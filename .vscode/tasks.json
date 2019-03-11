@@ -1,0 +1,25 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "buildConsoleConsumer",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/sample/ConsoleConsumer/ConsoleConsumer.csproj"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "buildConsoleProducer",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/sample/ConsoleProducer/ConsoleProducer.csproj"
+            ],
+            "problemMatcher": "$msCompile"
+        }
+    ]
+}
