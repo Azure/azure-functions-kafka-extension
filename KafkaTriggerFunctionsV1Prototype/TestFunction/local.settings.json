@@ -1,0 +1,10 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "DefaultEndpointsProtocol=https;AccountName=anirudhgfuncps8f45;AccountKey=PLVDIjRk6BTi6To5NOa8BylrePa1i9L8LQZocT+ULaUn5i6ZAtOIm9Uvy07TQcXp81Xwmm0k8sz7RAh4MTIg4Q==;EndpointSuffix=core.windows.net",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet",
+    "BrokerServers": "localhost:9092",
+    "TopicName": "test",
+    "ConsumerGroup": "csharp-consumer"
+  }
+}
