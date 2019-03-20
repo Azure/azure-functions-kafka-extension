@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using Avro.Generic;
 using Avro.Specific;
@@ -65,6 +66,66 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
+            var builder = new ConsumerBuilder<TKey, TValue>(this.GetConsumerConfiguration())
+                .SetErrorHandler((_, e) => {
+                    this.logger.LogError(e.Reason);
+                })
+                .SetRebalanceHandler((_, e) =>
+                {
+                    if (e.IsAssignment)
+                    {
+                        this.publisher.AddPartitions(e.Partitions);
+
+                        this.logger.LogInformation($"Assigned partitions: [{string.Join(", ", e.Partitions)}]");
+                        // possibly override the default partition assignment behavior:
+                        // consumer.Assign(...) 
+                    }
+                    else
+                    {
+                        this.publisher.ClearPartitions(e.Partitions);
+
+                        this.logger.LogInformation($"Revoked partitions: [{string.Join(", ", e.Partitions)}]");
+                        // consumer.Unassign()
+                    }
+                });
+
+
+            if (!string.IsNullOrEmpty(this.avroSchema))
+            {
+                var schemaRegistry = new LocalSchemaRegistry(this.avroSchema);
+                builder.SetValueDeserializer(new AvroDeserializer<TValue>(schemaRegistry));
+            }
+            else
+            {
+                if (typeof(Google.Protobuf.IMessage).IsAssignableFrom(typeof(TValue)))
+                {
+                    // protobuf: need to create using reflection due to generic requirements in ProtobufDeserializer
+                    var serializer = (IDeserializer<TValue>)Activator.CreateInstance(typeof(ProtobufDeserializer<>).MakeGenericType(typeof(TValue)));
+                    builder.SetValueDeserializer(serializer);
+                }
+            }
+
+            this.consumer = builder.Build();
+            this.consumer.Subscribe(this.topic);
+
+            this.publisher = (this.singleDispatch) ?
+                (IKafkaMessagePublisher<TKey, TValue>)new SingleKafkaMessagePublisher<TKey, TValue>(this.executor, this.consumer, cancellationToken, this.logger) :
+                new BatchKafkaMessagePublisher<TKey, TValue>(this.executor, this.consumer, this.maxBatchSize, this.logger);
+
+            // Using a thread as opposed to a task since this will be long running
+            // https://github.com/davidfowl/AspNetCoreDiagnosticScenarios/blob/master/AsyncGuidance.md#avoid-using-taskrun-for-long-running-work-that-blocks-the-thread
+            var thread = new Thread(ProcessSubscription)
+            {
+                IsBackground = true,
+            };
+            thread.Start(cancellationToken);
+
+
+            return Task.CompletedTask;
+        }
+
+        private ConsumerConfig GetConsumerConfiguration()
+        {
             ConsumerConfig conf;
             if (string.IsNullOrEmpty(this.eventHubConnectionString))
             {
@@ -104,63 +165,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     SslCaLocation = "./cacert.pem",
                     GroupId = consumerGroupToUse,
                     BrokerVersionFallback = "1.0.0",
-                   // { "debug", "security,broker,protocol" }       //Uncomment for librdkafka debugging information
+                    // { "debug", "security,broker,protocol" }       //Uncomment for librdkafka debugging information
                 };
             }
 
-
-            var builder = new ConsumerBuilder<TKey, TValue>(conf)
-                .SetErrorHandler((_, e) => {
-                    this.logger.LogError(e.Reason);
-                })
-                .SetRebalanceHandler((_, e) =>
-                {
-                    if (e.IsAssignment)
-                    {
-                        this.logger.LogInformation($"Assigned partitions: [{string.Join(", ", e.Partitions)}]");
-                        // possibly override the default partition assignment behavior:
-                        // consumer.Assign(...) 
-                    }
-                    else
-                    {
-                        this.logger.LogInformation($"Revoked partitions: [{string.Join(", ", e.Partitions)}]");
-                        // consumer.Unassign()
-                    }
-                });
-
-
-            if (!string.IsNullOrEmpty(this.avroSchema))
-            {
-                var schemaRegistry = new LocalSchemaRegistry(this.avroSchema);
-                builder.SetValueDeserializer(new AvroDeserializer<TValue>(schemaRegistry));
-            }
-            else
-            {
-                if (typeof(Google.Protobuf.IMessage).IsAssignableFrom(typeof(TValue)))
-                {
-                    // protobuf: need to create using reflection due to generic requirements in ProtobufDeserializer
-                    var serializer = (IDeserializer<TValue>)Activator.CreateInstance(typeof(ProtobufDeserializer<>).MakeGenericType(typeof(TValue)));
-                    builder.SetValueDeserializer(serializer);
-                }
-            }
-
-            this.consumer = builder.Build();
-            this.consumer.Subscribe(this.topic);
-
-            this.publisher = (this.singleDispatch) ?
-                (IKafkaMessagePublisher<TKey, TValue>)new SingleKafkaMessagePublisher<TKey, TValue>(this.executor, this.consumer, this.logger) :
-                new BatchKafkaMessagePublisher<TKey, TValue>(this.executor, this.consumer, this.maxBatchSize, this.logger);
-
-            // Using a thread as opposed to a task since this will be long running
-            // https://github.com/davidfowl/AspNetCoreDiagnosticScenarios/blob/master/AsyncGuidance.md#avoid-using-taskrun-for-long-running-work-that-blocks-the-thread
-            var thread = new Thread(ProcessSubscription)
-            {
-                IsBackground = true,
-            };
-            thread.Start(cancellationToken);
-
-
-            return Task.CompletedTask;
+            return conf;
         }
 
         private void ProcessSubscription(object parameter)
