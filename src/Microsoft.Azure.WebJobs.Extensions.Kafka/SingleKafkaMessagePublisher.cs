@@ -1,4 +1,7 @@
-﻿using System.Threading;
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the MIT License. See License.txt in the project root for license information.
+
+using System.Threading;
 using Confluent.Kafka;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Extensions.Logging;
@@ -10,7 +13,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     /// </summary>
     public class SingleKafkaMessagePublisher<TKey, TValue> : IKafkaMessagePublisher<TKey, TValue>
     {
-        const int commitPeriod = 5;
+        const int CommitPeriod = 5;
 
         private readonly ITriggeredFunctionExecutor executor;
         private readonly IConsumer<TKey, TValue> consumer;
@@ -35,7 +38,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             executor.TryExecuteAsync(triggerData, cancellationToken);
 
-            if (consumeResultData.Offset % commitPeriod == 0)
+            if (consumeResultData.Offset % CommitPeriod == 0)
             {
                 // The Commit method sends a "commit offsets" request to the Kafka
                 // cluster and synchronously waits for the response. This is very

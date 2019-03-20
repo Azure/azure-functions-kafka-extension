@@ -1,0 +1,16 @@
+<Project>
+  <PropertyGroup>
+    <!-- Extensions can have independent versions and only increment when released -->
+    <Version>0.0.1$(VersionSuffix)</Version>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Authors>Microsoft</Authors>
+    <Company>Microsoft</Company>
+    <RepositoryUrl>https://github.com/Microsoft/azure-functions-kafka-extension</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
+    <CodeAnalysisRuleSet>..\..\src.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemGroup>
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\stylecop.json" Link="stylecop.json" />
+  </ItemGroup>
+</Project>

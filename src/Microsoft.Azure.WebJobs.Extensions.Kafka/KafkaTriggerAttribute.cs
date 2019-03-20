@@ -1,4 +1,7 @@
-﻿using Avro.Specific;
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the MIT License. See License.txt in the project root for license information.
+
+using Avro.Specific;
 using Microsoft.Azure.WebJobs.Description;
 using System;
 
@@ -57,7 +60,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             set
             {
                 if (value != null && !IsValidValueType(value))
+                {
                     throw new ArgumentException($"The value of {nameof(ValueType)} must be a byte[], string or a type that implements {nameof(ISpecificRecord)} or {nameof(Google.Protobuf.IMessage)}. The type {value.Name} does not.");
+                }
 
                 this.valueType = value;
             }

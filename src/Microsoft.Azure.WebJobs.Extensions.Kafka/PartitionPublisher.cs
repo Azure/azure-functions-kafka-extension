@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the MIT License. See License.txt in the project root for license information.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -23,7 +26,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         object listSync = new object();
 
-        public PartitionPublisher(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer,int maxBatchSize, TimeSpan maxClientTimeout, ILogger logger)
+        public PartitionPublisher(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, int maxBatchSize, TimeSpan maxClientTimeout, ILogger logger)
         {
             this.executor = executor ?? throw new System.ArgumentNullException(nameof(executor));
             this.consumer = consumer ?? throw new System.ArgumentNullException(nameof(consumer));
