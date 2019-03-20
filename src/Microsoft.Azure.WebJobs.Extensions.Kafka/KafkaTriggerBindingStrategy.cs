@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the MIT License. See License.txt in the project root for license information.
+
+using System;
 using System.Collections.Generic;
 using System.Text;
 using Microsoft.Azure.WebJobs.Host.Bindings;
@@ -44,7 +47,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             AddBindingContractMember(contract, nameof(KafkaEventData.Key), typeof(object), isSingleDispatch);
             AddBindingContractMember(contract, nameof(KafkaEventData.Partition), typeof(int), isSingleDispatch);
             AddBindingContractMember(contract, nameof(KafkaEventData.Topic), typeof(string), isSingleDispatch);
-            AddBindingContractMember(contract, nameof(KafkaEventData.Timestamp) , typeof(DateTime), isSingleDispatch);
+            AddBindingContractMember(contract, nameof(KafkaEventData.Timestamp), typeof(DateTime), isSingleDispatch);
 
             return contract;
         }
