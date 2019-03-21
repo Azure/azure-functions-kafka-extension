@@ -16,7 +16,7 @@ A sample function is provided in folder sample/KafkaFunctionSample. It depends o
 {
   "IsEncrypted": false,
   "Values": {
-    "AzureWebJobsStorage": "<storage-account>",
+    "AzureWebJobsStorage": "None",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet",
     "LocalBroker": "broker:9092"
   }
@@ -62,3 +62,35 @@ Short description of building a web jobs trigger:
 1. In `IExtensionConfigProvider` add the bindings for the required attributes. For input triggers (starting a functions execution) a `ITriggerBindingProvider` implementation is required
 1. In `ITriggerBindingProvider` implementation we need to map a `IListener` for function parameters
 1. In `IListener` implementation we call `ITriggeredFunctionExecutor.TryExecuteAsync` to trigger the function call
+
+
+### Kafka trigger
+
+Triggering function calls starts at the KafkaListener class. It is responsible for connecting a Kafka trigger function with a Kafka Consumer (from Confluent.Kafka library).
+As the library does not seem to support a way to receive message in batches the current implementation loops getting items with a timeout, triggering the functions as messages are received.
+Once the listener is created a new thread is started, acting as a Kafka subscriber. 
+
+The subscriber loop:
+
+```
+while (!cancellationToken.IsCancellationRequested)
+    while !MaxBatchReleaseTime is passed
+        read from kafka
+        pending_items[partition].add(kafkaItem)
+        
+        if (pending_items[partition].length > maxBatchSize)
+            pending_items[partition].flush() // making the items available for the function executor
+    end until
+    
+    foreach partition not already flushed
+        pending_items[i].flush()
+end until
+```
+
+Executing the function:
+
+The function is executed by two type of executors: SingleItem and MultiItem.
+A single item executor calls the received items in a loop, one by one. The multi item executor calls the function a single time.
+Once all items have been processed the checkpoint is saved.
+
+Items processing is implemented through a channel. Once the channel is full (by default 10 batches) the subscriber will pause until the function catches up. This will cause all partitions to wait.
