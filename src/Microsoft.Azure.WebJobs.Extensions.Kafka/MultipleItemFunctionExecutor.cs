@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Channels;
@@ -18,56 +19,75 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     /// </summary>
     public class MultipleItemFunctionExecutor<TKey, TValue> : FunctionExecutorBase<TKey, TValue>
     {
-        public MultipleItemFunctionExecutor(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, CancellationToken cancellationToken, ILogger logger) 
-            : base(executor, consumer, cancellationToken, logger)
+        public MultipleItemFunctionExecutor(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, ILogger logger) 
+            : base(executor, consumer, logger)
         {
         }
 
         protected override async Task ReaderAsync(ChannelReader<KafkaEventData[]> reader, CancellationToken cancellationToken, ILogger logger)
         {
-            while (await reader.WaitToReadAsync(cancellationToken))
+            while (!cancellationToken.IsCancellationRequested && await reader.WaitToReadAsync(cancellationToken))
             {
-                while (reader.TryRead(out var itemsToPublish))
+                while (!cancellationToken.IsCancellationRequested && reader.TryRead(out var itemsToExecute))
                 {
                     try
                     {
                         // Try to publish them
-                        var triggerInput = KafkaTriggerInput.New(itemsToPublish);
+                        var triggerInput = KafkaTriggerInput.New(itemsToExecute);
                         var triggerData = new TriggeredFunctionData
                         {
                             TriggerValue = triggerInput,
                         };
 
-
                         var functionResult = await this.ExecuteFunctionAsync(triggerData, cancellationToken);
-                        if (functionResult.Succeeded)
+
+                        var offsetsToCommit = new Dictionary<int, TopicPartitionOffset>();
+                        for (var i=itemsToExecute.Length - 1; i >= 0; i--)
                         {
-
-                            logger.LogDebug("Executed {batchSize} items in {topic} / {partition} / {startingOffset}-{endingOffset}",
-                                itemsToPublish.Length,
-                                itemsToPublish[0].Topic,
-                                itemsToPublish[0].Partition,
-                                itemsToPublish[0].Offset,
-                                itemsToPublish[itemsToPublish.Length - 1].Offset);
-
-                            this.Commit(itemsToPublish.Last());
+                            if (!offsetsToCommit.ContainsKey(itemsToExecute[i].Partition))
+                            {
+                                offsetsToCommit.Add(
+                                    itemsToExecute[i].Partition, 
+                                    new TopicPartitionOffset(
+                                        itemsToExecute[i].Topic,
+                                        itemsToExecute[i].Partition,
+                                        itemsToExecute[i].Offset));
+                            }
                         }
-                        else
-                        { 
-                            logger.LogError(functionResult.Exception, "Failed to executed function with {batchSize} items in {topic} / {partition} / {startingOffset}-{endingOffset}",
-                                itemsToPublish.Length,
-                                itemsToPublish[0].Topic,
-                                itemsToPublish[0].Partition,
-                                itemsToPublish[0].Offset,
-                                itemsToPublish[itemsToPublish.Length - 1].Offset);
+
+                        if (!cancellationToken.IsCancellationRequested)
+                        {
+                            this.Commit(offsetsToCommit.Values);
+
+                            if (functionResult.Succeeded)
+                            {
+                                if (logger.IsEnabled(LogLevel.Debug))
+                                {
+                                    logger.LogDebug("Function executed with {batchSize} items in {topic} / {partitions} / {offsets}",
+                                        itemsToExecute.Length,
+                                        itemsToExecute[0].Topic,
+                                        string.Join(",", offsetsToCommit.Keys),
+                                        string.Join(",", offsetsToCommit.Values.Select(x => x.Offset)));
+                                }
+                            }
+                            else
+                            {
+                                logger.LogError(functionResult.Exception, "Failed to executed function with {batchSize} items in {topic} / {partitions} / {offsets}",
+                                    itemsToExecute.Length,
+                                    itemsToExecute[0].Topic,
+                                    string.Join(",", offsetsToCommit.Keys),
+                                    string.Join(",", offsetsToCommit.Values.Select(x => x.Offset)));
+                            }
                         }
                     }
                     catch (Exception ex)
                     {
-                        logger.LogError(ex, $"Error in partition publisher reader");
+                        logger.LogError(ex, $"Error in executor reader");
                     }
                 }
             }
+
+            logger.LogInformation("Exiting reader {processName}", nameof(MultipleItemFunctionExecutor<TKey, TValue>));
         }
     }
 }

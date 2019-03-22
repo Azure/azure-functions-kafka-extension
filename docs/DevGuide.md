@@ -63,34 +63,71 @@ Short description of building a web jobs trigger:
 1. In `ITriggerBindingProvider` implementation we need to map a `IListener` for function parameters
 1. In `IListener` implementation we call `ITriggeredFunctionExecutor.TryExecuteAsync` to trigger the function call
 
-
 ### Kafka trigger
 
 Triggering function calls starts at the KafkaListener class. It is responsible for connecting a Kafka trigger function with a Kafka Consumer (from Confluent.Kafka library).
 As the library does not seem to support a way to receive message in batches the current implementation loops getting items with a timeout, triggering the functions as messages are received.
-Once the listener is created a new thread is started, acting as a Kafka subscriber. 
+At the listener startup a "Kafka subscriber thread" is created.
 
-The subscriber loop:
+The subscriber thread does the following:
 
 ```
 while (!cancellationToken.IsCancellationRequested)
     while !MaxBatchReleaseTime is passed
-        read from kafka
-        pending_items[partition].add(kafkaItem)
+        kafkaItem = read_from_kafka()
+        executor.add(kafkaItem)
         
-        if (pending_items[partition].length > maxBatchSize)
-            pending_items[partition].flush() // making the items available for the function executor
-    end until
+        if (executor.length > maxBatchSize) {
+            executor.flush() // making the items available for the function executor
+            alreadyFlushedInCurrentExecution = true
+        }
+    end
     
-    foreach partition not already flushed
-        pending_items[i].flush()
-end until
+    if (!alreadyFlushedInCurrentExecution)
+        executor.flush()
+end
 ```
 
-Executing the function:
+Function executors:
 
 The function is executed by two type of executors: SingleItem and MultiItem.
-A single item executor calls the received items in a loop, one by one. The multi item executor calls the function a single time.
-Once all items have been processed the checkpoint is saved.
+A single item executor calls the received items in a loop, one by one in parallel if multiple partitions exist. The multi item executor calls the function a single time, items will be in order, batch can contain items from distinct partitions. Once all items have been processed the checkpoint is saved.
 
-Items processing is implemented through a channel. Once the channel is full (by default 10 batches) the subscriber will pause until the function catches up. This will cause all partitions to wait.
+Items to send to function are added to a channel with a capacity of 10 batches (10 * ~64 items). Once full the subscriber will pause until the function catches up. This will cause all partitions to wait.
+
+### Execution order
+
+**Data in Kafka**
+
+```
+Partition 1: ABCDE
+Partition 2: 12345
+```
+
+**Receiving order**
+```
+00:00:01: AB12C
+00:00:02: 34DE5
+```
+
+**Multi item function**
+
+1. Batch AB12C is received
+1. Send to function batch containing AB12C
+1. Commit C and 2
+1. Batch 34DE5 is received
+1. Send to function batch containing 34DE5
+1. Commit E and 5
+
+**Single item function**
+
+1. Batch AB12C is received
+1. Sends A, 1 (in parallel)
+1. Sends B, 2 (in parallel)
+1. Sends C
+1. Commits C and 2
+1. Batch 34DE5 is received
+1. Sends D, 3 (in parallel)
+1. Sends E, 4 (in parallel)
+1. Sends 5
+1. Commits E and 5

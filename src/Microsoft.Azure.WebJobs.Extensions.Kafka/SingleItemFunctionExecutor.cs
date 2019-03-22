@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Channels;
@@ -18,53 +19,65 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     /// </summary>
     public class SingleItemFunctionExecutor<TKey, TValue> : FunctionExecutorBase<TKey, TValue>
     {
-        public SingleItemFunctionExecutor(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, CancellationToken cancellationToken, ILogger logger) 
-            : base(executor, consumer, cancellationToken, logger)
+        public SingleItemFunctionExecutor(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, ILogger logger) 
+            : base(executor, consumer, logger)
         {
         }
 
         protected override async Task ReaderAsync(ChannelReader<KafkaEventData[]> reader, CancellationToken cancellationToken, ILogger logger)
         {
-            while (await reader.WaitToReadAsync(cancellationToken))
+            var pendingTasks = new List<Task<FunctionResult>>();
+
+            while (!cancellationToken.IsCancellationRequested && await reader.WaitToReadAsync(cancellationToken))
             {
-                while (reader.TryRead(out var itemsToPublish))
+                while (!cancellationToken.IsCancellationRequested && reader.TryRead(out var itemsToExecute))
                 {
                     try
                     {
-                        foreach (var kafkaEventData in itemsToPublish)
+                        // Execute multiple topic in parallel.
+                        // Order in a partition must be followed.
+                        var partitionOffsets = new Dictionary<int, long>();
+                        var itemsByPartition = itemsToExecute.GroupBy(x => x.Partition);
+
+                        var i = 0;
+                        do
                         {
-                            var triggerInput = KafkaTriggerInput.New(kafkaEventData);
-                            var triggerData = new TriggeredFunctionData
-                            {
-                                TriggerValue = triggerInput,
-                            };
+                            pendingTasks.Clear();
 
-                            var functionResult = await this.ExecuteFunctionAsync(triggerData, cancellationToken);
-                            if (functionResult.Succeeded)
+                            foreach (var partition in itemsByPartition)
                             {
+                                var kafkaEventData = partition.ElementAtOrDefault(i);
+                                if (kafkaEventData != null)
+                                {
+                                    var triggerInput = KafkaTriggerInput.New(kafkaEventData);
+                                    var triggerData = new TriggeredFunctionData
+                                    {
+                                        TriggerValue = triggerInput,
+                                    };
 
-                                logger.LogDebug("Executed {topic} / {partition} / {offset}",
-                                    kafkaEventData.Topic,
-                                    kafkaEventData.Partition,
-                                    kafkaEventData.Offset);
+                                    partitionOffsets[partition.Key] = kafkaEventData.Offset;
+
+                                    pendingTasks.Add(this.ExecuteFunctionAsync(triggerData, cancellationToken));
+                                }
                             }
-                            else
-                            {
-                                logger.LogError(functionResult.Exception, "Failed to execute function {topic} / {partition} / {offset}",
-                                    kafkaEventData.Topic,
-                                    kafkaEventData.Partition,
-                                    kafkaEventData.Offset);
-                            }
+
+                            i++;
+                            await Task.WhenAll(pendingTasks);
+                        } while (!cancellationToken.IsCancellationRequested && pendingTasks.Count > 0);
+
+                        if (!cancellationToken.IsCancellationRequested)
+                        {
+                            this.Commit(partitionOffsets.Select((kv) => new TopicPartitionOffset(new TopicPartition(itemsToExecute[0].Topic, kv.Key), kv.Value)));
                         }
-
-                        this.Commit(itemsToPublish.Last());
                     }
                     catch (Exception ex)
                     {
-                        logger.LogError(ex, $"Error in partition publisher reader");
+                        logger.LogError(ex, $"Error in executor reader");
                     }
                 }
             }
+
+            logger.LogInformation("Exiting reader {processName}", nameof(SingleItemFunctionExecutor<TKey, TValue>));
         }
     }
 }

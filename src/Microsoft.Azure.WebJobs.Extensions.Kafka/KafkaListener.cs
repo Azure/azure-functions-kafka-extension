@@ -4,17 +4,9 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Text;
 using System.Threading;
-using System.Threading.Channels;
 using System.Threading.Tasks;
-using Avro.Generic;
-using Avro.Specific;
 using Confluent.Kafka;
-using Confluent.SchemaRegistry;
 using Confluent.SchemaRegistry.Serdes;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
@@ -29,6 +21,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     /// </summary>
     internal class KafkaListener<TKey, TValue> : IListener
     {
+        /// <summary>
+        /// The time to wait for running process to end.
+        /// </summary>
+        const int TimeToWaitForRunningProcessToEnd = 10 * 1000;
+
         private readonly ITriggeredFunctionExecutor executor;
         private readonly bool singleDispatch;
         private readonly ILogger logger;
@@ -38,10 +35,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly string eventHubConnectionString;
         private readonly string avroSchema;
         private readonly int maxBatchSize;
-        private readonly ConcurrentDictionary<int, FunctionExecutorBase<TKey, TValue>> ownedPartitions = new ConcurrentDictionary<int, FunctionExecutorBase<TKey, TValue>>();
+        private FunctionExecutorBase<TKey, TValue> functionExecutor;
         private Consumer<TKey, TValue> consumer;
         private bool disposed;
-        private CancellationToken cancellationToken;
+        private CancellationTokenSource cancellationTokenSource;
+        private SemaphoreSlim subscriberFinished;
 
         /// <summary>
         /// Gets or sets value indicating how long events will be read from Kafka before they are sent to the function
@@ -71,17 +69,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.eventHubConnectionString = eventHubConnectionString;
             this.avroSchema = avroSchema;
             this.maxBatchSize = maxBatchSize;
+            this.cancellationTokenSource = new CancellationTokenSource();
         }
 
         public void Cancel()
         {
-            this.SafeCloseConsumer();
+            this.SafeCloseConsumerAsync().GetAwaiter().GetResult();
         }        
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            this.cancellationToken = cancellationToken;
-
             var builder = new ConsumerBuilder<TKey, TValue>(this.GetConsumerConfiguration())
                 .SetErrorHandler((_, e) => {
                     this.logger.LogError(e.Reason);
@@ -90,25 +87,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 {
                     if (e.IsAssignment)
                     {
-                        foreach (var tp in e.Partitions)
-                        {
-                            this.EnsurePartitionExecutorExists(tp.Partition);
-                        }
-
                         this.logger.LogInformation($"Assigned partitions: [{string.Join(", ", e.Partitions)}]");
                         // possibly override the default partition assignment behavior:
                         // consumer.Assign(...) 
                     }
                     else
                     {
-                        foreach (var tp in e.Partitions)
-                        {
-                            if (this.ownedPartitions.TryRemove(tp.Partition, out var partitionFunctionExecutor))
-                            {
-                                partitionFunctionExecutor.Dispose();
-                            }
-                        }
-
                         this.logger.LogInformation($"Revoked partitions: [{string.Join(", ", e.Partitions)}]");
                         // consumer.Unassign()
                     }
@@ -131,6 +115,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
 
             this.consumer = builder.Build();
+
+            this.functionExecutor = singleDispatch ?
+                (FunctionExecutorBase<TKey, TValue>)new SingleItemFunctionExecutor<TKey, TValue>(this.executor, this.consumer, this.logger) :
+                new MultipleItemFunctionExecutor<TKey, TValue>(this.executor, this.consumer, this.logger);
+
             this.consumer.Subscribe(this.topic);
 
             // Using a thread as opposed to a task since this will be long running
@@ -139,22 +128,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 IsBackground = true,
             };
-            thread.Start();
-
+            thread.Start(this.cancellationTokenSource.Token);
 
             return Task.CompletedTask;
-        }
-
-        private FunctionExecutorBase<TKey, TValue> EnsurePartitionExecutorExists(int partition)
-        {
-            return this.ownedPartitions.GetOrAdd(partition, (p) =>
-            {
-                var functionExecutor = this.singleDispatch ?
-                    (FunctionExecutorBase<TKey, TValue>)new SingleItemFunctionExecutor<TKey, TValue>(this.executor, this.consumer, this.cancellationToken, this.logger) :
-                    new MultipleItemFunctionExecutor<TKey, TValue>(this.executor, this.consumer, this.cancellationToken, this.logger);
-
-                return functionExecutor;
-            });
         }
 
         private ConsumerConfig GetConsumerConfiguration()
@@ -207,15 +183,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         private void ProcessSubscription(object parameter)
         {
+            this.subscriberFinished = new SemaphoreSlim(0, 1);
+            var cancellationToken = (CancellationToken)parameter;
             var messages = new List<ConsumeResult<TKey, TValue>>(this.maxBatchSize);
 
             try
             {
-                var alreadyFlushedPartitions = new HashSet<int>();
-                while (!this.cancellationToken.IsCancellationRequested)
+                var alreadyFlushedInCurrentExecution = false;
+                while (!cancellationToken.IsCancellationRequested)
                 {
                     var batchStart = DateTime.UtcNow;
                     var availableTime = this.MaxBatchReleaseTime - (DateTime.UtcNow - batchStart);
+                    alreadyFlushedInCurrentExecution = false;
 
                     while (availableTime > TimeSpan.Zero)
                     {
@@ -236,17 +215,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
                                     // add message to executor
                                     // if executor pending items is full, flush it
-                                    var partitionExecutor = this.EnsurePartitionExecutorExists(kafkaEventData.Partition);
-                                    var currentSize = partitionExecutor.Add(kafkaEventData);
-                                    if (currentSize == this.maxBatchSize)
+                                    var currentSize = this.functionExecutor.Add(kafkaEventData);
+                                    if (currentSize >= this.maxBatchSize)
                                     {
-                                        partitionExecutor.Flush();
-                                        alreadyFlushedPartitions.Add(kafkaEventData.Partition);
+                                        this.functionExecutor.Flush();
+                                        alreadyFlushedInCurrentExecution = true;
                                     }
                                 }
-                            }
 
-                            availableTime = this.MaxBatchReleaseTime - (DateTime.UtcNow - batchStart);
+                                availableTime = this.MaxBatchReleaseTime - (DateTime.UtcNow - batchStart);
+                            }
+                            else
+                            {
+                                // TODO: maybe slow down if don't have much data incoming
+                                break;
+                            }
                         }
                         catch (ConsumeException ex)
                         {
@@ -254,59 +237,58 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                         }
                     }
 
-                    // flush all partitions
-                    foreach (var kv in this.ownedPartitions)
+                    if (!alreadyFlushedInCurrentExecution)
                     {
-                        // Do not flush a partition that was recently flushed
-                        // It can lead to excessive function calls
-                        if (!alreadyFlushedPartitions.Contains(kv.Key))
-                        {
-                            kv.Value.Flush();
-                        }
+                        this.functionExecutor.Flush();
                     }
-
-                    alreadyFlushedPartitions.Clear();
                 }
             }
             catch (OperationCanceledException)
             {
-                this.logger.LogInformation("Closing consumer.");
-                this.SafeCloseConsumer();
             }
+
+            this.logger.LogInformation("Exiting {processName} for {topic}", nameof(ProcessSubscription), this.topic);
+            this.subscriberFinished.Release();
         }
 
-        public Task StopAsync(CancellationToken cancellationToken)
+        public async Task StopAsync(CancellationToken cancellationToken)
         {
-            SafeCloseConsumer();
-
-            return Task.CompletedTask;
+            await SafeCloseConsumerAsync();
         }
 
-        private void SafeCloseConsumer()
+        bool isClosed = false;
+        private async Task SafeCloseConsumerAsync()
         {
-            if (this.consumer != null)
+            if (this.isClosed)
             {
-                this.consumer.Unsubscribe();
-
-                foreach (var kv in this.ownedPartitions)
-                {
-                    kv.Value.Dispose();
-                }
-                this.ownedPartitions.Clear();
-
-
-                this.consumer.Dispose();
-                this.consumer = null;
+                return;
             }
+                
+            // Stop subscriber thread
+            this.cancellationTokenSource.Cancel();
+
+            // Stop function executor
+            await this.functionExecutor?.CloseAsync(TimeSpan.FromMilliseconds(TimeToWaitForRunningProcessToEnd));
+
+            // Wait for subscriber thread to end
+            await this.subscriberFinished?.WaitAsync(TimeToWaitForRunningProcessToEnd);
+
+            this.isClosed = true;
+
+            this.consumer?.Unsubscribe();
+            this.consumer?.Dispose();
+            this.functionExecutor?.Dispose();
         }
 
         protected virtual void Dispose(bool disposing)
         {
             if (!disposed)
             {
+                this.logger.LogInformation("Disposing Kafka Listener for {topic}", this.topic);
+
                 if (disposing)
                 {
-                    SafeCloseConsumer();
+                    this.SafeCloseConsumerAsync().GetAwaiter().GetResult();
                 }
 
                 disposed = true;

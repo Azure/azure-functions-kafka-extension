@@ -23,17 +23,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         private readonly ITriggeredFunctionExecutor executor;
         private readonly IConsumer<TKey, TValue> consumer;
-        private readonly CancellationToken cancellationToken;
+        private readonly CancellationTokenSource cancellationTokenSource;
         private readonly Channel<KafkaEventData[]> channel;
         private readonly List<KafkaEventData> currentBatch;
         private readonly ILogger logger;
+        private SemaphoreSlim readerFinished = new SemaphoreSlim(0, 1);
 
-        public FunctionExecutorBase(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, CancellationToken cancellationToken, ILogger logger)
+        public FunctionExecutorBase(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, ILogger logger)
         {
             this.executor = executor ?? throw new System.ArgumentNullException(nameof(executor));
             this.consumer = consumer ?? throw new System.ArgumentNullException(nameof(consumer));
             this.logger = logger;
-            this.cancellationToken = cancellationToken;
+            this.cancellationTokenSource = new CancellationTokenSource();
             this.currentBatch = new List<KafkaEventData>();
 
             this.channel = Channel.CreateBounded<KafkaEventData[]>(new BoundedChannelOptions(ChannelCapacity)
@@ -42,22 +43,33 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 SingleWriter = true,
             });
 
-            Task.Run(() => this.ReaderAsync(this.channel.Reader, this.cancellationToken, this.logger));
+            Task.Run(async () =>
+            {
+                await this.ReaderAsync(this.channel.Reader, this.cancellationTokenSource.Token, this.logger);
+                this.readerFinished.Release();
+            });
         }
 
         protected abstract Task ReaderAsync(ChannelReader<KafkaEventData[]> reader, CancellationToken cancellationToken, ILogger logger);
 
-        protected void Commit(KafkaEventData kafkaEventData)
+
+        protected void Commit(IEnumerable<TopicPartitionOffset> topicPartitionOffsets)
         {
             try
             {
 
-                this.consumer.Commit(new[] { new TopicPartitionOffset(kafkaEventData.Topic, kafkaEventData.Partition, kafkaEventData.Offset) });
+                this.consumer.Commit(topicPartitionOffsets, this.cancellationTokenSource.Token);
 
-                this.logger.LogInformation("Committed {topic} / {partition} / {offset}",
-                       kafkaEventData.Topic,
-                       kafkaEventData.Partition,
-                       kafkaEventData.Offset);
+                if (this.logger.IsEnabled(LogLevel.Information))
+                {
+                    foreach (var tpo in topicPartitionOffsets)
+                    {
+                        this.logger.LogInformation("Committed {topic} / {partition} / {offset}",
+                           tpo.Topic,
+                           tpo.Partition,
+                           tpo.Offset);
+                    }
+                }
             }
             catch (KafkaException e)
             {
@@ -90,7 +102,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var loggedWaitingForFunction = false;
 
 
-            while (!this.cancellationToken.IsCancellationRequested)
+            while (!this.cancellationTokenSource.IsCancellationRequested)
             {
                 if (channel.Writer.TryWrite(items))
                 {
@@ -117,9 +129,29 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return this.executor.TryExecuteAsync(triggerData, cancellationToken);
         }
 
+        bool isClosed = false;
+        public async Task<bool> CloseAsync(TimeSpan timeout)
+        {
+            if (this.isClosed)
+            {
+                return true;
+            }
+
+            this.cancellationTokenSource.Cancel();
+            this.channel.Writer.Complete();
+
+            if (await this.readerFinished.WaitAsync(timeout))
+            {
+                this.isClosed = true;
+                return true;
+            }
+
+            return false;
+        }
+
         public void Dispose()
         {
-            this.channel.Writer.Complete();
+            this.CloseAsync(TimeSpan.Zero).GetAwaiter().GetResult();
             GC.SuppressFinalize(this);
         }
     }
