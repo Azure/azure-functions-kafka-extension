@@ -223,22 +223,26 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                         {
                             var consumeResult = consumer.Consume(availableTime);
 
-                            if (consumeResult.IsPartitionEOF)
+                            // If no message was consumed during the available time, returns null
+                            if (consumeResult != null)
                             {
-                                this.logger.LogInformation("Reached end of {topic} / {partition} / {offset}", consumeResult.Topic, consumeResult.Partition, consumeResult.Offset);
-                            }
-                            else
-                            {
-                                var kafkaEventData = new KafkaEventData(new ConsumeResultWrapper<TKey, TValue>(consumeResult));
-
-                                // add message to executor
-                                // if executor pending items is full, flush it
-                                var partitionExecutor = this.EnsurePartitionExecutorExists(kafkaEventData.Partition);
-                                var currentSize = partitionExecutor.Add(kafkaEventData);
-                                if (currentSize == this.maxBatchSize)
+                                if (consumeResult.IsPartitionEOF)
                                 {
-                                    partitionExecutor.Flush();
-                                    alreadyFlushedPartitions.Add(kafkaEventData.Partition);
+                                    this.logger.LogInformation("Reached end of {topic} / {partition} / {offset}", consumeResult.Topic, consumeResult.Partition, consumeResult.Offset);
+                                }
+                                else
+                                {
+                                    var kafkaEventData = new KafkaEventData(new ConsumeResultWrapper<TKey, TValue>(consumeResult));
+
+                                    // add message to executor
+                                    // if executor pending items is full, flush it
+                                    var partitionExecutor = this.EnsurePartitionExecutorExists(kafkaEventData.Partition);
+                                    var currentSize = partitionExecutor.Add(kafkaEventData);
+                                    if (currentSize == this.maxBatchSize)
+                                    {
+                                        partitionExecutor.Flush();
+                                        alreadyFlushedPartitions.Add(kafkaEventData.Partition);
+                                    }
                                 }
                             }
 
