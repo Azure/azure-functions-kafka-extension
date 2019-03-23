@@ -18,12 +18,12 @@ A sample function is provided in folder sample/KafkaFunctionSample. It depends o
   "Values": {
     "AzureWebJobsStorage": "None",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet",
-    "LocalBroker": "broker:9092"
+    "LocalBroker": "localhost:9092"
   }
 }
 ```
 
-You might have to bind `broker` to `127.0.0.1` if you have problems connecting from the sample function app.
+If localhost does not work try to use `broker` and add it in hosts file as `127.0.0.1`.
 
 ## Avro handling
 
