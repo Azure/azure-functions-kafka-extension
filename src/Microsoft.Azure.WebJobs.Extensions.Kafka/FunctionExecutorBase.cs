@@ -45,11 +45,31 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             Task.Run(async () =>
             {
-                await this.ReaderAsync(this.channel.Reader, this.cancellationTokenSource.Token, this.logger);
-                this.readerFinished.Release();
+                try
+                {
+                    await this.ReaderAsync(this.channel.Reader, this.cancellationTokenSource.Token, this.logger);
+                }
+                catch (Exception ex)
+                {
+                    // Channel reader will throw OperationCanceledException if cancellation token is cancelled during a call
+                    if (!(ex is OperationCanceledException))
+                    {
+                        this.logger.LogError(ex, $"Function executor error while processing channel");
+                    }
+                }
+                finally
+                {
+                    this.readerFinished.Release();
+                }
             });
         }
 
+        /// <summary>
+        /// Channel reader, executing the function once data is available in channel
+        /// </summary>
+        /// <param name="reader">The channel reader</param>
+        /// <param name="cancellationToken">Cancellation token indicating the host is shutting down</param>
+        /// <param name="logger">Logger</param>
         protected abstract Task ReaderAsync(ChannelReader<KafkaEventData[]> reader, CancellationToken cancellationToken, ILogger logger);
 
 
