@@ -19,8 +19,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     /// </summary>
     public class MultipleItemFunctionExecutor<TKey, TValue> : FunctionExecutorBase<TKey, TValue>
     {
-        public MultipleItemFunctionExecutor(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, ILogger logger) 
-            : base(executor, consumer, logger)
+        public MultipleItemFunctionExecutor(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, int channelCapacity, int channelFullRetryIntervalInMs, ILogger logger) 
+            : base(executor, consumer, channelCapacity, channelFullRetryIntervalInMs, logger)
         {
         }
 
@@ -51,7 +51,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                                     new TopicPartitionOffset(
                                         itemsToExecute[i].Topic,
                                         itemsToExecute[i].Partition,
-                                        itemsToExecute[i].Offset));
+                                        itemsToExecute[i].Offset + 1)); // offset is inclusive when resuming
                             }
                         }
 

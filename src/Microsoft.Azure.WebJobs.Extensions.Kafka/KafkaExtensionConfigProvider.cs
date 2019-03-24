@@ -1,39 +1,52 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
+using Avro.Generic;
 using Avro.Specific;
+using Microsoft.Azure.WebJobs.Description;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
+using Microsoft.Azure.WebJobs.Host.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
+    [Extension("Kafka", configurationSection: "kafka")]
     public class KafkaExtensionConfigProvider : IExtensionConfigProvider
     {
         private readonly IConfiguration config;
+        private readonly IOptions<KafkaOptions> options;
         private readonly ILoggerFactory loggerFactory;
         private readonly IConverterManager converterManager;
         private readonly INameResolver nameResolver;
+        private readonly IWebJobsExtensionConfiguration<KafkaExtensionConfigProvider> configuration;
 
         public KafkaExtensionConfigProvider(
             IConfiguration config,
+            IOptions<KafkaOptions> options,
             ILoggerFactory loggerFactory,
             IConverterManager converterManager,
-            INameResolver nameResolver)
+            INameResolver nameResolver,
+            IWebJobsExtensionConfiguration<KafkaExtensionConfigProvider> configuration)
         {
             this.config = config;
+            this.options = options;
             this.loggerFactory = loggerFactory;
             this.converterManager = converterManager;
             this.nameResolver = nameResolver;
+            this.configuration = configuration;
         }
 
         public void Initialize(ExtensionConfigContext context)
         {
+            this.configuration.ConfigurationSection.Bind(this.options);
 
             context
                .AddConverter<string, KafkaEventData>(ConvertString2KafkaEventData)
@@ -44,7 +57,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                .AddOpenConverter<OpenType.Poco, KafkaEventData>(ConvertPocoToKafkaEventData);
 
             // register our trigger binding provider
-            var triggerBindingProvider = new KafkaTriggerAttributeBindingProvider(this.config, this.loggerFactory, this.converterManager, this.nameResolver);
+            var triggerBindingProvider = new KafkaTriggerAttributeBindingProvider(this.config, this.options, this.converterManager, this.nameResolver, this.loggerFactory);
             context.AddBindingRule<KafkaTriggerAttribute>()
                 .BindToTrigger(triggerBindingProvider);
         }
@@ -55,7 +68,39 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         }
 
         private static string ConvertKafkaEventData2String(KafkaEventData kafkaEventData)
-           => JsonConvert.SerializeObject(kafkaEventData);
+        {
+            try
+            {
+                if (kafkaEventData.Value is GenericRecord genericRecord)
+                {
+                    return GenericRecord2String(genericRecord);
+                }
+                else
+                {
+                    return JsonConvert.SerializeObject(kafkaEventData);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                throw;
+            }
+        }
+
+
+        private static string GenericRecord2String(GenericRecord record)
+        {
+            var props = new Dictionary<string, object>();
+            foreach (var field in record.Schema.Fields)
+            {
+                if (record.TryGetValue(field.Name, out var value))
+                {
+                    props[field.Name] = value;
+                }
+            }
+
+            return JsonConvert.SerializeObject(props);
+        }
 
         private static KafkaEventData ConvertBytes2KafkaEventData(byte[] input)
             => new KafkaEventData(input);

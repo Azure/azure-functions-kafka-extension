@@ -19,10 +19,13 @@ namespace KafkaFunctionSample
     {
         [FunctionName(nameof(User))]
         public static void User(
-           [KafkaTrigger("LocalBroker", "users", ValueType=typeof(UserRecord), ConsumerGroup = "azfunc")] KafkaEventData kafkaEvent,
+           [KafkaTrigger("LocalBroker", "users", ValueType=typeof(UserRecord), ConsumerGroup = "azfunc")] KafkaEventData[] kafkaEvents,
            ILogger logger)
         {
-           logger.LogInformation($"{JsonConvert.SerializeObject(kafkaEvent.Value)}");
+            foreach (var kafkaEvent in kafkaEvents)
+            {
+                logger.LogInformation($"{JsonConvert.SerializeObject(kafkaEvent.Value)}");
+            }
         }
 
         [FunctionName(nameof(PageViewsFemale))]
