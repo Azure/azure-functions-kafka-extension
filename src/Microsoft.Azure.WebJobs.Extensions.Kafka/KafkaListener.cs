@@ -88,13 +88,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     if (e.IsAssignment)
                     {
                         this.logger.LogInformation($"Assigned partitions: [{string.Join(", ", e.Partitions)}]");
-                        // possibly override the default partition assignment behavior:
-                        // consumer.Assign(...) 
                     }
                     else
                     {
                         this.logger.LogInformation($"Revoked partitions: [{string.Join(", ", e.Partitions)}]");
-                        // consumer.Unassign()
                     }
                 });
 
@@ -243,12 +240,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     }
                 }
             }
-            catch (OperationCanceledException)
+            catch (Exception ex)
             {
+                this.logger.LogError(ex, "Error in Kafka subscriber");
             }
-
-            this.logger.LogInformation("Exiting {processName} for {topic}", nameof(ProcessSubscription), this.topic);
-            this.subscriberFinished.Release();
+            finally
+            {
+                this.logger.LogInformation("Exiting {processName} for {topic}", nameof(ProcessSubscription), this.topic);
+                this.subscriberFinished.Release();
+            }
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)
