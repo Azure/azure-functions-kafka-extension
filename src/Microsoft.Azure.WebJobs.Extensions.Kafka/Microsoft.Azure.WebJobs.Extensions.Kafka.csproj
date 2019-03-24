@@ -28,6 +28,7 @@
     <PackageReference Include="StyleCop.Analyzers" Version="1.1.0-beta004">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="System.Threading.Channels" Version="4.5.0" />
   </ItemGroup>
   <ItemGroup>
     <None Update="cacert.pem">
