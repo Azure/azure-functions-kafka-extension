@@ -29,7 +29,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// <summary>
         /// Gets or sets the broker list
         /// </summary>
-
         public string BrokerList { get; private set; }
 
         /// <summary>
@@ -73,12 +72,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// Should be used only if a generic record should be generated
         /// </summary>
         public string AvroSchema { get; set; }
-
-        /// <summary>
-        /// Gets or sets the maximum size of the batch.
-        /// </summary>
-        /// <value>The maximum size of the batch.</value>
-        public int MaxBatchSize { get; set; } = 64;
 
         bool IsValidValueType(Type value)
         {

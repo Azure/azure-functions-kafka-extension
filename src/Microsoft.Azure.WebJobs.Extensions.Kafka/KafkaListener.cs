@@ -11,10 +11,10 @@ using Confluent.SchemaRegistry.Serdes;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
-
     /// <summary>
     /// Kafka listener.
     /// Connects a Kafka trigger function with a Kafka Consumer
@@ -28,62 +28,108 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         private readonly ITriggeredFunctionExecutor executor;
         private readonly bool singleDispatch;
+        private readonly KafkaOptions options;
         private readonly ILogger logger;
         private readonly string brokerList;
         private readonly string topic;
         private readonly string consumerGroup;
         private readonly string eventHubConnectionString;
         private readonly string avroSchema;
-        private readonly int maxBatchSize;
         private FunctionExecutorBase<TKey, TValue> functionExecutor;
-        private Consumer<TKey, TValue> consumer;
+        private IConsumer<TKey, TValue> consumer;
         private bool disposed;
         private CancellationTokenSource cancellationTokenSource;
         private SemaphoreSlim subscriberFinished;
 
-        /// <summary>
-        /// Gets or sets value indicating how long events will be read from Kafka before they are sent to the function
-        /// If for a give partition it accumulates maxBatchSize elements the call to the function is started
-        /// At the of the the batch period all partitions are flushed, restarting the process
-        /// </summary>
-        /// <value>The max batch release time.</value>
-        public TimeSpan MaxBatchReleaseTime { get; private set; } = TimeSpan.FromSeconds(1);
-
         public KafkaListener(
             ITriggeredFunctionExecutor executor,
             bool singleDispatch,
-            ILogger logger,
+            KafkaOptions options,
             string brokerList,
             string topic,
             string consumerGroup,
             string eventHubConnectionString,
             string avroSchema,
-            int maxBatchSize)
+            ILogger logger)
         {
             this.executor = executor;
             this.singleDispatch = singleDispatch;
+            this.options = options;
             this.logger = logger;
             this.brokerList = brokerList;
             this.topic = topic;
             this.consumerGroup = consumerGroup;
             this.eventHubConnectionString = eventHubConnectionString;
             this.avroSchema = avroSchema;
-            this.maxBatchSize = maxBatchSize;
             this.cancellationTokenSource = new CancellationTokenSource();
         }
 
         public void Cancel()
         {
             this.SafeCloseConsumerAsync().GetAwaiter().GetResult();
-        }        
+        }
+
+        /// <summary>
+        /// Need to return a <see cref="IConsumer{TKey, TValue}"/> for unit tests.
+        /// Unfortunately <see cref="ConsumerBuilder{TKey, TValue}"/> returns <see cref="Consumer{TKey, TValue}"/>
+        /// </summary>
+        protected virtual IConsumer<TKey, TValue> CreateConsumer(
+            ConsumerConfig config,
+            Action<Consumer<TKey, TValue>, Error> errorHandler,
+            Action<IConsumer<TKey, TValue>, RebalanceEvent> rebalanceHandler,
+            IAsyncDeserializer<TValue> asyncValueDeserializer = null,
+            IDeserializer<TValue> valueDeserializer = null,
+            IAsyncDeserializer<TKey> keyDeserializer = null
+            )
+        {
+            var builder = new ConsumerBuilder<TKey, TValue>(config)
+                .SetErrorHandler(errorHandler)
+                .SetRebalanceHandler(rebalanceHandler);
+
+            if (keyDeserializer != null)
+            {
+                builder.SetKeyDeserializer(keyDeserializer);
+            }
+
+            if (asyncValueDeserializer != null)
+            {
+                builder.SetValueDeserializer(asyncValueDeserializer);
+            }
+            else if (valueDeserializer != null)
+            {
+                builder.SetValueDeserializer(valueDeserializer);
+            }
+
+            return builder.Build();
+        }
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            var builder = new ConsumerBuilder<TKey, TValue>(this.GetConsumerConfiguration())
-                .SetErrorHandler((_, e) => {
+            IAsyncDeserializer<TValue> asyncValueDeserializer = null;
+            IDeserializer<TValue> valueDeserializer = null;
+            IAsyncDeserializer<TKey> keyDeserializer = null;
+
+            if (!string.IsNullOrEmpty(this.avroSchema))
+            {
+                var schemaRegistry = new LocalSchemaRegistry(this.avroSchema);
+                asyncValueDeserializer = new AvroDeserializer<TValue>(schemaRegistry);
+            }
+            else
+            {
+                if (typeof(Google.Protobuf.IMessage).IsAssignableFrom(typeof(TValue)))
+                {
+                    // protobuf: need to create using reflection due to generic requirements in ProtobufDeserializer
+                    valueDeserializer = (IDeserializer<TValue>)Activator.CreateInstance(typeof(ProtobufDeserializer<>).MakeGenericType(typeof(TValue)));
+                }
+            }
+
+            this.consumer = this.CreateConsumer(
+                config: this.GetConsumerConfiguration(),
+                errorHandler: (_, e) =>
+                {
                     this.logger.LogError(e.Reason);
-                })
-                .SetRebalanceHandler((_, e) =>
+                },
+                rebalanceHandler: (_, e) =>
                 {
                     if (e.IsAssignment)
                     {
@@ -93,29 +139,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     {
                         this.logger.LogInformation($"Revoked partitions: [{string.Join(", ", e.Partitions)}]");
                     }
-                });
-
-
-            if (!string.IsNullOrEmpty(this.avroSchema))
-            {
-                var schemaRegistry = new LocalSchemaRegistry(this.avroSchema);
-                builder.SetValueDeserializer(new AvroDeserializer<TValue>(schemaRegistry));
-            }
-            else
-            {
-                if (typeof(Google.Protobuf.IMessage).IsAssignableFrom(typeof(TValue)))
-                {
-                    // protobuf: need to create using reflection due to generic requirements in ProtobufDeserializer
-                    var serializer = (IDeserializer<TValue>)Activator.CreateInstance(typeof(ProtobufDeserializer<>).MakeGenericType(typeof(TValue)));
-                    builder.SetValueDeserializer(serializer);
-                }
-            }
-
-            this.consumer = builder.Build();
+                },
+                asyncValueDeserializer: asyncValueDeserializer,
+                valueDeserializer: valueDeserializer,
+                keyDeserializer: keyDeserializer);
 
             this.functionExecutor = singleDispatch ?
-                (FunctionExecutorBase<TKey, TValue>)new SingleItemFunctionExecutor<TKey, TValue>(this.executor, this.consumer, this.logger) :
-                new MultipleItemFunctionExecutor<TKey, TValue>(this.executor, this.consumer, this.logger);
+                (FunctionExecutorBase<TKey, TValue>)new SingleItemFunctionExecutor<TKey, TValue>(this.executor, this.consumer, this.options.ExecutorChannelCapacity, this.options.ChannelFullRetryIntervalInMs, this.logger) :
+                new MultipleItemFunctionExecutor<TKey, TValue>(this.executor, this.consumer, this.options.ExecutorChannelCapacity, this.options.ChannelFullRetryIntervalInMs, this.logger);
 
             this.consumer.Subscribe(this.topic);
 
@@ -132,23 +163,72 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         private ConsumerConfig GetConsumerConfiguration()
         {
-            ConsumerConfig conf;
+            ConsumerConfig conf = new ConsumerConfig()
+            {
+                EnableAutoCommit = false, // we will commit manually
+                AutoOffsetReset = AutoOffsetReset.Earliest, // start from earliest if no checkpoint has been committed
+            };
+
+            if (this.options.StatisticsIntervalMs.HasValue)
+            {
+                conf.StatisticsIntervalMs = this.options.StatisticsIntervalMs.Value;
+            }
+
+            if (this.options.ReconnectBackoffMs.HasValue)
+            {
+                conf.ReconnectBackoffMs = this.options.ReconnectBackoffMs.Value;
+            }
+
+            if (this.options.ReconnectBackoffMaxMs.HasValue)
+            {
+                conf.ReconnectBackoffMaxMs = this.options.ReconnectBackoffMaxMs.Value;
+            }
+
+            if (this.options.StatisticsIntervalMs.HasValue)
+            {
+                conf.StatisticsIntervalMs = this.options.StatisticsIntervalMs.Value;
+            }
+
+            if (this.options.SessionTimeoutMs.HasValue)
+            {
+                conf.SessionTimeoutMs = this.options.SessionTimeoutMs.Value;
+            }
+
+            if (this.options.MaxPollIntervalMs.HasValue)
+            {
+                conf.MaxPollIntervalMs = this.options.MaxPollIntervalMs.Value;
+            }
+
+            if (this.options.QueuedMinMessages.HasValue)
+            {
+                conf.QueuedMinMessages = this.options.QueuedMinMessages.Value;
+            }
+
+            if (this.options.QueuedMaxMessagesKbytes.HasValue)
+            {
+                conf.QueuedMaxMessagesKbytes = this.options.QueuedMaxMessagesKbytes.Value;
+            }
+
+            if (this.options.MaxPartitionFetchBytes.HasValue)
+            {
+                conf.MaxPartitionFetchBytes = this.options.MaxPartitionFetchBytes.Value;
+            }
+
+            if (this.options.FetchMaxBytes.HasValue)
+            {
+                conf.FetchMaxBytes = this.options.FetchMaxBytes.Value;
+            }
+
+
             if (string.IsNullOrEmpty(this.eventHubConnectionString))
             {
-                // Setup raw kafka configuration
-                conf = new ConsumerConfig
-                {
-                    BootstrapServers = this.brokerList,
-                    GroupId = consumerGroup,
-                    StatisticsIntervalMs = 5000,
-                    SessionTimeoutMs = 6000,
-                    AutoOffsetReset = AutoOffsetReset.Earliest,
-                    EnablePartitionEof = true,
-                    // { "debug", "security,broker,protocol" }       //Uncomment for librdkafka debugging information
-                };
+                // Setup native kafka configuration
+                conf.BootstrapServers = this.brokerList;
+                conf.GroupId = consumerGroup;
             }
             else
             {
+                // Setup eventhubs kafka head configuration
                 var ehBrokerList = this.brokerList;
                 if (!ehBrokerList.Contains(".servicebus.windows.net"))
                 {
@@ -157,22 +237,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
                 var consumerGroupToUse = string.IsNullOrEmpty(this.consumerGroup) ? "$Default" : this.consumerGroup;
 
-                conf = new ConsumerConfig
-                {
-                    BootstrapServers = ehBrokerList,
-                    StatisticsIntervalMs = 5000,
-                    SessionTimeoutMs = 6000,
-                    AutoOffsetReset = AutoOffsetReset.Earliest,
-                    EnablePartitionEof = true,
-                    SecurityProtocol = SecurityProtocol.SaslSsl,
-                    SaslMechanism = SaslMechanism.Plain,
-                    SaslUsername = "$ConnectionString",
-                    SaslPassword = this.eventHubConnectionString,
-                    SslCaLocation = "./cacert.pem",
-                    GroupId = consumerGroupToUse,
-                    BrokerVersionFallback = "1.0.0",
-                    // { "debug", "security,broker,protocol" }       //Uncomment for librdkafka debugging information
-                };
+                conf.BootstrapServers = ehBrokerList;
+                conf.SecurityProtocol = SecurityProtocol.SaslSsl;
+                conf.SaslMechanism = SaslMechanism.Plain;
+                conf.SaslUsername = "$ConnectionString";
+                conf.SaslPassword = this.eventHubConnectionString;
+                conf.SslCaLocation = "./cacert.pem";
+                conf.GroupId = consumerGroupToUse;
+                conf.BrokerVersionFallback = "1.0.0";
             }
 
             return conf;
@@ -182,7 +254,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             this.subscriberFinished = new SemaphoreSlim(0, 1);
             var cancellationToken = (CancellationToken)parameter;
-            var messages = new List<ConsumeResult<TKey, TValue>>(this.maxBatchSize);
+            var messages = new List<ConsumeResult<TKey, TValue>>(this.options.MaxBatchSize);
+
+            var maxBatchReleaseTime = TimeSpan.FromSeconds(this.options.SubscriberIntervalInSeconds);
 
             try
             {
@@ -190,7 +264,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     var batchStart = DateTime.UtcNow;
-                    var availableTime = this.MaxBatchReleaseTime - (DateTime.UtcNow - batchStart);
+                    var availableTime = maxBatchReleaseTime - (DateTime.UtcNow - batchStart);
                     alreadyFlushedInCurrentExecution = false;
 
                     while (availableTime > TimeSpan.Zero)
@@ -213,14 +287,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                                     // add message to executor
                                     // if executor pending items is full, flush it
                                     var currentSize = this.functionExecutor.Add(kafkaEventData);
-                                    if (currentSize >= this.maxBatchSize)
+                                    if (currentSize >= this.options.MaxBatchSize)
                                     {
                                         this.functionExecutor.Flush();
                                         alreadyFlushedInCurrentExecution = true;
                                     }
                                 }
 
-                                availableTime = this.MaxBatchReleaseTime - (DateTime.UtcNow - batchStart);
+                                availableTime = maxBatchReleaseTime - (DateTime.UtcNow - batchStart);
                             }
                             else
                             {

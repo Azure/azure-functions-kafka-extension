@@ -1,0 +1,53 @@
+name: $(Build.SourceBranchName)_$(Build.Reason)_$(majorVersion).$(Build.BuildId)$(Rev:.r)
+variables:
+  buildConfiguration: 'Release'
+  majorVersion: 0.0.0
+
+# Enable PR validation on branches master and dev
+pr:
+  branches:
+    include:
+    - master
+    - dev
+
+# Enable CI on branches master and dev
+# Batch builds
+trigger:
+  batch: true
+  branches:
+    include:
+    - dev
+    - master
+
+jobs:
+
+- job: build_and_test
+  displayName: 'Build and Test'
+  continueOnError: false
+  pool:
+    vmImage: 'Ubuntu 16.04'
+  
+  steps:
+  - task: DotNetCoreCLI@2
+    displayName: 'Build project'
+    inputs:
+      projects: .
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Run unit tests'
+    inputs:
+      command: test
+      projects: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests    
+
+  - task: Bash@3
+    displayName: 'Start kafka in single node'
+    inputs:
+      targetType: filePath
+      filePath: './test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/start-kafka-test-environment.sh'
+      workingDirectory: test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Run e2e tests'
+    inputs:
+      command: test
+      projects: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests

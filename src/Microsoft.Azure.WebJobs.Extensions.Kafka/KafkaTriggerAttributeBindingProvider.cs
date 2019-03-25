@@ -17,6 +17,7 @@ using Microsoft.Azure.WebJobs.Host.Triggers;
 using Microsoft.Azure.WebJobs.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
@@ -25,17 +26,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly IConfiguration config;
         private readonly IConverterManager converterManager;
         private readonly INameResolver nameResolver;
+        private readonly IOptions<KafkaOptions> options;
         private readonly ILogger logger;
 
         public KafkaTriggerAttributeBindingProvider(
             IConfiguration config,
-            ILoggerFactory loggerFactory,
+            IOptions<KafkaOptions> options,
             IConverterManager converterManager,
-            INameResolver nameResolver)
+            INameResolver nameResolver,
+            ILoggerFactory loggerFactory)
         {
             this.config = config;
             this.converterManager = converterManager;
             this.nameResolver = nameResolver;
+            this.options = options;
             this.logger = loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("Kafka"));
         }
 
@@ -97,7 +101,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                         }
                     }
 
-                    var listener = (IListener)Activator.CreateInstance(typeof(KafkaListener<,>).MakeGenericType(keyType, valueType), factoryContext.Executor, singleDispatch, this.logger, resolvedBrokerList, resolvedTopic, resolvedConsumerGroup, resolvedEventHubConnectionString, avroSchema, attribute.MaxBatchSize);
+                    var listener = (IListener)Activator.CreateInstance(typeof(KafkaListener<,>).MakeGenericType(keyType, valueType),
+                        factoryContext.Executor,
+                        singleDispatch,
+                        this.options.Value,
+                        resolvedBrokerList,
+                        resolvedTopic,
+                        resolvedConsumerGroup,
+                        resolvedEventHubConnectionString,
+                        avroSchema,
+                        this.logger);
+
                     return Task.FromResult(listener);
                 };
 

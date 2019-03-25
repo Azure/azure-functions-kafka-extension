@@ -18,26 +18,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     /// </summary>
     public abstract class FunctionExecutorBase<TKey, TValue> : IDisposable
     {
-        const int ChannelWriteRetryInterval = 50;
-        const int ChannelCapacity = 10;
-
         private readonly ITriggeredFunctionExecutor executor;
         private readonly IConsumer<TKey, TValue> consumer;
+        private readonly int channelFullRetryIntervalInMs;
         private readonly CancellationTokenSource cancellationTokenSource;
         private readonly Channel<KafkaEventData[]> channel;
         private readonly List<KafkaEventData> currentBatch;
         private readonly ILogger logger;
         private SemaphoreSlim readerFinished = new SemaphoreSlim(0, 1);
 
-        public FunctionExecutorBase(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, ILogger logger)
+        public FunctionExecutorBase(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, int channelCapacity, int channelFullRetryIntervalInMs, ILogger logger)
         {
             this.executor = executor ?? throw new System.ArgumentNullException(nameof(executor));
             this.consumer = consumer ?? throw new System.ArgumentNullException(nameof(consumer));
+            this.channelFullRetryIntervalInMs = channelFullRetryIntervalInMs;
             this.logger = logger;
             this.cancellationTokenSource = new CancellationTokenSource();
             this.currentBatch = new List<KafkaEventData>();
 
-            this.channel = Channel.CreateBounded<KafkaEventData[]>(new BoundedChannelOptions(ChannelCapacity)
+            this.channel = Channel.CreateBounded<KafkaEventData[]>(new BoundedChannelOptions(channelCapacity)
             {
                 SingleReader = true,
                 SingleWriter = true,
@@ -77,7 +76,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             try
             {
-
                 this.consumer.Commit(topicPartitionOffsets, this.cancellationTokenSource.Token);
 
                 if (this.logger.IsEnabled(LogLevel.Information))
@@ -139,7 +137,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     loggedWaitingForFunction = true;
                 }
 
-                Thread.Sleep(ChannelWriteRetryInterval);
+                Thread.Sleep(this.channelFullRetryIntervalInMs);
             }
         }
 
@@ -160,7 +158,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.cancellationTokenSource.Cancel();
             this.channel.Writer.Complete();
 
-            if (await this.readerFinished.WaitAsync(timeout))
+            if (await this.readerFinished.WaitAsync(TimeSpan.FromSeconds(120)))
             {
                 this.isClosed = true;
                 return true;
