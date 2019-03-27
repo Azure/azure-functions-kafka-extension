@@ -20,9 +20,7 @@ namespace KafkaFunctionSample
 
     public static class AvroGenericTriggers
     {
-
-        const string PageViewsSchema = @"
-       {
+      const string PageViewsSchema = @"{
   ""type"": ""record"",
   ""name"": ""pageviews"",
   ""namespace"": ""ksql"",

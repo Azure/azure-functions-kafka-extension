@@ -19,11 +19,14 @@ namespace KafkaFunctionSample
     {
         // [FunctionName(nameof(ProtobufUser))]
         // public static void ProtobufUser(
-        //     [KafkaTrigger("LocalBroker", "protoUser", ValueType=typeof(ProtoUser), MaxBatchSize = 4, ConsumerGroup = "azfunc")] KafkaEventData[] kafkaEvents,
+        //     [KafkaTrigger("LocalBroker", "protoUser", ValueType=typeof(ProtoUser), ConsumerGroup = "azfunc")] KafkaEventData[] kafkaEvents,
         //     ILogger logger)
         // {
         //     foreach (var kafkaEvent in kafkaEvents)
-        //         logger.LogInformation($"{JsonConvert.SerializeObject(kafkaEvent.Value)}");
+        //     {
+        //         var user = (ProtoUser)kafkaEvent.Value;
+        //         logger.LogInformation($"{JsonConvert.SerializeObject(user)}");
+        //     }
         // }
     }
 }

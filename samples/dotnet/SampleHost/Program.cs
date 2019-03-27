@@ -10,69 +10,33 @@ namespace SampleHost
 {
     class Program
     {
-        const string Broker = "localhost:9092";
-        const string StringTopicWithOnePartition = "stringTopicOnePartition";
-        const string StringTopicWithTenPartitions = "stringTopicTenPartitions";
-
         static async Task Main(string[] args)
         {
-            IHost host = null;
-            try
-            {
-                host = await StartHostAsync();
-                host.WaitForShutdown();
-                host.Dispose();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-            }            
-        }
-
-        static async Task<IHost> StartHostAsync()
-        {
-            ExplicitTypeLocator locator = new ExplicitTypeLocator(typeof(MultiItemTriggerTenPartitions));
-
-            IHost host = new HostBuilder()
-                .ConfigureWebJobs(builder =>
+            var builder = new HostBuilder()
+                .UseEnvironment("Development")
+                .ConfigureWebJobs(b =>
                 {
-                    builder
-                    .AddAzureStorage()
-                    .AddKafka();
+                    b.AddKafka();
                 })
-                .ConfigureAppConfiguration(c =>
+                .ConfigureAppConfiguration(b =>
                 {
-                    //c.AddTestSettings();
-                    //c.AddJsonFile("appsettings.tests.json", optional: false);
+                })
+                .ConfigureLogging((context, b) =>
+                {
+                    b.SetMinimumLevel(LogLevel.Debug);
+                    b.AddConsole();
                 })
                 .ConfigureServices(services =>
                 {
-                    services.AddSingleton<ITypeLocator>(locator);
+                    services.AddSingleton<Functions>();
                 })
-                .ConfigureLogging(logging =>
-                {
-                    logging.ClearProviders();
-                    logging.AddConsole((o) =>
-                    {                        
-                    });
-                })
-                .Build();
+                .UseConsoleLifetime();
 
-            await host.StartAsync();
-            return host;
-        }
-
-        private static class MultiItemTriggerTenPartitions
-        {
-            public static void Trigger(
-                [KafkaTrigger(Broker, StringTopicWithTenPartitions, ConsumerGroup = "EndToEndTestClass-Trigger")] KafkaEventData[] events,
-                ILogger log)
+            var host = builder.Build();
+            using (host)
             {
-                foreach (var kafkaEvent in events)
-                {
-                    log.LogInformation(kafkaEvent.Value.ToString());
-                }
-            }
+                await host.RunAsync();
+            }   
         }
     }
 }
