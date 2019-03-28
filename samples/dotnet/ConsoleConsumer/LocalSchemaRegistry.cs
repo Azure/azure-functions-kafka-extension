@@ -64,6 +64,11 @@ namespace ConsoleConsumer
             throw new System.NotImplementedException();
         }
 
+        public Task<List<int>> GetSubjectVersionsAsync(string subject)
+        {
+            throw new System.NotImplementedException();
+        }
+
         public Task<bool> IsCompatibleAsync(string subject, string schema)
         {
             throw new System.NotImplementedException();

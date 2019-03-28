@@ -22,10 +22,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
         public void SetConsumer(IConsumer<TKey, TValue> consumer) => this.consumer = consumer;
 
-        protected override IConsumer<TKey, TValue> CreateConsumer(ConsumerConfig config, Action<Consumer<TKey, TValue>, Error> errorHandler, Action<IConsumer<TKey, TValue>, RebalanceEvent> rebalanceHandler, IAsyncDeserializer<TValue> asyncValueDeserializer = null, IDeserializer<TValue> valueDeserializer = null, IAsyncDeserializer<TKey> keyDeserializer = null)
+        protected override IConsumer<TKey, TValue> CreateConsumer(ConsumerConfig config, Action<Consumer<TKey, TValue>, Error> errorHandler, Action<IConsumer<TKey, TValue>, System.Collections.Generic.List<TopicPartition>> partitionsAssignedHandler, Action<IConsumer<TKey, TValue>, System.Collections.Generic.List<TopicPartitionOffset>> partitionsRevokedHandler, IAsyncDeserializer<TValue> asyncValueDeserializer = null, IDeserializer<TValue> valueDeserializer = null, IAsyncDeserializer<TKey> keyDeserializer = null)
         {
             return this.consumer ??
-                base.CreateConsumer(config, errorHandler, rebalanceHandler, asyncValueDeserializer, valueDeserializer, keyDeserializer);
+                base.CreateConsumer(config, errorHandler, partitionsAssignedHandler, partitionsRevokedHandler, asyncValueDeserializer, valueDeserializer, keyDeserializer);
         }
     }
 }

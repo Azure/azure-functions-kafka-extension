@@ -16,7 +16,8 @@ namespace ConsoleConsumer
         {
             this.impl = impl;
         }
-        public Task<TValue> DeserializeAsync(ReadOnlyMemory<byte> data, bool isNull, bool isKey, MessageMetadata messageMetadata, TopicPartition source)
+
+        public Task<TValue> DeserializeAsync(ReadOnlyMemory<byte> data, bool isNull, SerializationContext context)
         {
             // TODO: find a better way to solve this
             // Allocating memory in a critical path of the trigger
@@ -26,7 +27,7 @@ namespace ConsoleConsumer
             var dataSpan = data.Span;
             dataSpan.TryCopyTo(data2Span.Slice(Prefix));
 
-            return this.impl.DeserializeAsync(data2, isNull, isKey, messageMetadata, source);
+            return this.impl.DeserializeAsync(data2, isNull, context);
         }
     }
 }

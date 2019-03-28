@@ -8,7 +8,7 @@ namespace ConsoleProducer
     /// </summary>
     public class ProtobufSerializer<T> : ISerializer<T> where T : IMessage<T>, new()
     {
-        public byte[] Serialize(T data, bool isKey, MessageMetadata messageMetadata, TopicPartition destination)
+        public byte[] Serialize(T data, SerializationContext context)
             => data.ToByteArray();
     }
 }
