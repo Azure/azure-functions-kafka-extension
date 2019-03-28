@@ -4,7 +4,7 @@ Azure Functions extensions for Apache Kafka
 |---|---|
 |master|[![Build Status](https://dev.azure.com/ryancraw/azure-functions-kafka-extension/_apis/build/status/Microsoft.azure-functions-kafka-extension?branchName=master)](https://dev.azure.com/ryancraw/azure-functions-kafka-extension/_build/latest?definitionId=2?branchName=master)
 
-This repository contains Kafka binding extensions for the **Azure WebJobs SDK**. The extension status is experimental/under development. 
+This repository contains Kafka binding extensions for the **Azure WebJobs SDK**. The extension status is experimental/under development. The communcation with Kafka is based on library **Confluent.Kafka version 1.0.0-beta3**.
 
 [TODO: add more information about usage/limitations]
 
@@ -230,6 +230,53 @@ public static class ProtobufTriggers
 ### Output Binding
 
 [TODO: add output binding documentation]
+
+## Configuration
+
+Customizing the Kafka extensions is available in the host file. As mentioned before, the interface to Kafka is built based on **Confluent.Kafka** library, therefore some of the configuration is just a bridge to the producer/consumer.
+
+```json
+{
+  "version": "2.0",
+  "extensions": {
+    "kafka": {
+      "maxBatchSize": 100
+    }
+  }
+}
+```
+
+### Configuration Settings
+
+Confluent.Kafka is based on librdkafka C library. Some of the configuration required by the library is exposed by the extension in this repository. The complete configuration for librdkafka can be found [here](https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md).
+
+#### Extension configuration
+
+|Setting|Description|Default Value
+|-|-|-|
+|MaxBatchSize|Maximum batch size when calling a Kafka trigger function|64
+|SubscriberIntervalInSeconds|Defines the minimum frequency in which messages will be executed by function. Only if the message volume is less than MaxBatchSize / SubscriberIntervalInSeconds|1
+|ExecutorChannelCapacity|Defines the channel capacity in which messages will be sent to functions. Once the capacity is reached the Kafka subscriber will pause until the function catches up|10
+|ChannelFullRetryIntervalInMs|Defines the interval in milliseconds in which the subscriber should retry adding items to channel once it reaches the capacity|50
+
+#### librdkafka configuration
+
+The settings exposed here are targeted to more advanced users that want to customize how librdkafka works. Please check the librdkafka [documentation](https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md) for more information.
+
+|Setting|librdkafka property|Trigger or Output|
+|-|-|-|
+|ReconnectBackoffMs|reconnect.backoff.max.ms|Trigger
+|ReconnectBackoffMaxMs|reconnect.backoff.max.ms|Trigger
+|StatisticsIntervalMs|statistics.interval.ms|Trigger
+|SessionTimeoutMs|session.timeout.ms|Trigger
+|MaxPollIntervalMs|max.poll.interval.ms|Trigger
+|QueuedMinMessages|queued.min.messages|Trigger
+|QueuedMaxMessagesKbytes|queued.max.messages.kbytes|Trigger
+|MaxPartitionFetchBytes|max.partition.fetch.bytes|Trigger
+|FetchMaxBytes|fetch.max.bytes|Trigger
+
+If you are missing an configuration setting please create an issue and describe why you need it.
+
 
 ## Quickstart
 
