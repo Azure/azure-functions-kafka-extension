@@ -19,7 +19,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             parser = new MessageParser<T>(() => new T());
         }
 
-        public T Deserialize(ReadOnlySpan<byte> data, bool isNull, bool isKey, MessageMetadata messageMetadata, TopicPartition source)
-            => parser.ParseFrom(data.ToArray());
+        public T Deserialize(ReadOnlySpan<byte> data, bool isNull, SerializationContext context) => parser.ParseFrom(data.ToArray());
     }
 }

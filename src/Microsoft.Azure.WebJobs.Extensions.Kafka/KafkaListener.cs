@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Confluent.Kafka;
@@ -76,7 +77,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         protected virtual IConsumer<TKey, TValue> CreateConsumer(
             ConsumerConfig config,
             Action<Consumer<TKey, TValue>, Error> errorHandler,
-            Action<IConsumer<TKey, TValue>, RebalanceEvent> rebalanceHandler,
+            Action<IConsumer<TKey, TValue>, List<TopicPartition>> partitionsAssignedHandler,
+            Action<IConsumer<TKey, TValue>, List<TopicPartitionOffset>> partitionsRevokedHandler,
             IAsyncDeserializer<TValue> asyncValueDeserializer = null,
             IDeserializer<TValue> valueDeserializer = null,
             IAsyncDeserializer<TKey> keyDeserializer = null
@@ -84,7 +86,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             var builder = new ConsumerBuilder<TKey, TValue>(config)
                 .SetErrorHandler(errorHandler)
-                .SetRebalanceHandler(rebalanceHandler);
+                .SetPartitionsAssignedHandler(partitionsAssignedHandler)
+                .SetPartitionsRevokedHandler(partitionsRevokedHandler);
 
             if (keyDeserializer != null)
             {
@@ -129,16 +132,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 {
                     this.logger.LogError(e.Reason);
                 },
-                rebalanceHandler: (_, e) =>
+                partitionsAssignedHandler: (_, e) =>
                 {
-                    if (e.IsAssignment)
-                    {
-                        this.logger.LogInformation($"Assigned partitions: [{string.Join(", ", e.Partitions)}]");
-                    }
-                    else
-                    {
-                        this.logger.LogInformation($"Revoked partitions: [{string.Join(", ", e.Partitions)}]");
-                    }
+                    this.logger.LogInformation($"Assigned partitions: [{string.Join(", ", e)}]");
+                },
+                partitionsRevokedHandler: (_, e) =>
+                {
+                    this.logger.LogInformation($"Revoked partitions: [{string.Join(", ", e)}]");
                 },
                 asyncValueDeserializer: asyncValueDeserializer,
                 valueDeserializer: valueDeserializer,

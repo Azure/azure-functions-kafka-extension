@@ -76,7 +76,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             try
             {
-                this.consumer.Commit(topicPartitionOffsets, this.cancellationTokenSource.Token);
+                this.consumer.Commit(topicPartitionOffsets);
 
                 if (this.logger.IsEnabled(LogLevel.Information))
                 {
