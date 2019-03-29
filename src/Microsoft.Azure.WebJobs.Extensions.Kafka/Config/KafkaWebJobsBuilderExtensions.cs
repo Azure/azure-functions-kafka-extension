@@ -36,6 +36,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 configure(options);
             });
 
+            builder.Services.AddSingleton<IKafkaProducerManager, KafkaProducerManager>();
+
             return builder;
         }
     }

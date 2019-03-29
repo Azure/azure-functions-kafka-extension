@@ -155,13 +155,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 return true;
             }
 
-            this.cancellationTokenSource.Cancel();
-            this.channel.Writer.Complete();
-
-            if (await this.readerFinished.WaitAsync(TimeSpan.FromSeconds(120)))
+            try
             {
-                this.isClosed = true;
-                return true;
+
+                this.cancellationTokenSource.Cancel();
+                this.channel.Writer.Complete();
+
+                if (await this.readerFinished.WaitAsync(TimeSpan.FromSeconds(120)))
+                {
+                    this.isClosed = true;
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                this.logger.LogError(ex, "Failed to close Kafka trigger executor");
             }
 
             return false;

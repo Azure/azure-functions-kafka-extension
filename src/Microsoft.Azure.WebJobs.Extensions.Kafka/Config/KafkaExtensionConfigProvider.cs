@@ -27,6 +27,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly IConverterManager converterManager;
         private readonly INameResolver nameResolver;
         private readonly IWebJobsExtensionConfiguration<KafkaExtensionConfigProvider> configuration;
+        private readonly IKafkaProducerManager kafkaProducerManager;
 
         public KafkaExtensionConfigProvider(
             IConfiguration config,
@@ -34,7 +35,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             ILoggerFactory loggerFactory,
             IConverterManager converterManager,
             INameResolver nameResolver,
-            IWebJobsExtensionConfiguration<KafkaExtensionConfigProvider> configuration)
+            IWebJobsExtensionConfiguration<KafkaExtensionConfigProvider> configuration,
+            IKafkaProducerManager kafkaProducerManager)
         {
             this.config = config;
             this.options = options;
@@ -42,6 +44,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.converterManager = converterManager;
             this.nameResolver = nameResolver;
             this.configuration = configuration;
+            this.kafkaProducerManager = kafkaProducerManager;
         }
 
         public void Initialize(ExtensionConfigContext context)
@@ -60,6 +63,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var triggerBindingProvider = new KafkaTriggerAttributeBindingProvider(this.config, this.options, this.converterManager, this.nameResolver, this.loggerFactory);
             context.AddBindingRule<KafkaTriggerAttribute>()
                 .BindToTrigger(triggerBindingProvider);
+
+            // register output binding
+            context.AddBindingRule<KafkaAttribute>()
+                .BindToCollector(BuildCollectorFromAttribute);
+        }
+
+        private IAsyncCollector<KafkaEventData> BuildCollectorFromAttribute(KafkaAttribute attribute)
+        {
+            return new KafkaAsyncCollector(attribute.Topic, this.kafkaProducerManager.Resolve(attribute));
         }
 
         private ISpecificRecord ConvertKafkaEventData2AvroSpecific(KafkaEventData kafkaEventData)
