@@ -61,6 +61,5 @@ namespace KafkaFunctionSample
                 default: throw new AvroRuntimeException("Bad index " + fieldPos + " in Put()");
             };
         }
-
     }
 }

@@ -14,9 +14,11 @@ namespace ConsoleProducer
             try
             {
                 ITopicProducer producer;
+                var brokerList = "localhost:9092";
+                // brokerList = "broker:9092";
 
-                producer = new StringTopicProducer("localhost:9092", "stringTopic", 100);
-                // producer = new ProtobufTopicProducer("broker:9092", "protoUser", 100);
+                producer = new StringTopicProducer(brokerList, "stringTopicTenPartitions", 100);
+                // producer = new ProtobufTopicProducer(brokerList, "protoUser", 100);
                 await producer.StartAsync();
             }
             catch (Exception ex)
