@@ -168,8 +168,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             var committed = new ConcurrentQueue<TopicPartitionOffset>();
 
-            consumer.Setup(x => x.Commit(It.IsAny<IEnumerable<TopicPartitionOffset>>(), It.IsAny<CancellationToken>()))
-                .Callback<IEnumerable<TopicPartitionOffset>, CancellationToken>((topicPartitionOffsetCollection, _) =>
+            consumer.Setup(x => x.Commit(It.IsAny<IEnumerable<TopicPartitionOffset>>()))
+                .Callback<IEnumerable<TopicPartitionOffset>>((topicPartitionOffsetCollection) =>
                 {
                     foreach (var item in topicPartitionOffsetCollection)
                     {

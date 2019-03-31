@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -59,26 +60,24 @@ namespace ConsoleConsumer
 
         }
 
+        static void LogAssignedPartitions<TKey, TValue>(IConsumer<TKey, TValue> consumer, List<TopicPartition> e)
+        {
+            Console.WriteLine($"Assigned partitions: [{string.Join(", ", e)}]");
+        }
+
+        static void LogRekovedPartitions<TKey, TValue>(IConsumer<TKey, TValue> consumer, List<TopicPartitionOffset> e)
+        {
+            Console.WriteLine($"Revoked partitions: [{string.Join(", ", e.Select(x => x.TopicPartition))}]");
+        }
+
         private static void StartPageViewRegionConsumer(ConsumerConfig conf, CancellationToken cts = default)
         {
             var builder = new ConsumerBuilder<Ignore, PageViewRegion>(conf)
                 .SetErrorHandler((_, e) => {
                     Console.WriteLine(e.Reason);
                 })
-                .SetRebalanceHandler((_, e) =>
-                {
-                    if (e.IsAssignment)
-                    {
-                        Console.WriteLine($"Assigned partitions: [{string.Join(", ", e.Partitions)}]");
-                        // possibly override the default partition assignment behavior:
-                        // consumer.Assign(...) 
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Revoked partitions: [{string.Join(", ", e.Partitions)}]");
-                        // consumer.Unassign()
-                    }
-                });
+                .SetPartitionsAssignedHandler(LogAssignedPartitions)
+                .SetPartitionsRevokedHandler(LogRekovedPartitions);
 
             var avroSchema = PageViewRegion._SCHEMA;
             var schemaRegistry = new LocalSchemaRegistry(avroSchema.ToString());
@@ -150,20 +149,8 @@ namespace ConsoleConsumer
                 .SetErrorHandler((_, e) => {
                     Console.WriteLine(e.Reason);
                 })
-                .SetRebalanceHandler((_, e) =>
-                {
-                    if (e.IsAssignment)
-                    {
-                        Console.WriteLine($"Assigned partitions: [{string.Join(", ", e.Partitions)}]");
-                        // possibly override the default partition assignment behavior:
-                        // consumer.Assign(...) 
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Revoked partitions: [{string.Join(", ", e.Partitions)}]");
-                        // consumer.Unassign()
-                    }
-                });
+                .SetPartitionsAssignedHandler(LogAssignedPartitions)
+                .SetPartitionsRevokedHandler(LogRekovedPartitions);
 
             var avroSchema = PageViews._SCHEMA;
             var schemaRegistry = new LocalSchemaRegistry(avroSchema.ToString());
@@ -235,20 +222,8 @@ namespace ConsoleConsumer
                 .SetErrorHandler((_, e) => {
                     Console.WriteLine(e.Reason);
                 })
-                .SetRebalanceHandler((_, e) =>
-                {
-                    if (e.IsAssignment)
-                    {
-                        Console.WriteLine($"Assigned partitions: [{string.Join(", ", e.Partitions)}]");
-                        // possibly override the default partition assignment behavior:
-                        // consumer.Assign(...) 
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Revoked partitions: [{string.Join(", ", e.Partitions)}]");
-                        // consumer.Unassign()
-                    }
-                });
+                .SetPartitionsAssignedHandler(LogAssignedPartitions)
+                .SetPartitionsRevokedHandler(LogRekovedPartitions);
 
             var avroSchema = PageViews._SCHEMA;
             var schemaRegistry = new LocalSchemaRegistry(avroSchema.ToString());
@@ -321,20 +296,8 @@ namespace ConsoleConsumer
                 .SetErrorHandler((_, e) => {
                     Console.WriteLine(e.Reason);
                 })
-                .SetRebalanceHandler((_, e) =>
-                {
-                    if (e.IsAssignment)
-                    {
-                        Console.WriteLine($"Assigned partitions: [{string.Join(", ", e.Partitions)}]");
-                        // possibly override the default partition assignment behavior:
-                        // consumer.Assign(...) 
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Revoked partitions: [{string.Join(", ", e.Partitions)}]");
-                        // consumer.Unassign()
-                    }
-                });
+                .SetPartitionsAssignedHandler(LogAssignedPartitions)
+                .SetPartitionsRevokedHandler(LogRekovedPartitions);
 
             var avroSchema = PageViews._SCHEMA;
             var schemaRegistry = new LocalSchemaRegistry(avroSchema.ToString());
