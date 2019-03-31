@@ -6,7 +6,7 @@ Azure Functions extensions for Apache Kafka
 
 This repository contains Kafka binding extensions for the **Azure WebJobs SDK**. The extension status is experimental/under development. The communcation with Kafka is based on library **Confluent.Kafka version 1.0.0-beta3**.
 
-[TODO: add more information about usage/limitations]
+**DISCLAIMER**: This library is under development and is experimental. Currently there is no guarantee regarding support or availability as a product.
 
 ## Bindings
 
@@ -65,7 +65,7 @@ public class Functions
 
 ### Trigger Binding
 
-Trigger bindings are design for the consumption of Kafka topics.
+Trigger bindings are designed to consume messages from a Kafka topics.
 
 ```csharp
 public static void StringTopic(
@@ -229,7 +229,32 @@ public static class ProtobufTriggers
 
 ### Output Binding
 
-[TODO: add output binding documentation]
+Output binding are designed to produce messages to a Kafka topic. It supports different keys and values types. Avro and Protobuf serialisation are built-in.
+
+```csharp
+[FunctionName("ProduceStringTopic")]
+public static async Task<IActionResult> Run(
+    [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
+    [Kafka("stringTopicTenPartitions", BrokerList = "LocalBroker")] IAsyncCollector<KafkaEventData> events,
+    ILogger log)
+{
+    var kafkaEvent = new KafkaEventData()
+    {
+        Value = await new StreamReader(req.Body).ReadToEndAsync(),
+    };
+
+    await events.AddAsync(kafkaEvent);
+
+    return new OkResult();
+}
+```
+
+To set a key value set the property `KeyType` (i.e typeof(string) or typeof(long)).
+
+To send use Protobuf serialisation set the value of the KafkaAttribute.ValueType to a type that implements the IMessage.
+
+For Avro provide a type that implements ISpecificRecord.
+If nothing is defined the value will be of type string and no key will be set.
 
 ## Configuration
 
@@ -277,11 +302,6 @@ The settings exposed here are targeted to more advanced users that want to custo
 
 If you are missing an configuration setting please create an issue and describe why you need it.
 
-
 ## Quickstart
 
 For samples take a look at the [samples folder](./samples).
-
-## License
-
-[TODO: add license / use the dotnetfoundation one?]
