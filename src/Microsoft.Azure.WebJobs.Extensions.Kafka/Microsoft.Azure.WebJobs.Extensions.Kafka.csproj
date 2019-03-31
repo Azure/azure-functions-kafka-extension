@@ -42,6 +42,5 @@
     <Folder Include="Properties\" />
     <Folder Include="Trigger\" />
     <Folder Include="Serialization\" />
-    <Folder Include="Output\" />
   </ItemGroup>
 </Project>

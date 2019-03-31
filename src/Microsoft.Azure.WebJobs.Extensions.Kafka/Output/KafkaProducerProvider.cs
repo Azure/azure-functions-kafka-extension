@@ -7,28 +7,31 @@ using Avro.Generic;
 using Avro.Specific;
 using Confluent.Kafka;
 using Microsoft.Azure.WebJobs.Host;
+using Microsoft.Azure.WebJobs.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
     /// <summary>
-    /// Creates <see cref="IKafkaProducer"/>
+    /// Provider for <see cref="IKafkaProducer"/>
     /// Those matching the broker, key type and value type are shared
     /// </summary>
-    public class KafkaProducerManager : IKafkaProducerManager
+    public class KafkaProducerProvider : IKafkaProducerProvider
     {
         private readonly IConfiguration config;
         private readonly INameResolver nameResolver;
+        private readonly ILoggerProvider loggerProvider;
         ConcurrentDictionary<string, IKafkaProducer> producers = new ConcurrentDictionary<string, IKafkaProducer>();
 
-        public KafkaProducerManager(IConfiguration config, INameResolver nameResolver)
+        public KafkaProducerProvider(IConfiguration config, INameResolver nameResolver, ILoggerProvider loggerProvider)
         {
             this.config = config;
             this.nameResolver = nameResolver;
+            this.loggerProvider = loggerProvider;
         }
 
-        public IKafkaProducer Resolve(KafkaAttribute attribute)
+        public IKafkaProducer Get(KafkaAttribute attribute)
         {
             var resolvedBrokerList = this.nameResolver.ResolveWholeString(attribute.BrokerList);
             var brokerListFromConfig = this.config.GetConnectionStringOrSetting(resolvedBrokerList);
@@ -73,7 +76,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return (IKafkaProducer)Activator.CreateInstance(
                 typeof(KafkaProducer<,>).MakeGenericType(keyType, valueType),
                 this.GetProducerConfig(brokerList),
-                avroSchema);
+                avroSchema,
+                this.loggerProvider.CreateLogger(LogCategories.CreateTriggerCategory("Kafka")));
         }
 
         private ProducerConfig GetProducerConfig(string brokerList)

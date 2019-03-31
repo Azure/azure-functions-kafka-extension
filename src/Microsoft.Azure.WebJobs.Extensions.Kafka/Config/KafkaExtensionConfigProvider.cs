@@ -27,7 +27,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly IConverterManager converterManager;
         private readonly INameResolver nameResolver;
         private readonly IWebJobsExtensionConfiguration<KafkaExtensionConfigProvider> configuration;
-        private readonly IKafkaProducerManager kafkaProducerManager;
+        private readonly IKafkaProducerProvider kafkaProducerManager;
 
         public KafkaExtensionConfigProvider(
             IConfiguration config,
@@ -36,7 +36,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             IConverterManager converterManager,
             INameResolver nameResolver,
             IWebJobsExtensionConfiguration<KafkaExtensionConfigProvider> configuration,
-            IKafkaProducerManager kafkaProducerManager)
+            IKafkaProducerProvider kafkaProducerManager)
         {
             this.config = config;
             this.options = options;
@@ -71,7 +71,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         private IAsyncCollector<KafkaEventData> BuildCollectorFromAttribute(KafkaAttribute attribute)
         {
-            return new KafkaAsyncCollector(attribute.Topic, this.kafkaProducerManager.Resolve(attribute));
+            return new KafkaAsyncCollector(attribute.Topic, this.kafkaProducerManager.Get(attribute));
         }
 
         private ISpecificRecord ConvertKafkaEventData2AvroSpecific(KafkaEventData kafkaEventData)
