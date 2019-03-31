@@ -15,6 +15,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public DateTime Timestamp { get; set; }
         public object Value { get; set; }
 
+        public KafkaEventData()
+        {
+        }
+
         public KafkaEventData(byte[] bytes)
         {
         }

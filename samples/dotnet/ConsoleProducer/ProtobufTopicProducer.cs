@@ -27,6 +27,7 @@ namespace ConsoleProducer
 
             };
 
+
             var builder = new ProducerBuilder<string, User>(config)
                 .SetValueSerializer(new ProtobufSerializer<User>());
 

@@ -43,7 +43,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         /// <summary>
         /// Gets or sets the key element type
-        /// Default is long
+        /// Default is Null
         /// </summary>
         public Type KeyType { get; set; }
 

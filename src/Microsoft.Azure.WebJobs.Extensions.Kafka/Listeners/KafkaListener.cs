@@ -337,21 +337,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 return;
             }
-                
-            // Stop subscriber thread
-            this.cancellationTokenSource.Cancel();
 
-            // Stop function executor
-            await this.functionExecutor?.CloseAsync(TimeSpan.FromMilliseconds(TimeToWaitForRunningProcessToEnd));
+            try
+            {
+                this.isClosed = true;
 
-            // Wait for subscriber thread to end
-            await this.subscriberFinished?.WaitAsync(TimeToWaitForRunningProcessToEnd);
+                // Stop subscriber thread
+                this.cancellationTokenSource.Cancel();
 
-            this.isClosed = true;
+                // Stop function executor
+                await this.functionExecutor?.CloseAsync(TimeSpan.FromMilliseconds(TimeToWaitForRunningProcessToEnd));
 
-            this.consumer?.Unsubscribe();
-            this.consumer?.Dispose();
-            this.functionExecutor?.Dispose();
+                // Wait for subscriber thread to end
+                await this.subscriberFinished?.WaitAsync(TimeToWaitForRunningProcessToEnd);
+
+                this.consumer?.Unsubscribe();
+                this.consumer?.Dispose();
+                this.functionExecutor?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                this.logger.LogError(ex, "Failed to close Kafka listener");
+            }
         }
 
         protected virtual void Dispose(bool disposing)

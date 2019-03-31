@@ -7,6 +7,7 @@
     <RootNamespace>Microsoft.Azure.WebJobs.Extensions.Kafka</RootNamespace>
     <PackageId>Microsoft.Azure.WebJobs.Extensions.Kafka</PackageId>
     <Description>Microsoft Azure WebJobs SDK Kafka Extension</Description>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <StyleCopTreatErrorsAsWarnings>false</StyleCopTreatErrorsAsWarnings>
@@ -34,5 +35,13 @@
     <None Update="cacert.pem">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Config\" />
+    <Folder Include="Listeners\" />
+    <Folder Include="Properties\" />
+    <Folder Include="Trigger\" />
+    <Folder Include="Serialization\" />
+    <Folder Include="Output\" />
   </ItemGroup>
 </Project>
