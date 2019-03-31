@@ -13,6 +13,15 @@ namespace KafkaFunctionSample
 {
     public static class ProduceStringTopic
     {
+        /// <summary>
+        /// Make sure the topic "stringTopicTenPartitions" exists
+        /// To send data using curl:
+        /// curl -d "hello world" -X POST http://localhost:7071/api/ProduceStringTopic
+        /// </summary>
+        /// <param name="req"></param>
+        /// <param name="events"></param>
+        /// <param name="log"></param>
+        /// <returns></returns>
         [FunctionName("ProduceStringTopic")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,

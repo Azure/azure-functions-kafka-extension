@@ -6,10 +6,10 @@ using System.Threading;
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
     /// <summary>
-    /// Manages <see cref="IKafkaProducer"/>
+    /// Provider for <see cref="IKafkaProducer"/>
     /// </summary>
-    public interface IKafkaProducerManager
+    public interface IKafkaProducerProvider
     {
-        IKafkaProducer Resolve(KafkaAttribute attribute);
+        IKafkaProducer Get(KafkaAttribute attribute);
     }
 }

@@ -10,7 +10,7 @@ This repository contains Kafka binding extensions for the **Azure WebJobs SDK**.
 
 ## Bindings
 
-There are two binding types in this repo: trigger and output (still to come). To get started using the extension in a WebJob project add reference to Microsoft.Azure.WebJobs.Extensions.Kafka project and call `AddKafka()` on the startup:
+There are two binding types in this repo: trigger and output. To get started using the extension in a WebJob project add reference to Microsoft.Azure.WebJobs.Extensions.Kafka project and call `AddKafka()` on the startup:
 
 ```csharp
 static async Task Main(string[] args)

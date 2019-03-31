@@ -40,16 +40,16 @@ namespace KafkaFunctionSample
   ]
 }";
 
-        //[FunctionName(nameof(PageViews))]
-        //public static void PageViews(
-        //   [KafkaTrigger("LocalBroker", "pageviews", AvroSchema = PageViewsSchema, ConsumerGroup = "azfunc")] KafkaEventData kafkaEvent,
-        //   ILogger logger)
-        //{
-        //   if (kafkaEvent.Value is GenericRecord genericRecord)
-        //   {
-        //       logger.LogInformation($"{GenericToJson(genericRecord)}");
-        //   }
-        //}
+        [FunctionName(nameof(PageViews))]
+        public static void PageViews(
+           [KafkaTrigger("LocalBroker", "pageviews", AvroSchema = PageViewsSchema, ConsumerGroup = "azfunc")] KafkaEventData kafkaEvent,
+           ILogger logger)
+        {
+            if (kafkaEvent.Value is GenericRecord genericRecord)
+            {
+                logger.LogInformation($"{GenericToJson(genericRecord)}");
+            }
+        }
 
         public static string GenericToJson(GenericRecord record)
         {

@@ -20,9 +20,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public KafkaProducer(
             ProducerConfig config,
-            string avroSchema)
+            string avroSchema,
+            ILogger logger)
         {
-            this.logger = null;
+            this.logger = logger;
             var builder = new ProducerBuilder<TKey, TValue>(config);
 
             IAsyncSerializer<TValue> asyncValueSerializer = null;
@@ -84,24 +85,34 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             if (item.Key != null)
             {
-                msg.Key = (TKey)item.Key;
+                if (!(item.Key is TKey keyValue))
+                {
+                    throw new ArgumentException($"Key value is not of the expected type. Expected: {typeof(TKey).Name}. Actual: {item.Key.GetType().Name}");
+                }
+
+                msg.Key = keyValue;
             }
 
             var topicUsed = topic;
             if (string.IsNullOrEmpty(topic))
             {
                 topicUsed = item.Topic;
+
+                if (string.IsNullOrEmpty(topicUsed))
+                {
+                    throw new ArgumentException("No topic was defined in Kafka attribute or in KafkaEventData");
+                }
             }
 
             try
             {
                 var deliveryReport = await this.producer.ProduceAsync(topicUsed, msg);
 
-                this.logger?.LogDebug("Message produced on {topic} / {partition} / {offset}", deliveryReport.Topic, (int)deliveryReport.Partition, (long)deliveryReport.Offset);
+                this.logger.LogDebug("Message produced on {topic} / {partition} / {offset}", deliveryReport.Topic, (int)deliveryReport.Partition, (long)deliveryReport.Offset);
             }
             catch (Exception ex)
             {
-                this.logger?.LogError(ex, "Error producing into {topic}", topicUsed);
+                this.logger.LogError(ex, "Error producing into {topic}", topicUsed);
             }
         }
     }

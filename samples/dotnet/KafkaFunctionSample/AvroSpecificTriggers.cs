@@ -17,26 +17,26 @@ namespace KafkaFunctionSample
     /// </summary>
     public static class AvroSpecificTriggers
     {
-        //[FunctionName(nameof(User))]
-        //public static void User(
-        //   [KafkaTrigger("LocalBroker", "users", ValueType=typeof(UserRecord), ConsumerGroup = "azfunc")] KafkaEventData[] kafkaEvents,
-        //   ILogger logger)
-        //{
-        //    foreach (var kafkaEvent in kafkaEvents)
-        //    {
-        //        logger.LogInformation($"{JsonConvert.SerializeObject(kafkaEvent.Value)}");
-        //    }
-        //}
+        [FunctionName(nameof(User))]
+        public static void User(
+           [KafkaTrigger("LocalBroker", "users", ValueType = typeof(UserRecord), ConsumerGroup = "azfunc")] KafkaEventData[] kafkaEvents,
+           ILogger logger)
+        {
+            foreach (var kafkaEvent in kafkaEvents)
+            {
+                logger.LogInformation($"{JsonConvert.SerializeObject(kafkaEvent.Value)}");
+            }
+        }
 
-        //[FunctionName(nameof(PageViewsFemale))]
-        //public static void PageViewsFemale(
-        //   [KafkaTrigger("LocalBroker", "PAGEVIEWS_FEMALE", ValueType=typeof(PageViewsFemale), ConsumerGroup = "azfunc")] KafkaEventData[] kafkaEvents,
-        //   ILogger logger)
-        //{
-        //   foreach (var ke in kafkaEvents)
-        //   {
-        //       logger.LogInformation($"{JsonConvert.SerializeObject(ke.Value)}");
-        //   }
-        //}
+        [FunctionName(nameof(PageViewsFemale))]
+        public static void PageViewsFemale(
+           [KafkaTrigger("LocalBroker", "PAGEVIEWS_FEMALE", ValueType = typeof(PageViewsFemale), ConsumerGroup = "azfunc")] KafkaEventData[] kafkaEvents,
+           ILogger logger)
+        {
+            foreach (var ke in kafkaEvents)
+            {
+                logger.LogInformation($"{JsonConvert.SerializeObject(ke.Value)}");
+            }
+        }
     }
 }
