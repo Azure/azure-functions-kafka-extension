@@ -331,15 +331,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                 var logs = new List<string>(host1Log.GetAllLogMessages().Where(messageFilter).Select(x => x.FormattedMessage));
                 logs.AddRange(host2Log.GetAllLogMessages().Where(messageFilter).Select(x => x.FormattedMessage));
 
+                var multipleProcessItemCount = 0;
                 for (int i = 1; i <= producedMessagesCount; i++)
                 {
                     var currentMessage = EndToEndTestExtensions.CreateMessageValue(messagePrefix, i);
                     var count = logs.Count(x => x == currentMessage);
                     if (count > 1)
                     {
+                        Assert.True(count < 3, "No item should be processed more than twice");
+                        multipleProcessItemCount++;
                         Console.WriteLine($"{currentMessage} was processed {count} times");
                     }
                 }
+
+                // Should not process more than 10% of all items a second time.
+                Assert.InRange(multipleProcessItemCount, 0, producedMessagesCount / 10);
 
             }
             finally

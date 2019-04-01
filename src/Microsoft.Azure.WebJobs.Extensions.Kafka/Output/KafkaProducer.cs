@@ -61,7 +61,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.producer = builder.Build();
         }
 
-        public async Task ProduceAsync(string topic, KafkaEventData item, CancellationToken cancellationToken)
+        public void Flush(CancellationToken cancellationToken)
+        {
+            try
+            {
+                this.producer.Flush(cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                // cancellationToken has been cancelled
+            }
+            catch (Exception ex)
+            {
+                this.logger.LogError(ex, "Error flushing Kafka producer");
+                throw;
+            }
+        }
+
+        public void Produce(string topic, KafkaEventData item)
         {
             if (item == null)
             {
@@ -106,13 +123,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             try
             {
-                var deliveryReport = await this.producer.ProduceAsync(topicUsed, msg);
-
-                this.logger.LogDebug("Message produced on {topic} / {partition} / {offset}", deliveryReport.Topic, (int)deliveryReport.Partition, (long)deliveryReport.Offset);
+                this.producer.BeginProduce(topicUsed, msg, this.DeliveryHandler);
             }
             catch (Exception ex)
             {
                 this.logger.LogError(ex, "Error producing into {topic}", topicUsed);
+                throw;
+            }
+        }
+
+        private void DeliveryHandler(DeliveryReport<TKey, TValue> deliveredItem)
+        {
+            if (deliveredItem.Error != null)
+            {
+                this.logger.LogError("Failed to delivery message to {topic} / {partition} / {offset}. Error: {error}", deliveredItem.Topic, (int)deliveredItem.Partition, (long)deliveredItem.Offset, deliveredItem.Error.ToString());
+            }
+            else
+            {
+                this.logger.LogDebug("Message delivered on {topic} / {partition} / {offset}", deliveredItem.Topic, (int)deliveredItem.Partition, (long)deliveredItem.Offset);
             }
         }
     }

@@ -42,12 +42,15 @@ namespace KafkaFunctionSample
 
         [FunctionName(nameof(PageViews))]
         public static void PageViews(
-           [KafkaTrigger("LocalBroker", "pageviews", AvroSchema = PageViewsSchema, ConsumerGroup = "azfunc")] KafkaEventData kafkaEvent,
+           [KafkaTrigger("LocalBroker", "pageviews", AvroSchema = PageViewsSchema, ConsumerGroup = "azfunc")] KafkaEventData[] kafkaEvents,
            ILogger logger)
         {
-            if (kafkaEvent.Value is GenericRecord genericRecord)
+            foreach (var kafkaEvent in kafkaEvents)
             {
-                logger.LogInformation($"{GenericToJson(genericRecord)}");
+                if (kafkaEvent.Value is GenericRecord genericRecord)
+                {
+                    logger.LogInformation($"{GenericToJson(genericRecord)}");
+                }
             }
         }
 
