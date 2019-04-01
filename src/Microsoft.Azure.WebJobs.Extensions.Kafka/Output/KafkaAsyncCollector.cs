@@ -1,6 +1,7 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -17,13 +18,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.producer = producer;
         }
 
-        public async Task AddAsync(KafkaEventData item, CancellationToken cancellationToken = default)
+        public Task AddAsync(KafkaEventData item, CancellationToken cancellationToken = default)
         {
-            await this.producer.ProduceAsync(this.topic, item, cancellationToken);
+            this.producer.Produce(this.topic, item);
+            return Task.CompletedTask;
         }
 
         public Task FlushAsync(CancellationToken cancellationToken = default)
         {
+            try
+            {
+                this.producer.Flush(cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                // cancellationToken was cancelled
+            }
+
             return Task.CompletedTask;
         }
     }

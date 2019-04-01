@@ -9,7 +9,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.WebJobs.Logging" Version="3.0.5" />
     <PackageReference Include="Confluent.Kafka" Version="1.0.0-RC2" />
-    <PackageReference Include="librdkafka.redist" Version="1.0.0" />
     <PackageReference Include="Confluent.SchemaRegistry.Serdes" Version="1.0.0-RC2" />
     <PackageReference Include="Google.Protobuf" Version="3.7.0" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="3.0.4" />
