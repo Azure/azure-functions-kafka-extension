@@ -13,10 +13,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
     /// </summary>
     internal class KafkaListenerForTest<TKey, TValue> : KafkaListener<TKey, TValue>
     {
-        IConsumer<TKey, TValue> consumer;
+        private IConsumer<TKey, TValue> consumer;
 
-        public KafkaListenerForTest(ITriggeredFunctionExecutor executor, bool singleDispatch, KafkaOptions options, string brokerList, string topic, string consumerGroup, string eventHubConnectionString, string avroSchema, ILogger logger) 
-            : base(executor, singleDispatch, options, brokerList, topic, consumerGroup, eventHubConnectionString, avroSchema, logger)
+        public KafkaListenerForTest(ITriggeredFunctionExecutor executor, bool singleDispatch, KafkaOptions options, string brokerList, string topic, string consumerGroup, string eventHubConnectionString, ILogger logger)
+            : base(executor, singleDispatch, options, brokerList, topic, consumerGroup, eventHubConnectionString, logger)
         {
         }
 

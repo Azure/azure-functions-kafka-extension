@@ -1,15 +1,8 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-using System;
-using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using Avro.Generic;
-using Avro.Specific;
-using Confluent.Kafka;
-using Confluent.SchemaRegistry.Serdes;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Listeners;
@@ -74,46 +67,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
 
             // TODO: reuse connections if they match with others in same function app
-            Func<ListenerFactoryContext, bool, Task<IListener>> listenerCreator =
-                (factoryContext, singleDispatch) =>
-                {
-                    Type keyType = attribute.KeyType ?? typeof(Ignore);
-                    Type valueType = attribute.ValueType;
-                    string avroSchema = null;
-                    if (valueType == null)
-                    {
-                        if (!string.IsNullOrEmpty(attribute.AvroSchema))
-                        {
-                            avroSchema = attribute.AvroSchema;
-                            valueType = typeof(GenericRecord);
-                        }
-                        else
-                        {
-                            valueType = typeof(string);
-                        }
-                    }
-                    else
-                    {
-                        if (typeof(ISpecificRecord).IsAssignableFrom(valueType))
-                        {
-                            var specificRecord = (ISpecificRecord)Activator.CreateInstance(valueType);
-                            avroSchema = specificRecord.Schema.ToString();
-                        }
-                    }
+            Task<IListener> listenerCreator(ListenerFactoryContext factoryContext, bool singleDispatch)
+            {
+                var listener = Listeners.KafkaListenerFactory.CreateFor(attribute,
+                    factoryContext.Executor,
+                    singleDispatch,
+                    options.Value,
+                    resolvedBrokerList,
+                    resolvedTopic,
+                    resolvedConsumerGroup,
+                    resolvedEventHubConnectionString, logger);
 
-                    var listener = (IListener)Activator.CreateInstance(typeof(KafkaListener<,>).MakeGenericType(keyType, valueType),
-                        factoryContext.Executor,
-                        singleDispatch,
-                        this.options.Value,
-                        resolvedBrokerList,
-                        resolvedTopic,
-                        resolvedConsumerGroup,
-                        resolvedEventHubConnectionString,
-                        avroSchema,
-                        this.logger);
-
-                    return Task.FromResult(listener);
-                };
+                return Task.FromResult(listener);
+            }
 
             var binding = BindingFactory.GetTriggerBinding(new KafkaTriggerBindingStrategy(), context.Parameter, this.converterManager, listenerCreator);
             return Task.FromResult<ITriggerBinding>(binding);

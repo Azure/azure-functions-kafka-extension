@@ -8,7 +8,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Confluent.Kafka;
-using Confluent.SchemaRegistry.Serdes;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Extensions.Logging;
@@ -35,7 +34,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly string topic;
         private readonly string consumerGroup;
         private readonly string eventHubConnectionString;
-        private readonly string avroSchema;
         private FunctionExecutorBase<TKey, TValue> functionExecutor;
         private IConsumer<TKey, TValue> consumer;
         private bool disposed;
@@ -50,7 +48,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             string topic,
             string consumerGroup,
             string eventHubConnectionString,
-            string avroSchema,
             ILogger logger)
         {
             this.executor = executor;
@@ -61,7 +58,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.topic = topic;
             this.consumerGroup = consumerGroup;
             this.eventHubConnectionString = eventHubConnectionString;
-            this.avroSchema = avroSchema;
             this.cancellationTokenSource = new CancellationTokenSource();
         }
 
@@ -106,49 +102,38 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return builder.Build();
         }
 
-        public Task StartAsync(CancellationToken cancellationToken)
+        public virtual Task StartAsync(CancellationToken cancellationToken)
         {
-            IAsyncDeserializer<TValue> asyncValueDeserializer = null;
-            IDeserializer<TValue> valueDeserializer = null;
-            IAsyncDeserializer<TKey> keyDeserializer = null;
+            SetConsumerAndExecutor(null, null, null);
 
-            if (!string.IsNullOrEmpty(this.avroSchema))
-            {
-                var schemaRegistry = new LocalSchemaRegistry(this.avroSchema);
-                asyncValueDeserializer = new AvroDeserializer<TValue>(schemaRegistry);
-            }
-            else
-            {
-                if (typeof(Google.Protobuf.IMessage).IsAssignableFrom(typeof(TValue)))
-                {
-                    // protobuf: need to create using reflection due to generic requirements in ProtobufDeserializer
-                    valueDeserializer = (IDeserializer<TValue>)Activator.CreateInstance(typeof(ProtobufDeserializer<>).MakeGenericType(typeof(TValue)));
-                }
-            }
+            return Task.CompletedTask;
+        }
 
-            this.consumer = this.CreateConsumer(
-                config: this.GetConsumerConfiguration(),
-                errorHandler: (_, e) =>
-                {
-                    this.logger.LogError(e.Reason);
-                },
-                partitionsAssignedHandler: (_, e) =>
-                {
-                    this.logger.LogInformation($"Assigned partitions: [{string.Join(", ", e)}]");
-                },
-                partitionsRevokedHandler: (_, e) =>
-                {
-                    this.logger.LogInformation($"Revoked partitions: [{string.Join(", ", e)}]");
-                },
-                asyncValueDeserializer: asyncValueDeserializer,
-                valueDeserializer: valueDeserializer,
-                keyDeserializer: keyDeserializer);
+        protected void SetConsumerAndExecutor(IAsyncDeserializer<TValue> asyncValueDeserializer, IDeserializer<TValue> valueDeserializer, IAsyncDeserializer<TKey> keyDeserializer)
+        {
+            consumer = CreateConsumer(
+                            config: GetConsumerConfiguration(),
+                            errorHandler: (_, e) =>
+                            {
+                                logger.LogError(e.Reason);
+                            },
+                            partitionsAssignedHandler: (_, e) =>
+                            {
+                                logger.LogInformation($"Assigned partitions: [{string.Join(", ", e)}]");
+                            },
+                            partitionsRevokedHandler: (_, e) =>
+                            {
+                                logger.LogInformation($"Revoked partitions: [{string.Join(", ", e)}]");
+                            },
+                            asyncValueDeserializer: asyncValueDeserializer,
+                            valueDeserializer: valueDeserializer,
+                            keyDeserializer: keyDeserializer);
 
-            this.functionExecutor = singleDispatch ?
-                (FunctionExecutorBase<TKey, TValue>)new SingleItemFunctionExecutor<TKey, TValue>(this.executor, this.consumer, this.options.ExecutorChannelCapacity, this.options.ChannelFullRetryIntervalInMs, this.logger) :
-                new MultipleItemFunctionExecutor<TKey, TValue>(this.executor, this.consumer, this.options.ExecutorChannelCapacity, this.options.ChannelFullRetryIntervalInMs, this.logger);
+            functionExecutor = singleDispatch ?
+                (FunctionExecutorBase<TKey, TValue>)new SingleItemFunctionExecutor<TKey, TValue>(executor, consumer, options.ExecutorChannelCapacity, options.ChannelFullRetryIntervalInMs, logger) :
+                new MultipleItemFunctionExecutor<TKey, TValue>(executor, consumer, options.ExecutorChannelCapacity, options.ChannelFullRetryIntervalInMs, logger);
 
-            this.consumer.Subscribe(this.topic);
+            consumer.Subscribe(topic);
 
             // Using a thread as opposed to a task since this will be long running
             // https://github.com/davidfowl/AspNetCoreDiagnosticScenarios/blob/master/AsyncGuidance.md#avoid-using-taskrun-for-long-running-work-that-blocks-the-thread
@@ -156,9 +141,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 IsBackground = true,
             };
-            thread.Start(this.cancellationTokenSource.Token);
-
-            return Task.CompletedTask;
+            thread.Start(cancellationTokenSource.Token);
         }
 
         private ConsumerConfig GetConsumerConfiguration()
