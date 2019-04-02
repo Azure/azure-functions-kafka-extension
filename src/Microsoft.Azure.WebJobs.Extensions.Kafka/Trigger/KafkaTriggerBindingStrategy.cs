@@ -11,14 +11,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
     public class KafkaTriggerBindingStrategy : ITriggerBindingStrategy<KafkaEventData, KafkaTriggerInput>
     {
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope")]
+        /// <summary>
+        /// Given a raw string, convert to a TTriggerValue.
+        /// This is primarily used in the "invoke from dashboard" path. 
+        /// </summary>
         public KafkaTriggerInput ConvertFromString(string input)
         {
-            byte[] bytes = Encoding.UTF8.GetBytes(input);
-            var eventData = new KafkaEventData(bytes);
-
-            // Return a single event. Doesn't support multiple dispatch 
-            return KafkaTriggerInput.New(eventData);
+            // Need to dig up to see how "invoke from dashboard" works.
+            // Returning null for now, since it is not being called
+            return null;
         }
 
         // Single instance: Core --> EventData
@@ -26,7 +27,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             if (value == null)
             {
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
             }
             return value.GetSingleEventData();
         }
@@ -35,7 +36,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             if (value == null)
             {
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
             }
             return value.Events;
         }
@@ -65,7 +66,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             if (value == null)
             {
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
             }
 
             var bindingData = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);

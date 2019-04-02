@@ -52,12 +52,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.configuration.ConfigurationSection.Bind(this.options);
 
             context
-               .AddConverter<string, KafkaEventData>(ConvertString2KafkaEventData)
                .AddConverter<KafkaEventData, string>(ConvertKafkaEventData2String)
                .AddConverter<KafkaEventData, ISpecificRecord>(ConvertKafkaEventData2AvroSpecific)
-               .AddConverter<byte[], KafkaEventData>(ConvertBytes2KafkaEventData)
-               .AddConverter<KafkaEventData, byte[]>(ConvertKafkaEventData2Bytes)
-               .AddOpenConverter<OpenType.Poco, KafkaEventData>(ConvertPocoToKafkaEventData);
+               .AddConverter<KafkaEventData, byte[]>(ConvertKafkaEventData2Bytes);
 
             // register our trigger binding provider
             var triggerBindingProvider = new KafkaTriggerAttributeBindingProvider(this.config, this.options, this.converterManager, this.nameResolver, this.loggerFactory);
@@ -114,18 +111,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return JsonConvert.SerializeObject(props);
         }
 
-        private static KafkaEventData ConvertBytes2KafkaEventData(byte[] input)
-            => new KafkaEventData(input);
-
         private static byte[] ConvertKafkaEventData2Bytes(KafkaEventData input)
-            => Encoding.UTF8.GetBytes(input.Value.ToString());
-
-        private static KafkaEventData ConvertString2KafkaEventData(string input)
-            => ConvertBytes2KafkaEventData(Encoding.UTF8.GetBytes(input));
-
-        private static Task<object> ConvertPocoToKafkaEventData(object arg, Attribute attrResolved, ValueBindingContext context)
         {
-            return Task.FromResult<object>(ConvertString2KafkaEventData(JsonConvert.SerializeObject(arg)));
+            if (input.Value is byte[] bytes)
+            {
+                return bytes;
+            }
+
+            return null;
         }
     }
 }
