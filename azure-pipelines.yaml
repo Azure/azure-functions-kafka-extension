@@ -1,7 +1,9 @@
-name: $(Build.SourceBranchName)_$(Build.Reason)_$(majorVersion).$(Build.BuildId)$(Rev:.r)
+name: $(Build.SourceBranchName)_$(Build.Reason)_$(Major).$(Minor).$(Patch).$(Build.BuildId)$(Rev:.r)
 variables:
   buildConfiguration: 'Release'
-  majorVersion: 0.0.0
+  Major: '0'
+  Minor: '0'
+  Patch: '0-preview'
 
 # Enable PR validation on branches master and dev
 pr:
@@ -41,6 +43,16 @@ jobs:
 
   - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
     displayName: 'Component Detection'
+
+  - script: dotnet pack /p:PackageVersion=$(Major).$(Minor).$(Patch) -o '$(Build.ArtifactStagingDirectory)' --include-symbols src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
+    displayName: 'Pack nuget pacakge'
+  
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathToPublish: '$(Build.ArtifactStagingDirectory)'
+      artifactName: 'drop'
+      publishLocation: 'Container'
+
 
   - task: Bash@3
     displayName: 'Start kafka in single node'
