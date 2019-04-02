@@ -69,13 +69,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var target = new KafkaListenerForTest<Ignore, string>(
                 executor.Object,
                 singleDispatch: true,
-                new KafkaOptions(),
-                "testBroker",
-                "topic",
-                "group1",
-                null,
-                null,
-                NullLogger.Instance
+                options: new KafkaOptions(),
+                brokerList: "testBroker",
+                topic: "topic",
+                consumerGroup: "group1",
+                eventHubConnectionString: null,
+                logger: NullLogger.Instance
                 );
 
             target.SetConsumer(consumer.Object);
@@ -126,13 +125,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var target = new KafkaListenerForTest<Ignore, string>(
                 executor.Object,
                 singleDispatch: false,
-                new KafkaOptions(),
-                "testBroker",
-                "topic",
-                "group1",
-                null,
-                null,
-                NullLogger.Instance
+                options: new KafkaOptions(),
+                brokerList: "testBroker",
+                topic: "topic",
+                consumerGroup: "group1",
+                eventHubConnectionString: null,
+                logger: NullLogger.Instance
                 );
 
             target.SetConsumer(consumer.Object);
@@ -245,7 +243,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 "testBroker",
                 "topic",
                 "group1",
-                null,
                 null,
                 NullLogger.Instance
                 );
