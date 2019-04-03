@@ -3,6 +3,7 @@
 
 using System;
 using System.Reflection;
+using Avro.Generic;
 using Avro.Specific;
 using Confluent.Kafka;
 using Microsoft.Azure.WebJobs.Host.Executors;
@@ -36,7 +37,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.Listeners
                     topic,
                     consumerGroup,
                     eventHubConnectionString,
-                    logger, avroSchema
+                    logger,
+                    avroSchema
                 });
         }
 
@@ -80,7 +82,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.Listeners
             ILogger logger,
             string avroSchema = null)
         {
-            if (typeof(ISpecificRecord).IsAssignableFrom(typeof(TValue)))
+            if (typeof(ISpecificRecord).IsAssignableFrom(typeof(TValue)) || typeof(GenericRecord).IsAssignableFrom(typeof(TValue)))
             {
                 if (string.IsNullOrWhiteSpace(avroSchema))
                 {
