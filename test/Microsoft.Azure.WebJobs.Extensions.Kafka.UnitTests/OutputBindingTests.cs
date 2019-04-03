@@ -29,8 +29,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             mockProducer.Setup(x => x.Produce("topic", kafkaEvent));
             var collection = new KafkaAsyncCollector("topic", mockProducer.Object);
 
-            await collection.AddAsync(kafkaEvent);
+            await collection.AddAsync(new KafkaEventData()
+            {
+                Key = 123,
+                Value = "hello world"
+            });
             await collection.FlushAsync();
+
+            Assert.Equal("hello world", kafkaEvent.Value);
         }
     }
 }
