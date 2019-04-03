@@ -1,14 +1,9 @@
-using System;
-using System.IO;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+using Confluent.SchemaRegistry.Serdes;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
+using Microsoft.Azure.WebJobs.Extensions.Kafka;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Microsoft.Azure.WebJobs.Extensions.Kafka;
-using Confluent.SchemaRegistry.Serdes;
 
 namespace KafkaFunctionSample
 {
@@ -41,7 +36,7 @@ namespace KafkaFunctionSample
             }
         }
 
-        static AvroDeserializer<UserRecord> myCustomDeserialiser = new AvroDeserializer<UserRecord>(new LocalSchemaRegistry(UserRecord.SchemaText));
+        private static AvroDeserializer<UserRecord> myCustomDeserialiser = new AvroDeserializer<UserRecord>(new LocalSchemaRegistry(UserRecord.SchemaText));
 
         /// <summary>
         /// This function shows how to implement a custom deserialiser in the function method
@@ -51,15 +46,29 @@ namespace KafkaFunctionSample
         /// <param name="logger">Logger.</param>
         [FunctionName(nameof(UserAsBytes))]
         public static async Task UserAsBytes(
-           [KafkaTrigger("LocalBroker", "users", ValueType = typeof(byte[]), ConsumerGroup = "azfunc_bytes")] KafkaEventData[] kafkaEvents,
+           [KafkaTrigger("LocalBroker", "users", ValueType = typeof(byte[]), ConsumerGroup = "azfunc_bytes")] byte[][] kafkaEvents,
            ILogger logger)
         {
             foreach (var kafkaEvent in kafkaEvents)
             {
-                var desUserRecord = await myCustomDeserialiser.DeserializeAsync(((byte[])kafkaEvent.Value), false, Confluent.Kafka.SerializationContext.Empty);
-
-                logger.LogInformation($"Custom deserialised user: {JsonConvert.SerializeObject(desUserRecord)}");
+                var desUserRecord = await myCustomDeserialiser.DeserializeAsync(kafkaEvent, false, Confluent.Kafka.SerializationContext.Empty);
+                logger.LogInformation($"Custom deserialised user from batch: {JsonConvert.SerializeObject(desUserRecord)}");
             }
+        }
+
+        /// <summary>
+        /// This function shows how to implement a custom deserialiser in the function method
+        /// </summary>
+        /// <returns>The as bytes.</returns>
+        /// <param name="kafkaEvents">Kafka events.</param>
+        /// <param name="logger">Logger.</param>
+        [FunctionName(nameof(UserAsByte))]
+        public static async Task UserAsByte(
+           [KafkaTrigger("LocalBroker", "users", ValueType = typeof(byte[]), ConsumerGroup = "azfunc_byte")] byte[] kafkaEvent,
+           ILogger logger)
+        {
+            var desUserRecord = await myCustomDeserialiser.DeserializeAsync(kafkaEvent, false, Confluent.Kafka.SerializationContext.Empty);
+            logger.LogInformation($"Custom deserialised user: {JsonConvert.SerializeObject(desUserRecord)}");
         }
 
         [FunctionName(nameof(PageViewsFemale))]
