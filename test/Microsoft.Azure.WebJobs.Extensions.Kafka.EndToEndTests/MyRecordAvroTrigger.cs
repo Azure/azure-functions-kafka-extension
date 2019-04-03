@@ -8,7 +8,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
     internal static class MyRecordAvroTrigger
     {
         public static void Trigger(
-            [KafkaTrigger(Constants.Broker, Constants.MyAvroRecordTopic, ValueType = typeof(MyAvroRecord), KeyType = typeof(string), ConsumerGroup = nameof(MyRecordAvroTrigger))] KafkaEventData[] kafkaEvents,
+            [KafkaTrigger("LocalBroker", Constants.MyAvroRecordTopicName, ValueType = typeof(MyAvroRecord), KeyType = typeof(string), ConsumerGroup = nameof(MyRecordAvroTrigger))] KafkaEventData[] kafkaEvents,
             ILogger log)
         {
             foreach (var kafkaEvent in kafkaEvents)

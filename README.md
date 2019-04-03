@@ -305,3 +305,27 @@ If you are missing an configuration setting please create an issue and describe 
 ## Quickstart
 
 For samples take a look at the [samples folder](./samples).
+
+## Testing
+
+This repo includes unit and end to end tests. End to end tests require a Kafka instance. A quick way to provide one is to use the Kafka quick start example mentioned previously or use a simpler single node docker-compose solution (also based on Confluent Docker images):
+
+Getting simple single node Kafka running:
+
+```bash
+docker-compose -f ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/kafka-singlenode-compose.yaml up -d
+```
+
+To shutdown the single node Kafka:
+
+```bash
+docker-compose -f ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/kafka-singlenode-compose.yaml down
+```
+
+By default end to end tests will try to connect to Kafka on `localhost:9092`. If your Kafka broker is located in a different location create a `local.appsettings.tests.json` file in folder `./test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/` overwritting the value of LocalBroker setting like the example below:
+
+```json
+{
+    "LocalBroker": "location-of-your-kafka-broker:9092"
+}
+```

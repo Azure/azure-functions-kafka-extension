@@ -8,7 +8,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
     internal static class SingleItemTrigger
     {
         public static void Trigger(
-            [KafkaTrigger(Constants.Broker, Constants.StringTopicWithOnePartition, ConsumerGroup = nameof(SingleItemTrigger))] KafkaEventData kafkaEvent,
+            [KafkaTrigger("LocalBroker", Constants.StringTopicWithOnePartitionName, ConsumerGroup = nameof(SingleItemTrigger))] KafkaEventData kafkaEvent,
             ILogger log)
         {
             log.LogInformation(kafkaEvent.Value.ToString());

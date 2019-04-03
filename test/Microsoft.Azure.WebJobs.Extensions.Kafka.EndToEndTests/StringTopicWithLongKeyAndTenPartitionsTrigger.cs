@@ -8,7 +8,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
     internal static class StringTopicWithLongKeyAndTenPartitionsTrigger
     {
         public static void Trigger(
-            [KafkaTrigger(Constants.Broker, Constants.StringTopicWithLongKeyAndTenPartitions, ConsumerGroup = nameof(StringTopicWithLongKeyAndTenPartitionsTrigger), KeyType = typeof(long))] KafkaEventData[] kafkaEvents,
+            [KafkaTrigger("LocalBroker", Constants.StringTopicWithLongKeyAndTenPartitionsName, ConsumerGroup = nameof(StringTopicWithLongKeyAndTenPartitionsTrigger), KeyType = typeof(long))] KafkaEventData[] kafkaEvents,
             ILogger log)
         {
             foreach (var kafkaEvent in kafkaEvents)
