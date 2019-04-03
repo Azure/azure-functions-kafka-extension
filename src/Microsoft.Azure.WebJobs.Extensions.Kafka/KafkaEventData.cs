@@ -19,10 +19,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
         }
 
-        public KafkaEventData(byte[] bytes)
-        {
-        }
-
         public KafkaEventData(IConsumeResultData msg)
         {
             this.Key = msg.Key;
