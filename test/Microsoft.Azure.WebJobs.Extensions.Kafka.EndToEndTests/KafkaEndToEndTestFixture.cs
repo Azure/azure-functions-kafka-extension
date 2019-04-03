@@ -83,17 +83,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
                 await adminClient.CreateTopicsAsync(GetAllTopics(), createTopicOptions);
             }
+            catch (CreateTopicsException createTopicsException)
+            {
+                if (!createTopicsException.Results.All(x => x.Error.Code == ErrorCode.TopicAlreadyExists))
+                {
+                    Console.WriteLine($"Error creation topics: {createTopicsException.ToString()}");
+                    throw;
+                }
+            }
             catch (KafkaException ex)
             {
-                if (ex is CreateTopicsException createTopicsException)
-                {
-                    if (!createTopicsException.Results.All(x => x.Error.Code == ErrorCode.TopicAlreadyExists))
-                    {
-                        Console.WriteLine($"Error creation topics: {ex.ToString()}");
-                        throw;
-                    }
-                }
-                else if (!ex.Error.Reason.Equals("No topics to create", StringComparison.InvariantCultureIgnoreCase))
+                if (!ex.Error.Reason.Equals("No topics to create", StringComparison.InvariantCultureIgnoreCase))
                 {
                     throw;
                 }
