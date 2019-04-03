@@ -134,13 +134,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         private void DeliveryHandler(DeliveryReport<TKey, TValue> deliveredItem)
         {
-            if (deliveredItem.Error != null)
+            if (deliveredItem.Error == null || deliveredItem.Error.Code == ErrorCode.NoError)
             {
-                this.logger.LogError("Failed to delivery message to {topic} / {partition} / {offset}. Error: {error}", deliveredItem.Topic, (int)deliveredItem.Partition, (long)deliveredItem.Offset, deliveredItem.Error.ToString());
+                this.logger.LogDebug("Message delivered on {topic} / {partition} / {offset}", deliveredItem.Topic, (int)deliveredItem.Partition, (long)deliveredItem.Offset);
             }
             else
             {
-                this.logger.LogDebug("Message delivered on {topic} / {partition} / {offset}", deliveredItem.Topic, (int)deliveredItem.Partition, (long)deliveredItem.Offset);
+                this.logger.LogError("Failed to delivery message to {topic} / {partition} / {offset}. Error: {error}", deliveredItem.Topic, (int)deliveredItem.Partition, (long)deliveredItem.Offset, deliveredItem.Error.ToString());
             }
         }
     }

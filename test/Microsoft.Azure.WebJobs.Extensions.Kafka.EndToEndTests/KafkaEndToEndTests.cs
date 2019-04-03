@@ -6,7 +6,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Extensions.Tests;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -15,9 +17,10 @@ using Xunit;
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 {
     [Trait("Category", "E2E")]
-    public class KafkaEndToEndTests
+    public class KafkaEndToEndTests : IClassFixture<KafkaEndToEndTestFixture>
     {
         private readonly TestLoggerProvider loggerProvider;
+        private readonly KafkaEndToEndTestFixture endToEndTestFixture;
 
         internal static TestLoggerProvider CreateTestLoggerProvider()
         {
@@ -26,9 +29,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                 new TestLoggerProvider();
         }
 
-        public KafkaEndToEndTests()
+        public KafkaEndToEndTests(KafkaEndToEndTestFixture endToEndTestFixture)
         {
             this.loggerProvider = CreateTestLoggerProvider();
+            this.endToEndTestFixture = endToEndTestFixture;
         }
 
         [Fact]
@@ -47,11 +51,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
                 await jobHost.CallOutputTriggerStringAsync(
                     GetStaticMethod(typeof(KafkaOutputFunctions), nameof(KafkaOutputFunctions.SendToStringTopic)),
-                    Constants.StringTopicWithOnePartition,
+                    this.endToEndTestFixture.StringTopicWithOnePartition.Name,
                     Enumerable.Range(1, producedMessagesCount).Select(x => messagePrefixBatch1 + x));
-
-                // await KafkaProducers.ProduceStringsAsync(Broker, StringTopicWithOnePartition, Enumerable.Range(1, producedMessagesCount).Select(x => messagePrefixBatch1 + x));
-
+                    
                 await TestHelpers.Await(() =>
                 {
                     var foundCount = loggerProvider1.GetAllUserLogMessages().Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains(messagePrefixBatch1));
@@ -70,7 +72,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
                 await jobHost.CallOutputTriggerStringAsync(
                     GetStaticMethod(typeof(KafkaOutputFunctions), nameof(KafkaOutputFunctions.SendToStringTopic)),
-                    Constants.StringTopicWithOnePartition,
+                    this.endToEndTestFixture.StringTopicWithOnePartition.Name,
                     Enumerable.Range(1 + producedMessagesCount, producedMessagesCount).Select(x => messagePrefixBatch2 + x));
                     
                 await TestHelpers.Await(() =>
@@ -102,7 +104,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
                 await jobHost.CallOutputTriggerStringAsync(
                     GetStaticMethod(typeof(KafkaOutputFunctions), nameof(KafkaOutputFunctions.SendToStringTopic)),
-                    Constants.StringTopicWithOnePartition,
+                    this.endToEndTestFixture.StringTopicWithOnePartition.Name,
                     Enumerable.Range(1, producedMessagesCount).Select(x => messagePrefixBatch1 + x));
 
                 await TestHelpers.Await(() =>
@@ -125,7 +127,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
                 await jobHost.CallOutputTriggerStringAsync(
                     GetStaticMethod(typeof(KafkaOutputFunctions), nameof(KafkaOutputFunctions.SendToStringTopic)),
-                    Constants.StringTopicWithOnePartition,
+                    this.endToEndTestFixture.StringTopicWithOnePartition.Name,
                     Enumerable.Range(1 + producedMessagesCount, producedMessagesCount).Select(x => messagePrefixBatch2 + x));
 
                 await TestHelpers.Await(() =>
@@ -157,7 +159,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
                 await jobHost.CallOutputTriggerStringAsync(
                     GetStaticMethod(typeof(KafkaOutputFunctions), nameof(KafkaOutputFunctions.SendToStringTopic)),
-                    Constants.StringTopicWithTenPartitions,
+                    this.endToEndTestFixture.StringTopicWithTenPartitions.Name,
                     Enumerable.Range(1, producedMessagesCount).Select(x => messagePrefixBatch1 + x));
 
                 await TestHelpers.Await(() =>
@@ -180,7 +182,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
                 await jobHost.CallOutputTriggerStringAsync(
                     GetStaticMethod(typeof(KafkaOutputFunctions), nameof(KafkaOutputFunctions.SendToStringTopic)),
-                    Constants.StringTopicWithTenPartitions,
+                    this.endToEndTestFixture.StringTopicWithTenPartitions.Name,
                     Enumerable.Range(1 + producedMessagesCount, producedMessagesCount).Select(x => messagePrefixBatch2 + x));
 
                 await TestHelpers.Await(() =>
@@ -212,7 +214,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
                 await jobHost.CallOutputTriggerStringAsync(
                     GetStaticMethod(typeof(KafkaOutputFunctions), nameof(KafkaOutputFunctions.SendToStringTopic)),
-                    Constants.StringTopicWithTenPartitions,
+                    this.endToEndTestFixture.StringTopicWithTenPartitions.Name,
                     Enumerable.Range(1, producedMessagesCount).Select(x => messagePrefixBatch1 + x));
 
                 await TestHelpers.Await(() =>
@@ -235,7 +237,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
                 await jobHost.CallOutputTriggerStringAsync(
                     GetStaticMethod(typeof(KafkaOutputFunctions), nameof(KafkaOutputFunctions.SendToStringTopic)),
-                    Constants.StringTopicWithTenPartitions,
+                    this.endToEndTestFixture.StringTopicWithTenPartitions.Name,
                     Enumerable.Range(1 + producedMessagesCount, producedMessagesCount).Select(x => messagePrefixBatch2 + x));
 
                 await TestHelpers.Await(() =>
@@ -265,7 +267,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
             var producerTask = producerJobHost.CallOutputTriggerStringAsync(
                 GetStaticMethod(typeof(KafkaOutputFunctions), nameof(KafkaOutputFunctions.SendToStringTopic)),
-                Constants.StringTopicWithTenPartitions,
+                this.endToEndTestFixture.StringTopicWithTenPartitions.Name,
                 Enumerable.Range(1, producedMessagesCount).Select(x => EndToEndTestExtensions.CreateMessageValue(messagePrefix, x)), 
                 TimeSpan.FromMilliseconds(100));
 
@@ -373,7 +375,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
                 await jobHost.CallOutputTriggerStringWithLongKeyAsync(
                     GetStaticMethod(typeof(KafkaOutputFunctions), nameof(KafkaOutputFunctions.SendToStringWithLongKeyTopic)),
-                    Constants.StringTopicWithLongKeyAndTenPartitions,
+                    this.endToEndTestFixture.StringTopicWithLongKeyAndTenPartitions.Name,
                     Enumerable.Range(1, producedMessagesCount).Select(x => messagePrefix + x),
                     Enumerable.Range(1, producedMessagesCount).Select(x => x % 20L));
                     
@@ -400,7 +402,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
                 await jobHost.CallOutputTriggerStringWithStringKeyAsync(
                     GetStaticMethod(typeof(KafkaOutputFunctions), nameof(KafkaOutputFunctions.SendAvroWithStringKeyTopic)),
-                    Constants.MyAvroRecordTopic,
+                    this.endToEndTestFixture.MyAvroRecordTopic.Name,
                     Enumerable.Range(1, producedMessagesCount).Select(x => messagePrefix + x),
                     Enumerable.Range(1, producedMessagesCount).Select(x => "record_" + (x % 20).ToString())
                     );
@@ -428,7 +430,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
                 await jobHost.CallOutputTriggerStringWithStringKeyAsync(
                     GetStaticMethod(typeof(KafkaOutputFunctions), nameof(KafkaOutputFunctions.SendProtobufWithStringKeyTopic)),
-                    Constants.MyProtobufTopic,
+                    this.endToEndTestFixture.MyProtobufTopic.Name,
                     Enumerable.Range(1, producedMessagesCount).Select(x => messagePrefix + x),
                     Enumerable.Range(1, producedMessagesCount).Select(x => "record_" + (x % 20).ToString())
                     );
@@ -458,8 +460,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                 })
                 .ConfigureAppConfiguration(c =>
                 {
-                    //c.AddTestSettings();
-                    //c.AddJsonFile("appsettings.tests.json", optional: false);
+                    c.AddTestSettings();
+                    c.AddJsonFile("appsettings.tests.json", optional: true);
+                    c.AddJsonFile("local.appsettings.tests.json", optional: true);
                 })
                 .ConfigureServices(services =>
                 {
