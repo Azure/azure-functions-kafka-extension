@@ -20,7 +20,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// <param name="topic">Topic name</param>
         public KafkaAttribute(string topic)
         {
-            this.Topic = topic;
+            Topic = topic;
         }
 
         /// <summary>
@@ -57,15 +57,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// </summary>
         public Type ValueType
         {
-            get => valueType;
+            get => this.valueType;
             set
             {
                 if (value != null && !IsValidValueType(value))
                 {
-                    throw new ArgumentException($"The value of {nameof(this.ValueType)} must be a byte[], string or a type that implements {nameof(ISpecificRecord)} or {nameof(Google.Protobuf.IMessage)}. The type {value.Name} does not.");
+                    throw new ArgumentException($"The value of {nameof(ValueType)} must be a byte[], string or a type that implements {nameof(ISpecificRecord)} or {nameof(Google.Protobuf.IMessage)}. The type {value.Name} does not.");
                 }
 
-                valueType = value;
+                this.valueType = value;
             }
         }
 

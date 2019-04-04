@@ -57,14 +57,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 builder.SetKeySerializer(keySerializer);
             }
 
-            producer = builder.Build();
+            this.producer = builder.Build();
         }
 
         public void Flush(CancellationToken cancellationToken)
         {
             try
             {
-                producer.Flush(cancellationToken);
+                this.producer.Flush(cancellationToken);
             }
             catch (OperationCanceledException)
             {
@@ -72,7 +72,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error flushing Kafka producer");
+                this.logger.LogError(ex, "Error flushing Kafka producer");
                 throw;
             }
         }
@@ -122,11 +122,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             try
             {
-                producer.BeginProduce(topicUsed, msg, DeliveryHandler);
+                this.producer.BeginProduce(topicUsed, msg, this.DeliveryHandler);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error producing into {topic}", topicUsed);
+                this.logger.LogError(ex, "Error producing into {topic}", topicUsed);
                 throw;
             }
         }
@@ -135,7 +135,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             if (deliveredItem.Error == null || deliveredItem.Error.Code == ErrorCode.NoError)
             {
-                logger.LogDebug("Message delivered on {topic} / {partition} / {offset}", deliveredItem.Topic, (int)deliveredItem.Partition, (long)deliveredItem.Offset);
+                this.logger.LogDebug("Message delivered on {topic} / {partition} / {offset}", deliveredItem.Topic, (int)deliveredItem.Partition, (long)deliveredItem.Offset);
             }
             else
             {
