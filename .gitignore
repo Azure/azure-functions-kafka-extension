@@ -268,3 +268,4 @@ __pycache__/
 !.vscode/extensions.json
 
 local.settings.json
+local.appsettings.tests.json

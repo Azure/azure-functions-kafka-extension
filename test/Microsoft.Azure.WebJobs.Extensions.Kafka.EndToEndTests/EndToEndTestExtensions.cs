@@ -16,10 +16,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
         /// <summary>
         /// Calls the output trigger string
         /// </summary>
-        public static async Task CallOutputTriggerStringAsync(this JobHost jobHost, MethodInfo method, string topic, IEnumerable<object> values, TimeSpan? interval = null)
+        public static async Task CallOutputTriggerStringAsync(this JobHost jobHost, MethodInfo method, string topic, IEnumerable<object> values)
         {
             var allValues = values.Select(x => x.ToString());
-            await jobHost.CallAsync(method, new { topic = topic, content = allValues, interval = interval });
+            await jobHost.CallAsync(method, new { topic = topic, content = allValues });
         }
 
         /// <summary>

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Tests;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
@@ -265,14 +266,33 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             var producerHost = await this.StartHostAsync(typeof(KafkaOutputFunctions));
             var producerJobHost = producerHost.GetJobHost();
 
-            var producerTask = producerJobHost.CallOutputTriggerStringAsync(
-                GetStaticMethod(typeof(KafkaOutputFunctions), nameof(KafkaOutputFunctions.SendToStringTopic)),
-                this.endToEndTestFixture.StringTopicWithTenPartitions.Name,
-                Enumerable.Range(1, producedMessagesCount).Select(x => EndToEndTestExtensions.CreateMessageValue(messagePrefix, x)), 
-                TimeSpan.FromMilliseconds(100));
+            var host2HasPartitionsSemaphore = new SemaphoreSlim(0);
+
+            // Split the call in 4, waiting 1sec between calls
+            var producerTask = Task.Run(async () => 
+            {
+                var allMessages = Enumerable.Range(1, producedMessagesCount).Select(x => EndToEndTestExtensions.CreateMessageValue(messagePrefix, x));
+                const int loopCount = 4;
+                var itemsPerLoop = producedMessagesCount / loopCount;
+                for (var i=0; i < loopCount; ++i)
+                {
+                    var messages = allMessages.Skip(i * itemsPerLoop).Take(itemsPerLoop);
+                    await producerJobHost.CallOutputTriggerStringAsync(
+                        GetStaticMethod(typeof(KafkaOutputFunctions), nameof(KafkaOutputFunctions.SendToStringTopic)),
+                        this.endToEndTestFixture.StringTopicWithTenPartitions.Name,
+                        messages);
+
+                    if (i == 0)
+                    {
+                        // wait until host2 has partitions assigned
+                        Assert.True(await host2HasPartitionsSemaphore.WaitAsync(TimeSpan.FromSeconds(30)));
+                    }
+
+                    await Task.Delay(100);
+                }
+            });
 
             IHost host1 = null, host2 = null;
-
             Func<LogMessage, bool> messageFilter = (LogMessage m) => m.FormattedMessage != null && m.FormattedMessage.Contains(messagePrefix);
 
             try
@@ -296,8 +316,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                 await TestHelpers.Await(() =>
                 {
                     var host2HasPartitions = host2Log.GetAllLogMessages().Any(x => x.FormattedMessage != null && x.FormattedMessage.Contains("Assigned partitions"));
+
+                    if (host2HasPartitions)
+                    {
+                        host2HasPartitionsSemaphore.Release();
+                    }
+
                     return host2HasPartitions;
                 });
+
+                // Wait until producer is finished
+                await producerTask;
 
                 await TestHelpers.Await(() =>
                 {
@@ -340,7 +369,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                     var count = logs.Count(x => x == currentMessage);
                     if (count > 1)
                     {
-                        Assert.True(count < 3, "No item should be processed more than twice");
+                        Assert.True(count < 3, $"{currentMessage} was processed {count} times");
                         multipleProcessItemCount++;
                         Console.WriteLine($"{currentMessage} was processed {count} times");
                     }
