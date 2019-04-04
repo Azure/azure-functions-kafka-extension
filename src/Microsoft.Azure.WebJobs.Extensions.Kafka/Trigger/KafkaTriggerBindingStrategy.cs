@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 
@@ -44,11 +43,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public Dictionary<string, Type> GetBindingContract(bool isSingleDispatch = true)
         {
             var contract = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
-            //contract.Add("PartitionContext", typeof(PartitionContext));
             AddBindingContractMember(contract, nameof(KafkaEventData.Key), typeof(object), isSingleDispatch);
             AddBindingContractMember(contract, nameof(KafkaEventData.Partition), typeof(int), isSingleDispatch);
             AddBindingContractMember(contract, nameof(KafkaEventData.Topic), typeof(string), isSingleDispatch);
             AddBindingContractMember(contract, nameof(KafkaEventData.Timestamp), typeof(DateTime), isSingleDispatch);
+            AddBindingContractMember(contract, nameof(KafkaEventData.Offset), typeof(long), isSingleDispatch);
 
             return contract;
         }
@@ -70,8 +69,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
 
             var bindingData = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-            //SafeAddValue(() => bindingData.Add(nameof(value.PartitionContext), value.PartitionContext));
-
             if (value.IsSingleDispatch)
             {
                 AddBindingData(bindingData, value.GetSingleEventData());
@@ -86,30 +83,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         internal static void AddBindingData(Dictionary<string, object> bindingData, KafkaEventData[] events)
         {
-            //int length = events.Length;
-            //var partitionKeys = new string[length];
-            //var offsets = new string[length];
-            //var sequenceNumbers = new long[length];
-            //var enqueuedTimesUtc = new DateTime[length];
-            //var properties = new IDictionary<string, object>[length];
-            //var systemProperties = new IDictionary<string, object>[length];
+            int length = events.Length;
+            var partitions = new int[length];
+            var offsets = new long[length];
+            var timestamps = new DateTime[length];
+            var topics = new string[length];
+            var keys = new object[length];
 
-            //SafeAddValue(() => bindingData.Add("PartitionKeyArray", partitionKeys));
-            //SafeAddValue(() => bindingData.Add("OffsetArray", offsets));
-            //SafeAddValue(() => bindingData.Add("SequenceNumberArray", sequenceNumbers));
-            //SafeAddValue(() => bindingData.Add("EnqueuedTimeUtcArray", enqueuedTimesUtc));
-            //SafeAddValue(() => bindingData.Add("PropertiesArray", properties));
-            //SafeAddValue(() => bindingData.Add("SystemPropertiesArray", systemProperties));
+            bindingData.Add("PartitionArray", partitions);
+            bindingData.Add("OffsetArray", offsets);
+            bindingData.Add("TimestampArray", timestamps);
+            bindingData.Add("TopicArray", topics);
+            bindingData.Add("KeyArray", keys);
 
-            // for (int i = 0; i < events.Length; i++)
-            // {
-            //     partitionKeys[i] = events[i].SystemProperties?.PartitionKey;
-            //     offsets[i] = events[i].SystemProperties?.Offset;
-            //     sequenceNumbers[i] = events[i].SystemProperties?.SequenceNumber ?? 0;
-            //     enqueuedTimesUtc[i] = events[i].SystemProperties?.EnqueuedTimeUtc ?? DateTime.MinValue;
-            //     properties[i] = events[i].Properties;
-            //     systemProperties[i] = events[i].SystemProperties?.ToDictionary();
-            // }
+            for (int i = 0; i < events.Length; i++)
+            {
+                partitions[i] = events[i].Partition;
+                offsets[i] = events[i].Offset;
+                timestamps[i] = events[i].Timestamp;
+                keys[i] = events[i].Key;
+                topics[i] = events[i].Topic;
+            }
         }
 
         private static void AddBindingData(Dictionary<string, object> bindingData, KafkaEventData eventData)
@@ -118,19 +112,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             bindingData.Add(nameof(KafkaEventData.Partition), eventData.Partition);
             bindingData.Add(nameof(KafkaEventData.Topic), eventData.Topic);
             bindingData.Add(nameof(KafkaEventData.Timestamp), eventData.Timestamp);
-        }
-
-        private static void SafeAddValue(Action addValue)
-        {
-            try
-            {
-                addValue();
-            }
-            catch
-            {
-                // some message propery getters can throw, based on the
-                // state of the message
-            }
+            bindingData.Add(nameof(KafkaEventData.Offset), eventData.Offset);
         }
     }
 }
