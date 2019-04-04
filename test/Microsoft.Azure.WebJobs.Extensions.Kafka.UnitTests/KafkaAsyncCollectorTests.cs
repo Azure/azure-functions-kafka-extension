@@ -12,22 +12,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
     public class KafkaAsyncCollectorTests
     {
         [Fact]
-        public void NullArgumentCheck()
+        public void Topic_NullArgumentCheck()
         {
             var mockProducer = new Mock<IKafkaProducer>();
             Assert.Throws<ArgumentNullException>(() => new KafkaAsyncCollector(null, mockProducer.Object));
         }
 
         [Fact]
+        public void Producer_NullArgumentCheck()
+        {
+            var mockProducer = new Mock<IKafkaProducer>();
+            Assert.Throws<ArgumentNullException>(() => new KafkaAsyncCollector("topic", null));
+        }
+
+        [Fact]
         public async Task SendMultipleProduce()
         {
             var mockProducer = new Mock<IKafkaProducer>();
-            var cancelToken = CancellationToken.None;
-            var kafkaEvent = new KafkaEventData();
-            kafkaEvent.Key = 123;
-            kafkaEvent.Value = "hello world";
-
-            mockProducer.Setup(x => x.Produce("topic", kafkaEvent));
+            mockProducer.Setup(x => x.Produce("topic", It.IsNotNull<KafkaEventData>()));
             var collector = new KafkaAsyncCollector("topic", mockProducer.Object);
 
 
@@ -43,28 +45,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             });
 
             await collector.FlushAsync();
+
+            mockProducer.Verify(x => x.Produce("topic", It.IsNotNull<KafkaEventData>()), Times.Exactly(2));
+            mockProducer.Verify(x => x.Produce("topic", It.Is<KafkaEventData>(k => k.Value.ToString() == "hello world")), Times.Once);
+            mockProducer.Verify(x => x.Produce("topic", It.Is<KafkaEventData>(k => k.Value.ToString() == "hello world 2")), Times.Once);
         }
-
-        [Fact]
-        public async Task FlushAfterLotsOfSmallEvents()
-        {
-            var collector = new KafkaAsyncCollector();
-
-            // Sending a bunch of little events
-            for (int i = 0; i < 150; i++)
-            {
-                var e1 = new KafkaEventData() { Key = 1, Value = "hello" };
-                await collector.AddAsync(e1);
-            }
-        }
-
+        
         [Fact]
         public async Task CantSendNullEvent()
         {
-            var collector = new KafkaAsyncCollector();
+            var mockProducer = new Mock<IKafkaProducer>();
+            mockProducer.Setup(x => x.Produce("topic", It.IsNotNull<KafkaEventData>()));
+            var collector = new KafkaAsyncCollector("topic", mockProducer.Object);
 
             await Assert.ThrowsAsync<ArgumentNullException>(
                 async () => await collector.AddAsync(null));
+
+            await collector.FlushAsync();
         }
     }
 }

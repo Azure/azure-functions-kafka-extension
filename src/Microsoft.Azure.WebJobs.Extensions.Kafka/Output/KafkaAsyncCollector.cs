@@ -13,12 +13,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly string topic;
         private readonly IKafkaProducer producer;
 
-        public KafkaAsyncCollector()
-        {
-        }
-
         public KafkaAsyncCollector(string topic, IKafkaProducer producer)
         {
+            if (topic == null)
+            {
+                throw new ArgumentNullException(nameof(topic));
+            }
+
+            if (producer == null)
+            {
+                throw new ArgumentNullException(nameof(producer));
+            }
+
             this.topic = topic;
             this.producer = producer;
         }
@@ -27,7 +33,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             if (item == null)
             {
-                throw new ArgumentNullException("item");
+                throw new ArgumentNullException(nameof(item));
             }
 
             this.producer.Produce(this.topic, item);
