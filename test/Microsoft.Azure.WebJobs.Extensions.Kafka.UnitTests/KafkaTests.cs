@@ -74,6 +74,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var strategy = new KafkaTriggerBindingStrategy();
             var bindingData = strategy.GetBindingData(input);
 
+            // To be implemented
+
             Assert.Equal(3, bindingData.Count);
         }
     }
