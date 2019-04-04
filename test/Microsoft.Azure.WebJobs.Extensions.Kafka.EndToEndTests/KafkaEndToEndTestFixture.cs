@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Confluent.Kafka;
 using Confluent.Kafka.Admin;
@@ -52,7 +53,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
         /// <returns>The all topics.</returns>
         public IEnumerable<TopicSpecification> GetAllTopics()
         {
-            foreach (var prop in this.GetType().GetProperties().Where(x => x.PropertyType == typeof(TopicSpecification)))
+            foreach (var prop in this.GetType().GetProperties(BindingFlags.NonPublic | BindingFlags.Instance).Where(x => x.PropertyType == typeof(TopicSpecification)))
             {
                 yield return (TopicSpecification)prop.GetValue(this);
             }

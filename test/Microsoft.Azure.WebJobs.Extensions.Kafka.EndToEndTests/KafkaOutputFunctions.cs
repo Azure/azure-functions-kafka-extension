@@ -12,7 +12,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
         public static async Task SendToStringTopic(
             string topic,
             IEnumerable<string> content,
-            TimeSpan? interval,
             [Kafka(BrokerList = "LocalBroker")] IAsyncCollector<KafkaEventData> output)
         {
             foreach (var c in content)
@@ -24,12 +23,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                 };
 
                 await output.AddAsync(message);
-
-                if (interval.HasValue)
-                {
-                    await Task.Delay(interval.Value);
-
-                }
             }
         }
 
@@ -37,7 +30,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             string topic,
             IEnumerable<long> keys,
             IEnumerable<string> content,
-            TimeSpan? interval,
             [Kafka(BrokerList = "LocalBroker", KeyType = typeof(long))] IAsyncCollector<KafkaEventData> output)
         {
 
@@ -53,12 +45,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                 };
 
                 await output.AddAsync(message);
-
-                if (interval.HasValue)
-                {
-                    await Task.Delay(interval.Value);
-
-                }
             }
         }
 
@@ -66,7 +52,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             string topic,
             IEnumerable<string> keys,
             IEnumerable<string> content,
-            TimeSpan? interval,
             [Kafka(BrokerList = "LocalBroker", KeyType = typeof(string), ValueType = typeof(MyAvroRecord))] IAsyncCollector<KafkaEventData> output)
         {
 
@@ -87,11 +72,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                 };
 
                 await output.AddAsync(message);
-
-                if (interval.HasValue)
-                {
-                    await Task.Delay(interval.Value);
-                }
             }
         }
 
@@ -99,7 +79,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             string topic,
             IEnumerable<string> keys,
             IEnumerable<string> content,
-            TimeSpan? interval,
             [Kafka(BrokerList = "LocalBroker", KeyType = typeof(string), ValueType = typeof(ProtoUser))] IAsyncCollector<KafkaEventData> output)
         {
             var colors = new[] { "red", "blue", "green" };
@@ -124,11 +103,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
                 await output.AddAsync(message);
                 i++;
-
-                if (interval.HasValue)
-                {
-                    await Task.Delay(interval.Value);
-                }
             }
         }
     }
