@@ -256,6 +256,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
         /// <summary>
         /// Ensures that multiple hosts processing a topic with 10 partition share the content, having the events being processed at least once.
+        /// 
+        /// Test flow:
+        /// 1. In a separated task producer creates 4x80 items. After the first batch is created waits for semaphore.
+        /// 2. In main task host1 starts processing messages
+        /// 3. When host1 has at least a message starts hosts2
+        /// 4. When host2 obtains at least 1 partitions it triggers the semaphore
+        /// 5. Once the producer tasks is finished (all 240 messages were created), validate that all messages were processed by host1 and host2
         /// </summary>
         [Fact]
         public async Task Multiple_Hosts_Process_Events_At_Least_Once()
@@ -285,7 +292,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                     if (i == 0)
                     {
                         // wait until host2 has partitions assigned
-                        Assert.True(await host2HasPartitionsSemaphore.WaitAsync(TimeSpan.FromSeconds(30)));
+                        Assert.True(await host2HasPartitionsSemaphore.WaitAsync(TimeSpan.FromSeconds(30)), "Host2 has not been assigned any partition after waiting for 30 seconds");
                     }
 
                     await Task.Delay(100);
@@ -358,7 +365,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                     return true;
                 });
 
-                // For history write down items that have more than once
+                // For history write down items that have been processed more than once
+                // If an item is processed more than 2x times test fails
                 var logs = new List<string>(host1Log.GetAllLogMessages().Where(messageFilter).Select(x => x.FormattedMessage));
                 logs.AddRange(host2Log.GetAllLogMessages().Where(messageFilter).Select(x => x.FormattedMessage));
 
@@ -377,7 +385,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
                 // Should not process more than 10% of all items a second time.
                 Assert.InRange(multipleProcessItemCount, 0, producedMessagesCount / 10);
-
             }
             finally
             {
