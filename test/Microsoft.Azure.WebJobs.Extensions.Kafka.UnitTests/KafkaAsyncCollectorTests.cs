@@ -55,13 +55,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         public async Task CantSendNullEvent()
         {
             var mockProducer = new Mock<IKafkaProducer>();
-            mockProducer.Setup(x => x.Produce("topic", It.IsNotNull<KafkaEventData>()));
             var collector = new KafkaAsyncCollector("topic", mockProducer.Object);
 
-            await Assert.ThrowsAsync<ArgumentNullException>(
-                async () => await collector.AddAsync(null));
-
-            await collector.FlushAsync();
+            await Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            {
+                await collector.AddAsync(null);
+            });
         }
     }
 }

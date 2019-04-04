@@ -6,7 +6,7 @@ using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 {
-    public class KafkaTests
+    public class KafkaTriggerBindingStrategyTest
     {
         [Fact]
         public void GetStaticBindingContract_ReturnsExpectedValue()
@@ -33,40 +33,5 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(typeof(string), contract["Topic"]);
             Assert.Equal(typeof(DateTime), contract["Timestamp"]);
         }
-        
-        //[Fact]
-        //public void GetBindingData_MultipleDispatch_ReturnsExpectedValue()
-        //{
-        //    var events = new KafkaEventData[3]
-        //    {
-        //        new KafkaEventData()
-        //        {
-        //            Key = 1,
-        //            Value = "hello world"
-        //        },
-        //        new KafkaEventData()
-        //        {
-        //            Key = 2,
-        //            Value = "hello world 2"
-        //        },
-        //        new KafkaEventData()
-        //        {
-        //            Key = 3,
-        //            Value = "hello world 3"
-        //        }
-        //    };
-            
-        //    var input = new KafkaTriggerInput
-        //    {
-        //        Events = events
-        //    };
-
-        //    var strategy = new KafkaTriggerBindingStrategy();
-        //    var bindingData = strategy.GetBindingData(input);
-
-        //    // To be implemented
-
-        //    Assert.Equal(3, bindingData.Count);
-        //}
     }
 }
