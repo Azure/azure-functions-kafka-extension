@@ -15,6 +15,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.Listeners
     internal static class KafkaListenerFactory
     {
         public static IListener CreateFor(KafkaTriggerAttribute attribute,
+            Type parameterType,
             ITriggeredFunctionExecutor executor,
             bool singleDispatch,
             KafkaOptions options,
@@ -24,7 +25,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.Listeners
             string eventHubConnectionString,
             ILogger logger)
         {
-            var valueType = GetValueType(attribute, out string avroSchema);
+            var valueType = GetValueType(attribute, parameterType, out string avroSchema);
             return (IListener)typeof(KafkaListenerFactory)
                 .GetMethod(nameof(CreateFor), BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.InvokeMethod)
                 .MakeGenericMethod(attribute.KeyType ?? typeof(Ignore), valueType)
@@ -42,7 +43,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.Listeners
                 });
         }
 
-        private static Type GetValueType(KafkaTriggerAttribute attribute, out string avroSchema)
+        private static Type GetValueType(KafkaTriggerAttribute attribute, Type parameterType, out string avroSchema)
         {
             avroSchema = null;
 
@@ -53,6 +54,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.Listeners
                 {
                     avroSchema = attribute.AvroSchema;
                     return typeof(Avro.Generic.GenericRecord);
+                }
+                else if (parameterType == typeof(byte[][])
+                    || parameterType == typeof(byte[]))
+                {
+                    return typeof(byte[]);
                 }
                 else
                 {
