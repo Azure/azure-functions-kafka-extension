@@ -3,7 +3,6 @@
 
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 using Confluent.Kafka;
 using Confluent.SchemaRegistry.Serdes;
 using Microsoft.Extensions.Logging;
@@ -58,14 +57,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 builder.SetKeySerializer(keySerializer);
             }
 
-            this.producer = builder.Build();
+            producer = builder.Build();
         }
 
         public void Flush(CancellationToken cancellationToken)
         {
             try
             {
-                this.producer.Flush(cancellationToken);
+                producer.Flush(cancellationToken);
             }
             catch (OperationCanceledException)
             {
@@ -73,7 +72,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "Error flushing Kafka producer");
+                logger.LogError(ex, "Error flushing Kafka producer");
                 throw;
             }
         }
@@ -123,11 +122,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             try
             {
-                this.producer.BeginProduce(topicUsed, msg, this.DeliveryHandler);
+                producer.BeginProduce(topicUsed, msg, DeliveryHandler);
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "Error producing into {topic}", topicUsed);
+                logger.LogError(ex, "Error producing into {topic}", topicUsed);
                 throw;
             }
         }
@@ -136,11 +135,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             if (deliveredItem.Error == null || deliveredItem.Error.Code == ErrorCode.NoError)
             {
-                this.logger.LogDebug("Message delivered on {topic} / {partition} / {offset}", deliveredItem.Topic, (int)deliveredItem.Partition, (long)deliveredItem.Offset);
+                logger.LogDebug("Message delivered on {topic} / {partition} / {offset}", deliveredItem.Topic, (int)deliveredItem.Partition, (long)deliveredItem.Offset);
             }
             else
             {
-                this.logger.LogError("Failed to delivery message to {topic} / {partition} / {offset}. Error: {error}", deliveredItem.Topic, (int)deliveredItem.Partition, (long)deliveredItem.Offset, deliveredItem.Error.ToString());
+                logger.LogError("Failed to delivery message to {topic} / {partition} / {offset}. Reason: {reason}. Full Error: {error}", deliveredItem.Topic, (int)deliveredItem.Partition, (long)deliveredItem.Offset, deliveredItem.Error.Reason, deliveredItem.Error.ToString());
             }
         }
     }
