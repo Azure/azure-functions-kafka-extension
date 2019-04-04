@@ -20,7 +20,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// <param name="topic">Topic name</param>
         public KafkaAttribute(string topic)
         {
-            Topic = topic;
+            this.Topic = topic;
         }
 
         /// <summary>
@@ -49,7 +49,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// </summary>
         public Type KeyType { get; set; }
 
-        Type valueType;
+        private Type valueType;
 
         /// <summary>
         /// Gets or sets the Avro data type
@@ -57,15 +57,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// </summary>
         public Type ValueType
         {
-            get => this.valueType;
+            get => valueType;
             set
             {
                 if (value != null && !IsValidValueType(value))
                 {
-                    throw new ArgumentException($"The value of {nameof(ValueType)} must be a byte[], string or a type that implements {nameof(ISpecificRecord)} or {nameof(Google.Protobuf.IMessage)}. The type {value.Name} does not.");
+                    throw new ArgumentException($"The value of {nameof(this.ValueType)} must be a byte[], string or a type that implements {nameof(ISpecificRecord)} or {nameof(Google.Protobuf.IMessage)}. The type {value.Name} does not.");
                 }
 
-                this.valueType = value;
+                valueType = value;
             }
         }
 
@@ -75,7 +75,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// </summary>
         public string AvroSchema { get; set; }
 
-        bool IsValidValueType(Type value)
+        private bool IsValidValueType(Type value)
         {
             return
                 typeof(ISpecificRecord).IsAssignableFrom(value) ||
@@ -83,5 +83,36 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 value == typeof(byte[]) ||
                 value == typeof(string);
         }
+
+        /// <summary>
+        /// Gets or sets the Maximum transmit message size. Default: 1MB
+        /// </summary>
+        public int MaxMessageBytes { get; set; } = 1024000;
+
+        /// <summary>
+        /// Maximum number of messages batched in one MessageSet. default: 10000
+        /// </summary>
+        public int BatchSize { get; set; } = 1000;
+
+        /// <summary>
+        /// When set to `true`, the producer will ensure that messages are successfully produced exactly once and in the original produce order. default: false
+        /// </summary>
+        public bool EnableIdempotence { get; set; } = false;
+
+        /// <summary>
+        /// Local message timeout. This value is only enforced locally and limits the time a produced message waits for successful delivery. A time of 0 is infinite. This is the maximum time used to deliver a message (including retries). Delivery error occurs when either the retry count or the message timeout are exceeded. default: 300000
+        /// </summary>
+        public int MessageTimeoutMs { get; set; } = 300000;
+
+        /// <summary>
+        /// The ack timeout of the producer request in milliseconds. default: 5000
+        /// </summary>
+        public int RequestTimeoutMs { get; set; } = 5000;
+
+        /// <summary>
+        /// How many times to retry sending a failing Message. **Note:** default: 2 
+        /// </summary>
+        /// <remarks>Retrying may cause reordering unless <c>EnableIdempotence</c> is set to <c>true</c>.</remarks>
+        public int MaxRetries { get; set; } = 2;
     }
 }

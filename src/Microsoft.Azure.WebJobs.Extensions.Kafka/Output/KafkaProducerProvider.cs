@@ -22,7 +22,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly IConfiguration config;
         private readonly INameResolver nameResolver;
         private readonly ILoggerProvider loggerProvider;
-        ConcurrentDictionary<string, IKafkaProducer> producers = new ConcurrentDictionary<string, IKafkaProducer>();
+        private ConcurrentDictionary<string, IKafkaProducer> producers = new ConcurrentDictionary<string, IKafkaProducer>();
 
         public KafkaProducerProvider(IConfiguration config, INameResolver nameResolver, ILoggerProvider loggerProvider)
         {
@@ -33,8 +33,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public IKafkaProducer Get(KafkaAttribute attribute)
         {
-            var resolvedBrokerList = this.nameResolver.ResolveWholeString(attribute.BrokerList);
-            var brokerListFromConfig = this.config.GetConnectionStringOrSetting(resolvedBrokerList);
+            var resolvedBrokerList = nameResolver.ResolveWholeString(attribute.BrokerList);
+            var brokerListFromConfig = config.GetConnectionStringOrSetting(resolvedBrokerList);
             if (!string.IsNullOrEmpty(brokerListFromConfig))
             {
                 resolvedBrokerList = brokerListFromConfig;
@@ -44,7 +44,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var valueTypeName = attribute.ValueType == null ? string.Empty : attribute.ValueType.AssemblyQualifiedName;
             var producerKey = $"{resolvedBrokerList}:keyTypeName:valueTypeName";
 
-            return producers.GetOrAdd(producerKey, (k) => this.Create(attribute, resolvedBrokerList));
+            return producers.GetOrAdd(producerKey, (k) => Create(attribute, resolvedBrokerList));
         }
 
         private IKafkaProducer Create(KafkaAttribute attribute, string brokerList)
@@ -75,17 +75,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             return (IKafkaProducer)Activator.CreateInstance(
                 typeof(KafkaProducer<,>).MakeGenericType(keyType, valueType),
-                this.GetProducerConfig(brokerList),
+                GetProducerConfig(attribute, brokerList),
                 avroSchema,
-                this.loggerProvider.CreateLogger(LogCategories.CreateTriggerCategory("Kafka")));
+                loggerProvider.CreateLogger(LogCategories.CreateTriggerCategory("Kafka")));
         }
 
-        private ProducerConfig GetProducerConfig(string brokerList)
+        private ProducerConfig GetProducerConfig(KafkaAttribute attribute, string brokerList) => new ProducerConfig
         {
-            return new ProducerConfig()
-            {
-                BootstrapServers = brokerList,
-            };
-        }
+            BootstrapServers = brokerList,
+            BatchNumMessages = attribute.BatchSize,
+            EnableIdempotence = attribute.EnableIdempotence,
+            MessageSendMaxRetries = attribute.MaxRetries,
+            MessageTimeoutMs = attribute.MessageTimeoutMs,
+            RequestTimeoutMs = attribute.RequestTimeoutMs,
+        };
     }
 }
