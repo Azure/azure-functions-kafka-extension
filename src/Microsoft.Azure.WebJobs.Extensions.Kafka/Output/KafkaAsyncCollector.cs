@@ -15,11 +15,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public KafkaAsyncCollector(string topic, IKafkaProducer producer)
         {
-            if (topic == null)
-            {
-                throw new ArgumentNullException(nameof(topic));
-            }
-
             if (producer == null)
             {
                 throw new ArgumentNullException(nameof(producer));

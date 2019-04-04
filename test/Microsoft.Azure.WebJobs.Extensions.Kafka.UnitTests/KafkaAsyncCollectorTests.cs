@@ -12,13 +12,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
     public class KafkaAsyncCollectorTests
     {
         [Fact]
-        public void Topic_NullArgumentCheck()
-        {
-            var mockProducer = new Mock<IKafkaProducer>();
-            Assert.Throws<ArgumentNullException>(() => new KafkaAsyncCollector(null, mockProducer.Object));
-        }
-
-        [Fact]
         public void Producer_NullArgumentCheck()
         {
             var mockProducer = new Mock<IKafkaProducer>();
