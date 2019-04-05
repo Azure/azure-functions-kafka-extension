@@ -54,3 +54,12 @@ jobs:
     inputs:
       command: test
       projects: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
+
+  - script: dotnet pack -o '$(Build.ArtifactStagingDirectory)' --include-symbols src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
+    displayName: 'Pack nuget pacakge'
+  
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathToPublish: '$(Build.ArtifactStagingDirectory)'
+      artifactName: 'drop'
+      publishLocation: 'Container'

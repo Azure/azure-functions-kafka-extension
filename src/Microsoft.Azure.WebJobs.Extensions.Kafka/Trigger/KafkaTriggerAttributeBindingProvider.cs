@@ -70,6 +70,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             Task<IListener> listenerCreator(ListenerFactoryContext factoryContext, bool singleDispatch)
             {
                 var listener = Listeners.KafkaListenerFactory.CreateFor(attribute,
+                    parameter.ParameterType,
                     factoryContext.Executor,
                     singleDispatch,
                     options.Value,
