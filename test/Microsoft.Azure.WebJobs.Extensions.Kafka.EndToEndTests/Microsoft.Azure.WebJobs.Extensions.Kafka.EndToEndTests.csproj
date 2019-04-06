@@ -27,8 +27,8 @@
     <PackageReference Include="xunit" Version="2.4.0" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.0" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Logging" Version="3.0.5" />
-    <PackageReference Include="Confluent.Kafka" Version="1.0.0-RC2" />
-    <PackageReference Include="Confluent.SchemaRegistry.Serdes" Version="1.0.0-RC2" />
+    <PackageReference Include="Confluent.Kafka" Version="1.0.0-RC3" />
+    <PackageReference Include="Confluent.SchemaRegistry.Serdes" Version="1.0.0-RC3" />
     <PackageReference Include="Google.Protobuf" Version="3.7.0" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="3.0.4" />
   </ItemGroup>
