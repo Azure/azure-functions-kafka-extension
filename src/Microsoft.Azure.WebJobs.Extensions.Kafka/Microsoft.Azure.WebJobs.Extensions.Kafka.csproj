@@ -7,6 +7,16 @@
     <RootNamespace>Microsoft.Azure.WebJobs.Extensions.Kafka</RootNamespace>
     <PackageId>Microsoft.Azure.WebJobs.Extensions.Kafka</PackageId>
     <Description>Microsoft Azure WebJobs SDK Kafka Extension</Description>
+    <CommitHash Condition="$(CommitHash) == ''">N/A</CommitHash>
+    <InformationalVersion>$(Version) Commit hash: $(CommitHash)</InformationalVersion>
+    <Authors>Microsoft</Authors>
+    <Company>Microsoft</Company>
+    <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
+    <PackageLicenseUrl>https://raw.githubusercontent.com/Azure/azure-functions-kafka-extension/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>http://go.microsoft.com/fwlink/?LinkID=320972</PackageProjectUrl>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/Azure/azure-functions-kafka-extension</RepositoryUrl>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
