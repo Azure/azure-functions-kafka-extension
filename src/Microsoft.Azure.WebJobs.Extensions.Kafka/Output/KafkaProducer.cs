@@ -3,7 +3,6 @@
 
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 using Confluent.Kafka;
 using Confluent.SchemaRegistry.Serdes;
 using Microsoft.Extensions.Logging;
@@ -140,7 +139,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
             else
             {
-                this.logger.LogError("Failed to delivery message to {topic} / {partition} / {offset}. Error: {error}", deliveredItem.Topic, (int)deliveredItem.Partition, (long)deliveredItem.Offset, deliveredItem.Error.ToString());
+                logger.LogError("Failed to delivery message to {topic} / {partition} / {offset}. Reason: {reason}. Full Error: {error}", deliveredItem.Topic, (int)deliveredItem.Partition, (long)deliveredItem.Offset, deliveredItem.Error.Reason, deliveredItem.Error.ToString());
             }
         }
     }
