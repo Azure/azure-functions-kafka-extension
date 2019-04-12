@@ -8,8 +8,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     /// <summary>
     /// Provider for <see cref="IKafkaProducer"/>
     /// </summary>
-    public interface IKafkaProducerProvider
+    public interface IKafkaProducerFactory
     {
-        IKafkaProducer Get(KafkaAttribute attribute);
+        IKafkaProducer Create(KafkaAttribute attribute);
     }
 }

@@ -5,7 +5,7 @@ using Avro;
 using Avro.Specific;
 using Newtonsoft.Json;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
+namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 {
     public class MyAvroRecord : ISpecificRecord
     {
@@ -39,7 +39,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                 case 0: return this.ID;
                 case 1: return this.Ticks;
                 default: throw new AvroRuntimeException("Bad index " + fieldPos + " in Get()");
-            };
+            }
         }
         public virtual void Put(int fieldPos, object fieldValue)
         {
@@ -48,8 +48,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                 case 0: this.ID = (string)fieldValue; break;
                 case 1: this.Ticks = (long)fieldValue; break;
                 default: throw new AvroRuntimeException("Bad index " + fieldPos + " in Put()");
-            };
+            }
         }
-
     }
 }

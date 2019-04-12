@@ -12,7 +12,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
         public static async Task SendToStringTopic(
             string topic,
             IEnumerable<string> content,
-            [Kafka(BrokerList = "LocalBroker")] IAsyncCollector<KafkaEventData> output)
+            [Kafka(BrokerList = "LocalBroker", ValueType = typeof(string))] IAsyncCollector<KafkaEventData> output)
         {
             foreach (var c in content)
             {
@@ -30,7 +30,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             string topic,
             IEnumerable<long> keys,
             IEnumerable<string> content,
-            [Kafka(BrokerList = "LocalBroker", KeyType = typeof(long))] IAsyncCollector<KafkaEventData> output)
+            [Kafka(BrokerList = "LocalBroker", KeyType = typeof(long), ValueType = typeof(string))] IAsyncCollector<KafkaEventData> output)
         {
 
             var keysEnumerator = keys.GetEnumerator();

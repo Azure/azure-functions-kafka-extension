@@ -9,7 +9,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
     internal static class MultiItemTrigger
     {
         public static void Trigger(
-            [KafkaTrigger("LocalBroker", Constants.StringTopicWithOnePartitionName, ConsumerGroup = nameof(MultiItemTrigger))] KafkaEventData[] kafkaEvents,
+            [KafkaTrigger("LocalBroker", Constants.StringTopicWithOnePartitionName, ConsumerGroup = nameof(MultiItemTrigger), ValueType = typeof(string))] KafkaEventData[] kafkaEvents,
             ILogger log)
         {
             foreach (var kafkaEvent in kafkaEvents)

@@ -69,7 +69,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             // TODO: reuse connections if they match with others in same function app
             Task<IListener> listenerCreator(ListenerFactoryContext factoryContext, bool singleDispatch)
             {
-                var listener = Listeners.KafkaListenerFactory.CreateFor(attribute,
+                var listener = KafkaListenerFactory.CreateFor(attribute,
                     parameter.ParameterType,
                     factoryContext.Executor,
                     singleDispatch,
@@ -77,12 +77,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     resolvedBrokerList,
                     resolvedTopic,
                     resolvedConsumerGroup,
-                    resolvedEventHubConnectionString, logger);
+                    resolvedEventHubConnectionString,
+                    logger);
 
                 return Task.FromResult(listener);
             }
 
+            #pragma warning disable CS0618 // Type or member is obsolete
             var binding = BindingFactory.GetTriggerBinding(new KafkaTriggerBindingStrategy(), context.Parameter, this.converterManager, listenerCreator);
+            #pragma warning restore CS0618 // Type or member is obsolete
+
             return Task.FromResult<ITriggerBinding>(binding);
         }
     }

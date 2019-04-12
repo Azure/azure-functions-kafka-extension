@@ -21,17 +21,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly ITriggeredFunctionExecutor executor;
         private readonly IConsumer<TKey, TValue> consumer;
         private readonly int channelFullRetryIntervalInMs;
+        private readonly ICommitStrategy<TKey, TValue> commitStrategy;
         private readonly CancellationTokenSource cancellationTokenSource;
         private readonly Channel<KafkaEventData[]> channel;
         private readonly List<KafkaEventData> currentBatch;
         private readonly ILogger logger;
         private SemaphoreSlim readerFinished = new SemaphoreSlim(0, 1);
 
-        public FunctionExecutorBase(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, int channelCapacity, int channelFullRetryIntervalInMs, ILogger logger)
+        internal FunctionExecutorBase(
+            ITriggeredFunctionExecutor executor,
+            IConsumer<TKey, TValue> consumer,
+            int channelCapacity,
+            int channelFullRetryIntervalInMs,
+            ICommitStrategy<TKey, TValue> commitStrategy,
+            ILogger logger)
         {
             this.executor = executor ?? throw new System.ArgumentNullException(nameof(executor));
             this.consumer = consumer ?? throw new System.ArgumentNullException(nameof(consumer));
             this.channelFullRetryIntervalInMs = channelFullRetryIntervalInMs;
+            this.commitStrategy = commitStrategy;
             this.logger = logger;
             this.cancellationTokenSource = new CancellationTokenSource();
             this.currentBatch = new List<KafkaEventData>();
@@ -76,18 +84,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             try
             {
-                this.consumer.Commit(topicPartitionOffsets);
-
-                if (this.logger.IsEnabled(LogLevel.Information))
-                {
-                    foreach (var tpo in topicPartitionOffsets)
-                    {
-                        this.logger.LogInformation("Committed {topic} / {partition} / {offset}",
-                           tpo.Topic,
-                           tpo.Partition,
-                           tpo.Offset);
-                    }
-                }
+                this.commitStrategy.Commit(topicPartitionOffsets);
             }
             catch (KafkaException e)
             {

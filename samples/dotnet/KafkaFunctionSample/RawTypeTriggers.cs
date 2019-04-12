@@ -23,7 +23,7 @@ namespace KafkaFunctionSample
     {
         //[FunctionName(nameof(StringTopic))]
         //public static void StringTopic(
-        //    [KafkaTrigger("LocalBroker", "stringTopic", ConsumerGroup = "azfunc")] KafkaEventData kafkaEvent,
+        //    [KafkaTrigger("LocalBroker", "stringTopic", ConsumerGroup = "azfunc", ValueType = typeof(string))] KafkaEventData kafkaEvent,
         //    ILogger logger)
         //{
         //    logger.LogInformation(kafkaEvent.Value.ToString());

@@ -22,7 +22,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         public async Task SendMultipleProduce()
         {
             var mockProducer = new Mock<IKafkaProducer>();
-            mockProducer.Setup(x => x.Produce("topic", It.IsNotNull<KafkaEventData>()));
+            mockProducer.Setup(x => x.ProduceAsync("topic", It.IsNotNull<KafkaEventData>()))
+                .Returns(Task.CompletedTask);
+
             var collector = new KafkaAsyncCollector("topic", mockProducer.Object);
 
 
@@ -39,9 +41,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             await collector.FlushAsync();
 
-            mockProducer.Verify(x => x.Produce("topic", It.IsNotNull<KafkaEventData>()), Times.Exactly(2));
-            mockProducer.Verify(x => x.Produce("topic", It.Is<KafkaEventData>(k => k.Value.ToString() == "hello world")), Times.Once);
-            mockProducer.Verify(x => x.Produce("topic", It.Is<KafkaEventData>(k => k.Value.ToString() == "hello world 2")), Times.Once);
+            mockProducer.Verify(x => x.ProduceAsync("topic", It.IsNotNull<KafkaEventData>()), Times.Exactly(2));
+            mockProducer.Verify(x => x.ProduceAsync("topic", It.Is<KafkaEventData>(k => k.Value.ToString() == "hello world")), Times.Once);
+            mockProducer.Verify(x => x.ProduceAsync("topic", It.Is<KafkaEventData>(k => k.Value.ToString() == "hello world 2")), Times.Once);
         }
         
         [Fact]
