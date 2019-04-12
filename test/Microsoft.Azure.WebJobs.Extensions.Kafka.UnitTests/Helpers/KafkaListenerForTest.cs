@@ -16,22 +16,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         private IConsumer<TKey, TValue> consumer;
         private ConsumerBuilder<TKey, TValue> consumerBuilder;
 
+        public ConsumerConfig ConsumerConfig { get; private set; }
+
         public KafkaListenerForTest(ITriggeredFunctionExecutor executor,
             bool singleDispatch,
             KafkaOptions options,
-            string brokerList,
-            string topic,
-            string consumerGroup,
-            string eventHubConnectionString,
+            KafkaListenerConfiguration kafkaListenerConfiguration,
             object valueDeserializer,
             ILogger logger)
             : base(executor,
                 singleDispatch,
                 options,
-                brokerList,
-                topic,
-                consumerGroup,
-                eventHubConnectionString,
+                kafkaListenerConfiguration,
                 valueDeserializer,
                 logger)
         {
@@ -44,6 +40,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
         protected override ConsumerBuilder<TKey, TValue> CreateConsumerBuilder(ConsumerConfig config)
         {
+            this.ConsumerConfig = config;
             return this.consumerBuilder ?? new TestConsumerBuilder<TKey, TValue>(config, this.consumer);
         }
     }

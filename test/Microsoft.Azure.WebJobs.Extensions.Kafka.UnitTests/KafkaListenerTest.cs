@@ -3,6 +3,7 @@
 
 using Confluent.Kafka;
 using Microsoft.Azure.WebJobs.Host.Executors;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using System;
@@ -66,14 +67,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 })
                 .ReturnsAsync(new FunctionResult(true));
 
+            var listenerConfig = new KafkaListenerConfiguration()
+            {
+                BrokerList = "testBroker",
+                Topic = "topic",
+                ConsumerGroup = "group1",
+            };
+
             var target = new KafkaListenerForTest<Ignore, string>(
                 executor.Object,
                 singleDispatch: true,
                 options: new KafkaOptions(),
-                brokerList: "testBroker",
-                topic: "topic",
-                consumerGroup: "group1",
-                eventHubConnectionString: null,
+                listenerConfig,
                 valueDeserializer: null,
                 logger: NullLogger.Instance
                 );
@@ -123,14 +128,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 })
                 .ReturnsAsync(new FunctionResult(true));
 
+            var listenerConfig = new KafkaListenerConfiguration()
+            {
+                BrokerList = "testBroker",
+                Topic = "topic",
+                ConsumerGroup = "group1",
+            };
+
             var target = new KafkaListenerForTest<Ignore, string>(
                 executor.Object,
                 singleDispatch: false,
                 options: new KafkaOptions(),
-                brokerList: "testBroker",
-                topic: "topic",
-                consumerGroup: "group1",
-                eventHubConnectionString: null,
+                listenerConfig,
                 valueDeserializer: null,
                 logger: NullLogger.Instance
                 );
@@ -235,14 +244,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 })
                 .ReturnsAsync(new FunctionResult(true));
 
+            var listenerConfig = new KafkaListenerConfiguration()
+            {
+                BrokerList = "testBroker",
+                Topic = "topic",
+                ConsumerGroup = "group1",
+            };
+
             var target = new KafkaListenerForTest<Ignore, string>(
                 executor.Object,
                 singleDispatch,
                 new KafkaOptions(),
-                "testBroker",
-                "topic",
-                "group1",
-                null,
+                listenerConfig,
                 valueDeserializer: null,
                 NullLogger.Instance
                 );
@@ -270,25 +283,88 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             await target.StopAsync(default(CancellationToken));
         }
 
-        public async Task When_Options_Are_Set_Config_Should_Be_Set_In_Consumer()
+        [Fact]
+        public async Task When_Options_Are_Set_Should_Be_Set_In_Consumer_Config()
         {
             var executor = new Mock<ITriggeredFunctionExecutor>();
+            var consumer = new Mock<IConsumer<Ignore, string>>();
+
+            var listenerConfig = new KafkaListenerConfiguration()
+            {
+                BrokerList = "testBroker",
+                Topic = "topic",
+                ConsumerGroup = "group1",
+            };
+
+            var kafkaOptions = new KafkaOptions();
             var target = new KafkaListenerForTest<Ignore, string>(
                 executor.Object,
                 true,
-                new KafkaOptions()
-                {
-                    MaxBatchSize = 123,
-                },
-                "testBroker",
-                "topic",
-                "group1",
-                null,
+                kafkaOptions,
+                listenerConfig,
                 valueDeserializer: null,
                 NullLogger.Instance
                 );
 
+            target.SetConsumer(consumer.Object);
+
             await target.StartAsync(default);
+
+            Assert.Equal(6, target.ConsumerConfig.Count());
+            Assert.Equal("testBroker", target.ConsumerConfig.BootstrapServers);
+            Assert.Equal("group1", target.ConsumerConfig.GroupId);
+            Assert.Equal(kafkaOptions.AutoCommitIntervalMs, target.ConsumerConfig.AutoCommitIntervalMs);
+            Assert.Equal(true, target.ConsumerConfig.EnableAutoCommit);
+            Assert.Equal(false, target.ConsumerConfig.EnableAutoOffsetStore);
+            Assert.Equal(AutoOffsetReset.Earliest, target.ConsumerConfig.AutoOffsetReset);
+
+            await target.StopAsync(default);
+        }
+
+        [Fact]
+        public async Task When_Options_With_Ssal_Are_Set_Should_Be_Set_In_Consumer_Config()
+        {
+            var executor = new Mock<ITriggeredFunctionExecutor>();
+            var consumer = new Mock<IConsumer<Ignore, string>>();
+
+            var listenerConfig = new KafkaListenerConfiguration()
+            {
+                BrokerList = "testBroker",
+                Topic = "topic",
+                ConsumerGroup = "group1",
+                SaslMechanism = SaslMechanism.Plain,
+                SaslPassword = "mypassword",
+                SaslUsername ="myusername",
+                SecurityProtocol = SecurityProtocol.SaslSsl,
+            };
+
+            var kafkaOptions = new KafkaOptions();
+            var target = new KafkaListenerForTest<Ignore, string>(
+                executor.Object,
+                true,
+                kafkaOptions,
+                listenerConfig,
+                valueDeserializer: null,
+                NullLogger.Instance
+                );
+
+            target.SetConsumer(consumer.Object);
+
+            await target.StartAsync(default);
+
+            Assert.Equal(10, target.ConsumerConfig.Count());
+            Assert.Equal("testBroker", target.ConsumerConfig.BootstrapServers);
+            Assert.Equal("group1", target.ConsumerConfig.GroupId);
+            Assert.Equal(kafkaOptions.AutoCommitIntervalMs, target.ConsumerConfig.AutoCommitIntervalMs);
+            Assert.Equal(true, target.ConsumerConfig.EnableAutoCommit);
+            Assert.Equal(false, target.ConsumerConfig.EnableAutoOffsetStore);
+            Assert.Equal(AutoOffsetReset.Earliest, target.ConsumerConfig.AutoOffsetReset);
+            Assert.Equal(SaslMechanism.Plain, target.ConsumerConfig.SaslMechanism);
+            Assert.Equal("mypassword", target.ConsumerConfig.SaslPassword);
+            Assert.Equal("myusername", target.ConsumerConfig.SaslUsername);
+            Assert.Equal(SecurityProtocol.SaslSsl, target.ConsumerConfig.SecurityProtocol);
+
+            await target.StopAsync(default);
         }
     }
 }

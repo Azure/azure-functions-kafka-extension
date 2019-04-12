@@ -19,10 +19,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             ITriggeredFunctionExecutor executor,
             bool singleDispatch,
             KafkaOptions options,
-            string brokerList,
-            string topic,
-            string consumerGroup,
-            string eventHubConnectionString,
+            KafkaListenerConfiguration consumerKafkaConfiguration,
             ILogger logger)
         {
             var valueType = SerializationHelper.GetValueType(attribute.ValueType, attribute.AvroSchema, parameterType, out var avroSchema);
@@ -35,10 +32,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     executor,
                     singleDispatch,
                     options,
-                    brokerList,
-                    topic,
-                    consumerGroup,
-                    eventHubConnectionString,
+                    consumerKafkaConfiguration,
                     valueDeserializer,
                     logger
                 });

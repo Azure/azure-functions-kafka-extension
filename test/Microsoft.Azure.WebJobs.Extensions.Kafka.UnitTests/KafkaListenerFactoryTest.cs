@@ -21,6 +21,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             };
 
             var executor = new Mock<ITriggeredFunctionExecutor>();
+            var listenerConfig = new KafkaListenerConfiguration()
+            {
+                BrokerList = attribute.BrokerList,
+                Topic = attribute.Topic,
+                ConsumerGroup = "group1",
+            };
 
             var listener = KafkaListenerFactory.CreateFor(
                 attribute,
@@ -28,10 +34,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 executor.Object,
                 true,
                 new KafkaOptions(),
-                "brokers:9092",
-                "myTopic",
-                "group1",
-                null,
+                listenerConfig,
                 NullLogger.Instance);
 
             Assert.NotNull(listener);
@@ -49,6 +52,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             };
 
             var executor = new Mock<ITriggeredFunctionExecutor>();
+            var listenerConfig = new KafkaListenerConfiguration()
+            {
+                BrokerList = attribute.BrokerList,
+                Topic = attribute.Topic,
+                ConsumerGroup = "group1",
+            };
 
             var listener = KafkaListenerFactory.CreateFor(
                 attribute,
@@ -56,10 +65,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 executor.Object,
                 true,
                 new KafkaOptions(),
-                "brokers:9092",
-                "myTopic",
-                "group1",
-                null,
+                listenerConfig,
                 NullLogger.Instance);
 
             Assert.NotNull(listener);
@@ -77,6 +83,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             };
 
             var executor = new Mock<ITriggeredFunctionExecutor>();
+            var listenerConfig = new KafkaListenerConfiguration()
+            {
+                BrokerList = attribute.BrokerList,
+                Topic = attribute.Topic,
+                ConsumerGroup = "group1",
+            };
 
             var listener = KafkaListenerFactory.CreateFor(
                 attribute,
@@ -84,10 +96,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 executor.Object,
                 true,
                 new KafkaOptions(),
-                "brokers:9092",
-                "myTopic",
-                "group1",
-                null,
+                listenerConfig,
                 NullLogger.Instance);
 
             Assert.NotNull(listener);
@@ -107,17 +116,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             };
 
             var executor = new Mock<ITriggeredFunctionExecutor>();
-
+            var listenerConfig = new KafkaListenerConfiguration()
+            {
+                BrokerList = attribute.BrokerList,
+                Topic = attribute.Topic,
+                ConsumerGroup = "group1",
+            };
             var listener = KafkaListenerFactory.CreateFor(
                 attribute,
                 typeof(KafkaEventData),
                 executor.Object,
                 true,
                 new KafkaOptions(),
-                "brokers:9092",
-                "myTopic",
-                "group1",
-                null,
+                listenerConfig,
                 NullLogger.Instance);
 
             Assert.NotNull(listener);
@@ -136,17 +147,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             };
 
             var executor = new Mock<ITriggeredFunctionExecutor>();
-
+            var listenerConfig = new KafkaListenerConfiguration()
+            {
+                BrokerList = attribute.BrokerList,
+                Topic = attribute.Topic,
+                ConsumerGroup = "group1",
+            };
             var listener = KafkaListenerFactory.CreateFor(
                 attribute,
                 typeof(KafkaEventData),
                 executor.Object,
                 true,
                 new KafkaOptions(),
-                "brokers:9092",
-                "myTopic",
-                "group1",
-                null,
+                listenerConfig,
                 NullLogger.Instance);
 
             Assert.NotNull(listener);

@@ -1,6 +1,7 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
+using System.Linq;
 using Avro.Generic;
 using Confluent.Kafka;
 using Confluent.SchemaRegistry.Serdes;
@@ -107,6 +108,42 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var typedProducer = (KafkaProducer<Null, ProtoUser>)producer;
             Assert.NotNull(typedProducer.ValueSerializer);
             Assert.IsType<ProtobufSerializer<ProtoUser>>(typedProducer.ValueSerializer);
+        }
+
+        [Fact]
+        public void GetProducerConfig_When_No_Auth_Defined_Should_Contain_Only_BrokerList()
+        {
+            var attribute = new KafkaAttribute("brokers:9092", "myTopic")
+            {
+                ValueType = typeof(ProtoUser)
+            };
+
+            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerProvider.Instance);
+            var config = factory.GetProducerConfig(attribute);
+            Assert.Single(config);
+            Assert.Equal("brokers:9092", config.BootstrapServers);
+        }
+
+        [Fact]
+        public void GetProducerConfig_When_Auth_Defined_Should_Contain_Them()
+        {
+            var attribute = new KafkaAttribute("brokers:9092", "myTopic")
+            {
+                ValueType = typeof(ProtoUser),
+                AuthenticationMode = BrokerAuthenticationMode.Plain,
+                Protocol = BrokerProtocol.SaslSsl,
+                Username = "myuser",
+                Password = "secret",
+            };
+
+            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerProvider.Instance);
+            var config = factory.GetProducerConfig(attribute);
+            Assert.Equal(5, config.Count());
+            Assert.Equal("brokers:9092", config.BootstrapServers);
+            Assert.Equal(SecurityProtocol.SaslSsl, config.SecurityProtocol);
+            Assert.Equal(SaslMechanism.Plain, config.SaslMechanism);
+            Assert.Equal("secret", config.SaslPassword);
+            Assert.Equal("myuser", config.SaslUsername);
         }
     }
 }

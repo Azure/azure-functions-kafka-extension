@@ -41,7 +41,6 @@ namespace KafkaFunctionSample
         /// <summary>
         /// This function shows how to implement a custom deserialiser in the function method
         /// </summary>
-        /// <returns>The as bytes.</returns>
         /// <param name="kafkaEvents">Kafka events.</param>
         /// <param name="logger">Logger.</param>
         [FunctionName(nameof(UserAsBytes))]
@@ -59,8 +58,7 @@ namespace KafkaFunctionSample
         /// <summary>
         /// This function shows how to implement a custom deserialiser in the function method
         /// </summary>
-        /// <returns>The as bytes.</returns>
-        /// <param name="kafkaEvents">Kafka events.</param>
+        /// <param name="kafkaEvent">Kafka events.</param>
         /// <param name="logger">Logger.</param>
         [FunctionName(nameof(UserAsByte))]
         public static async Task UserAsByte(
