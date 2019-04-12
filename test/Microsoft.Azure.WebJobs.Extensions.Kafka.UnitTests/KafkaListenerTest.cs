@@ -74,6 +74,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 topic: "topic",
                 consumerGroup: "group1",
                 eventHubConnectionString: null,
+                valueDeserializer: null,
                 logger: NullLogger.Instance
                 );
 
@@ -130,6 +131,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 topic: "topic",
                 consumerGroup: "group1",
                 eventHubConnectionString: null,
+                valueDeserializer: null,
                 logger: NullLogger.Instance
                 );
 
@@ -165,14 +167,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var consumer = new Mock<IConsumer<Ignore, string>>();
 
             var committed = new ConcurrentQueue<TopicPartitionOffset>();
-
-            consumer.Setup(x => x.Commit(It.IsAny<IEnumerable<TopicPartitionOffset>>()))
-                .Callback<IEnumerable<TopicPartitionOffset>>((topicPartitionOffsetCollection) =>
+           
+            consumer.Setup(x => x.StoreOffset(It.IsNotNull<TopicPartitionOffset>()))
+                .Callback<TopicPartitionOffset>((topicPartitionOffset) =>
                 {
-                    foreach (var item in topicPartitionOffsetCollection)
-                    {
-                        committed.Enqueue(item);
-                    }
+                    committed.Enqueue(topicPartitionOffset);
                 });
 
             // Batch 1: AB12C
@@ -244,6 +243,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 "topic",
                 "group1",
                 null,
+                valueDeserializer: null,
                 NullLogger.Instance
                 );
 
@@ -268,6 +268,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(new[] { Offset_2 + 1, Offset_5 + 1 }, committedArray.Where(x => x.Partition == 1).Select(x => (long)x.Offset).ToArray());
 
             await target.StopAsync(default(CancellationToken));
+        }
+
+        public async Task When_Options_Are_Set_Config_Should_Be_Set_In_Consumer()
+        {
+            var executor = new Mock<ITriggeredFunctionExecutor>();
+            var target = new KafkaListenerForTest<Ignore, string>(
+                executor.Object,
+                true,
+                new KafkaOptions()
+                {
+                    MaxBatchSize = 123,
+                },
+                "testBroker",
+                "topic",
+                "group1",
+                null,
+                valueDeserializer: null,
+                NullLogger.Instance
+                );
+
+            await target.StartAsync(default);
         }
     }
 }

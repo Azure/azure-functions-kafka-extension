@@ -3,6 +3,7 @@
 
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Confluent.Kafka;
 using Confluent.SchemaRegistry.Serdes;
 using Microsoft.Extensions.Logging;
@@ -12,72 +13,46 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     /// <summary>
     /// Kafka producer
     /// </summary>
-    public class KafkaProducer<TKey, TValue> : IKafkaProducer
+    public sealed class KafkaProducer<TKey, TValue> : IKafkaProducer
     {
-        private readonly IProducer<TKey, TValue> producer;
-        private readonly ILogger logger;
+        private readonly object valueSerializer;
+        internal object ValueSerializer => valueSerializer;
 
+        private readonly ILogger logger;
+        private IProducer<TKey, TValue> producer;
+
+        /// <summary>
+        /// Creates a producer
+        /// </summary>
         public KafkaProducer(
-            ProducerConfig config,
-            string avroSchema,
+            Handle producerHandle,
+            object valueSerializer,
             ILogger logger)
         {
+            this.valueSerializer = valueSerializer;
             this.logger = logger;
-            var builder = new ProducerBuilder<TKey, TValue>(config);
+            var builder = new DependentProducerBuilder<TKey, TValue>(producerHandle);
 
-            IAsyncSerializer<TValue> asyncValueSerializer = null;
-            ISerializer<TValue> valueSerializer = null;
-            IAsyncSerializer<TKey> keySerializer = null;
-
-            if (!string.IsNullOrEmpty(avroSchema))
+            if (valueSerializer != null)
             {
-                var schemaRegistry = new LocalSchemaRegistry(avroSchema);
-                asyncValueSerializer = new AvroSerializer<TValue>(schemaRegistry);
-            }
-            else
-            {
-                if (typeof(Google.Protobuf.IMessage).IsAssignableFrom(typeof(TValue)))
+                if (valueSerializer is IAsyncSerializer<TValue> asyncSerializer)
                 {
-                    // protobuf: need to create using reflection due to generic requirements in ProtobufSerializer
-                    valueSerializer = (ISerializer<TValue>)Activator.CreateInstance(typeof(ProtobufSerializer<>).MakeGenericType(typeof(TValue)));
+                    builder.SetValueSerializer(asyncSerializer);
                 }
-            }
-
-            if (asyncValueSerializer != null)
-            {
-                builder.SetValueSerializer(asyncValueSerializer);
-            }
-            else if (valueSerializer != null)
-            {
-                builder.SetValueSerializer(valueSerializer);
-            }
-
-            if (keySerializer != null)
-            {
-                builder.SetKeySerializer(keySerializer);
+                else if (valueSerializer is ISerializer<TValue> syncSerializer)
+                {
+                    builder.SetValueSerializer(syncSerializer);
+                }
+                else
+                {
+                    throw new ArgumentException($"Value serializer must implement either IAsyncSerializer or ISerializer. Type {valueSerializer.GetType().Name} does not", nameof(valueSerializer));
+                }
             }
 
             this.producer = builder.Build();
         }
 
-        public void Flush(CancellationToken cancellationToken)
-        {
-            try
-            {
-                this.producer.Flush(cancellationToken);
-            }
-            catch (OperationCanceledException)
-            {
-                // cancellationToken has been cancelled
-            }
-            catch (Exception ex)
-            {
-                this.logger.LogError(ex, "Error flushing Kafka producer");
-                throw;
-            }
-        }
-
-        public void Produce(string topic, KafkaEventData item)
+        public async Task ProduceAsync(string topic, KafkaEventData item)
         {
             if (item == null)
             {
@@ -122,7 +97,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             try
             {
-                this.producer.BeginProduce(topicUsed, msg, this.DeliveryHandler);
+                var deliveryResult = await this.producer.ProduceAsync(topicUsed, msg);
+
+                this.logger.LogDebug("Message delivered on {topic} / {partition} / {offset}", deliveryResult.Topic, (int)deliveryResult.Partition, (long)deliveryResult.Offset);                
+            }
+            catch (ProduceException<TKey, TValue> produceException)
+            {
+                logger.LogError("Failed to delivery message to {topic} / {partition} / {offset}. Reason: {reason}. Full Error: {error}", produceException.DeliveryResult?.Topic, (int)produceException.DeliveryResult?.Partition, (long)produceException.DeliveryResult?.Offset, produceException.Error.Reason, produceException.Error.ToString());
+                throw;
             }
             catch (Exception ex)
             {
@@ -131,16 +113,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
         }
 
-        private void DeliveryHandler(DeliveryReport<TKey, TValue> deliveredItem)
+        public void Dispose()
         {
-            if (deliveredItem.Error == null || deliveredItem.Error.Code == ErrorCode.NoError)
-            {
-                this.logger.LogDebug("Message delivered on {topic} / {partition} / {offset}", deliveredItem.Topic, (int)deliveredItem.Partition, (long)deliveredItem.Offset);
-            }
-            else
-            {
-                logger.LogError("Failed to delivery message to {topic} / {partition} / {offset}. Reason: {reason}. Full Error: {error}", deliveredItem.Topic, (int)deliveredItem.Partition, (long)deliveredItem.Offset, deliveredItem.Error.Reason, deliveredItem.Error.ToString());
-            }
+            this.producer?.Dispose();
+            this.producer = null;
+            GC.SuppressFinalize(this);
         }
     }
 }

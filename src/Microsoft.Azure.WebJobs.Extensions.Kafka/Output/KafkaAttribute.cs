@@ -17,9 +17,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// <summary>
         /// Initialize a new instance of the <see cref="KafkaAttribute"/>
         /// </summary>
+        /// <param name="brokerList">Broker list</param>
         /// <param name="topic">Topic name</param>
-        public KafkaAttribute(string topic)
+        public KafkaAttribute(string brokerList, string topic)
         {
+            BrokerList = brokerList;
             Topic = topic;
         }
 

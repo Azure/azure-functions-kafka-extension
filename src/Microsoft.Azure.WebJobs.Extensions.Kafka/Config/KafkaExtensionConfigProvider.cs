@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text;
 using Avro.Generic;
 using Avro.Specific;
 using Microsoft.Azure.WebJobs.Description;
@@ -26,7 +27,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly IConverterManager converterManager;
         private readonly INameResolver nameResolver;
         private readonly IWebJobsExtensionConfiguration<KafkaExtensionConfigProvider> configuration;
-        private readonly IKafkaProducerProvider kafkaProducerManager;
+        private readonly IKafkaProducerFactory kafkaProducerManager;
         private readonly ILogger logger;
 
         public KafkaExtensionConfigProvider(
@@ -36,7 +37,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             IConverterManager converterManager,
             INameResolver nameResolver,
             IWebJobsExtensionConfiguration<KafkaExtensionConfigProvider> configuration,
-            IKafkaProducerProvider kafkaProducerManager)
+            IKafkaProducerFactory kafkaProducerManager)
         {
             this.config = config;
             this.options = options;
@@ -69,7 +70,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         private IAsyncCollector<KafkaEventData> BuildCollectorFromAttribute(KafkaAttribute attribute)
         {
-            return new KafkaAsyncCollector(attribute.Topic, kafkaProducerManager.Get(attribute));
+            return new KafkaAsyncCollector(attribute.Topic, kafkaProducerManager.Create(attribute));
         }
 
         private ISpecificRecord ConvertKafkaEventData2AvroSpecific(KafkaEventData kafkaEventData)
@@ -92,6 +93,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 if (kafkaEventData.Value is GenericRecord genericRecord)
                 {
                     return GenericRecord2String(genericRecord);
+                }
+                else if (kafkaEventData.Value is byte[] binaryContent)
+                {
+                    if (binaryContent != null)
+                    {
+                        return Encoding.UTF8.GetString(binaryContent);
+                    }
+                    else
+                    {
+                        return string.Empty;
+                    }
                 }
                 else
                 {

@@ -40,6 +40,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private CancellationTokenSource cancellationTokenSource;
         private SemaphoreSlim subscriberFinished;
 
+
+        readonly object valueDeserializer;
+        /// <summary>
+        /// Gets the value deserializer
+        /// </summary>
+        /// <value>The value deserializer.</value>
+        internal object ValueDeserializer => valueDeserializer;
+
         public KafkaListener(
             ITriggeredFunctionExecutor executor,
             bool singleDispatch,
@@ -48,8 +56,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             string topic,
             string consumerGroup,
             string eventHubConnectionString,
+            object valueDeserializer,
             ILogger logger)
         {
+            this.valueDeserializer = valueDeserializer;
             this.executor = executor;
             this.singleDispatch = singleDispatch;
             this.options = options;
@@ -66,72 +76,46 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.SafeCloseConsumerAsync().GetAwaiter().GetResult();
         }
 
-        /// <summary>
-        /// Need to return a <see cref="IConsumer{TKey, TValue}"/> for unit tests.
-        /// Unfortunately <see cref="ConsumerBuilder{TKey, TValue}"/> returns <see cref="Consumer{TKey, TValue}"/>
-        /// </summary>
-        protected virtual IConsumer<TKey, TValue> CreateConsumer(
-            ConsumerConfig config,
-            Action<Consumer<TKey, TValue>, Error> errorHandler,
-            Action<IConsumer<TKey, TValue>, List<TopicPartition>> partitionsAssignedHandler,
-            Action<IConsumer<TKey, TValue>, List<TopicPartitionOffset>> partitionsRevokedHandler,
-            IAsyncDeserializer<TValue> asyncValueDeserializer = null,
-            IDeserializer<TValue> valueDeserializer = null,
-            IAsyncDeserializer<TKey> keyDeserializer = null
-            )
+        public Task StartAsync(CancellationToken cancellationToken)
         {
-            var builder = new ConsumerBuilder<TKey, TValue>(config)
-                .SetErrorHandler(errorHandler)
-                .SetPartitionsAssignedHandler(partitionsAssignedHandler)
-                .SetPartitionsRevokedHandler(partitionsRevokedHandler);
+            var builder = this.CreateConsumerBuilder(GetConsumerConfiguration());
 
-            if (keyDeserializer != null)
+            builder.SetErrorHandler((_, e) =>
             {
-                builder.SetKeyDeserializer(keyDeserializer);
+                logger.LogError(e.Reason);
+            })
+            .SetPartitionsAssignedHandler((_, e) =>
+            {
+                logger.LogInformation($"Assigned partitions: [{string.Join(", ", e)}]");
+            })
+            .SetPartitionsRevokedHandler((_, e) =>
+            {
+                logger.LogInformation($"Revoked partitions: [{string.Join(", ", e)}]");
+            });
+
+            if (valueDeserializer != null)
+            {
+                if (valueDeserializer is IAsyncDeserializer<TValue> asyncValueDeserializer)
+                {
+                    builder.SetValueDeserializer(asyncValueDeserializer);
+                }
+                else if (valueDeserializer is IDeserializer<TValue> syncValueDeserializer)
+                {
+                    builder.SetValueDeserializer(syncValueDeserializer);
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Value deserializer must implement either IAsyncDeserializer or IDeserializer. Type {valueDeserializer.GetType().Name} does not");
+                }
             }
 
-            if (asyncValueDeserializer != null)
-            {
-                builder.SetValueDeserializer(asyncValueDeserializer);
-            }
-            else if (valueDeserializer != null)
-            {
-                builder.SetValueDeserializer(valueDeserializer);
-            }
+            this.consumer = builder.Build();
 
-            return builder.Build();
-        }
-
-        public virtual Task StartAsync(CancellationToken cancellationToken)
-        {
-            SetConsumerAndExecutor(null, null, null);
-
-            return Task.CompletedTask;
-        }
-
-        protected void SetConsumerAndExecutor(IAsyncDeserializer<TValue> asyncValueDeserializer, IDeserializer<TValue> valueDeserializer, IAsyncDeserializer<TKey> keyDeserializer)
-        {
-            consumer = CreateConsumer(
-                            config: GetConsumerConfiguration(),
-                            errorHandler: (_, e) =>
-                            {
-                                logger.LogError(e.Reason);
-                            },
-                            partitionsAssignedHandler: (_, e) =>
-                            {
-                                logger.LogInformation($"Assigned partitions: [{string.Join(", ", e)}]");
-                            },
-                            partitionsRevokedHandler: (_, e) =>
-                            {
-                                logger.LogInformation($"Revoked partitions: [{string.Join(", ", e)}]");
-                            },
-                            asyncValueDeserializer: asyncValueDeserializer,
-                            valueDeserializer: valueDeserializer,
-                            keyDeserializer: keyDeserializer);
+            var commitStrategy = new AsyncCommitStrategy<TKey, TValue>(consumer, this.logger);
 
             functionExecutor = singleDispatch ?
-                (FunctionExecutorBase<TKey, TValue>)new SingleItemFunctionExecutor<TKey, TValue>(executor, consumer, options.ExecutorChannelCapacity, options.ChannelFullRetryIntervalInMs, logger) :
-                new MultipleItemFunctionExecutor<TKey, TValue>(executor, consumer, options.ExecutorChannelCapacity, options.ChannelFullRetryIntervalInMs, logger);
+                (FunctionExecutorBase<TKey, TValue>)new SingleItemFunctionExecutor<TKey, TValue>(executor, consumer, options.ExecutorChannelCapacity, options.ChannelFullRetryIntervalInMs, commitStrategy, logger) :
+                new MultipleItemFunctionExecutor<TKey, TValue>(executor, consumer, options.ExecutorChannelCapacity, options.ChannelFullRetryIntervalInMs, commitStrategy, logger);
 
             consumer.Subscribe(topic);
 
@@ -142,13 +126,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 IsBackground = true,
             };
             thread.Start(cancellationTokenSource.Token);
+
+            return Task.CompletedTask;
         }
+
+        /// <summary>
+        /// Creates the ConsumerBuilder. Overriding in unit tests
+        /// </summary>
+        protected virtual ConsumerBuilder<TKey, TValue> CreateConsumerBuilder(ConsumerConfig config) => new ConsumerBuilder<TKey, TValue>(config);
 
         private ConsumerConfig GetConsumerConfiguration()
         {
             ConsumerConfig conf = new ConsumerConfig()
             {
-                EnableAutoCommit = false, // we will commit manually
+                EnableAutoCommit = true,                    // enabled auto-commit
+                EnableAutoOffsetStore = false,              // disable auto storing read offsets since we need to store them after calling the trigger function
+                AutoCommitIntervalMs = 200,                 // every 200ms auto commits what has been stored in memory
                 AutoOffsetReset = AutoOffsetReset.Earliest, // start from earliest if no checkpoint has been committed
             };
 

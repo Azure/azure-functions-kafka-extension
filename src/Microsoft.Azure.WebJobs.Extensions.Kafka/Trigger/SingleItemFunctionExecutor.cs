@@ -19,8 +19,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     /// </summary>
     public class SingleItemFunctionExecutor<TKey, TValue> : FunctionExecutorBase<TKey, TValue>
     {
-        public SingleItemFunctionExecutor(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, int channelCapacity, int channelFullRetryIntervalInMs, ILogger logger)
-            : base(executor, consumer, channelCapacity, channelFullRetryIntervalInMs, logger)
+        public SingleItemFunctionExecutor(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, int channelCapacity, int channelFullRetryIntervalInMs, ICommitStrategy<TKey, TValue> commitStrategy, ILogger logger)
+            : base(executor, consumer, channelCapacity, channelFullRetryIntervalInMs, commitStrategy, logger)
         {
         }
 

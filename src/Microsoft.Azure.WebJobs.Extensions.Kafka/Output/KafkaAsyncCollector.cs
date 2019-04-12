@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
-    public class KafkaAsyncCollector : IAsyncCollector<KafkaEventData>
+    public sealed class KafkaAsyncCollector : IAsyncCollector<KafkaEventData>
     {
         private readonly string topic;
         private readonly IKafkaProducer producer;
@@ -24,28 +24,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.producer = producer;
         }
 
-        public Task AddAsync(KafkaEventData item, CancellationToken cancellationToken = default)
+        public async Task AddAsync(KafkaEventData item, CancellationToken cancellationToken = default)
         {
             if (item == null)
             {
                 throw new ArgumentNullException(nameof(item));
             }
 
-            this.producer.Produce(this.topic, item);
-            return Task.CompletedTask;
+            await this.producer.ProduceAsync(this.topic, item);
         }
-        
+
         public Task FlushAsync(CancellationToken cancellationToken = default)
         {
-            try
-            {
-                this.producer.Flush(cancellationToken);
-            }
-            catch (OperationCanceledException)
-            {
-                // cancellationToken was cancelled
-            }
-
+            this.producer.Dispose();
             return Task.CompletedTask;
         }
     }

@@ -25,7 +25,7 @@ namespace KafkaFunctionSample
         [FunctionName("ProduceStringTopic")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
-            [Kafka("stringTopicTenPartitions", BrokerList = "LocalBroker")] IAsyncCollector<KafkaEventData> events,
+            [Kafka("LocalBroker", "stringTopicTenPartitions", ValueType = typeof(string))] IAsyncCollector<KafkaEventData> events,
             ILogger log)
         {
             try
