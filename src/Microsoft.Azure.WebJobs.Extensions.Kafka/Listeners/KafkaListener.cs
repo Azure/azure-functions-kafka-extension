@@ -29,11 +29,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly ITriggeredFunctionExecutor executor;
         private readonly bool singleDispatch;
         private readonly KafkaOptions options;
+        private readonly KafkaListenerConfiguration listenerConfiguration;
         private readonly ILogger logger;
-        private readonly string brokerList;
-        private readonly string topic;
-        private readonly string consumerGroup;
-        private readonly string eventHubConnectionString;
         private FunctionExecutorBase<TKey, TValue> functionExecutor;
         private IConsumer<TKey, TValue> consumer;
         private bool disposed;
@@ -52,10 +49,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             ITriggeredFunctionExecutor executor,
             bool singleDispatch,
             KafkaOptions options,
-            string brokerList,
-            string topic,
-            string consumerGroup,
-            string eventHubConnectionString,
+            KafkaListenerConfiguration kafkaListenerConfiguration,
             object valueDeserializer,
             ILogger logger)
         {
@@ -63,11 +57,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.executor = executor;
             this.singleDispatch = singleDispatch;
             this.options = options;
+            this.listenerConfiguration = kafkaListenerConfiguration;
             this.logger = logger;
-            this.brokerList = brokerList;
-            this.topic = topic;
-            this.consumerGroup = consumerGroup;
-            this.eventHubConnectionString = eventHubConnectionString;
             this.cancellationTokenSource = new CancellationTokenSource();
         }
 
@@ -114,10 +105,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var commitStrategy = new AsyncCommitStrategy<TKey, TValue>(consumer, this.logger);
 
             functionExecutor = singleDispatch ?
-                (FunctionExecutorBase<TKey, TValue>)new SingleItemFunctionExecutor<TKey, TValue>(executor, consumer, options.ExecutorChannelCapacity, options.ChannelFullRetryIntervalInMs, commitStrategy, logger) :
-                new MultipleItemFunctionExecutor<TKey, TValue>(executor, consumer, options.ExecutorChannelCapacity, options.ChannelFullRetryIntervalInMs, commitStrategy, logger);
+                (FunctionExecutorBase<TKey, TValue>)new SingleItemFunctionExecutor<TKey, TValue>(executor, consumer, this.options.ExecutorChannelCapacity, this.options.ChannelFullRetryIntervalInMs, commitStrategy, logger) :
+                new MultipleItemFunctionExecutor<TKey, TValue>(executor, consumer, this.options.ExecutorChannelCapacity, this.options.ChannelFullRetryIntervalInMs, commitStrategy, logger);
 
-            consumer.Subscribe(topic);
+            consumer.Subscribe(this.listenerConfiguration.Topic);
 
             // Using a thread as opposed to a task since this will be long running
             // https://github.com/davidfowl/AspNetCoreDiagnosticScenarios/blob/master/AsyncGuidance.md#avoid-using-taskrun-for-long-running-work-that-blocks-the-thread
@@ -139,85 +130,59 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             ConsumerConfig conf = new ConsumerConfig()
             {
-                EnableAutoCommit = true,                    // enabled auto-commit
-                EnableAutoOffsetStore = false,              // disable auto storing read offsets since we need to store them after calling the trigger function
-                AutoCommitIntervalMs = 200,                 // every 200ms auto commits what has been stored in memory
-                AutoOffsetReset = AutoOffsetReset.Earliest, // start from earliest if no checkpoint has been committed
+                // enable auto-commit 
+                EnableAutoCommit = true,
+
+                // disable auto storing read offsets since we need to store them after calling the trigger function
+                EnableAutoOffsetStore = false,
+
+                // Interval in which commits stored in memory will be saved
+                AutoCommitIntervalMs = this.options.AutoCommitIntervalMs,
+
+                // start from earliest if no checkpoint has been committed
+                AutoOffsetReset = AutoOffsetReset.Earliest,
+
+                // Secure communication/authentication
+                SaslMechanism = this.listenerConfiguration.SaslMechanism,
+                SaslUsername = this.listenerConfiguration.SaslUsername,
+                SaslPassword = this.listenerConfiguration.SaslPassword,
+                SecurityProtocol = this.listenerConfiguration.SecurityProtocol,
+
+
+                // Values from host configuration
+                StatisticsIntervalMs = this.options.StatisticsIntervalMs,
+                ReconnectBackoffMs = this.options.ReconnectBackoffMs,
+                ReconnectBackoffMaxMs = this.options.ReconnectBackoffMaxMs,
+                SessionTimeoutMs = this.options.SessionTimeoutMs,
+                MaxPollIntervalMs = this.options.MaxPollIntervalMs,
+                QueuedMinMessages = this.options.QueuedMinMessages,
+                QueuedMaxMessagesKbytes = this.options.QueuedMaxMessagesKbytes,
+                MaxPartitionFetchBytes = this.options.MaxPartitionFetchBytes,
+                FetchMaxBytes = this.options.FetchMaxBytes,
             };
 
-            if (this.options.StatisticsIntervalMs.HasValue)
-            {
-                conf.StatisticsIntervalMs = this.options.StatisticsIntervalMs.Value;
-            }
-
-            if (this.options.ReconnectBackoffMs.HasValue)
-            {
-                conf.ReconnectBackoffMs = this.options.ReconnectBackoffMs.Value;
-            }
-
-            if (this.options.ReconnectBackoffMaxMs.HasValue)
-            {
-                conf.ReconnectBackoffMaxMs = this.options.ReconnectBackoffMaxMs.Value;
-            }
-
-            if (this.options.StatisticsIntervalMs.HasValue)
-            {
-                conf.StatisticsIntervalMs = this.options.StatisticsIntervalMs.Value;
-            }
-
-            if (this.options.SessionTimeoutMs.HasValue)
-            {
-                conf.SessionTimeoutMs = this.options.SessionTimeoutMs.Value;
-            }
-
-            if (this.options.MaxPollIntervalMs.HasValue)
-            {
-                conf.MaxPollIntervalMs = this.options.MaxPollIntervalMs.Value;
-            }
-
-            if (this.options.QueuedMinMessages.HasValue)
-            {
-                conf.QueuedMinMessages = this.options.QueuedMinMessages.Value;
-            }
-
-            if (this.options.QueuedMaxMessagesKbytes.HasValue)
-            {
-                conf.QueuedMaxMessagesKbytes = this.options.QueuedMaxMessagesKbytes.Value;
-            }
-
-            if (this.options.MaxPartitionFetchBytes.HasValue)
-            {
-                conf.MaxPartitionFetchBytes = this.options.MaxPartitionFetchBytes.Value;
-            }
-
-            if (this.options.FetchMaxBytes.HasValue)
-            {
-                conf.FetchMaxBytes = this.options.FetchMaxBytes.Value;
-            }
-
-
-            if (string.IsNullOrEmpty(this.eventHubConnectionString))
+            if (string.IsNullOrEmpty(this.listenerConfiguration.EventHubConnectionString))
             {
                 // Setup native kafka configuration
-                conf.BootstrapServers = this.brokerList;
-                conf.GroupId = consumerGroup;
+                conf.BootstrapServers = this.listenerConfiguration.BrokerList;
+                conf.GroupId = this.listenerConfiguration.ConsumerGroup;
             }
             else
             {
                 // Setup eventhubs kafka head configuration
-                var ehBrokerList = this.brokerList;
+                var ehBrokerList = this.listenerConfiguration.BrokerList;
                 if (!ehBrokerList.Contains(".servicebus.windows.net"))
                 {
-                    ehBrokerList = $"{ this.brokerList}.servicebus.windows.net:9093";
+                    ehBrokerList = $"{ this.listenerConfiguration.BrokerList}.servicebus.windows.net:9093";
                 }
 
-                var consumerGroupToUse = string.IsNullOrEmpty(this.consumerGroup) ? "$Default" : this.consumerGroup;
+                var consumerGroupToUse = string.IsNullOrEmpty(this.listenerConfiguration.ConsumerGroup) ? "$Default" : this.listenerConfiguration.ConsumerGroup;
 
                 conf.BootstrapServers = ehBrokerList;
                 conf.SecurityProtocol = SecurityProtocol.SaslSsl;
                 conf.SaslMechanism = SaslMechanism.Plain;
                 conf.SaslUsername = "$ConnectionString";
-                conf.SaslPassword = this.eventHubConnectionString;
+                conf.SaslPassword = this.listenerConfiguration.EventHubConnectionString;
                 conf.SslCaLocation = "./cacert.pem";
                 conf.GroupId = consumerGroupToUse;
                 conf.BrokerVersionFallback = "1.0.0";
@@ -231,7 +196,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.subscriberFinished = new SemaphoreSlim(0, 1);
             var cancellationToken = (CancellationToken)parameter;
             var messages = new List<ConsumeResult<TKey, TValue>>(this.options.MaxBatchSize);
-
+            var maxBatchSize = this.options.MaxBatchSize;
             var maxBatchReleaseTime = TimeSpan.FromSeconds(this.options.SubscriberIntervalInSeconds);
 
             try
@@ -263,7 +228,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                                     // add message to executor
                                     // if executor pending items is full, flush it
                                     var currentSize = this.functionExecutor.Add(kafkaEventData);
-                                    if (currentSize >= this.options.MaxBatchSize)
+                                    if (currentSize >= maxBatchSize)
                                     {
                                         this.functionExecutor.Flush();
                                         alreadyFlushedInCurrentExecution = true;
@@ -296,7 +261,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
             finally
             {
-                this.logger.LogInformation("Exiting {processName} for {topic}", nameof(ProcessSubscription), this.topic);
+                this.logger.LogInformation("Exiting {processName} for {topic}", nameof(ProcessSubscription), this.listenerConfiguration.Topic);
                 this.subscriberFinished.Release();
             }
         }
@@ -341,7 +306,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             if (!disposed)
             {
-                this.logger.LogInformation("Disposing Kafka Listener for {topic}", this.topic);
+                this.logger.LogInformation("Disposing Kafka Listener for {topic}", this.listenerConfiguration.Topic);
 
                 if (disposing)
                 {

@@ -299,8 +299,23 @@ The settings exposed here are targeted to more advanced users that want to custo
 |QueuedMaxMessagesKbytes|queued.max.messages.kbytes|Trigger
 |MaxPartitionFetchBytes|max.partition.fetch.bytes|Trigger
 |FetchMaxBytes|fetch.max.bytes|Trigger
+|AutoCommitIntervalMs|auto.commit.interval.ms|Trigger
 
 If you are missing an configuration setting please create an issue and describe why you need it.
+
+## Connecting to a secure Kafka broker
+
+Both, trigger and output, can connect to a secure Kafka broker. The following attribute properties are available to establish a secure connection:
+
+|Setting|librdkafka property|Description|
+|-|-|-|
+|AuthenticationMode|sasl.mechanism|SASL mechanism to use for authentication|
+|Username|sasl.username|SASL username for use with the PLAIN and SASL-SCRAM|
+|Password|sasl.password|SASL password for use with the PLAIN and SASL-SCRAM|
+|Protocol|security.protocol|Security protocol used to communicate with brokers|
+|SslKeyLocation|ssl.key.location|Path to client's private key (PEM) used for authentication|
+
+Username and password should reference a Azure function configuration variable and not be hardcoded.
 
 ## Quickstart
 

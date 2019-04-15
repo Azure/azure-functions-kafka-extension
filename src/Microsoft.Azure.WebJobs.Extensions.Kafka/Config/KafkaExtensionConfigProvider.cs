@@ -90,11 +90,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             try
             {
-                if (kafkaEventData.Value is GenericRecord genericRecord)
-                {
-                    return GenericRecord2String(genericRecord);
-                }
-                else if (kafkaEventData.Value is byte[] binaryContent)
+                if (kafkaEventData.Value is byte[] binaryContent)
                 {
                     if (binaryContent != null)
                     {
@@ -104,6 +100,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     {
                         return string.Empty;
                     }
+                }
+                else if (kafkaEventData.Value is GenericRecord genericRecord)
+                {
+                    return GenericRecord2String(genericRecord);
                 }
                 else
                 {

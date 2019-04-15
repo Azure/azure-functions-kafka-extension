@@ -12,6 +12,7 @@ using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
@@ -26,7 +27,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly ILoggerProvider loggerProvider;
         private readonly ConcurrentDictionary<string, IProducer<string, string>> baseProducers = new ConcurrentDictionary<string, IProducer<string, string>>();
 
-        public KafkaProducerFactory(IConfiguration config, INameResolver nameResolver, ILoggerProvider loggerProvider)
+        public KafkaProducerFactory(
+            IConfiguration config,
+            INameResolver nameResolver,
+            ILoggerProvider loggerProvider)
         {
             this.config = config;
             this.nameResolver = nameResolver;
@@ -35,18 +39,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public IKafkaProducer Create(KafkaAttribute attribute)
         {
-            var resolvedBrokerList = nameResolver.ResolveWholeString(attribute.BrokerList);
-            var brokerListFromConfig = config.GetConnectionStringOrSetting(resolvedBrokerList);
-            if (!string.IsNullOrEmpty(brokerListFromConfig))
-            {
-                resolvedBrokerList = brokerListFromConfig;
-            }
-
             // Goal is to create as less producers as possible
             // We can group producers based on following criterias
             // - Broker List
             // - Configuration
-            var producerConfig = this.GetProducerConfig(attribute, resolvedBrokerList);
+            var producerConfig = this.GetProducerConfig(attribute);
             var producerKey = CreateKeyForConfig(producerConfig);
 
             var baseProducer = baseProducers.GetOrAdd(producerKey, (k) => CreateBaseProducer(producerConfig));
@@ -92,14 +89,32 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 loggerProvider.CreateLogger(LogCategories.CreateTriggerCategory("Kafka")));
         }
 
-        private ProducerConfig GetProducerConfig(KafkaAttribute attribute, string brokerList) => new ProducerConfig
+        public ProducerConfig GetProducerConfig(KafkaAttribute attribute)
         {
-            BootstrapServers = brokerList,
-            BatchNumMessages = attribute.BatchSize,
-            EnableIdempotence = attribute.EnableIdempotence,
-            MessageSendMaxRetries = attribute.MaxRetries,
-            MessageTimeoutMs = attribute.MessageTimeoutMs,
-            RequestTimeoutMs = attribute.RequestTimeoutMs,
-        };
+            var conf = new ProducerConfig()
+            {
+                BootstrapServers = this.config.ResolveSecureSetting(nameResolver, attribute.BrokerList),
+                BatchNumMessages = attribute.BatchSize,
+                EnableIdempotence = attribute.EnableIdempotence,
+                MessageSendMaxRetries = attribute.MaxRetries,
+                MessageTimeoutMs = attribute.MessageTimeoutMs,
+                RequestTimeoutMs = attribute.RequestTimeoutMs,
+                SaslPassword = this.config.ResolveSecureSetting(nameResolver, attribute.Password),
+                SaslUsername = this.config.ResolveSecureSetting(nameResolver, attribute.Username),
+                SslKeyLocation = attribute.SslKeyLocation,
+            };
+
+            if (attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet)
+            {
+                conf.SaslMechanism = (SaslMechanism)attribute.AuthenticationMode;
+            }
+
+            if (attribute.Protocol != BrokerProtocol.NotSet)
+            {
+                conf.SecurityProtocol = (SecurityProtocol)attribute.Protocol;
+            }
+
+            return conf;
+        }
     }
 }

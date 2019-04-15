@@ -127,6 +127,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
         }
 
+        /// <summary>
+        /// Gets or sets the auto commit interval ms.
+        /// Default = 200ms
+        /// 
+        /// Librdkafka: auto.commit.interval.ms (default 5000)
+        /// </summary>
+        /// <value>The auto commit interval ms.</value>
+        public int AutoCommitIntervalMs { get; set; } = 200;
+
         int subscriberIntervalInSeconds = 1;
         /// <summary>
         /// Defines the minimum frequency in which messages will be executed by function. Only if the message volume is less than <see cref="MaxBatchSize"/> / <see cref="SubscriberIntervalInSeconds"/>
@@ -146,7 +155,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 this.subscriberIntervalInSeconds = value;
             }
         }
-
 
         int executorChannelCapacity = 10;
         /// <summary>
@@ -194,7 +202,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var serializerSettings = new JsonSerializerSettings()
             {
                 DefaultValueHandling = DefaultValueHandling.Ignore,
-                Formatting = Formatting.Indented
+                Formatting = Formatting.Indented,
             };
 
             return JsonConvert.SerializeObject(this, serializerSettings);
