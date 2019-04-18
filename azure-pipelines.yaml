@@ -57,7 +57,31 @@ jobs:
 
   - script: dotnet pack -o '$(Build.ArtifactStagingDirectory)' --include-symbols src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
     displayName: 'Pack nuget pacakge'
-  
+
+  - task: EsrpCodeSigning@1
+    displayName: 'ESRP CodeSigning: Nupkg'
+    condition: and(succeeded(), not(variables['System.PullRequest.PullRequestNumber']))
+    inputs:
+      ConnectedServiceName: 'b12af24c-362b-4e79-bd63-61977b0007a3'
+      FolderPath: '$(Build.ArtifactStagingDirectory)'
+      Pattern: '*.nupkg'
+      signConfigType: 'inlineSignParams'
+      inlineOperation: '[
+    {
+      "KeyCode": "CP-401405",
+      "OperationCode": "NuGetSign",
+      "Parameters": {},
+      "ToolName": "sign",
+      "ToolVersion": "1.0"
+    },
+    {
+      "KeyCode": "CP-401405",
+      "OperationCode": "NuGetVerify",
+      "Parameters": {},
+      "ToolName": "sign",
+      "ToolVersion": "1.0"
+    }
+]'
   - task: PublishBuildArtifacts@1
     inputs:
       pathToPublish: '$(Build.ArtifactStagingDirectory)'
