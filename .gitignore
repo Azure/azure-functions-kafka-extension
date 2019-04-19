@@ -269,3 +269,14 @@ __pycache__/
 
 local.settings.json
 local.appsettings.tests.json
+
+# Java output
+**/target/*
+
+# Java IDE
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.checkstyle
