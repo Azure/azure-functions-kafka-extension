@@ -16,8 +16,8 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)
-@CustomBinding(direction = "in", name = "", type = "Kafka")
-public @interface Kafka { // TODO Should I name it as KafkaOutput?
+@CustomBinding(direction = "in", name = "", type = "KafkaOutput")
+public @interface KafkaOutput { // TODO Should I name it as KafkaOutput?
     /**
      * Gets the Topic.
      * @return
@@ -33,13 +33,13 @@ public @interface Kafka { // TODO Should I name it as KafkaOutput?
      * Gets or sets the KeyType
      * This method is used internally. Don't pass the value to this method.
      */
-    String keyType();  // TODO Originally Type type. Should I pass the serialized value for them?
+    // String keyType();  // TODO Originally Type type. Should I pass the serialized value for them?
 
     /**
      * Gets or sets the ValueType
      * This method is used internally. Don't pass the value to this method.
      */
-    String valueType(); // TODO Originally Type type. Should I pass the serialized value for them?
+    // String valueType(); // TODO Originally Type type. Should I pass the serialized value for them?
 
     /**
      * Gets or sets the Avro schema.

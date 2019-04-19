@@ -6,7 +6,7 @@
 package main.com.microsoft.azure.functions.kafka;
 
 /**
- * Kafka Event Data to use with Kafka binding
+ * KafkaOutput Event Data to use with KafkaOutput binding
  */
 public class KafkaEventData {
     /**

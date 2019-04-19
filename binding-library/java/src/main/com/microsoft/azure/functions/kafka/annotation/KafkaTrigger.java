@@ -16,7 +16,7 @@ import java.lang.annotation.ElementType;
 
 
 /**
- * <p>Annotation for Kafka bindings</p>
+ * <p>Annotation for KafkaOutput bindings</p>
  */
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)
@@ -33,7 +33,7 @@ public @interface KafkaTrigger {
     String brokerList();
 
     /**
-     * Gets or sets the EventHub connection string when using Kafka protocol header feature of Azure EventHubs.
+     * Gets or sets the EventHub connection string when using KafkaOutput protocol header feature of Azure EventHubs.
      */
     String eventHubConnectionString();
 
@@ -46,13 +46,13 @@ public @interface KafkaTrigger {
      * Gets or sets the KeyType
      * This method is used internally. Don't pass the value to this method.
      */
-    String keyType();  // TODO Originally Type type. Should I pass the serialized value for them?
+    // String keyType();  // TODO Originally Type type. Should I pass the serialized value for them?
 
     /**
      * Gets or sets the ValueType
      * This method is used internally. Don't pass the value to this method.
      */
-    String valueType(); // TODO Originally Type type. Should I pass the serialized value for them?
+    // String valueType(); // TODO Originally Type type. Should I pass the serialized value for them?
 
     /**
      * Gets or sets the Avro schema.
