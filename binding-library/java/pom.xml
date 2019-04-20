@@ -50,6 +50,13 @@
             <uniqueVersion>true</uniqueVersion>
             <layout>default</layout>
         </snapshotRepository>
+        <repository>
+            <id>dev-azure-com-ryancraw-kafkamaven</id>
+            <name>Kafka Trigger</name>
+            <uniqueVersion>true</uniqueVersion>
+            <url>https://pkgs.dev.azure.com/ryancraw/_packaging/KafkaMaven/maven/v1</url>
+        </repository>
+
     </distributionManagement>
 
     <developers>
@@ -67,6 +74,16 @@
             <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
             <releases>
                 <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>dev-azure-com-ryancraw-kafkamaven</id>
+            <url>https://pkgs.dev.azure.com/ryancraw/_packaging/KafkaMaven/maven/v1</url>
+            <releases>
+                <enabled>true</enabled>
             </releases>
             <snapshots>
                 <enabled>true</enabled>

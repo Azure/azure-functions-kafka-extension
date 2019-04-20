@@ -3,11 +3,11 @@
  * Licensed under the MIT License. See License.txt in the project root for
  * license information.
  */
-package main.com.microsoft.azure.functions.kafka.annotation;
+package com.microsoft.azure.functions.kafka.annotation;
 
 import com.microsoft.azure.functions.annotation.CustomBinding;
-import main.com.microsoft.azure.functions.kafka.BrokerAuthenticationMode;
-import main.com.microsoft.azure.functions.kafka.BrokerProtocol;
+import com.microsoft.azure.functions.kafka.BrokerAuthenticationMode;
+import com.microsoft.azure.functions.kafka.BrokerProtocol;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

@@ -280,3 +280,7 @@ local.appsettings.tests.json
 .project
 .settings/
 .checkstyle
+
+# Mac
+.DS_Store
+

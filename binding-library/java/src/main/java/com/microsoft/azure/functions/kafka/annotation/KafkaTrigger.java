@@ -3,11 +3,11 @@
  * Licensed under the MIT License. See License.txt in the project root for
  * license information.
  */
-package main.com.microsoft.azure.functions.kafka.annotation;
+package com.microsoft.azure.functions.kafka.annotation;
 
 import com.microsoft.azure.functions.annotation.CustomBinding;
-import main.com.microsoft.azure.functions.kafka.BrokerAuthenticationMode;
-import main.com.microsoft.azure.functions.kafka.BrokerProtocol;
+import com.microsoft.azure.functions.kafka.BrokerAuthenticationMode;
+import com.microsoft.azure.functions.kafka.BrokerProtocol;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
@@ -20,7 +20,7 @@ import java.lang.annotation.ElementType;
  */
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)
-@CustomBinding(direction = "in", name = "", type = "KafkaTrigger")
+@CustomBinding(direction = "in", name = "kafkaEvents", type = "KafkaTriggerAttribute")
 public @interface KafkaTrigger {
     /**
      * Gets the Topic.
@@ -35,7 +35,7 @@ public @interface KafkaTrigger {
     /**
      * Gets or sets the EventHub connection string when using KafkaOutput protocol header feature of Azure EventHubs.
      */
-    String eventHubConnectionString();
+    String eventHubConnectionString() default "";
 
     /**
      * Gets or sets the consumer group.
@@ -56,41 +56,41 @@ public @interface KafkaTrigger {
 
     /**
      * Gets or sets the Avro schema.
-     * Json format
-     * Default: Plain*
+     * Should be used only if a generic record should be generated
      */
-    String avroScema();
+    String avroScema() default "";
 
     /**
      * SASL mechanism to use for authentication.
+     * Allowed values: Gssapi, Plain, ScramSha256, ScramSha512
      * Default: PLAIN
      */
-    BrokerAuthenticationMode authenticationMode(); // TODO double check if it is OK
+    BrokerAuthenticationMode authenticationMode() default BrokerAuthenticationMode.NOTSET; // TODO double check if it is OK
 
     /**
      * SASL username with the PLAIN and SASL-SCRAM-.. mechanisms
      * Default: ""
      */
-    String username();
+    String username() default "";
 
     /**
      * SASL password with the PLAIN and SASL-SCRAM-.. mechanisms
-     * Default is plaintext
+     * Default: ""
      *
      * security.protocol in librdkafka
      */
-    String password();
+    String password() default "";
 
     /**
      * Gets or sets the security protocol used to communicate with brokers
      * default is PLAINTEXT
      */
-    BrokerProtocol protocol();
+    BrokerProtocol protocol() default BrokerProtocol.NOTSET;
 
     /**
      * Path to client's private key (PEM) used for authentication.
      * Default ""
      * ssl.key.location in librdkafka
      */
-    String sslKeyLocation();
+    String sslKeyLocation() default "";
 }

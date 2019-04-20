@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for
  * license information.
  */
-package main.com.microsoft.azure.functions.kafka;
+package com.microsoft.azure.functions.kafka;
 
 /**
  * Defines the broker authentication modes
