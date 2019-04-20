@@ -52,12 +52,12 @@ public class Functions
     /// Trigger for the topic
     /// </summary>
     public void MultiItemTriggerTenPartitions(
-        [KafkaTrigger(Broker, StringTopicWithTenPartitions, ConsumerGroup = "myConsumerGroup")] KafkaEventData[] events,
+        [KafkaTrigger(Broker, StringTopicWithTenPartitions, ConsumerGroup = "myConsumerGroup")] KafkaEventData<string> events,
         ILogger log)
     {
         foreach (var kafkaEvent in events)
         {
-            log.LogInformation(kafkaEvent.Value.ToString());
+            log.LogInformation(kafkaEvent.Value);
         }
     }
 }
@@ -69,11 +69,11 @@ Trigger bindings are designed to consume messages from a Kafka topics.
 
 ```csharp
 public static void StringTopic(
-    [KafkaTrigger("BrokerList", "myTopic", ConsumerGroup = "myGroupId")] KafkaEventData[] kafkaEvents,
+    [KafkaTrigger("BrokerList", "myTopic", ConsumerGroup = "myGroupId")] KafkaEventData<string>[] kafkaEvents,
     ILogger logger)
 {
     foreach (var kafkaEvent in kafkaEvents)
-        logger.LogInformation(kafkaEvent.Value.ToString());
+        logger.LogInformation(kafkaEvent.Value);
 }
 ```
 
@@ -89,8 +89,7 @@ The Kafka trigger supports two methods for consuming Avro format:
 *Using Avro specific*
 
 1. Define a class that inherits from `ISpecificRecord`.
-1. In `KafkaTrigger` attribute set the `ValueType` of the class defined in previous step
-1. The parameter type used with the trigger must be of type `KafkaEventData`. The value of `KafkaEventData.Value` will be of the specified type.
+1. The parameter where `KafkaTrigger` is added should have a value type of the class defined in previous step: `KafkaEventData<MySpecificRecord>`
 
 ```csharp
 public class UserRecord : ISpecificRecord
@@ -153,12 +152,12 @@ public class UserRecord : ISpecificRecord
 
 
 public static void User(
-    [KafkaTrigger("BrokerList", "users", ValueType=typeof(UserRecord), ConsumerGroup = "myGroupId")] KafkaEventData[] kafkaEvents,
+    [KafkaTrigger("BrokerList", "users", ConsumerGroup = "myGroupId")] KafkaEventData<UserRecord>[] kafkaEvents,
     ILogger logger)
 {
     foreach (var kafkaEvent in kafkaEvents)
     {
-        var user = (UserRecord)kafkaEvent.Value;
+        var user = kafkaEvent.Value;
         logger.LogInformation($"{JsonConvert.SerializeObject(kafkaEvent.Value)}");
     }
 }
@@ -167,7 +166,7 @@ public static void User(
 *Using Avro Generic*
 
 1. In `KafkaTrigger` attribute set the value of `AvroSchema` to the string representation of it.
-1. The parameter type used with the trigger must be of type `KafkaEventData`. The value of `KafkaEventData.Value` will be of the type `GenericRecord`.
+1. The parameter type used with the trigger must be of type `KafkaEventData<GenericRecord>`.
 
 The sample function contains 1 consumer using avro generic. Check the class `AvroGenericTriggers`
 
@@ -196,31 +195,31 @@ public static class AvroGenericTriggers
 
 [FunctionName(nameof(PageViews))]
 public static void PageViews(
-    [KafkaTrigger("BrokerList", "pageviews", AvroSchema = PageViewsSchema, ConsumerGroup = "myGroupId")] KafkaEventData kafkaEvent,
+    [KafkaTrigger("BrokerList", "pageviews", AvroSchema = PageViewsSchema, ConsumerGroup = "myGroupId")] KafkaEventData<GenericRecord> kafkaEvent,
     ILogger logger)
 {
-    if (kafkaEvent.Value is GenericRecord genericRecord)
+    if (kafkaEvent.Value != null)
     {
-        // Get the field values manually from genericRecord
+        // Get the field values manually from genericRecord (kafkaEvent.Value)
     }
 }
 ```
 
 #### Protobuf Binding Support
 
-Protobuf is supported in the trigger based on the `Google.Protobuf` nuget package. To consume a topic that is using protobuf as serialization set the ValueType to be of a type that implements `Google.Protobuf.IMessage`. The sample producer has a producer for topic `protoUser` (must be created). The sample function has a trigger handler for this topic in class `ProtobufTriggers`.
+Protobuf is supported in the trigger based on the `Google.Protobuf` nuget package. To consume a topic that is using protobuf as serialization set the TValue generic argument to be of a type that implements `Google.Protobuf.IMessage`. The sample producer has a producer for topic `protoUser` (must be created). The sample function has a trigger handler for this topic in class `ProtobufTriggers`.
 
 ```csharp
 public static class ProtobufTriggers
 {
     [FunctionName(nameof(ProtobufUser))]
     public static void ProtobufUser(
-        [KafkaTrigger("BrokerList", "protoUser", ValueType=typeof(ProtoUser), ConsumerGroup = "myGroupId")] KafkaEventData[] kafkaEvents,
+        [KafkaTrigger("BrokerList", "protoUser", ConsumerGroup = "myGroupId")] KafkaEventData<ProtoUser>[] kafkaEvents,
         ILogger logger)
     {
         foreach (var kafkaEvent in kafkaEvents)
         {
-            var user = (ProtoUser)kafkaEvent.Value;
+            var user = kafkaEvent.Value;
             logger.LogInformation($"{JsonConvert.SerializeObject(user)}");
         }
     }
@@ -235,10 +234,10 @@ Output binding are designed to produce messages to a Kafka topic. It supports di
 [FunctionName("ProduceStringTopic")]
 public static async Task<IActionResult> Run(
     [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
-    [Kafka("stringTopicTenPartitions", BrokerList = "LocalBroker")] IAsyncCollector<KafkaEventData> events,
+    [Kafka("stringTopicTenPartitions", BrokerList = "LocalBroker")] IAsyncCollector<KafkaEventData<string>> events,
     ILogger log)
 {
-    var kafkaEvent = new KafkaEventData()
+    var kafkaEvent = new KafkaEventData<string>()
     {
         Value = await new StreamReader(req.Body).ReadToEndAsync(),
     };
@@ -249,16 +248,16 @@ public static async Task<IActionResult> Run(
 }
 ```
 
-To set a key value set the property `KeyType` (i.e typeof(string) or typeof(long)).
+To set a key value use `KafkaEventData<string, string>` to define a key of type string (supported key types: int, long, string, byte[]).
 
-To send use Protobuf serialisation set the value of the KafkaAttribute.ValueType to a type that implements the IMessage.
+To produce messages using Protobuf serialisation use a `KafkaEventData<MyProtobufClass>` as message type. `MyProtobufClass` must implements the IMessage interface.
 
 For Avro provide a type that implements ISpecificRecord.
-If nothing is defined the value will be of type string and no key will be set.
+If nothing is defined the value will be of type `byte[]` and no key will be set.
 
 ## Configuration
 
-Customizing the Kafka extensions is available in the host file. As mentioned before, the interface to Kafka is built based on **Confluent.Kafka** library, therefore some of the configuration is just a bridge to the producer/consumer.
+Customization of the Kafka extensions is available in the host file. As mentioned before, the interface to Kafka is built based on **Confluent.Kafka** library, therefore some of the configuration is just a bridge to the producer/consumer.
 
 ```json
 {

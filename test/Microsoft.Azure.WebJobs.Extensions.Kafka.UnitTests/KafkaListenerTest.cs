@@ -98,7 +98,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             const int ExpectedEventCount = 10;
 
             var executor = new Mock<ITriggeredFunctionExecutor>();
-            var consumer = new Mock<IConsumer<Ignore, string>>();
+            var consumer = new Mock<IConsumer<Null, string>>();
 
             var offset = 0L;
             consumer.Setup(x => x.Consume(It.IsNotNull<TimeSpan>()))
@@ -108,7 +108,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                     {
                         offset++;
 
-                        return CreateConsumeResult<Ignore, string>(offset.ToString(), 0, offset);
+                        return CreateConsumeResult<Null, string>(offset.ToString(), 0, offset);
                     }
 
                     return null;
@@ -119,7 +119,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             executor.Setup(x => x.TryExecuteAsync(It.IsNotNull<TriggeredFunctionData>(), It.IsAny<CancellationToken>()))
                 .Callback<TriggeredFunctionData, CancellationToken>((td, _) =>
                 {
-                    var triggerData = (KafkaTriggerInput)td.TriggerValue;
+                    var triggerData = (KafkaTriggerInput<Null, string>)td.TriggerValue;
                     var alreadyProcessed = Interlocked.Add(ref processedItemCount, triggerData.Events.Length);
                     if (alreadyProcessed == ExpectedEventCount)
                     {
@@ -135,7 +135,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 ConsumerGroup = "group1",
             };
 
-            var target = new KafkaListenerForTest<Ignore, string>(
+            var target = new KafkaListenerForTest<Null, string>(
                 executor.Object,
                 singleDispatch: false,
                 options: new KafkaOptions(),
@@ -173,7 +173,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             const long Offset_5 = 4;
 
             var executor = new Mock<ITriggeredFunctionExecutor>();
-            var consumer = new Mock<IConsumer<Ignore, string>>();
+            var consumer = new Mock<IConsumer<Null, string>>();
 
             var committed = new ConcurrentQueue<TopicPartitionOffset>();
            
@@ -186,23 +186,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             // Batch 1: AB12C
             // Batch 2: 34DE5
             consumer.SetupSequence(x => x.Consume(It.IsNotNull<TimeSpan>()))
-                .Returns(CreateConsumeResult<Ignore, string>("A", 0, Offset_A))
-                .Returns(CreateConsumeResult<Ignore, string>("B", 0, Offset_B))
-                .Returns(CreateConsumeResult<Ignore, string>("1", 1, Offset_1))
-                .Returns(CreateConsumeResult<Ignore, string>("2", 1, Offset_2))
-                .Returns(CreateConsumeResult<Ignore, string>("C", 0, Offset_C))
-                .Returns((ConsumeResult<Ignore, string>)null)
-                .Returns(CreateConsumeResult<Ignore, string>("3", 1, Offset_3))
-                .Returns(CreateConsumeResult<Ignore, string>("4", 1, Offset_4))
-                .Returns(CreateConsumeResult<Ignore, string>("D", 0, Offset_D))
-                .Returns(CreateConsumeResult<Ignore, string>("E", 0, Offset_E))
+                .Returns(CreateConsumeResult<Null, string>("A", 0, Offset_A))
+                .Returns(CreateConsumeResult<Null, string>("B", 0, Offset_B))
+                .Returns(CreateConsumeResult<Null, string>("1", 1, Offset_1))
+                .Returns(CreateConsumeResult<Null, string>("2", 1, Offset_2))
+                .Returns(CreateConsumeResult<Null, string>("C", 0, Offset_C))
+                .Returns((ConsumeResult<Null, string>)null)
+                .Returns(CreateConsumeResult<Null, string>("3", 1, Offset_3))
+                .Returns(CreateConsumeResult<Null, string>("4", 1, Offset_4))
+                .Returns(CreateConsumeResult<Null, string>("D", 0, Offset_D))
+                .Returns(CreateConsumeResult<Null, string>("E", 0, Offset_E))
                 .Returns(() =>
                 {
                     // from now on return null
                     consumer.Setup(x => x.Consume(It.IsNotNull<TimeSpan>()))
-                        .Returns((ConsumeResult<Ignore, string>)null);
+                        .Returns((ConsumeResult<Null, string>)null);
 
-                    return CreateConsumeResult<Ignore, string>("5", 1, Offset_5);
+                    return CreateConsumeResult<Null, string>("5", 1, Offset_5);
                 });
 
             var partition0 = new ConcurrentQueue<string>();
@@ -212,7 +212,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             executor.Setup(x => x.TryExecuteAsync(It.IsNotNull<TriggeredFunctionData>(), It.IsAny<CancellationToken>()))
                 .Callback<TriggeredFunctionData, CancellationToken>((t, _) =>
                 {
-                    var triggerData = (KafkaTriggerInput)t.TriggerValue;
+                    var triggerData = (KafkaTriggerInput<Null, string>)t.TriggerValue;
 
                     if (singleDispatch)
                     {
@@ -251,7 +251,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 ConsumerGroup = "group1",
             };
 
-            var target = new KafkaListenerForTest<Ignore, string>(
+            var target = new KafkaListenerForTest<Null, string>(
                 executor.Object,
                 singleDispatch,
                 new KafkaOptions(),
@@ -325,7 +325,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         public async Task When_Options_With_Ssal_Are_Set_Should_Be_Set_In_Consumer_Config()
         {
             var executor = new Mock<ITriggeredFunctionExecutor>();
-            var consumer = new Mock<IConsumer<Ignore, string>>();
+            var consumer = new Mock<IConsumer<Null, string>>();
 
             var listenerConfig = new KafkaListenerConfiguration()
             {
@@ -339,7 +339,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             };
 
             var kafkaOptions = new KafkaOptions();
-            var target = new KafkaListenerForTest<Ignore, string>(
+            var target = new KafkaListenerForTest<Null, string>(
                 executor.Object,
                 true,
                 kafkaOptions,

@@ -8,13 +8,13 @@ using Microsoft.Azure.WebJobs.Host.Triggers;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
-    public class KafkaTriggerBindingStrategy : ITriggerBindingStrategy<KafkaEventData, KafkaTriggerInput>
+    public class KafkaTriggerBindingStrategy<TKey, TValue> : ITriggerBindingStrategy<KafkaEventData<TKey, TValue>, KafkaTriggerInput<TKey, TValue>>
     {
         /// <summary>
         /// Given a raw string, convert to a TTriggerValue.
         /// This is primarily used in the "invoke from dashboard" path. 
         /// </summary>
-        public KafkaTriggerInput ConvertFromString(string input)
+        public KafkaTriggerInput<TKey, TValue> ConvertFromString(string input)
         {
             // Need to dig up to see how "invoke from dashboard" works.
             // Returning null for now, since it is not being called
@@ -22,7 +22,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         }
 
         // Single instance: Core --> EventData
-        public KafkaEventData BindSingle(KafkaTriggerInput value, ValueBindingContext context)
+        public KafkaEventData<TKey, TValue> BindSingle(KafkaTriggerInput<TKey, TValue> value, ValueBindingContext context)
         {
             if (value == null)
             {
@@ -31,7 +31,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return value.GetSingleEventData();
         }
 
-        public KafkaEventData[] BindMultiple(KafkaTriggerInput value, ValueBindingContext context)
+        public KafkaEventData<TKey, TValue>[] BindMultiple(KafkaTriggerInput<TKey, TValue> value, ValueBindingContext context)
         {
             if (value == null)
             {
@@ -43,11 +43,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public Dictionary<string, Type> GetBindingContract(bool isSingleDispatch = true)
         {
             var contract = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
-            AddBindingContractMember(contract, nameof(KafkaEventData.Key), typeof(object), isSingleDispatch);
-            AddBindingContractMember(contract, nameof(KafkaEventData.Partition), typeof(int), isSingleDispatch);
-            AddBindingContractMember(contract, nameof(KafkaEventData.Topic), typeof(string), isSingleDispatch);
-            AddBindingContractMember(contract, nameof(KafkaEventData.Timestamp), typeof(DateTime), isSingleDispatch);
-            AddBindingContractMember(contract, nameof(KafkaEventData.Offset), typeof(long), isSingleDispatch);
+            AddBindingContractMember(contract, nameof(KafkaEventData<TKey, TValue>.Key), typeof(object), isSingleDispatch);
+            AddBindingContractMember(contract, nameof(KafkaEventData<TKey, TValue>.Partition), typeof(int), isSingleDispatch);
+            AddBindingContractMember(contract, nameof(KafkaEventData<TKey, TValue>.Topic), typeof(string), isSingleDispatch);
+            AddBindingContractMember(contract, nameof(KafkaEventData<TKey, TValue>.Timestamp), typeof(DateTime), isSingleDispatch);
+            AddBindingContractMember(contract, nameof(KafkaEventData<TKey, TValue>.Offset), typeof(long), isSingleDispatch);
 
             return contract;
         }
@@ -61,7 +61,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             contract.Add(name, isSingleDispatch ? type : type.MakeArrayType());
         }
 
-        public Dictionary<string, object> GetBindingData(KafkaTriggerInput value)
+        public Dictionary<string, object> GetBindingData(KafkaTriggerInput<TKey, TValue> value)
         {
             if (value == null)
             {
@@ -81,7 +81,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return bindingData;
         }
 
-        internal static void AddBindingData(Dictionary<string, object> bindingData, KafkaEventData[] events)
+        internal static void AddBindingData(Dictionary<string, object> bindingData, KafkaEventData<TKey, TValue>[] events)
         {
             int length = events.Length;
             var partitions = new int[length];
@@ -106,13 +106,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
         }
 
-        private static void AddBindingData(Dictionary<string, object> bindingData, KafkaEventData eventData)
+        private static void AddBindingData(Dictionary<string, object> bindingData, KafkaEventData<TKey, TValue> eventData)
         {
-            bindingData.Add(nameof(KafkaEventData.Key), eventData.Key);
-            bindingData.Add(nameof(KafkaEventData.Partition), eventData.Partition);
-            bindingData.Add(nameof(KafkaEventData.Topic), eventData.Topic);
-            bindingData.Add(nameof(KafkaEventData.Timestamp), eventData.Timestamp);
-            bindingData.Add(nameof(KafkaEventData.Offset), eventData.Offset);
+            bindingData.Add(nameof(KafkaEventData<TKey, TValue>.Key), eventData.Key);
+            bindingData.Add(nameof(KafkaEventData<TKey, TValue>.Partition), eventData.Partition);
+            bindingData.Add(nameof(KafkaEventData<TKey, TValue>.Topic), eventData.Topic);
+            bindingData.Add(nameof(KafkaEventData<TKey, TValue>.Timestamp), eventData.Timestamp);
+            bindingData.Add(nameof(KafkaEventData<TKey, TValue>.Offset), eventData.Offset);
         }
     }
 }

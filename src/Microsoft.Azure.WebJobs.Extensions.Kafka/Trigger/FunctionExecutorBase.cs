@@ -23,8 +23,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly int channelFullRetryIntervalInMs;
         private readonly ICommitStrategy<TKey, TValue> commitStrategy;
         private readonly CancellationTokenSource cancellationTokenSource;
-        private readonly Channel<KafkaEventData[]> channel;
-        private readonly List<KafkaEventData> currentBatch;
+        private readonly Channel<KafkaEventData<TKey, TValue>[]> channel;
+        private readonly List<KafkaEventData<TKey, TValue>> currentBatch;
         private readonly ILogger logger;
         private SemaphoreSlim readerFinished = new SemaphoreSlim(0, 1);
 
@@ -42,9 +42,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.commitStrategy = commitStrategy;
             this.logger = logger;
             this.cancellationTokenSource = new CancellationTokenSource();
-            this.currentBatch = new List<KafkaEventData>();
+            this.currentBatch = new List<KafkaEventData<TKey, TValue>>();
 
-            this.channel = Channel.CreateBounded<KafkaEventData[]>(new BoundedChannelOptions(channelCapacity)
+            this.channel = Channel.CreateBounded<KafkaEventData<TKey, TValue>[]>(new BoundedChannelOptions(channelCapacity)
             {
                 SingleReader = true,
                 SingleWriter = true,
@@ -77,7 +77,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// <param name="reader">The channel reader</param>
         /// <param name="cancellationToken">Cancellation token indicating the host is shutting down</param>
         /// <param name="logger">Logger</param>
-        protected abstract Task ReaderAsync(ChannelReader<KafkaEventData[]> reader, CancellationToken cancellationToken, ILogger logger);
+        protected abstract Task ReaderAsync(ChannelReader<KafkaEventData<TKey, TValue>[]> reader, CancellationToken cancellationToken, ILogger logger);
 
 
         protected void Commit(IEnumerable<TopicPartitionOffset> topicPartitionOffsets)
@@ -95,7 +95,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// <summary>
         /// Adds an item, returning the current pending amount
         /// </summary>
-        internal int Add(KafkaEventData kafkaEventData)
+        internal int Add(KafkaEventData<TKey, TValue> kafkaEventData)
         {
             this.currentBatch.Add(kafkaEventData);
             return this.currentBatch.Count;

@@ -25,7 +25,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly IConfiguration config;
         private readonly INameResolver nameResolver;
         private readonly ILoggerProvider loggerProvider;
-        private readonly ConcurrentDictionary<string, IProducer<string, string>> baseProducers = new ConcurrentDictionary<string, IProducer<string, string>>();
+        private readonly ConcurrentDictionary<string, IProducer<byte[], byte[]>> baseProducers = new ConcurrentDictionary<string, IProducer<byte[], byte[]>>();
 
         public KafkaProducerFactory(
             IConfiguration config,
@@ -37,17 +37,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.loggerProvider = loggerProvider;
         }
 
-        public IKafkaProducer Create(KafkaAttribute attribute)
+        public IKafkaProducer Create(KafkaProducerEntity entity)
         {
             // Goal is to create as less producers as possible
             // We can group producers based on following criterias
             // - Broker List
             // - Configuration
-            var producerConfig = this.GetProducerConfig(attribute);
+            var producerConfig = this.GetProducerConfig(entity);
             var producerKey = CreateKeyForConfig(producerConfig);
 
             var baseProducer = baseProducers.GetOrAdd(producerKey, (k) => CreateBaseProducer(producerConfig));
-            return Create(baseProducer.Handle, attribute);
+            return Create(baseProducer.Handle, entity);
         }
 
         /// <summary>
@@ -69,18 +69,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return keyBuilder.ToString();
         }
 
-        private IProducer<string, string> CreateBaseProducer(ProducerConfig producerConfig)
+        private IProducer<byte[], byte[]> CreateBaseProducer(ProducerConfig producerConfig)
         {
-            var builder = new ProducerBuilder<string, string>(producerConfig);
+            var builder = new ProducerBuilder<byte[], byte[]>(producerConfig);
             return builder.Build();
         }
 
-        private IKafkaProducer Create(Handle producerBaseHandle, KafkaAttribute attribute)
+        private IKafkaProducer Create(Handle producerBaseHandle, KafkaProducerEntity entity)
         {
-            var valueType = SerializationHelper.GetValueType(attribute.ValueType, attribute.AvroSchema, null, out var avroSchema);
-            var keyType = attribute.KeyType ?? typeof(Null);
+            var valueType = entity.ValueType ?? typeof(byte[]);
+            var keyType = entity.KeyType ?? typeof(Null);
 
-            var valueSerializer = SerializationHelper.ResolveValueSerializer(valueType, attribute.AvroSchema);
+            var valueSerializer = SerializationHelper.ResolveValueSerializer(valueType, entity.AvroSchema);
 
             return (IKafkaProducer)Activator.CreateInstance(
                 typeof(KafkaProducer<,>).MakeGenericType(keyType, valueType),
@@ -89,29 +89,29 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 loggerProvider.CreateLogger(LogCategories.CreateTriggerCategory("Kafka")));
         }
 
-        public ProducerConfig GetProducerConfig(KafkaAttribute attribute)
+        public ProducerConfig GetProducerConfig(KafkaProducerEntity entity)
         {
             var conf = new ProducerConfig()
             {
-                BootstrapServers = this.config.ResolveSecureSetting(nameResolver, attribute.BrokerList),
-                BatchNumMessages = attribute.BatchSize,
-                EnableIdempotence = attribute.EnableIdempotence,
-                MessageSendMaxRetries = attribute.MaxRetries,
-                MessageTimeoutMs = attribute.MessageTimeoutMs,
-                RequestTimeoutMs = attribute.RequestTimeoutMs,
-                SaslPassword = this.config.ResolveSecureSetting(nameResolver, attribute.Password),
-                SaslUsername = this.config.ResolveSecureSetting(nameResolver, attribute.Username),
-                SslKeyLocation = attribute.SslKeyLocation,
+                BootstrapServers = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.BrokerList),
+                BatchNumMessages = entity.Attribute.BatchSize,
+                EnableIdempotence = entity.Attribute.EnableIdempotence,
+                MessageSendMaxRetries = entity.Attribute.MaxRetries,
+                MessageTimeoutMs = entity.Attribute.MessageTimeoutMs,
+                RequestTimeoutMs = entity.Attribute.RequestTimeoutMs,
+                SaslPassword = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.Password),
+                SaslUsername = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.Username),
+                SslKeyLocation = entity.Attribute.SslKeyLocation,
             };
 
-            if (attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet)
+            if (entity.Attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet)
             {
-                conf.SaslMechanism = (SaslMechanism)attribute.AuthenticationMode;
+                conf.SaslMechanism = (SaslMechanism)entity.Attribute.AuthenticationMode;
             }
 
-            if (attribute.Protocol != BrokerProtocol.NotSet)
+            if (entity.Attribute.Protocol != BrokerProtocol.NotSet)
             {
-                conf.SecurityProtocol = (SecurityProtocol)attribute.Protocol;
+                conf.SecurityProtocol = (SecurityProtocol)entity.Attribute.Protocol;
             }
 
             return conf;

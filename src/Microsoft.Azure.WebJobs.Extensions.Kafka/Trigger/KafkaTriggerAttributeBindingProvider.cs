@@ -36,7 +36,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.nameResolver = nameResolver;
             this.options = options;
             this.logger = loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("Kafka"));
-        }
+        }   
 
         public Task<ITriggerBinding> TryCreateAsync(TriggerBindingProviderContext context)
         {
@@ -49,27 +49,38 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             var consumerConfig = CreateConsumerConfiguration(attribute);
 
-            // TODO: reuse connections if they match with others in same function app
-            Task<IListener> listenerCreator(ListenerFactoryContext factoryContext, bool singleDispatch)
-            {
-                var listener = KafkaListenerFactory.CreateFor(attribute,
-                    parameter.ParameterType,
-                    factoryContext.Executor,
-                    singleDispatch,
-                    this.options.Value,
-                    consumerConfig,
-                    logger);
+            var keyAndValueTypes = SerializationHelper.GetKeyAndValueTypes(attribute.AvroSchema, parameter.ParameterType);
+            var valueDeserializer = SerializationHelper.ResolveValueDeserializer(keyAndValueTypes.ValueType, keyAndValueTypes.AvroSchema);
 
-                return Task.FromResult(listener);
-            }
-
-            #pragma warning disable CS0618 // Type or member is obsolete
-            var binding = BindingFactory.GetTriggerBinding(new KafkaTriggerBindingStrategy(), context.Parameter, this.converterManager, listenerCreator);
-            #pragma warning restore CS0618 // Type or member is obsolete
+            var binding = CreateBindingStrategyFor(keyAndValueTypes.KeyType ?? typeof(Ignore), keyAndValueTypes.ValueType, valueDeserializer, parameter, consumerConfig);
 
             return Task.FromResult<ITriggerBinding>(binding);
         }
 
+        ITriggerBinding CreateBindingStrategyFor(Type keyType, Type valueType, object valueDeserializer, ParameterInfo parameterInfo, KafkaListenerConfiguration listenerConfiguration)
+        {
+            var genericCreateBindingStrategy = this.GetType().GetMethod(nameof(CreateBindingStrategy), BindingFlags.Instance | BindingFlags.NonPublic).MakeGenericMethod(keyType, valueType);
+            return (ITriggerBinding)genericCreateBindingStrategy.Invoke(this, new object[] { parameterInfo, listenerConfiguration, valueDeserializer });
+        }
+
+        private ITriggerBinding CreateBindingStrategy<TKey, TValue>(ParameterInfo parameter, KafkaListenerConfiguration listenerConfiguration, object valueDeserializer)
+        {
+            // TODO: reuse connections if they match with others in same function app
+            Task<IListener> listenerCreator(ListenerFactoryContext factoryContext, bool singleDispatch)
+            {
+                var listener = new KafkaListener<TKey, TValue>(
+                    factoryContext.Executor,
+                    singleDispatch,
+                    this.options.Value,
+                    listenerConfiguration,
+                    valueDeserializer,
+                    this.logger);
+                
+                return Task.FromResult<IListener>(listener);
+            }
+
+            return BindingFactory.GetTriggerBinding(new KafkaTriggerBindingStrategy<TKey, TValue>(), parameter, new KafkaEventDataConvertManager(this.converterManager, this.logger), listenerCreator);
+        }
 
         private KafkaListenerConfiguration CreateConsumerConfiguration(KafkaTriggerAttribute attribute)
         {

@@ -45,47 +45,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         // [ConnectionString]
         public string BrokerList { get; set; }
 
-
-        /// <summary>
-        /// Gets or sets the key element type
-        /// Default is long
-        /// </summary>
-        public Type KeyType { get; set; }
-
-        private Type valueType;
-
-        /// <summary>
-        /// Gets or sets the Avro data type
-        /// Must implement ISpecificRecord
-        /// </summary>
-        public Type ValueType
-        {
-            get => this.valueType;
-            set
-            {
-                if (value != null && !IsValidValueType(value))
-                {
-                    throw new ArgumentException($"The value of {nameof(ValueType)} must be a byte[], string or a type that implements {nameof(ISpecificRecord)} or {nameof(Google.Protobuf.IMessage)}. The type {value.Name} does not.");
-                }
-
-                this.valueType = value;
-            }
-        }
-
         /// <summary>
         /// Gets or sets the Avro schema.
         /// Should be used only if a generic record should be generated
         /// </summary>
         public string AvroSchema { get; set; }
-
-        private bool IsValidValueType(Type value)
-        {
-            return
-                typeof(ISpecificRecord).IsAssignableFrom(value) ||
-                typeof(Google.Protobuf.IMessage).IsAssignableFrom(value) ||
-                value == typeof(byte[]) ||
-                value == typeof(string);
-        }
 
         /// <summary>
         /// Gets or sets the Maximum transmit message size. Default: 1MB

@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Linq;
 using Avro.Generic;
 using Avro.Specific;
 using Confluent.Kafka;
@@ -66,42 +67,57 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         }
 
         /// <summary>
-        /// Gets the type of the value.
+        /// Gets the type of the key and value.
         /// </summary>
-        /// <returns>The value type.</returns>
-        /// <param name="typeFromAttribute">Type from attribute (KafkaAttribute or KafkaTriggerAttribute).</param>
         /// <param name="avroSchemaFromAttribute">Avro schema from attribute.</param>
-        internal static Type GetValueType(Type typeFromAttribute, string avroSchemaFromAttribute, Type parameterType,  out string avroSchema)
+        internal static (Type KeyType, Type ValueType, string AvroSchema) GetKeyAndValueTypes(string avroSchemaFromAttribute, Type parameterType)
         {
-            avroSchema = null;
+            string avroSchema = null;
 
-            var valueType = typeFromAttribute;
-            if (valueType == null)
+            var valueType = parameterType;
+            var keyType = typeof(Null);
+
+            while (valueType.HasElementType && valueType.GetElementType() != typeof(byte))
             {
-                if (!string.IsNullOrEmpty(avroSchemaFromAttribute))
-                {
-                    avroSchema = avroSchemaFromAttribute;
-                    return typeof(Avro.Generic.GenericRecord);
-                }
-                else if (parameterType == typeof(string))
-                {
-                    return typeof(string);
-                }
-                else
-                {
-                    return typeof(byte[]);
-                }
-            }
-            else
+                valueType = valueType.GetElementType();
+            }            
+
+            if (!valueType.IsPrimitive)
             {
+                // todo: handle List<T>, arrays, etc
+                if (valueType.IsGenericType)
+                {
+                    Type genericTypeDefinition = valueType.GetGenericTypeDefinition();
+
+                    if (genericTypeDefinition == typeof(IAsyncCollector<>))
+                    {
+                        valueType = valueType.GetGenericArguments()[0];
+                    }
+
+                    if (valueType.IsGenericType)
+                    {
+                        var genericArgs = valueType.GetGenericArguments();
+                        valueType = genericArgs.Last();
+                        if (genericArgs.Length > 1)
+                        {
+                            keyType = genericArgs[0];
+                        }
+                    }
+                }
+
                 if (typeof(ISpecificRecord).IsAssignableFrom(valueType))
                 {
                     var specificRecord = (ISpecificRecord)Activator.CreateInstance(valueType);
                     avroSchema = specificRecord.Schema.ToString();
                 }
+                else if (!string.IsNullOrEmpty(avroSchemaFromAttribute))
+                {
+                    avroSchema = avroSchemaFromAttribute;
+                    valueType = typeof(Avro.Generic.GenericRecord);
+                }
             }
 
-            return valueType;
+            return (keyType, valueType, avroSchema);
         }
     }
 }

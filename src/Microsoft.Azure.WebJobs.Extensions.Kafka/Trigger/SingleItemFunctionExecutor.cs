@@ -24,7 +24,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
         }
 
-        protected override async Task ReaderAsync(ChannelReader<KafkaEventData[]> reader, CancellationToken cancellationToken, ILogger logger)
+        protected override async Task ReaderAsync(ChannelReader<KafkaEventData<TKey, TValue>[]> reader, CancellationToken cancellationToken, ILogger logger)
         {
             var pendingTasks = new List<Task<FunctionResult>>();
 
@@ -49,7 +49,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                                 var kafkaEventData = partition.ElementAtOrDefault(i);
                                 if (kafkaEventData != null)
                                 {
-                                    var triggerInput = KafkaTriggerInput.New(kafkaEventData);
+                                    var triggerInput = KafkaTriggerInput<TKey, TValue>.New(kafkaEventData);
                                     var triggerData = new TriggeredFunctionData
                                     {
                                         TriggerValue = triggerInput,

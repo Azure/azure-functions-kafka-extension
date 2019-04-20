@@ -111,7 +111,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             consumer.Subscribe(this.listenerConfiguration.Topic);
 
             // Using a thread as opposed to a task since this will be long running
-            // https://github.com/davidfowl/AspNetCoreDiagnosticScenarios/blob/master/AsyncGuidance.md#avoid-using-taskrun-for-long-running-work-that-blocks-the-thread
             var thread = new Thread(ProcessSubscription)
             {
                 IsBackground = true,
@@ -223,7 +222,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                                 }
                                 else
                                 {
-                                    var kafkaEventData = new KafkaEventData(new ConsumeResultWrapper<TKey, TValue>(consumeResult));
+                                    var kafkaEventData = new KafkaEventData<TKey, TValue>(consumeResult);
 
                                     // add message to executor
                                     // if executor pending items is full, flush it

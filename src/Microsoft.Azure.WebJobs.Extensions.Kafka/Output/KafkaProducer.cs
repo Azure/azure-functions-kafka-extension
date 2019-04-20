@@ -15,8 +15,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     /// </summary>
     public sealed class KafkaProducer<TKey, TValue> : IKafkaProducer
     {
-        private readonly object valueSerializer;
-        internal object ValueSerializer => valueSerializer;
+        internal object ValueSerializer { get; }
 
         private readonly ILogger logger;
         private IProducer<TKey, TValue> producer;
@@ -29,7 +28,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             object valueSerializer,
             ILogger logger)
         {
-            this.valueSerializer = valueSerializer;
+            this.ValueSerializer = valueSerializer;
             this.logger = logger;
             var builder = new DependentProducerBuilder<TKey, TValue>(producerHandle);
 
@@ -52,33 +51,34 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.producer = builder.Build();
         }
 
-        public async Task ProduceAsync(string topic, KafkaEventData item)
+        public async Task ProduceAsync(string topic, object item)
         {
             if (item == null)
             {
                 throw new ArgumentNullException(nameof(item));
             }
 
-            if (item.Value == null)
+            var actualItem = (IKafkaEventData)item;
+            if (actualItem == null)
+            {
+                throw new ArgumentException($"Message value is not of the expected type. Expected: {typeof(KafkaEventData<TKey, TValue>).Name}. Actual: {item.GetType().Name}");
+            }
+
+            if (actualItem.Value == null)
             {
                 throw new ArgumentException("Message value was not defined");
             }
-
-            if (!(item.Value is TValue typedValue))
-            {
-                throw new ArgumentException($"Message value is not of the expected type. Expected: {typeof(TValue).Name}. Actual: {item.Value.GetType().Name}");
-            }
-
+            
             var msg = new Message<TKey, TValue>()
             {
-                Value = typedValue,
+                Value = (TValue)actualItem.Value,
             };
 
-            if (item.Key != null)
+            if (actualItem.Key != null)
             {
-                if (!(item.Key is TKey keyValue))
+                if (!(actualItem.Key is TKey keyValue))
                 {
-                    throw new ArgumentException($"Key value is not of the expected type. Expected: {typeof(TKey).Name}. Actual: {item.Key.GetType().Name}");
+                    throw new ArgumentException($"Key value is not of the expected type. Expected: {typeof(TKey).Name}. Actual: {actualItem.Key.GetType().Name}");
                 }
 
                 msg.Key = keyValue;
@@ -87,7 +87,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var topicUsed = topic;
             if (string.IsNullOrEmpty(topic))
             {
-                topicUsed = item.Topic;
+                topicUsed = actualItem.Topic;
 
                 if (string.IsNullOrEmpty(topicUsed))
                 {
