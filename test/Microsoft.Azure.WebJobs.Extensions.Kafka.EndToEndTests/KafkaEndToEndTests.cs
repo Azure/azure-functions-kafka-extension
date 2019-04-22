@@ -543,7 +543,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             }
         }
 
-        [Theory]       
+        [Theory]
         [InlineData(
             nameof(KafkaOutputFunctions.Produce_AsyncCollector_String_With_Long_Key),
             typeof(MultiItem_KafkaEventData_String_With_Long_Key_Trigger),
@@ -561,6 +561,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             typeof(MultiItem_Protobuf_With_String_Key_Trigger),
             Constants.MyProtobufTopicName
             )]
+        [InlineData(
+            nameof(KafkaOutputFunctions.Produce_Return_Parameter_KafkaEventData_Array_String_With_String_Key),
+            typeof(MultiItem_RawStringArray_Trigger),
+            Constants.StringTopicWithTenPartitionsName)]
         public async Task Produce_And_Consume_With_Key(string producerFunctionName, Type triggerFunctionType, string topicName)
         {
             const int producedMessagesCount = 20;

@@ -68,7 +68,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         
         public static Task<object> ConvertKafkaEventDataType<TValue>(object src, Attribute attribute, ValueBindingContext context)
         {
-            var srcEventData = (KafkaEventData<Null, TValue>)src;
+            var srcEventData = (IKafkaEventData)src;
             return Task.FromResult<object>(new KafkaEventData<TValue>(srcEventData));
         }
 

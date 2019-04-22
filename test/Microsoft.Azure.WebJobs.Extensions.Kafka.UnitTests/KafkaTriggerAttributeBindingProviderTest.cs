@@ -67,11 +67,34 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             return method.GetParameters().First();
         }
 
+        private void AssertIsCorrectKafkaListener(IListener listener, Type expectedKeyType, Type expectedValueType, Type expectedDeserializerType)
+        {
+            var method = this.GetType().GetMethod(nameof(AssertIsCorrectKafkaListenerFor), BindingFlags.NonPublic | BindingFlags.Instance);
+            var genericMethod = method.MakeGenericMethod(expectedKeyType, expectedValueType);
+            genericMethod.Invoke(this, new object[] { listener, expectedDeserializerType });
+        }
+
+        private void AssertIsCorrectKafkaListenerFor<TKey, TValue>(IListener listener, Type expectedDeserializerType)
+        {
+            Assert.IsType<KafkaListener<TKey, TValue>>(listener);
+            var typedListener = (KafkaListener<TKey, TValue>)listener;
+
+            if (expectedDeserializerType == null)
+            {
+                Assert.Null(typedListener.ValueDeserializer);
+            }
+            else
+            {
+                Assert.NotNull(typedListener.ValueDeserializer);
+                Assert.IsType(expectedDeserializerType, typedListener.ValueDeserializer);
+            }
+        }
+
         [Theory]
-        [InlineData(nameof(ByteArray_Fn))]
-        [InlineData(nameof(RawByteArray_Fn))]
-        [InlineData(nameof(ByteArrayWithoutKey_Fn))]
-        public async Task When_No_Type_Is_Set_Should_Create_ByteArray_Listener(string functionName)
+        [InlineData(nameof(ByteArray_Fn), typeof(Null))]
+        [InlineData(nameof(RawByteArray_Fn), typeof(Ignore))]
+        [InlineData(nameof(ByteArrayWithoutKey_Fn), typeof(Ignore))]
+        public async Task When_No_Type_Is_Set_Should_Create_ByteArray_Listener(string functionName, Type expectedKeyType)
         {
             var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")
             {
@@ -100,16 +123,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var listener = await triggerBinding.CreateListenerAsync(new ListenerFactoryContext(new FunctionDescriptor(), new Mock<ITriggeredFunctionExecutor>().Object, default));
 
             Assert.NotNull(listener);
-            Assert.IsType<KafkaListener<Null, byte[]>>(listener);
-            var typedListener = (KafkaListener<Null, byte[]>)listener;
-            Assert.Null(typedListener.ValueDeserializer);
+            AssertIsCorrectKafkaListener(listener, expectedKeyType, typeof(byte[]), null);
         }
 
         [Theory]
-        [InlineData(nameof(String_Fn))]
-        [InlineData(nameof(RawString_Fn))]
-        [InlineData(nameof(StringWithoutKey_Fn))]
-        public async Task When_String_Value_Type_Is_Set_Should_Create_String_Listener(string functionName)
+        [InlineData(nameof(String_Fn), typeof(Null))]
+        [InlineData(nameof(RawString_Fn), typeof(Ignore))]
+        [InlineData(nameof(StringWithoutKey_Fn), typeof(Ignore))]
+        public async Task When_String_Value_Type_Is_Set_Should_Create_String_Listener(string functionName, Type expectedKeyType)
         {
             var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")
             {
@@ -139,16 +160,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
 
             Assert.NotNull(listener);
-            Assert.IsType<KafkaListener<Null, string>>(listener);
-            var typedListener = (KafkaListener<Null, string>)listener;
-            Assert.Null(typedListener.ValueDeserializer);
+            AssertIsCorrectKafkaListener(listener, expectedKeyType, typeof(string), null);
         }
 
         [Theory]
-        [InlineData(nameof(GenericAvro_Fn))]
-        [InlineData(nameof(GenericAvroWithoutKey_Fn))]
-        [InlineData(nameof(RawGenericAvro_Fn))]
-        public async Task When_Avro_Schema_Is_Provided_Should_Create_GenericRecord_Listener(string functionName)
+        [InlineData(nameof(GenericAvro_Fn), typeof(Null))]
+        [InlineData(nameof(GenericAvroWithoutKey_Fn), typeof(Ignore))]
+        [InlineData(nameof(RawGenericAvro_Fn), typeof(Ignore))]
+        public async Task When_Avro_Schema_Is_Provided_Should_Create_GenericRecord_Listener(string functionName, Type expectedKeyType)
         {
             var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")
             {
@@ -178,18 +197,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
 
             Assert.NotNull(listener);
-            Assert.IsType<KafkaListener<Null, GenericRecord>>(listener);
-            var typedListener = (KafkaListener<Null, GenericRecord>)listener;
-            Assert.NotNull(typedListener.ValueDeserializer);
-            Assert.IsType<AvroDeserializer<GenericRecord>>(typedListener.ValueDeserializer);
-        }
-
+            AssertIsCorrectKafkaListener(listener, expectedKeyType, typeof(GenericRecord), typeof(AvroDeserializer<GenericRecord>));            
+        }       
 
         [Theory]
-        [InlineData(nameof(RawSpecificAvro_Fn))]
-        [InlineData(nameof(SpecificAvro_Fn))]
-        [InlineData(nameof(SpecificAvroWithoutKey_Fn))]
-        public async Task When_Value_Type_Is_Specific_Record_Should_Create_SpecificRecord_Listener(string functionName)
+        [InlineData(nameof(SpecificAvro_Fn), typeof(Null))]
+        [InlineData(nameof(RawSpecificAvro_Fn), typeof(Ignore))]
+        [InlineData(nameof(SpecificAvroWithoutKey_Fn), typeof(Ignore))]
+        public async Task When_Value_Type_Is_Specific_Record_Should_Create_SpecificRecord_Listener(string functionName, Type expectedKeyType)
         {
             var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")
             {
@@ -219,17 +234,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
 
             Assert.NotNull(listener);
-            Assert.IsType<KafkaListener<Null, MyAvroRecord>>(listener);
-            var typedListener = (KafkaListener<Null, MyAvroRecord>)listener;
-            Assert.NotNull(typedListener.ValueDeserializer);
-            Assert.IsType<AvroDeserializer<MyAvroRecord>>(typedListener.ValueDeserializer);
+            AssertIsCorrectKafkaListener(listener, expectedKeyType, typeof(MyAvroRecord), typeof(AvroDeserializer<MyAvroRecord>));
         }
 
         [Theory]
-        [InlineData(nameof(Protobuf_Fn))]
-        [InlineData(nameof(RawProtobuf_Fn))]
-        [InlineData(nameof(ProtobufWithoutKey_Fn))]
-        public async Task When_Value_Type_Is_Protobuf_Should_Create_Protobuf_Listener(string functionName)
+        [InlineData(nameof(Protobuf_Fn), typeof(Null))]
+        [InlineData(nameof(RawProtobuf_Fn), typeof(Ignore))]
+        [InlineData(nameof(ProtobufWithoutKey_Fn), typeof(Ignore))]
+        public async Task When_Value_Type_Is_Protobuf_Should_Create_Protobuf_Listener(string functionName, Type expectedKeyType)
         {
             var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")
             {
@@ -259,10 +271,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
 
             Assert.NotNull(listener);
-            Assert.IsType<KafkaListener<Null, ProtoUser>>(listener);
-            var typedListener = (KafkaListener<Null, ProtoUser>)listener;
-            Assert.NotNull(typedListener.ValueDeserializer);
-            Assert.IsType<ProtobufDeserializer<ProtoUser>>(typedListener.ValueDeserializer);
+            AssertIsCorrectKafkaListener(listener, expectedKeyType, typeof(ProtoUser), typeof(ProtobufDeserializer<ProtoUser>));
         }
 
 

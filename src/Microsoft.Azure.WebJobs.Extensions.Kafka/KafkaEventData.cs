@@ -79,15 +79,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.Partition = src.Partition;
             this.Timestamp = src.Timestamp;
             this.Topic = src.Topic;
-        }
-
-        public KafkaEventData(ConsumeResult<Null, TValue> consumeResult)
-        {
-            this.Value = consumeResult.Value;
-            this.Offset = consumeResult.Offset;
-            this.Partition = consumeResult.Partition;
-            this.Timestamp = consumeResult.Timestamp.UtcDateTime;
-            this.Topic = consumeResult.Topic;
-        }
+        }        
     }
 }

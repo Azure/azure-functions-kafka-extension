@@ -70,12 +70,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// Gets the type of the key and value.
         /// </summary>
         /// <param name="avroSchemaFromAttribute">Avro schema from attribute.</param>
-        internal static (Type KeyType, Type ValueType, string AvroSchema) GetKeyAndValueTypes(string avroSchemaFromAttribute, Type parameterType)
+        internal static (Type KeyType, Type ValueType, string AvroSchema) GetKeyAndValueTypes(string avroSchemaFromAttribute, Type parameterType, Type defaultKeyType)
         {
             string avroSchema = null;
 
             var valueType = parameterType;
-            var keyType = typeof(Null);
+            var keyType = defaultKeyType;
 
             while (valueType.HasElementType && valueType.GetElementType() != typeof(byte))
             {
