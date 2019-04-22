@@ -1,3 +1,4 @@
+test
 Azure Functions extensions for Apache Kafka
 ===
 |Branch|Status|
