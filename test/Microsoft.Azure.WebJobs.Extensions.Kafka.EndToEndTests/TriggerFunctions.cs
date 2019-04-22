@@ -96,7 +96,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
         }
     }
 
-    internal static class SingleItem_RawByteArray_Trigger
+    internal static class SingleItem_SinglePartition_RawByteArray_Trigger
     {
         public static void Trigger(
             [KafkaTrigger("LocalBroker", Constants.StringTopicWithOnePartitionName, ConsumerGroup = Constants.ConsumerGroupID)] byte[] kafkaEvent,
@@ -105,6 +105,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             log.LogInformation($@"Byte data received. Length: {kafkaEvent.Length}, Content: ""{Encoding.UTF8.GetString(kafkaEvent)}""");
         }
     }
+
+    internal static class SingleItem_RawByteArray_Trigger
+    {
+        public static void Trigger(
+            [KafkaTrigger("LocalBroker", Constants.StringTopicWithTenPartitionsName, ConsumerGroup = Constants.ConsumerGroupID)] byte[] kafkaEvent,
+            ILogger log)
+        {
+            log.LogInformation($@"Byte data received. Length: {kafkaEvent.Length}, Content: ""{Encoding.UTF8.GetString(kafkaEvent)}""");
+        }
+    }
+
+
 
     internal static class MultiItem_KafkaEventData_String_With_Long_Key_Trigger
     {

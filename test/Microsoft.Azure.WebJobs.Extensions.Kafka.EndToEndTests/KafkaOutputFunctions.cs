@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
@@ -23,6 +24,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                 };
 
                 await output.AddAsync(message);
+            }
+        }
+
+        public static async Task Produce_AsyncColletor_Raw_ByteArray_Without_Key(
+            string topic,
+            IEnumerable<string> content,
+            [Kafka("LocalBroker", Constants.StringTopicWithTenPartitionsName)] IAsyncCollector<byte[]> output)
+        {
+            foreach (var c in content)
+            {
+                await output.AddAsync(Encoding.UTF8.GetBytes(c));
             }
         }
 
