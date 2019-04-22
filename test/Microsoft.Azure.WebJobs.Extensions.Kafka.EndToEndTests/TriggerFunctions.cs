@@ -34,7 +34,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
     }
 
-    internal static class SingleItem_RawString_Without_Key_Trigger
+    internal static class SingleItem_Raw_String_Without_Key_Trigger
     {
         public static void Trigger(
             [KafkaTrigger("LocalBroker", Constants.StringTopicWithTenPartitionsName, ConsumerGroup = Constants.ConsumerGroupID)] string kafkaEvent,
@@ -43,6 +43,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             log.LogInformation(kafkaEvent);
         }
     }
+
+    internal static class MultiItem_Raw_StringArray_Without_Key_Trigger
+    {
+        public static void Trigger(
+            [KafkaTrigger("LocalBroker", Constants.StringTopicWithTenPartitionsName, ConsumerGroup = Constants.ConsumerGroupID)] string[] kafkaEvents,
+            ILogger log)
+        {
+            foreach (var kafkaEvent in kafkaEvents)
+                log.LogInformation(kafkaEvent);
+        }
+    }
+
     internal static class MultiItem_KafkaEventData_String_With_String_Key_Trigger
     {
         public static void Trigger(
@@ -131,7 +143,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
         }
     }
 
-    internal static class SingleItem_Raw_String_Without_Key_Trigger
+    internal static class SingleItem_KafkaEventData_String_Without_Key_Trigger
     {
         public static void Trigger(
             [KafkaTrigger("LocalBroker", Constants.StringTopicWithTenPartitionsName, ConsumerGroup = Constants.ConsumerGroupID)] KafkaEventData<string> kafkaEvent,

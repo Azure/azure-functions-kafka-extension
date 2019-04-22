@@ -18,8 +18,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public IArgumentBinding<KafkaProducerEntity> TryCreate(ParameterInfo parameter)
         {
-            var parameterType = GetActualType(parameter.ParameterType);
-            if (!parameter.IsOut || !SerializationHelper.IsDesSerType(GetNonArrayType(parameterType)))
+            if (!parameter.IsOut)
+            {
+                return null;
+            }
+
+            var parameterType = GetNonRefType(parameter.ParameterType);
+            if (!SerializationHelper.IsDesSerType(GetNonArrayType(parameterType)))
             {
                 return null;
             }
@@ -32,7 +37,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return (IArgumentBinding<KafkaProducerEntity>)Activator.CreateInstance(typeof(SerializableTypeArgumentBinding<>).MakeGenericType(parameterType));
         }
 
-        private Type GetActualType(Type type) => type.IsByRef ? type.GetElementType() : type;
+        private Type GetNonRefType(Type type) => type.IsByRef ? type.GetElementType() : type;
 
         private Type GetNonArrayType(Type type) => type.IsArray ? type.GetElementType() : type;
 

@@ -82,6 +82,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             return list.ToArray();
         }
 
+        
+        [return: Kafka("LocalBroker", Constants.StringTopicWithTenPartitionsName)]
+        public static string[] Produce_Return_Parameter_Raw_String_Array(
+            string topic,
+            IEnumerable<string> content)
+        {
+            var list = new List<string>();
+            foreach (var c in content)
+            {
+                list.Add(c);
+            }
+
+            return list.ToArray();
+        }
+
         public static void Produce_Out_Parameter_KafkaEventData_Array_String_Without_Key(
             string topic,
             IEnumerable<string> content,

@@ -264,7 +264,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
             var loggerProvider1 = CreateTestLoggerProvider();
 
-            using (var host = await StartHostAsync(new[] { typeof(KafkaOutputFunctions), typeof(SingleItem_Raw_String_Without_Key_Trigger) }, loggerProvider1))
+            using (var host = await StartHostAsync(new[] { typeof(KafkaOutputFunctions), typeof(SingleItem_KafkaEventData_String_Without_Key_Trigger) }, loggerProvider1))
             {
                 var jobHost = host.GetJobHost();
 
@@ -287,7 +287,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
             var loggerProvider2 = CreateTestLoggerProvider();
 
-            using (var host = await StartHostAsync(new[] { typeof(KafkaOutputFunctions), typeof(SingleItem_Raw_String_Without_Key_Trigger) }, loggerProvider2))
+            using (var host = await StartHostAsync(new[] { typeof(KafkaOutputFunctions), typeof(SingleItem_KafkaEventData_String_Without_Key_Trigger) }, loggerProvider2))
             {
                 var jobHost = host.GetJobHost();
 
@@ -511,7 +511,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
         [Theory]
         [InlineData(
             nameof(KafkaOutputFunctions.Produce_Out_Parameter_KafkaEventData_Array_String_Without_Key),
-            typeof(SingleItem_RawString_Without_Key_Trigger),
+            typeof(SingleItem_Raw_String_Without_Key_Trigger),
+            Constants.StringTopicWithTenPartitionsName)]
+        [InlineData(
+            nameof(KafkaOutputFunctions.Produce_Return_Parameter_Raw_String_Array),
+            typeof(MultiItem_Raw_StringArray_Without_Key_Trigger),
             Constants.StringTopicWithTenPartitionsName)]
         [InlineData(
             nameof(KafkaOutputFunctions.Produce_AsyncColletor_Raw_String_Without_Key),
