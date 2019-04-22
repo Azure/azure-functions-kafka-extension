@@ -7,6 +7,7 @@ using Avro.Generic;
 using Avro.Specific;
 using Confluent.Kafka;
 using Confluent.SchemaRegistry.Serdes;
+using Google.Protobuf;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
@@ -66,13 +67,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return null;
         }
 
+        internal class GetKeyAndValueTypesResult
+        {
+            public Type KeyType { get; set; }
+            public bool RequiresKey { get; set; }
+            public Type ValueType { get; set; }
+            public string AvroSchema { get; set; }
+        }
+
         /// <summary>
         /// Gets the type of the key and value.
         /// </summary>
         /// <param name="avroSchemaFromAttribute">Avro schema from attribute.</param>
-        internal static (Type KeyType, Type ValueType, string AvroSchema) GetKeyAndValueTypes(string avroSchemaFromAttribute, Type parameterType, Type defaultKeyType)
+        internal static GetKeyAndValueTypesResult GetKeyAndValueTypes(string avroSchemaFromAttribute, Type parameterType, Type defaultKeyType)
         {
             string avroSchema = null;
+            var requiresKey = false;
 
             var valueType = parameterType;
             var keyType = defaultKeyType;
@@ -100,6 +110,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                         valueType = genericArgs.Last();
                         if (genericArgs.Length > 1)
                         {
+                            requiresKey = true;
                             keyType = genericArgs[0];
                         }
                     }
@@ -117,7 +128,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 }
             }
 
-            return (keyType, valueType, avroSchema);
+            return new GetKeyAndValueTypesResult
+            {
+                KeyType = keyType,
+                ValueType = valueType,
+                AvroSchema = avroSchema,
+                RequiresKey = requiresKey,
+            };
+        }
+
+
+        /// <summary>
+        /// Gets if the type can be serialized/deserialized
+        /// </summary>
+        internal static bool IsDesSerType(Type type)
+        {
+            return type == typeof(GenericRecord) ||
+                typeof(ISpecificRecord).IsAssignableFrom(type) ||
+                typeof(IMessage).IsAssignableFrom(type);
         }
     }
 }

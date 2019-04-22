@@ -30,6 +30,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly bool singleDispatch;
         private readonly KafkaOptions options;
         private readonly KafkaListenerConfiguration listenerConfiguration;
+        // Indicates if the consumer requires the Kafka element key
+        private readonly bool requiresKey;
         private readonly ILogger logger;
         private FunctionExecutorBase<TKey, TValue> functionExecutor;
         private IConsumer<TKey, TValue> consumer;
@@ -37,27 +39,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private CancellationTokenSource cancellationTokenSource;
         private SemaphoreSlim subscriberFinished;
 
-
-        readonly object valueDeserializer;
         /// <summary>
         /// Gets the value deserializer
         /// </summary>
         /// <value>The value deserializer.</value>
-        internal object ValueDeserializer => valueDeserializer;
+        internal object ValueDeserializer { get; }
 
         public KafkaListener(
             ITriggeredFunctionExecutor executor,
             bool singleDispatch,
             KafkaOptions options,
             KafkaListenerConfiguration kafkaListenerConfiguration,
+            bool requiresKey,
             object valueDeserializer,
             ILogger logger)
         {
-            this.valueDeserializer = valueDeserializer;
+            this.ValueDeserializer = valueDeserializer;
             this.executor = executor;
             this.singleDispatch = singleDispatch;
             this.options = options;
             this.listenerConfiguration = kafkaListenerConfiguration;
+            this.requiresKey = requiresKey;
             this.logger = logger;
             this.cancellationTokenSource = new CancellationTokenSource();
         }
@@ -84,19 +86,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 logger.LogInformation($"Revoked partitions: [{string.Join(", ", e)}]");
             });
 
-            if (valueDeserializer != null)
+            if (ValueDeserializer != null)
             {
-                if (valueDeserializer is IAsyncDeserializer<TValue> asyncValueDeserializer)
+                if (ValueDeserializer is IAsyncDeserializer<TValue> asyncValueDeserializer)
                 {
                     builder.SetValueDeserializer(asyncValueDeserializer);
                 }
-                else if (valueDeserializer is IDeserializer<TValue> syncValueDeserializer)
+                else if (ValueDeserializer is IDeserializer<TValue> syncValueDeserializer)
                 {
                     builder.SetValueDeserializer(syncValueDeserializer);
                 }
                 else
                 {
-                    throw new InvalidOperationException($"Value deserializer must implement either IAsyncDeserializer or IDeserializer. Type {valueDeserializer.GetType().Name} does not");
+                    throw new InvalidOperationException($"Value deserializer must implement either IAsyncDeserializer or IDeserializer. Type {ValueDeserializer.GetType().Name} does not");
                 }
             }
 
@@ -222,7 +224,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                                 }
                                 else
                                 {
-                                    var kafkaEventData = new KafkaEventData<TKey, TValue>(consumeResult);
+                                    var kafkaEventData = this.requiresKey ? 
+                                        (IKafkaEventData)new KafkaEventData<TKey, TValue>(consumeResult) : 
+                                        KafkaEventData<TValue>.CreateFrom(consumeResult);
 
                                     // add message to executor
                                     // if executor pending items is full, flush it
@@ -270,7 +274,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             await SafeCloseConsumerAsync();
         }
 
-        bool isClosed = false;
+        bool isClosed = false;        
+
         private async Task SafeCloseConsumerAsync()
         {
             if (this.isClosed)

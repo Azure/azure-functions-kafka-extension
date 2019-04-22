@@ -29,16 +29,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.Value = value;
         }
 
-        public KafkaEventData(IKafkaEventData src)
-        {
-            this.Key = (TKey)src.Key;
-            this.Value = (TValue)src.Value;
-            this.Offset = src.Offset;
-            this.Partition = src.Partition;
-            this.Timestamp = src.Timestamp;
-            this.Topic = src.Topic;
-        }
-
         public KafkaEventData(ConsumeResult<TKey, TValue> consumeResult)
         {
             this.Key = consumeResult.Key;
@@ -70,6 +60,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public KafkaEventData(TValue value)
         {
             this.Value = value;
+        }
+
+        internal static KafkaEventData<TValue> CreateFrom<TKey>(ConsumeResult<TKey, TValue> consumeResult)
+        {
+            var result = new KafkaEventData<TValue>
+            {
+                Value = consumeResult.Value,
+                Offset = consumeResult.Offset,
+                Partition = consumeResult.Partition,
+                Timestamp = consumeResult.Timestamp.UtcDateTime,
+                Topic = consumeResult.Topic,
+            };
+
+            return result;
         }
 
         public KafkaEventData(IKafkaEventData src)

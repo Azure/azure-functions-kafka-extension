@@ -79,6 +79,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 singleDispatch: true,
                 options: new KafkaOptions(),
                 listenerConfig,
+                requiresKey: true,
                 valueDeserializer: null,
                 logger: NullLogger.Instance
                 );
@@ -119,7 +120,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             executor.Setup(x => x.TryExecuteAsync(It.IsNotNull<TriggeredFunctionData>(), It.IsAny<CancellationToken>()))
                 .Callback<TriggeredFunctionData, CancellationToken>((td, _) =>
                 {
-                    var triggerData = (KafkaTriggerInput<Null, string>)td.TriggerValue;
+                    var triggerData = (KafkaTriggerInput)td.TriggerValue;
                     var alreadyProcessed = Interlocked.Add(ref processedItemCount, triggerData.Events.Length);
                     if (alreadyProcessed == ExpectedEventCount)
                     {
@@ -140,6 +141,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 singleDispatch: false,
                 options: new KafkaOptions(),
                 listenerConfig,
+                requiresKey: true,
                 valueDeserializer: null,
                 logger: NullLogger.Instance
                 );
@@ -212,7 +214,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             executor.Setup(x => x.TryExecuteAsync(It.IsNotNull<TriggeredFunctionData>(), It.IsAny<CancellationToken>()))
                 .Callback<TriggeredFunctionData, CancellationToken>((t, _) =>
                 {
-                    var triggerData = (KafkaTriggerInput<Null, string>)t.TriggerValue;
+                    var triggerData = (KafkaTriggerInput)t.TriggerValue;
 
                     if (singleDispatch)
                     {
@@ -256,6 +258,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 singleDispatch,
                 new KafkaOptions(),
                 listenerConfig,
+                requiresKey: true,
                 valueDeserializer: null,
                 NullLogger.Instance
                 );
@@ -302,6 +305,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 true,
                 kafkaOptions,
                 listenerConfig,
+                requiresKey: true,
                 valueDeserializer: null,
                 NullLogger.Instance
                 );
@@ -344,6 +348,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 true,
                 kafkaOptions,
                 listenerConfig,
+                requiresKey: true,
                 valueDeserializer: null,
                 NullLogger.Instance
                 );

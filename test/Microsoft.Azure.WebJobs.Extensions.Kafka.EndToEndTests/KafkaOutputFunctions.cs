@@ -148,6 +148,46 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             }
         }
 
+        public static async Task Produce_AsyncCollector_Raw_SpecificAvro(
+            string topic,
+            IEnumerable<string> content,
+            [Kafka("LocalBroker", Constants.MyAvroRecordTopicName)] IAsyncCollector<MyAvroRecord> output)
+        {
+
+            foreach (var c in content)
+            {                
+                await output.AddAsync(new MyAvroRecord()
+                {
+                    ID = c,
+                    Ticks = DateTime.UtcNow.Ticks,
+                });
+            }
+        }
+
+        [return: Kafka("LocalBroker", Constants.MyProtobufTopicName)]
+        public static ProtoUser[] Produce_Return_Parameter_Raw_Protobuf_Without_Key(
+            string topic,
+            IEnumerable<string> content)
+        {
+            var colors = new[] { "red", "blue", "green" };
+
+            var list = new List<ProtoUser>();
+            var i = 0;
+            foreach (var c in content)
+            {
+                list.Add(new ProtoUser()
+                {
+                    Name = c,
+                    FavoriteColor = colors[i % colors.Length],
+                    FavoriteNumber = i,
+                });
+
+                i++;
+            }
+
+            return list.ToArray();
+        }
+
         public static async Task Produce_AsyncCollector_Protobuf_With_String_Key(
             string topic,
             IEnumerable<string> keys,

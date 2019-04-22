@@ -8,7 +8,6 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Avro.Generic;
-using Confluent.Kafka;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -46,7 +45,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 {
                     return ConvertToByteArray;
                 }
-                else if (typeof(IKafkaEventData).IsAssignableFrom(typeSource) && typeSource.IsGenericType)
+                else if (typeSource.IsGenericType)
                 {
                     var sourceGenericTypes = typeSource.GetGenericArguments();
                     var sourceValueType = sourceGenericTypes.Last();
@@ -61,11 +60,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                         return converter;
                     }
                 }
+                else if (SerializationHelper.IsDesSerType(typeDest))
+                {
+                    return ConvertFromKafkaEventDataValueProperty;
+                }
             }
 
-            return this.converterManager.GetConverter<TAttribute>(typeSource, typeDest);
+            return this.converterManager?.GetConverter<TAttribute>(typeSource, typeDest);
         }
-        
+
+        static Task<object> ConvertFromKafkaEventDataValueProperty(object src, Attribute attribute, ValueBindingContext context) => Task.FromResult<object>(((IKafkaEventData)src).Value);
+
         public static Task<object> ConvertKafkaEventDataType<TValue>(object src, Attribute attribute, ValueBindingContext context)
         {
             var srcEventData = (IKafkaEventData)src;

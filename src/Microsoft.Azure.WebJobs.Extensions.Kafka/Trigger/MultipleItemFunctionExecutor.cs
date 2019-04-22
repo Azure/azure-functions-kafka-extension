@@ -24,7 +24,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
         }
 
-        protected override async Task ReaderAsync(ChannelReader<KafkaEventData<TKey, TValue>[]> reader, CancellationToken cancellationToken, ILogger logger)
+        protected override async Task ReaderAsync(ChannelReader<IKafkaEventData[]> reader, CancellationToken cancellationToken, ILogger logger)
         {
             while (!cancellationToken.IsCancellationRequested && await reader.WaitToReadAsync(cancellationToken))
             {
@@ -33,7 +33,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     try
                     {
                         // Try to publish them
-                        var triggerInput = KafkaTriggerInput<TKey, TValue>.New(itemsToExecute);
+                        var triggerInput = KafkaTriggerInput.New(itemsToExecute);
                         var triggerData = new TriggeredFunctionData
                         {
                             TriggerValue = triggerInput,

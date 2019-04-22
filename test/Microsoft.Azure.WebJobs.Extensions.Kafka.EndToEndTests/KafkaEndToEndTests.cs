@@ -517,6 +517,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             nameof(KafkaOutputFunctions.Produce_AsyncColletor_Raw_String_Without_Key),
             typeof(MultiItem_KafkaEventData_String_With_Ignore_Key_Trigger),
             Constants.StringTopicWithTenPartitionsName)]
+        [InlineData(
+            nameof(KafkaOutputFunctions.Produce_AsyncCollector_Raw_SpecificAvro),
+            typeof(MultiItem_Raw_SpecificAvro_Without_Key_Trigger),
+            Constants.MyAvroRecordTopicName)]
+        [InlineData(
+            nameof(KafkaOutputFunctions.Produce_Return_Parameter_Raw_Protobuf_Without_Key),
+            typeof(MultiItem_Raw_Protobuf_Trigger),
+            Constants.MyProtobufTopicName)]
         public async Task Produce_And_Consume_Without_Key(string producerFunctionName, Type triggerFunctionType, string topicName)
         {
             const int producedMessagesCount = 20;

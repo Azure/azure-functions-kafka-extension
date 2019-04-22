@@ -8,13 +8,13 @@ using Microsoft.Azure.WebJobs.Host.Triggers;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
-    public class KafkaTriggerBindingStrategy<TKey, TValue> : ITriggerBindingStrategy<KafkaEventData<TKey, TValue>, KafkaTriggerInput<TKey, TValue>>
+    public class KafkaTriggerBindingStrategy<TKey, TValue> : ITriggerBindingStrategy<IKafkaEventData, KafkaTriggerInput>
     {
         /// <summary>
         /// Given a raw string, convert to a TTriggerValue.
         /// This is primarily used in the "invoke from dashboard" path. 
         /// </summary>
-        public KafkaTriggerInput<TKey, TValue> ConvertFromString(string input)
+        public KafkaTriggerInput ConvertFromString(string input)
         {
             // Need to dig up to see how "invoke from dashboard" works.
             // Returning null for now, since it is not being called
@@ -22,7 +22,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         }
 
         // Single instance: Core --> EventData
-        public KafkaEventData<TKey, TValue> BindSingle(KafkaTriggerInput<TKey, TValue> value, ValueBindingContext context)
+        public IKafkaEventData BindSingle(KafkaTriggerInput value, ValueBindingContext context)
         {
             if (value == null)
             {
@@ -31,7 +31,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return value.GetSingleEventData();
         }
 
-        public KafkaEventData<TKey, TValue>[] BindMultiple(KafkaTriggerInput<TKey, TValue> value, ValueBindingContext context)
+        public IKafkaEventData[] BindMultiple(KafkaTriggerInput value, ValueBindingContext context)
         {
             if (value == null)
             {
@@ -61,7 +61,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             contract.Add(name, isSingleDispatch ? type : type.MakeArrayType());
         }
 
-        public Dictionary<string, object> GetBindingData(KafkaTriggerInput<TKey, TValue> value)
+        public Dictionary<string, object> GetBindingData(KafkaTriggerInput value)
         {
             if (value == null)
             {
@@ -81,7 +81,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return bindingData;
         }
 
-        internal static void AddBindingData(Dictionary<string, object> bindingData, KafkaEventData<TKey, TValue>[] events)
+        internal static void AddBindingData(Dictionary<string, object> bindingData, IKafkaEventData[] events)
         {
             int length = events.Length;
             var partitions = new int[length];
@@ -106,13 +106,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
         }
 
-        private static void AddBindingData(Dictionary<string, object> bindingData, KafkaEventData<TKey, TValue> eventData)
+        private static void AddBindingData(Dictionary<string, object> bindingData, IKafkaEventData eventData)
         {
-            bindingData.Add(nameof(KafkaEventData<TKey, TValue>.Key), eventData.Key);
-            bindingData.Add(nameof(KafkaEventData<TKey, TValue>.Partition), eventData.Partition);
-            bindingData.Add(nameof(KafkaEventData<TKey, TValue>.Topic), eventData.Topic);
-            bindingData.Add(nameof(KafkaEventData<TKey, TValue>.Timestamp), eventData.Timestamp);
-            bindingData.Add(nameof(KafkaEventData<TKey, TValue>.Offset), eventData.Offset);
+            bindingData.Add(nameof(IKafkaEventData.Key), eventData.Key);
+            bindingData.Add(nameof(IKafkaEventData.Partition), eventData.Partition);
+            bindingData.Add(nameof(IKafkaEventData.Topic), eventData.Topic);
+            bindingData.Add(nameof(IKafkaEventData.Timestamp), eventData.Timestamp);
+            bindingData.Add(nameof(IKafkaEventData.Offset), eventData.Offset);
         }
     }
 }

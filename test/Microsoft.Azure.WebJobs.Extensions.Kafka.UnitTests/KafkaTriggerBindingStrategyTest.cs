@@ -51,7 +51,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             };
 
             var strategy = new KafkaTriggerBindingStrategy<string, string>();
-            var binding = strategy.GetBindingData(KafkaTriggerInput<string, string>.New(kafkaEventData));
+            var binding = strategy.GetBindingData(KafkaTriggerInput.New(kafkaEventData));
             Assert.Equal("1", binding["Key"]);
             Assert.Equal(100L, binding["Offset"]);
             Assert.Equal(2, binding["Partition"]);
@@ -69,7 +69,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         [Fact]
         public void MultiDispatch_GetBindingData_Should_Create_Data_From_Kafka_Event()
         {
-            var triggerInput = KafkaTriggerInput<string, string>.New(new[]
+            var triggerInput = KafkaTriggerInput.New(new[]
             {
                 new KafkaEventData<string, string>()
                 {

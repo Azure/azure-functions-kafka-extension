@@ -50,20 +50,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var consumerConfig = CreateConsumerConfiguration(attribute);
 
             var keyAndValueTypes = SerializationHelper.GetKeyAndValueTypes(attribute.AvroSchema, parameter.ParameterType, typeof(Ignore));
-            var valueDeserializer = SerializationHelper.ResolveValueDeserializer(keyAndValueTypes.ValueType, keyAndValueTypes.AvroSchema);
+            var valueDeserializer = SerializationHelper.ResolveValueDeserializer(keyAndValueTypes.ValueType, keyAndValueTypes.AvroSchema);            
 
-            var binding = CreateBindingStrategyFor(keyAndValueTypes.KeyType ?? typeof(Ignore), keyAndValueTypes.ValueType, valueDeserializer, parameter, consumerConfig);
+            var binding = CreateBindingStrategyFor(keyAndValueTypes.KeyType ?? typeof(Ignore), keyAndValueTypes.ValueType, keyAndValueTypes.RequiresKey, valueDeserializer, parameter, consumerConfig);
 
             return Task.FromResult<ITriggerBinding>(binding);
         }
 
-        ITriggerBinding CreateBindingStrategyFor(Type keyType, Type valueType, object valueDeserializer, ParameterInfo parameterInfo, KafkaListenerConfiguration listenerConfiguration)
+        ITriggerBinding CreateBindingStrategyFor(Type keyType, Type valueType, bool requiresKey, object valueDeserializer, ParameterInfo parameterInfo, KafkaListenerConfiguration listenerConfiguration)
         {
             var genericCreateBindingStrategy = this.GetType().GetMethod(nameof(CreateBindingStrategy), BindingFlags.Instance | BindingFlags.NonPublic).MakeGenericMethod(keyType, valueType);
-            return (ITriggerBinding)genericCreateBindingStrategy.Invoke(this, new object[] { parameterInfo, listenerConfiguration, valueDeserializer });
+            return (ITriggerBinding)genericCreateBindingStrategy.Invoke(this, new object[] { parameterInfo, listenerConfiguration, requiresKey, valueDeserializer });
         }
 
-        private ITriggerBinding CreateBindingStrategy<TKey, TValue>(ParameterInfo parameter, KafkaListenerConfiguration listenerConfiguration, object valueDeserializer)
+        private ITriggerBinding CreateBindingStrategy<TKey, TValue>(ParameterInfo parameter, KafkaListenerConfiguration listenerConfiguration, bool requiresKey, object valueDeserializer)
         {
             // TODO: reuse connections if they match with others in same function app
             Task<IListener> listenerCreator(ListenerFactoryContext factoryContext, bool singleDispatch)
@@ -73,6 +73,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     singleDispatch,
                     this.options.Value,
                     listenerConfiguration,
+                    requiresKey,
                     valueDeserializer,
                     this.logger);
                 

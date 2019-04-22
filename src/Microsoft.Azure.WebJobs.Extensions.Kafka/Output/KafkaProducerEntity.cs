@@ -29,13 +29,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 foreach (var collectionItem in collection)
                 {
-                    await kafkaProducer.ProduceAsync(this.Topic, collectionItem);
+                    await kafkaProducer.ProduceAsync(this.Topic, this.GetItemToProduce(collectionItem));
                 }
             }
             else
             {
-                await kafkaProducer.ProduceAsync(this.Topic, item);
+                await kafkaProducer.ProduceAsync(this.Topic, this.GetItemToProduce(item));
             }
+        }
+
+        private object GetItemToProduce<T>(T item)
+        {
+            if (item is IKafkaEventData)
+            {
+                return item;
+            }
+
+            return new KafkaEventData<T>(item);
         }
     }
 }

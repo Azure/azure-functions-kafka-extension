@@ -15,7 +15,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             new AsyncCollectorArgumentBindingProvider(),
             new KafkaEventDataArgumentBindingProvider(),
             new StringArgumentBindingProvider(),
-            new ByteArrayArgumentBindingProvider()
+            new ByteArrayArgumentBindingProvider(),
+            new SerializableTypeArgumentBindingProvider()
             );
 
         private readonly IKafkaProducerFactory kafkaProducerFactory;
