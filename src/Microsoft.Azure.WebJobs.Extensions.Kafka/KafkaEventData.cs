@@ -4,6 +4,7 @@
 using Confluent.Kafka;
 using System;
 
+// ci test
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
     public class KafkaEventData
