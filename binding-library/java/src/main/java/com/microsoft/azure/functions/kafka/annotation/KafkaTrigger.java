@@ -20,7 +20,7 @@ import java.lang.annotation.ElementType;
  */
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)
-@CustomBinding(direction = "in", name = "kafkaEvents", type = "KafkaTriggerAttribute")
+@CustomBinding(direction = "in", name = "kafkaEvents", type = "kafkaTrigger")
 public @interface KafkaTrigger {
     /**
      * Gets the Topic.
