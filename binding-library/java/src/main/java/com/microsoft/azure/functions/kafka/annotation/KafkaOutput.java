@@ -30,25 +30,6 @@ public @interface KafkaOutput { // TODO Should I name it as KafkaOutput?
     String brokerList();
 
     /**
-     * Gets or sets the KeyType
-     * This method is used internally. Don't pass the value to this method.
-     */
-    // String keyType();  // TODO Originally Type type. Should I pass the serialized value for them?
-
-    /**
-     * Gets or sets the ValueType
-     * This method is used internally. Don't pass the value to this method.
-     */
-    // String valueType(); // TODO Originally Type type. Should I pass the serialized value for them?
-
-    /**
-     * Gets or sets the Avro schema.
-     * Json format
-     * Default: Plain*
-     */
-    String AvroScema();
-
-    /**
      * Gets or sets the Maximum transmit message size. Default: 1MB
      */
     int maxMessageBytes();

@@ -43,24 +43,6 @@ public @interface KafkaTrigger {
     String consumerGroup();
 
     /**
-     * Gets or sets the KeyType
-     * This method is used internally. Don't pass the value to this method.
-     */
-    // String keyType();  // TODO Originally Type type. Should I pass the serialized value for them?
-
-    /**
-     * Gets or sets the ValueType
-     * This method is used internally. Don't pass the value to this method.
-     */
-    // String valueType(); // TODO Originally Type type. Should I pass the serialized value for them?
-
-    /**
-     * Gets or sets the Avro schema.
-     * Should be used only if a generic record should be generated
-     */
-    String avroScema() default "";
-
-    /**
      * SASL mechanism to use for authentication.
      * Allowed values: Gssapi, Plain, ScramSha256, ScramSha512
      * Default: PLAIN
