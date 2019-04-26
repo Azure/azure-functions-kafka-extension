@@ -16,7 +16,7 @@ import java.lang.annotation.ElementType;
 
 
 /**
- * <p>Annotation for KafkaOutput bindings</p>
+ * <p>Annotation for KafkaTrigger bindings</p>
  */
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)
