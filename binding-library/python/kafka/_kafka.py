@@ -1,54 +1,32 @@
+import abc
 import typing
 
-from ._kafka_abc import AbstractKafkaEvent
+class AbstractKafkaEvent(abc.ABC):
 
-class KafkaEvent(AbstractKafkaEvent):
-    """A concrete implementation of Kafka event message type."""
-
-    def __init__(self, *,
-                 body: bytes,
-                 key: typing.Optional[str]=None,
-                 offset: typing.Optional[int]=None,
-                 partition: typing.Optional[int]=None,
-                 topic: typing.Optional[str]=None,
-                 timestamp: typing.Optional[str]=None) -> None:
-        self.__body = body
-        self.__key = key
-        self.__offset = offset
-        self.__partition = partition
-        self.__topic = topic
-        self.__timestamp = timestamp
-    
+    @abc.abstractmethod
     def get_body(self) -> bytes:
-        return self.__body
-    
+        pass
     @property
+    @abc.abstractmethod
     def key(self) -> typing.Optional[str]:
-        return self.__key
+        pass
     
     @property
+    @abc.abstractmethod
     def offset(self) -> typing.Optional[int]:
-        return self.__offset
-    
+        pass
+
     @property
+    @abc.abstractmethod
     def partition(self) -> typing.Optional[int]:
-        return self.__partition
-    
+        pass
+
     @property
+    @abc.abstractmethod
     def topic(self) -> typing.Optional[str]:
-        return self.__topic
-    
+        pass
+
     @property
+    @abc.abstractmethod
     def timestamp(self) -> typing.Optional[str]:
-        return self.__timestamp
-    
-    def __repr__(self) -> str:
-        return (
-            f'<azure.KafkaEvent '
-            f'key={self.key} '
-            f'partition={self.offset} '
-            f'offset={self.offset} '
-            f'topic={self.topic} '
-            f'timestamp={self.timestamp} '
-            f'at 0x{id(self):0x}>'
-        )
+        pass

@@ -1,10 +1,61 @@
 import json
 import typing
 
-from ._kafka import KafkaEvent
+from ._kafka import AbstractKafkaEvent
 
 from azure.functions_worker.bindings import meta
 from azure.functions_worker import protos
+
+class KafkaEvent(AbstractKafkaEvent):
+    """A concrete implementation of Kafka event message type."""
+
+    def __init__(self, *,
+                 body: bytes,
+                 key: typing.Optional[str]=None,
+                 offset: typing.Optional[int]=None,
+                 partition: typing.Optional[int]=None,
+                 topic: typing.Optional[str]=None,
+                 timestamp: typing.Optional[str]=None) -> None:
+        self.__body = body
+        self.__key = key
+        self.__offset = offset
+        self.__partition = partition
+        self.__topic = topic
+        self.__timestamp = timestamp
+    
+    def get_body(self) -> bytes:
+        return self.__body
+    
+    @property
+    def key(self) -> typing.Optional[str]:
+        return self.__key
+    
+    @property
+    def offset(self) -> typing.Optional[int]:
+        return self.__offset
+    
+    @property
+    def partition(self) -> typing.Optional[int]:
+        return self.__partition
+    
+    @property
+    def topic(self) -> typing.Optional[str]:
+        return self.__topic
+    
+    @property
+    def timestamp(self) -> typing.Optional[str]:
+        return self.__timestamp
+    
+    def __repr__(self) -> str:
+        return (
+            f'<azure.KafkaEvent '
+            f'key={self.key} '
+            f'partition={self.offset} '
+            f'offset={self.offset} '
+            f'topic={self.topic} '
+            f'timestamp={self.timestamp} '
+            f'at 0x{id(self):0x}>'
+        )
 
 class KafkaConverter(meta.InConverter, meta.OutConverter,
                         binding='kafka'):
@@ -49,16 +100,8 @@ class KafkaConverter(meta.InConverter, meta.OutConverter,
     @classmethod
     def to_proto(cls, obj: typing.Any, *,
                  pytype: typing.Optional[type]) -> protos.TypedData:
-        if isinstance(obj, str):
-            data = protos.TypedData(string=obj)
-
-        elif isinstance(obj, bytes):
-            data = protos.TypedData(bytes=obj)
-
-        elif isinstance(obj, list):
-            data = protos.TypedData(json=json.dumps(obj))
-
-        return data
+        raise NotImplementedError(
+                f'Output bindings are not supported for Kafka')
 
 
 class KafkaTriggerConverter(KafkaConverter,
@@ -87,8 +130,6 @@ class KafkaTriggerConverter(KafkaConverter,
             body=body,
             timestamp=cls._decode_trigger_metadata_field(
                 trigger_metadata, 'Timestamp', python_type=str),
-            #timestamp=cls._parse_datetime_metadata(
-             #   trigger_metadata, 'Timestamp'),
             key=cls._decode_trigger_metadata_field(
                 trigger_metadata, 'Key', python_type=str),
             partition=cls._decode_trigger_metadata_field(
