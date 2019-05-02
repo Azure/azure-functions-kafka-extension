@@ -6,6 +6,7 @@ class AbstractKafkaEvent(abc.ABC):
     @abc.abstractmethod
     def get_body(self) -> bytes:
         pass
+
     @property
     @abc.abstractmethod
     def key(self) -> typing.Optional[str]:
