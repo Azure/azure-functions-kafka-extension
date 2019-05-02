@@ -32,6 +32,13 @@ If you have problems connecting to localhost:9092 try to add `broker    127.0.0.
 
 [TODO: add information about .NET Host sample]
 
-[TODO: add information Python samples]
+## Python Consumer
 
+A sample Python consumer function is provided in samples/python/KafkaTrigger. It depends on the Kafka installed locally (localhost:9092), as described in previous section.
+
+### Using the Azure Functions Python Kakfa Trigger
+
+1. Make sure you have access to a Kafka Cluster. Follow [these](https://medium.com/@tsuyoshiushio/local-kafka-cluster-on-kubernetes-on-your-pc-in-5-minutes-651a2ff4dcde) steps to set it up locally
+
+2. Make sure you have [latest version](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local) of functions core tools.
 [TODO: add information Java samples]
