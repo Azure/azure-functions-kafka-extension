@@ -147,7 +147,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 SaslUsername = this.listenerConfiguration.SaslUsername,
                 SaslPassword = this.listenerConfiguration.SaslPassword,
                 SecurityProtocol = this.listenerConfiguration.SecurityProtocol,
-
+                SslCaLocation = this.listenerConfiguration.SslKeyLocation,
 
                 // Values from host configuration
                 StatisticsIntervalMs = this.options.StatisticsIntervalMs,
@@ -183,7 +183,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 conf.SaslMechanism = SaslMechanism.Plain;
                 conf.SaslUsername = "$ConnectionString";
                 conf.SaslPassword = this.listenerConfiguration.EventHubConnectionString;
-                conf.SslCaLocation = "./cacert.pem";
+                conf.SslCaLocation= string.IsNullOrEmpty(conf.SslCaLocation) ? "./cacert.pem" : conf.SslCaLocation;
                 conf.GroupId = consumerGroupToUse;
                 conf.BrokerVersionFallback = "1.0.0";
             }
