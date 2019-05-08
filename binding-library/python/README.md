@@ -22,6 +22,11 @@ pip install azure-functions-kafka-binding
 - See setup.py for dependencies
 
 ## Usage
+=======
+# Installation
+pip install azure-functions-kafka-binding
+
+# Usage
 
 ```python
 from azure_functions.kafka import KafkaEvent
