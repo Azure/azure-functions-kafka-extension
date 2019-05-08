@@ -21,8 +21,6 @@ pip install azure-functions-kafka-binding
 - Python 3.6
 - See setup.py for dependencies
 
-## Usage
-=======
 # Installation
 pip install azure-functions-kafka-binding
 
