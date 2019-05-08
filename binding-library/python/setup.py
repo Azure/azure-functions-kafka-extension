@@ -6,7 +6,7 @@ with open("README.md") as f:
 
 setup(
     name='azure-functions-kafka-binding',
-    version='1.0.0',
+    version='1.0.1',
     packages=['azure_functions.kafka'],
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -17,7 +17,6 @@ setup(
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
         'Operating System :: OS Independent',
         'License :: OSI Approved :: MIT License',
     ]
