@@ -6,7 +6,7 @@ with open("README.md") as f:
 
 setup(
     name='azure-functions-kafka-binding',
-    version='2.0.0',
+    version='1.0.0',
     packages=['azure_functions.kafka'],
     long_description=long_description,
     long_description_content_type='text/markdown',
