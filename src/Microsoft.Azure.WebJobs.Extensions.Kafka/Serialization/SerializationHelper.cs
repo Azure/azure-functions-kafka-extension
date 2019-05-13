@@ -3,9 +3,12 @@
 
 using System;
 using System.Linq;
+using System.Reflection;
 using Avro.Generic;
 using Avro.Specific;
 using Confluent.Kafka;
+using Confluent.Kafka.SyncOverAsync;
+using Confluent.SchemaRegistry;
 using Confluent.SchemaRegistry.Serdes;
 using Google.Protobuf;
 
@@ -33,11 +36,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     specifiedAvroSchema = ((ISpecificRecord)Activator.CreateInstance(valueType)).Schema.ToString();
                 }
 
+                var methodInfo = typeof(SerializationHelper).GetMethod(nameof(CreateAvroDeserializer), BindingFlags.Static | BindingFlags.NonPublic);
+                var genericMethod = methodInfo.MakeGenericMethod(valueType);
+
                 var schemaRegistry = new LocalSchemaRegistry(specifiedAvroSchema);
-                return Activator.CreateInstance(typeof(AvroDeserializer<>).MakeGenericType(valueType), schemaRegistry, null /* config */);
+                return genericMethod.Invoke(null, new object[] { schemaRegistry });
             }
                        
             return null;
+        }
+
+        private static IDeserializer<TValue> CreateAvroDeserializer<TValue>(ISchemaRegistryClient schemaRegistry)
+        {
+            return new AvroDeserializer<TValue>(schemaRegistry).AsSyncOverAsync();
         }
 
         internal static object ResolveValueSerializer(Type valueType, string specifiedAvroSchema)
