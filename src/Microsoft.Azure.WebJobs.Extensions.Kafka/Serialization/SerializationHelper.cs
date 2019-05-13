@@ -2,10 +2,12 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Linq;
 using Avro.Generic;
 using Avro.Specific;
 using Confluent.Kafka;
 using Confluent.SchemaRegistry.Serdes;
+using Google.Protobuf;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
@@ -65,43 +67,85 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return null;
         }
 
-        /// <summary>
-        /// Gets the type of the value.
-        /// </summary>
-        /// <returns>The value type.</returns>
-        /// <param name="typeFromAttribute">Type from attribute (KafkaAttribute or KafkaTriggerAttribute).</param>
-        /// <param name="avroSchemaFromAttribute">Avro schema from attribute.</param>
-        internal static Type GetValueType(Type typeFromAttribute, string avroSchemaFromAttribute, Type parameterType,  out string avroSchema)
+        internal class GetKeyAndValueTypesResult
         {
-            avroSchema = null;
+            public Type KeyType { get; set; }
+            public bool RequiresKey { get; set; }
+            public Type ValueType { get; set; }
+            public string AvroSchema { get; set; }
+        }
 
-            var valueType = typeFromAttribute;
-            if (valueType == null)
+        /// <summary>
+        /// Gets the type of the key and value.
+        /// </summary>
+        /// <param name="avroSchemaFromAttribute">Avro schema from attribute.</param>
+        internal static GetKeyAndValueTypesResult GetKeyAndValueTypes(string avroSchemaFromAttribute, Type parameterType, Type defaultKeyType)
+        {
+            string avroSchema = null;
+            var requiresKey = false;
+
+            var valueType = parameterType;
+            var keyType = defaultKeyType;
+
+            while (valueType.HasElementType && valueType.GetElementType() != typeof(byte))
             {
-                if (!string.IsNullOrEmpty(avroSchemaFromAttribute))
-                {
-                    avroSchema = avroSchemaFromAttribute;
-                    return typeof(Avro.Generic.GenericRecord);
-                }
-                else if (parameterType == typeof(string))
-                {
-                    return typeof(string);
-                }
-                else
-                {
-                    return typeof(byte[]);
-                }
-            }
-            else
+                valueType = valueType.GetElementType();
+            }            
+
+            if (!valueType.IsPrimitive)
             {
+                // todo: handle List<T>, arrays, etc
+                if (valueType.IsGenericType)
+                {
+                    Type genericTypeDefinition = valueType.GetGenericTypeDefinition();
+
+                    if (genericTypeDefinition == typeof(IAsyncCollector<>))
+                    {
+                        valueType = valueType.GetGenericArguments()[0];
+                    }
+
+                    if (valueType.IsGenericType)
+                    {
+                        var genericArgs = valueType.GetGenericArguments();
+                        valueType = genericArgs.Last();
+                        if (genericArgs.Length > 1)
+                        {
+                            requiresKey = true;
+                            keyType = genericArgs[0];
+                        }
+                    }
+                }
+
                 if (typeof(ISpecificRecord).IsAssignableFrom(valueType))
                 {
                     var specificRecord = (ISpecificRecord)Activator.CreateInstance(valueType);
                     avroSchema = specificRecord.Schema.ToString();
                 }
+                else if (!string.IsNullOrEmpty(avroSchemaFromAttribute))
+                {
+                    avroSchema = avroSchemaFromAttribute;
+                    valueType = typeof(Avro.Generic.GenericRecord);
+                }
             }
 
-            return valueType;
+            return new GetKeyAndValueTypesResult
+            {
+                KeyType = keyType,
+                ValueType = valueType,
+                AvroSchema = avroSchema,
+                RequiresKey = requiresKey,
+            };
+        }
+
+
+        /// <summary>
+        /// Gets if the type can be serialized/deserialized
+        /// </summary>
+        internal static bool IsDesSerType(Type type)
+        {
+            return type == typeof(GenericRecord) ||
+                typeof(ISpecificRecord).IsAssignableFrom(type) ||
+                typeof(IMessage).IsAssignableFrom(type);
         }
     }
 }

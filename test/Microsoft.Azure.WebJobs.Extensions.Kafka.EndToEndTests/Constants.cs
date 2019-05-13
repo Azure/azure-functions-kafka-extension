@@ -9,5 +9,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
         internal const string StringTopicWithLongKeyAndTenPartitionsName = "stringTopicWithLongKeyTenPartitions";
         internal const string MyAvroRecordTopicName = "myAvroRecordTopic";
         internal const string MyProtobufTopicName = "myProtobufTopic";
+        internal const string ConsumerGroupID = "e2e_tests";
     }
 }

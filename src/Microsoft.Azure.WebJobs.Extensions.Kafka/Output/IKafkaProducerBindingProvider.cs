@@ -1,15 +1,13 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-using System.Threading;
+using System.Reflection;
+using Microsoft.Azure.WebJobs.Host.Bindings;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
-    /// <summary>
-    /// Provider for <see cref="IKafkaProducer"/>
-    /// </summary>
-    public interface IKafkaProducerFactory
+    internal interface IKafkaProducerBindingProvider
     {
-        IKafkaProducer Create(KafkaProducerEntity entity);
+        IArgumentBinding<KafkaProducerEntity> TryCreate(ParameterInfo parameter);
     }
 }

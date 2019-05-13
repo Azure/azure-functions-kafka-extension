@@ -16,7 +16,7 @@ namespace SampleHost
         /// Trigger for the topic 
         /// </summary>
         public void MultiItemTriggerTenPartitions(
-            [KafkaTrigger(Broker, StringTopicWithTenPartitions, ConsumerGroup = "myConsumerGroup")] KafkaEventData[] events,
+            [KafkaTrigger(Broker, StringTopicWithTenPartitions, ConsumerGroup = "myConsumerGroup")] KafkaEventData<string>[] events,
             ILogger log)
         {
             foreach (var kafkaEvent in events)

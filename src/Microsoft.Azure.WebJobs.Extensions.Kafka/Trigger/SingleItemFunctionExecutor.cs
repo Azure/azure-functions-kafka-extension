@@ -24,7 +24,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
         }
 
-        protected override async Task ReaderAsync(ChannelReader<KafkaEventData[]> reader, CancellationToken cancellationToken, ILogger logger)
+        protected override async Task ReaderAsync(ChannelReader<IKafkaEventData[]> reader, CancellationToken cancellationToken, ILogger logger)
         {
             var pendingTasks = new List<Task<FunctionResult>>();
 
