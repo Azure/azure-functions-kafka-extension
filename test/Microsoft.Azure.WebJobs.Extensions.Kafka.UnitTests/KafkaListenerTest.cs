@@ -3,6 +3,7 @@
 
 using Confluent.Kafka;
 using Microsoft.Azure.WebJobs.Host.Executors;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using System;
@@ -66,14 +67,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 })
                 .ReturnsAsync(new FunctionResult(true));
 
+            var listenerConfig = new KafkaListenerConfiguration()
+            {
+                BrokerList = "testBroker",
+                Topic = "topic",
+                ConsumerGroup = "group1",
+            };
+
             var target = new KafkaListenerForTest<Ignore, string>(
                 executor.Object,
                 singleDispatch: true,
                 options: new KafkaOptions(),
-                brokerList: "testBroker",
-                topic: "topic",
-                consumerGroup: "group1",
-                eventHubConnectionString: null,
+                listenerConfig,
+                requiresKey: true,
+                valueDeserializer: null,
                 logger: NullLogger.Instance
                 );
 
@@ -92,7 +99,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             const int ExpectedEventCount = 10;
 
             var executor = new Mock<ITriggeredFunctionExecutor>();
-            var consumer = new Mock<IConsumer<Ignore, string>>();
+            var consumer = new Mock<IConsumer<Null, string>>();
 
             var offset = 0L;
             consumer.Setup(x => x.Consume(It.IsNotNull<TimeSpan>()))
@@ -102,7 +109,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                     {
                         offset++;
 
-                        return CreateConsumeResult<Ignore, string>(offset.ToString(), 0, offset);
+                        return CreateConsumeResult<Null, string>(offset.ToString(), 0, offset);
                     }
 
                     return null;
@@ -122,14 +129,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 })
                 .ReturnsAsync(new FunctionResult(true));
 
-            var target = new KafkaListenerForTest<Ignore, string>(
+            var listenerConfig = new KafkaListenerConfiguration()
+            {
+                BrokerList = "testBroker",
+                Topic = "topic",
+                ConsumerGroup = "group1",
+            };
+
+            var target = new KafkaListenerForTest<Null, string>(
                 executor.Object,
                 singleDispatch: false,
                 options: new KafkaOptions(),
-                brokerList: "testBroker",
-                topic: "topic",
-                consumerGroup: "group1",
-                eventHubConnectionString: null,
+                listenerConfig,
+                requiresKey: true,
+                valueDeserializer: null,
                 logger: NullLogger.Instance
                 );
 
@@ -162,39 +175,36 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             const long Offset_5 = 4;
 
             var executor = new Mock<ITriggeredFunctionExecutor>();
-            var consumer = new Mock<IConsumer<Ignore, string>>();
+            var consumer = new Mock<IConsumer<Null, string>>();
 
             var committed = new ConcurrentQueue<TopicPartitionOffset>();
-
-            consumer.Setup(x => x.Commit(It.IsAny<IEnumerable<TopicPartitionOffset>>()))
-                .Callback<IEnumerable<TopicPartitionOffset>>((topicPartitionOffsetCollection) =>
+           
+            consumer.Setup(x => x.StoreOffset(It.IsNotNull<TopicPartitionOffset>()))
+                .Callback<TopicPartitionOffset>((topicPartitionOffset) =>
                 {
-                    foreach (var item in topicPartitionOffsetCollection)
-                    {
-                        committed.Enqueue(item);
-                    }
+                    committed.Enqueue(topicPartitionOffset);
                 });
 
             // Batch 1: AB12C
             // Batch 2: 34DE5
             consumer.SetupSequence(x => x.Consume(It.IsNotNull<TimeSpan>()))
-                .Returns(CreateConsumeResult<Ignore, string>("A", 0, Offset_A))
-                .Returns(CreateConsumeResult<Ignore, string>("B", 0, Offset_B))
-                .Returns(CreateConsumeResult<Ignore, string>("1", 1, Offset_1))
-                .Returns(CreateConsumeResult<Ignore, string>("2", 1, Offset_2))
-                .Returns(CreateConsumeResult<Ignore, string>("C", 0, Offset_C))
-                .Returns((ConsumeResult<Ignore, string>)null)
-                .Returns(CreateConsumeResult<Ignore, string>("3", 1, Offset_3))
-                .Returns(CreateConsumeResult<Ignore, string>("4", 1, Offset_4))
-                .Returns(CreateConsumeResult<Ignore, string>("D", 0, Offset_D))
-                .Returns(CreateConsumeResult<Ignore, string>("E", 0, Offset_E))
+                .Returns(CreateConsumeResult<Null, string>("A", 0, Offset_A))
+                .Returns(CreateConsumeResult<Null, string>("B", 0, Offset_B))
+                .Returns(CreateConsumeResult<Null, string>("1", 1, Offset_1))
+                .Returns(CreateConsumeResult<Null, string>("2", 1, Offset_2))
+                .Returns(CreateConsumeResult<Null, string>("C", 0, Offset_C))
+                .Returns((ConsumeResult<Null, string>)null)
+                .Returns(CreateConsumeResult<Null, string>("3", 1, Offset_3))
+                .Returns(CreateConsumeResult<Null, string>("4", 1, Offset_4))
+                .Returns(CreateConsumeResult<Null, string>("D", 0, Offset_D))
+                .Returns(CreateConsumeResult<Null, string>("E", 0, Offset_E))
                 .Returns(() =>
                 {
                     // from now on return null
                     consumer.Setup(x => x.Consume(It.IsNotNull<TimeSpan>()))
-                        .Returns((ConsumeResult<Ignore, string>)null);
+                        .Returns((ConsumeResult<Null, string>)null);
 
-                    return CreateConsumeResult<Ignore, string>("5", 1, Offset_5);
+                    return CreateConsumeResult<Null, string>("5", 1, Offset_5);
                 });
 
             var partition0 = new ConcurrentQueue<string>();
@@ -236,14 +246,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 })
                 .ReturnsAsync(new FunctionResult(true));
 
-            var target = new KafkaListenerForTest<Ignore, string>(
+            var listenerConfig = new KafkaListenerConfiguration()
+            {
+                BrokerList = "testBroker",
+                Topic = "topic",
+                ConsumerGroup = "group1",
+            };
+
+            var target = new KafkaListenerForTest<Null, string>(
                 executor.Object,
                 singleDispatch,
                 new KafkaOptions(),
-                "testBroker",
-                "topic",
-                "group1",
-                null,
+                listenerConfig,
+                requiresKey: true,
+                valueDeserializer: null,
                 NullLogger.Instance
                 );
 
@@ -268,6 +284,92 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(new[] { Offset_2 + 1, Offset_5 + 1 }, committedArray.Where(x => x.Partition == 1).Select(x => (long)x.Offset).ToArray());
 
             await target.StopAsync(default(CancellationToken));
+        }
+
+        [Fact]
+        public async Task When_Options_Are_Set_Should_Be_Set_In_Consumer_Config()
+        {
+            var executor = new Mock<ITriggeredFunctionExecutor>();
+            var consumer = new Mock<IConsumer<Ignore, string>>();
+
+            var listenerConfig = new KafkaListenerConfiguration()
+            {
+                BrokerList = "testBroker",
+                Topic = "topic",
+                ConsumerGroup = "group1",
+            };
+
+            var kafkaOptions = new KafkaOptions();
+            var target = new KafkaListenerForTest<Ignore, string>(
+                executor.Object,
+                true,
+                kafkaOptions,
+                listenerConfig,
+                requiresKey: true,
+                valueDeserializer: null,
+                NullLogger.Instance
+                );
+
+            target.SetConsumer(consumer.Object);
+
+            await target.StartAsync(default);
+
+            Assert.Equal(6, target.ConsumerConfig.Count());
+            Assert.Equal("testBroker", target.ConsumerConfig.BootstrapServers);
+            Assert.Equal("group1", target.ConsumerConfig.GroupId);
+            Assert.Equal(kafkaOptions.AutoCommitIntervalMs, target.ConsumerConfig.AutoCommitIntervalMs);
+            Assert.Equal(true, target.ConsumerConfig.EnableAutoCommit);
+            Assert.Equal(false, target.ConsumerConfig.EnableAutoOffsetStore);
+            Assert.Equal(AutoOffsetReset.Earliest, target.ConsumerConfig.AutoOffsetReset);
+
+            await target.StopAsync(default);
+        }
+
+        [Fact]
+        public async Task When_Options_With_Ssal_Are_Set_Should_Be_Set_In_Consumer_Config()
+        {
+            var executor = new Mock<ITriggeredFunctionExecutor>();
+            var consumer = new Mock<IConsumer<Null, string>>();
+
+            var listenerConfig = new KafkaListenerConfiguration()
+            {
+                BrokerList = "testBroker",
+                Topic = "topic",
+                ConsumerGroup = "group1",
+                SaslMechanism = SaslMechanism.Plain,
+                SaslPassword = "mypassword",
+                SaslUsername ="myusername",
+                SecurityProtocol = SecurityProtocol.SaslSsl,
+            };
+
+            var kafkaOptions = new KafkaOptions();
+            var target = new KafkaListenerForTest<Null, string>(
+                executor.Object,
+                true,
+                kafkaOptions,
+                listenerConfig,
+                requiresKey: true,
+                valueDeserializer: null,
+                NullLogger.Instance
+                );
+
+            target.SetConsumer(consumer.Object);
+
+            await target.StartAsync(default);
+
+            Assert.Equal(10, target.ConsumerConfig.Count());
+            Assert.Equal("testBroker", target.ConsumerConfig.BootstrapServers);
+            Assert.Equal("group1", target.ConsumerConfig.GroupId);
+            Assert.Equal(kafkaOptions.AutoCommitIntervalMs, target.ConsumerConfig.AutoCommitIntervalMs);
+            Assert.Equal(true, target.ConsumerConfig.EnableAutoCommit);
+            Assert.Equal(false, target.ConsumerConfig.EnableAutoOffsetStore);
+            Assert.Equal(AutoOffsetReset.Earliest, target.ConsumerConfig.AutoOffsetReset);
+            Assert.Equal(SaslMechanism.Plain, target.ConsumerConfig.SaslMechanism);
+            Assert.Equal("mypassword", target.ConsumerConfig.SaslPassword);
+            Assert.Equal("myusername", target.ConsumerConfig.SaslUsername);
+            Assert.Equal(SecurityProtocol.SaslSsl, target.ConsumerConfig.SecurityProtocol);
+
+            await target.StopAsync(default);
         }
     }
 }

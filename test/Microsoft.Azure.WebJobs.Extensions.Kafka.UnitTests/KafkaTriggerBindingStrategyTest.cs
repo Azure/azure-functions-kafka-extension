@@ -12,7 +12,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         [Fact]
         public void GetStaticBindingContract_ReturnsExpectedValue()
         {
-            var strategy = new KafkaTriggerBindingStrategy();
+            var strategy = new KafkaTriggerBindingStrategy<string, string>();
             var contract = strategy.GetBindingContract();
 
             Assert.Equal(5, contract.Count);
@@ -26,7 +26,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         [Fact]
         public void GetBindingContract_SingleDispatch_ReturnsExpectedValue()
         {
-            var strategy = new KafkaTriggerBindingStrategy();
+            var strategy = new KafkaTriggerBindingStrategy<string, string>();
             var contract = strategy.GetBindingContract(true);
 
             Assert.Equal(5, contract.Count);
@@ -40,7 +40,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         [Fact]
         public void SingleDispatch_GetBindingData_Should_Create_Data_From_Kafka_Event()
         {
-            var kafkaEventData = new KafkaEventData()
+            var kafkaEventData = new KafkaEventData<string, string>()
             {
                 Key = "1",
                 Offset = 100,
@@ -50,7 +50,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 Value = "Nothing",
             };
 
-            var strategy = new KafkaTriggerBindingStrategy();
+            var strategy = new KafkaTriggerBindingStrategy<string, string>();
             var binding = strategy.GetBindingData(KafkaTriggerInput.New(kafkaEventData));
             Assert.Equal("1", binding["Key"]);
             Assert.Equal(100L, binding["Offset"]);
@@ -71,7 +71,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         {
             var triggerInput = KafkaTriggerInput.New(new[]
             {
-                new KafkaEventData()
+                new KafkaEventData<string, string>()
                 {
                     Key = "1",
                     Offset = 100,
@@ -80,7 +80,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                     Topic = "myTopic",
                     Value = "Nothing1",
                 },
-                new KafkaEventData()
+                new KafkaEventData<string, string>()
                 {
                     Key = "2",
                     Offset = 101,
@@ -91,7 +91,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 },
             });
 
-            var strategy = new KafkaTriggerBindingStrategy();
+            var strategy = new KafkaTriggerBindingStrategy<string, string>();
             var binding = strategy.GetBindingData(triggerInput);
             Assert.Equal(new[] { "1", "2" }, binding["KeyArray"]);
             Assert.Equal(new[] { 100L, 101L }, binding["OffsetArray"]);

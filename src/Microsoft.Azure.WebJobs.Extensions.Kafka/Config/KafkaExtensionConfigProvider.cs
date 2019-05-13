@@ -3,6 +3,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text;
+using System.Threading.Tasks;
 using Avro.Generic;
 using Avro.Specific;
 using Microsoft.Azure.WebJobs.Description;
@@ -26,7 +28,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly IConverterManager converterManager;
         private readonly INameResolver nameResolver;
         private readonly IWebJobsExtensionConfiguration<KafkaExtensionConfigProvider> configuration;
-        private readonly IKafkaProducerProvider kafkaProducerManager;
+        private readonly IKafkaProducerFactory kafkaProducerFactory;
         private readonly ILogger logger;
 
         public KafkaExtensionConfigProvider(
@@ -36,7 +38,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             IConverterManager converterManager,
             INameResolver nameResolver,
             IWebJobsExtensionConfiguration<KafkaExtensionConfigProvider> configuration,
-            IKafkaProducerProvider kafkaProducerManager)
+            IKafkaProducerFactory kafkaProducerFactory)
         {
             this.config = config;
             this.options = options;
@@ -44,7 +46,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.converterManager = converterManager;
             this.nameResolver = nameResolver;
             this.configuration = configuration;
-            this.kafkaProducerManager = kafkaProducerManager;
+            this.kafkaProducerFactory = kafkaProducerFactory;
             this.logger = loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("Kafka"));
         }
 
@@ -52,83 +54,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             configuration.ConfigurationSection.Bind(options);
 
-            context
-               .AddConverter<KafkaEventData, string>(ConvertKafkaEventData2String)
-               .AddConverter<KafkaEventData, ISpecificRecord>(ConvertKafkaEventData2AvroSpecific)
-               .AddConverter<KafkaEventData, byte[]>(ConvertKafkaEventData2Bytes);
-
             // register our trigger binding provider
             var triggerBindingProvider = new KafkaTriggerAttributeBindingProvider(config, options, converterManager, nameResolver, loggerFactory);
             context.AddBindingRule<KafkaTriggerAttribute>()
                 .BindToTrigger(triggerBindingProvider);
 
             // register output binding
-            context.AddBindingRule<KafkaAttribute>()
-                .BindToCollector(BuildCollectorFromAttribute);
-        }
-
-        private IAsyncCollector<KafkaEventData> BuildCollectorFromAttribute(KafkaAttribute attribute)
-        {
-            return new KafkaAsyncCollector(attribute.Topic, kafkaProducerManager.Get(attribute));
-        }
-
-        private ISpecificRecord ConvertKafkaEventData2AvroSpecific(KafkaEventData kafkaEventData)
-        {
-            if (kafkaEventData.Value is ISpecificRecord specRecord)
-            {
-                return specRecord;
-            }
-            else
-            {
-                logger.LogWarning($@"Unable to convert incoming data to Avro format. Expected ISpecificRecord, got {kafkaEventData.Value.GetType()}. Returning [null]");
-                return null;
-            }
-        }
-
-        private string ConvertKafkaEventData2String(KafkaEventData kafkaEventData)
-        {
-            try
-            {
-                if (kafkaEventData.Value is GenericRecord genericRecord)
-                {
-                    return GenericRecord2String(genericRecord);
-                }
-                else
-                {
-                    return JsonConvert.SerializeObject(kafkaEventData);
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, $@"Unable to convert incoming data to string.");
-                throw;
-            }
-        }
-
-
-        private string GenericRecord2String(GenericRecord record)
-        {
-            var props = new Dictionary<string, object>();
-            foreach (var field in record.Schema.Fields)
-            {
-                if (record.TryGetValue(field.Name, out var value))
-                {
-                    props[field.Name] = value;
-                }
-            }
-
-            return JsonConvert.SerializeObject(props);
-        }
-
-        private byte[] ConvertKafkaEventData2Bytes(KafkaEventData input)
-        {
-            if (input.Value is byte[] bytes)
-            {
-                return bytes;
-            }
-
-            logger.LogWarning($@"Unable to convert incoming data to byte[] as underlying data stream was not byte[]. Returning [null]");
-            return null;
+            context.AddBindingRule<KafkaAttribute>().Bind(new KafkaAttributeBindingProvider(this.kafkaProducerFactory));
         }
     }
 }

@@ -1,0 +1,120 @@
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the MIT License. See License.txt in the project root for license information.
+
+using System;
+using System.Collections.Concurrent;
+using System.Reflection;
+using System.Text;
+using Avro.Generic;
+using Avro.Specific;
+using Confluent.Kafka;
+using Microsoft.Azure.WebJobs.Host;
+using Microsoft.Azure.WebJobs.Logging;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+
+namespace Microsoft.Azure.WebJobs.Extensions.Kafka
+{
+    /// <summary>
+    /// Factory for <see cref="IKafkaProducer"/>
+    /// Those matching the broker, key type and value type are shared
+    /// </summary>
+    public class KafkaProducerFactory : IKafkaProducerFactory
+    {
+        private readonly IConfiguration config;
+        private readonly INameResolver nameResolver;
+        private readonly ILoggerProvider loggerProvider;
+        private readonly ConcurrentDictionary<string, IProducer<byte[], byte[]>> baseProducers = new ConcurrentDictionary<string, IProducer<byte[], byte[]>>();
+
+        public KafkaProducerFactory(
+            IConfiguration config,
+            INameResolver nameResolver,
+            ILoggerProvider loggerProvider)
+        {
+            this.config = config;
+            this.nameResolver = nameResolver;
+            this.loggerProvider = loggerProvider;
+        }
+
+        public IKafkaProducer Create(KafkaProducerEntity entity)
+        {
+            // Goal is to create as less producers as possible
+            // We can group producers based on following criterias
+            // - Broker List
+            // - Configuration
+            var producerConfig = this.GetProducerConfig(entity);
+            var producerKey = CreateKeyForConfig(producerConfig);
+
+            var baseProducer = baseProducers.GetOrAdd(producerKey, (k) => CreateBaseProducer(producerConfig));
+            return Create(baseProducer.Handle, entity);
+        }
+
+        /// <summary>
+        /// Creates a config key by concatenating all property key and values
+        /// </summary>
+        private string CreateKeyForConfig(ProducerConfig producerConfig)
+        {
+            var keyBuilder = new StringBuilder();
+
+            foreach (var kv in producerConfig)
+            {
+                keyBuilder
+                    .Append(kv.Key)
+                    .Append('=')
+                    .Append(kv.Value)
+                    .Append(';');
+            }
+
+            return keyBuilder.ToString();
+        }
+
+        private IProducer<byte[], byte[]> CreateBaseProducer(ProducerConfig producerConfig)
+        {
+            var builder = new ProducerBuilder<byte[], byte[]>(producerConfig);
+            return builder.Build();
+        }
+
+        private IKafkaProducer Create(Handle producerBaseHandle, KafkaProducerEntity entity)
+        {
+            var valueType = entity.ValueType ?? typeof(byte[]);
+            var keyType = entity.KeyType ?? typeof(Null);
+
+            var valueSerializer = SerializationHelper.ResolveValueSerializer(valueType, entity.AvroSchema);
+
+            return (IKafkaProducer)Activator.CreateInstance(
+                typeof(KafkaProducer<,>).MakeGenericType(keyType, valueType),
+                producerBaseHandle,
+                valueSerializer,
+                loggerProvider.CreateLogger(LogCategories.CreateTriggerCategory("Kafka")));
+        }
+
+        public ProducerConfig GetProducerConfig(KafkaProducerEntity entity)
+        {
+            var conf = new ProducerConfig()
+            {
+                BootstrapServers = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.BrokerList),
+                BatchNumMessages = entity.Attribute.BatchSize,
+                EnableIdempotence = entity.Attribute.EnableIdempotence,
+                MessageSendMaxRetries = entity.Attribute.MaxRetries,
+                MessageTimeoutMs = entity.Attribute.MessageTimeoutMs,
+                RequestTimeoutMs = entity.Attribute.RequestTimeoutMs,
+                SaslPassword = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.Password),
+                SaslUsername = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.Username),
+                SslKeyLocation = entity.Attribute.SslKeyLocation,
+            };
+
+            if (entity.Attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet)
+            {
+                conf.SaslMechanism = (SaslMechanism)entity.Attribute.AuthenticationMode;
+            }
+
+            if (entity.Attribute.Protocol != BrokerProtocol.NotSet)
+            {
+                conf.SecurityProtocol = (SecurityProtocol)entity.Attribute.Protocol;
+            }
+
+            return conf;
+        }
+    }
+}

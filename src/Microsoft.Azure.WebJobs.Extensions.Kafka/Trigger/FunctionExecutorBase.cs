@@ -21,22 +21,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly ITriggeredFunctionExecutor executor;
         private readonly IConsumer<TKey, TValue> consumer;
         private readonly int channelFullRetryIntervalInMs;
+        private readonly ICommitStrategy<TKey, TValue> commitStrategy;
         private readonly CancellationTokenSource cancellationTokenSource;
-        private readonly Channel<KafkaEventData[]> channel;
-        private readonly List<KafkaEventData> currentBatch;
+        private readonly Channel<IKafkaEventData[]> channel;
+        private readonly List<IKafkaEventData> currentBatch;
         private readonly ILogger logger;
         private SemaphoreSlim readerFinished = new SemaphoreSlim(0, 1);
 
-        public FunctionExecutorBase(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, int channelCapacity, int channelFullRetryIntervalInMs, ILogger logger)
+        internal FunctionExecutorBase(
+            ITriggeredFunctionExecutor executor,
+            IConsumer<TKey, TValue> consumer,
+            int channelCapacity,
+            int channelFullRetryIntervalInMs,
+            ICommitStrategy<TKey, TValue> commitStrategy,
+            ILogger logger)
         {
             this.executor = executor ?? throw new System.ArgumentNullException(nameof(executor));
             this.consumer = consumer ?? throw new System.ArgumentNullException(nameof(consumer));
             this.channelFullRetryIntervalInMs = channelFullRetryIntervalInMs;
+            this.commitStrategy = commitStrategy;
             this.logger = logger;
             this.cancellationTokenSource = new CancellationTokenSource();
-            this.currentBatch = new List<KafkaEventData>();
+            this.currentBatch = new List<IKafkaEventData>();
 
-            this.channel = Channel.CreateBounded<KafkaEventData[]>(new BoundedChannelOptions(channelCapacity)
+            this.channel = Channel.CreateBounded<IKafkaEventData[]>(new BoundedChannelOptions(channelCapacity)
             {
                 SingleReader = true,
                 SingleWriter = true,
@@ -69,25 +77,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// <param name="reader">The channel reader</param>
         /// <param name="cancellationToken">Cancellation token indicating the host is shutting down</param>
         /// <param name="logger">Logger</param>
-        protected abstract Task ReaderAsync(ChannelReader<KafkaEventData[]> reader, CancellationToken cancellationToken, ILogger logger);
+        protected abstract Task ReaderAsync(ChannelReader<IKafkaEventData[]> reader, CancellationToken cancellationToken, ILogger logger);
 
 
         protected void Commit(IEnumerable<TopicPartitionOffset> topicPartitionOffsets)
         {
             try
             {
-                this.consumer.Commit(topicPartitionOffsets);
-
-                if (this.logger.IsEnabled(LogLevel.Information))
-                {
-                    foreach (var tpo in topicPartitionOffsets)
-                    {
-                        this.logger.LogInformation("Committed {topic} / {partition} / {offset}",
-                           tpo.Topic,
-                           tpo.Partition,
-                           tpo.Offset);
-                    }
-                }
+                this.commitStrategy.Commit(topicPartitionOffsets);
             }
             catch (KafkaException e)
             {
@@ -98,7 +95,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// <summary>
         /// Adds an item, returning the current pending amount
         /// </summary>
-        internal int Add(KafkaEventData kafkaEventData)
+        internal int Add(IKafkaEventData kafkaEventData)
         {
             this.currentBatch.Add(kafkaEventData);
             return this.currentBatch.Count;

@@ -8,7 +8,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         // If != -1, then only process a single event in this batch. 
         private int _selector = -1;
 
-        internal KafkaEventData[] Events { get; set; }
+        internal IKafkaEventData[] Events { get; set; }
 
         public bool IsSingleDispatch
         {
@@ -18,7 +18,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
         }
 
-        public static KafkaTriggerInput New(KafkaEventData eventData)
+        public static KafkaTriggerInput New(IKafkaEventData eventData)
         {
             return new KafkaTriggerInput
             {
@@ -30,7 +30,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             };
         }
 
-        public static KafkaTriggerInput New(KafkaEventData[] eventDataCollection)
+        public static KafkaTriggerInput New(IKafkaEventData[] eventDataCollection)
         {
             return new KafkaTriggerInput
             {
@@ -48,7 +48,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             };
         }
 
-        public KafkaEventData GetSingleEventData()
+        public IKafkaEventData GetSingleEventData()
         {
             return this.Events[this._selector];
         }

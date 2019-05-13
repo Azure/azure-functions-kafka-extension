@@ -1,8 +1,10 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
+using System;
 using System.Reflection;
 using System.Threading.Tasks;
+using Confluent.Kafka;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Listeners;
@@ -34,7 +36,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.nameResolver = nameResolver;
             this.options = options;
             this.logger = loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("Kafka"));
-        }
+        }   
 
         public Task<ITriggerBinding> TryCreateAsync(TriggerBindingProviderContext context)
         {
@@ -45,45 +47,71 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 return Task.FromResult<ITriggerBinding>(null);
             }
 
-            var resolvedBrokerList = this.nameResolver.ResolveWholeString(attribute.BrokerList);
-            var brokerListFromConfig = this.config.GetConnectionStringOrSetting(resolvedBrokerList);
-            if (!string.IsNullOrEmpty(brokerListFromConfig))
-            {
-                resolvedBrokerList = brokerListFromConfig;
-            }
+            var consumerConfig = CreateConsumerConfiguration(attribute);
 
-            var resolvedConsumerGroup = this.nameResolver.ResolveWholeString(attribute.ConsumerGroup);
-            var resolvedTopic = this.nameResolver.ResolveWholeString(attribute.Topic);
+            var keyAndValueTypes = SerializationHelper.GetKeyAndValueTypes(attribute.AvroSchema, parameter.ParameterType, typeof(Ignore));
+            var valueDeserializer = SerializationHelper.ResolveValueDeserializer(keyAndValueTypes.ValueType, keyAndValueTypes.AvroSchema);            
 
-            string resolvedEventHubConnectionString = null;
-            if (!string.IsNullOrWhiteSpace(attribute.EventHubConnectionString))
-            {
-                resolvedEventHubConnectionString = this.nameResolver.ResolveWholeString(attribute.EventHubConnectionString);
-                var ehConnectionStringFromConfig = this.config.GetConnectionStringOrSetting(resolvedEventHubConnectionString);
-                if (!string.IsNullOrEmpty(ehConnectionStringFromConfig))
-                {
-                    resolvedEventHubConnectionString = ehConnectionStringFromConfig;
-                }
-            }
+            var binding = CreateBindingStrategyFor(keyAndValueTypes.KeyType ?? typeof(Ignore), keyAndValueTypes.ValueType, keyAndValueTypes.RequiresKey, valueDeserializer, parameter, consumerConfig);
 
+            return Task.FromResult<ITriggerBinding>(binding);
+        }
+
+        ITriggerBinding CreateBindingStrategyFor(Type keyType, Type valueType, bool requiresKey, object valueDeserializer, ParameterInfo parameterInfo, KafkaListenerConfiguration listenerConfiguration)
+        {
+            var genericCreateBindingStrategy = this.GetType().GetMethod(nameof(CreateBindingStrategy), BindingFlags.Instance | BindingFlags.NonPublic).MakeGenericMethod(keyType, valueType);
+            return (ITriggerBinding)genericCreateBindingStrategy.Invoke(this, new object[] { parameterInfo, listenerConfiguration, requiresKey, valueDeserializer });
+        }
+
+        private ITriggerBinding CreateBindingStrategy<TKey, TValue>(ParameterInfo parameter, KafkaListenerConfiguration listenerConfiguration, bool requiresKey, object valueDeserializer)
+        {
             // TODO: reuse connections if they match with others in same function app
             Task<IListener> listenerCreator(ListenerFactoryContext factoryContext, bool singleDispatch)
             {
-                var listener = Listeners.KafkaListenerFactory.CreateFor(attribute,
-                    parameter.ParameterType,
+                var listener = new KafkaListener<TKey, TValue>(
                     factoryContext.Executor,
                     singleDispatch,
-                    options.Value,
-                    resolvedBrokerList,
-                    resolvedTopic,
-                    resolvedConsumerGroup,
-                    resolvedEventHubConnectionString, logger);
-
-                return Task.FromResult(listener);
+                    this.options.Value,
+                    listenerConfiguration,
+                    requiresKey,
+                    valueDeserializer,
+                    this.logger);
+                
+                return Task.FromResult<IListener>(listener);
             }
 
-            var binding = BindingFactory.GetTriggerBinding(new KafkaTriggerBindingStrategy(), context.Parameter, this.converterManager, listenerCreator);
-            return Task.FromResult<ITriggerBinding>(binding);
+            return BindingFactory.GetTriggerBinding(new KafkaTriggerBindingStrategy<TKey, TValue>(), parameter, new KafkaEventDataConvertManager(this.converterManager, this.logger), listenerCreator);
+        }
+
+        private KafkaListenerConfiguration CreateConsumerConfiguration(KafkaTriggerAttribute attribute)
+        {
+            var consumerConfig = new KafkaListenerConfiguration()
+            {
+                BrokerList = this.config.ResolveSecureSetting(nameResolver, attribute.BrokerList),
+                ConsumerGroup = this.nameResolver.ResolveWholeString(attribute.ConsumerGroup),
+                Topic = this.nameResolver.ResolveWholeString(attribute.Topic),
+                EventHubConnectionString = this.config.ResolveSecureSetting(nameResolver, attribute.EventHubConnectionString),
+            };
+
+            if (attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet || 
+                attribute.Protocol != BrokerProtocol.NotSet)
+            {
+                consumerConfig.SaslPassword = this.config.ResolveSecureSetting(nameResolver, attribute.Password);
+                consumerConfig.SaslUsername = this.config.ResolveSecureSetting(nameResolver, attribute.Username);
+                consumerConfig.SslKeyLocation = attribute.SslKeyLocation;
+
+                if (attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet)
+                {
+                    consumerConfig.SaslMechanism = (SaslMechanism)attribute.AuthenticationMode;
+                }
+
+                if (attribute.Protocol != BrokerProtocol.NotSet)
+                {
+                    consumerConfig.SecurityProtocol = (SecurityProtocol)attribute.Protocol;
+                }
+            }
+
+            return consumerConfig;
         }
     }
 }

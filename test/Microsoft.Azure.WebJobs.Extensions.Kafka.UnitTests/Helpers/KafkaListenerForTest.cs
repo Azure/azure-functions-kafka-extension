@@ -14,18 +14,36 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
     internal class KafkaListenerForTest<TKey, TValue> : KafkaListener<TKey, TValue>
     {
         private IConsumer<TKey, TValue> consumer;
+        private ConsumerBuilder<TKey, TValue> consumerBuilder;
 
-        public KafkaListenerForTest(ITriggeredFunctionExecutor executor, bool singleDispatch, KafkaOptions options, string brokerList, string topic, string consumerGroup, string eventHubConnectionString, ILogger logger)
-            : base(executor, singleDispatch, options, brokerList, topic, consumerGroup, eventHubConnectionString, logger)
+        public ConsumerConfig ConsumerConfig { get; private set; }
+
+        public KafkaListenerForTest(ITriggeredFunctionExecutor executor,
+            bool singleDispatch,
+            KafkaOptions options,
+            KafkaListenerConfiguration kafkaListenerConfiguration,
+            bool requiresKey,
+            object valueDeserializer,
+            ILogger logger)
+            : base(executor,
+                singleDispatch,
+                options,
+                kafkaListenerConfiguration,
+                requiresKey,
+                valueDeserializer,
+                logger)
         {
         }
 
+        public void SetConsumerBuilder(ConsumerBuilder<TKey, TValue> consumerBuilder) => this.consumerBuilder = consumerBuilder;
+
         public void SetConsumer(IConsumer<TKey, TValue> consumer) => this.consumer = consumer;
 
-        protected override IConsumer<TKey, TValue> CreateConsumer(ConsumerConfig config, Action<Consumer<TKey, TValue>, Error> errorHandler, Action<IConsumer<TKey, TValue>, System.Collections.Generic.List<TopicPartition>> partitionsAssignedHandler, Action<IConsumer<TKey, TValue>, System.Collections.Generic.List<TopicPartitionOffset>> partitionsRevokedHandler, IAsyncDeserializer<TValue> asyncValueDeserializer = null, IDeserializer<TValue> valueDeserializer = null, IAsyncDeserializer<TKey> keyDeserializer = null)
+
+        protected override ConsumerBuilder<TKey, TValue> CreateConsumerBuilder(ConsumerConfig config)
         {
-            return this.consumer ??
-                base.CreateConsumer(config, errorHandler, partitionsAssignedHandler, partitionsRevokedHandler, asyncValueDeserializer, valueDeserializer, keyDeserializer);
+            this.ConsumerConfig = config;
+            return this.consumerBuilder ?? new TestConsumerBuilder<TKey, TValue>(config, this.consumer);
         }
     }
 }

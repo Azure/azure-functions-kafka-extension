@@ -25,19 +25,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
         /// <summary>
         /// Calls the output trigger string
         /// </summary>
-        public static async Task CallOutputTriggerStringWithLongKeyAsync(this JobHost jobHost, MethodInfo method, string topic, IEnumerable<object> values, IEnumerable<long> keys, TimeSpan? interval = null)
+        public static async Task CallOutputTriggerStringWithKeyAsync(this JobHost jobHost, MethodInfo method, string topic, IEnumerable<object> values, IEnumerable<string> keys, TimeSpan? interval = null)
         {
-            var allValues = values.Select(x => x.ToString());
-            await jobHost.CallAsync(method, new { topic = topic, content = allValues, keys = keys, interval = interval });
-        }
+            object keysValue = keys;
+            var keysParameter = method.GetParameters().First(x => x.Name == "keys");
+            if (keysParameter.ParameterType == typeof(IEnumerable<long>))
+            {
+                keysValue = keys.Select(x => long.Parse(x));
+            }
 
-        /// <summary>
-        /// Calls the output trigger string
-        /// </summary>
-        public static async Task CallOutputTriggerStringWithStringKeyAsync(this JobHost jobHost, MethodInfo method, string topic, IEnumerable<object> values, IEnumerable<string> keys, TimeSpan? interval = null)
-        {
             var allValues = values.Select(x => x.ToString());
-            await jobHost.CallAsync(method, new { topic = topic, content = allValues, keys = keys, interval = interval });
+            await jobHost.CallAsync(method, new { topic = topic, content = allValues, keys = keysValue });
         }
 
         internal static string CreateMessageValue(string prefix, int id) => string.Concat(prefix, id.ToString("00000000000000000000"));

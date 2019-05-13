@@ -3,6 +3,7 @@
 
 using System;
 using Avro.Specific;
+using Confluent.Kafka;
 using Microsoft.Azure.WebJobs.Description;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
@@ -17,9 +18,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// <summary>
         /// Initialize a new instance of the <see cref="KafkaAttribute"/>
         /// </summary>
+        /// <param name="brokerList">Broker list</param>
         /// <param name="topic">Topic name</param>
-        public KafkaAttribute(string topic)
+        public KafkaAttribute(string brokerList, string topic)
         {
+            BrokerList = brokerList;
             Topic = topic;
         }
 
@@ -42,47 +45,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         // [ConnectionString]
         public string BrokerList { get; set; }
 
-
-        /// <summary>
-        /// Gets or sets the key element type
-        /// Default is long
-        /// </summary>
-        public Type KeyType { get; set; }
-
-        private Type valueType;
-
-        /// <summary>
-        /// Gets or sets the Avro data type
-        /// Must implement ISpecificRecord
-        /// </summary>
-        public Type ValueType
-        {
-            get => this.valueType;
-            set
-            {
-                if (value != null && !IsValidValueType(value))
-                {
-                    throw new ArgumentException($"The value of {nameof(ValueType)} must be a byte[], string or a type that implements {nameof(ISpecificRecord)} or {nameof(Google.Protobuf.IMessage)}. The type {value.Name} does not.");
-                }
-
-                this.valueType = value;
-            }
-        }
-
         /// <summary>
         /// Gets or sets the Avro schema.
         /// Should be used only if a generic record should be generated
         /// </summary>
         public string AvroSchema { get; set; }
-
-        private bool IsValidValueType(Type value)
-        {
-            return
-                typeof(ISpecificRecord).IsAssignableFrom(value) ||
-                typeof(Google.Protobuf.IMessage).IsAssignableFrom(value) ||
-                value == typeof(byte[]) ||
-                value == typeof(string);
-        }
 
         /// <summary>
         /// Gets or sets the Maximum transmit message size. Default: 1MB
@@ -114,5 +81,45 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// </summary>
         /// <remarks>Retrying may cause reordering unless <c>EnableIdempotence</c> is set to <c>true</c>.</remarks>
         public int? MaxRetries { get; set; }
+
+        /// <summary>
+        /// SASL mechanism to use for authentication. 
+        /// Allowed values: Gssapi, Plain, ScramSha256, ScramSha512
+        /// Default: Plain
+        /// 
+        /// sasl.mechanism in librdkafka
+        /// </summary>
+        public BrokerAuthenticationMode AuthenticationMode { get; set; } = BrokerAuthenticationMode.NotSet;
+
+        /// <summary>
+        /// SASL username for use with the PLAIN and SASL-SCRAM-.. mechanisms
+        /// Default: ""
+        /// 
+        /// 'sasl.username' in librdkafka
+        /// </summary>
+        public string Username { get; set; }
+
+        /// <summary>
+        /// SASL password for use with the PLAIN and SASL-SCRAM-.. mechanism
+        /// Default: ""
+        /// 
+        /// sasl.password in librdkafka
+        /// </summary>
+        public string Password { get; set; }
+
+        /// <summary>
+        /// Gets or sets the security protocol used to communicate with brokers
+        /// Default is plain text
+        /// 
+        /// security.protocol in librdkafka
+        /// </summary>
+        public BrokerProtocol Protocol { get; set; } = BrokerProtocol.NotSet;
+
+        /// <summary>
+        /// Path to client's private key (PEM) used for authentication.
+        /// Default: ""
+        /// ssl.key.location in librdkafka
+        /// </summary>
+        public string SslKeyLocation { get; set; }
     }
 }

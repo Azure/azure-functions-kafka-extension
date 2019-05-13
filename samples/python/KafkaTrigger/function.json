@@ -1,0 +1,12 @@
+{
+      "scriptFile": "main.py",
+      "bindings": [
+        {
+          "type": "kafkaTrigger",
+          "name": "kevent",
+          "topic": "test_topic",
+          "brokerList": "localhost:9092",
+          "consumerGroup" : "default"
+        }
+    ]
+}

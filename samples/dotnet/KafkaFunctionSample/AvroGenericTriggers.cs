@@ -42,7 +42,7 @@ namespace KafkaFunctionSample
 
         [FunctionName(nameof(PageViews))]
         public static void PageViews(
-           [KafkaTrigger("LocalBroker", "pageviews", AvroSchema = PageViewsSchema, ConsumerGroup = "azfunc")] KafkaEventData[] kafkaEvents,
+           [KafkaTrigger("LocalBroker", "pageviews", AvroSchema = PageViewsSchema, ConsumerGroup = "azfunc")] KafkaEventData<string, GenericRecord>[] kafkaEvents,
            long[] offsetArray,
            int[] partitionArray,
            string[] topicArray,
