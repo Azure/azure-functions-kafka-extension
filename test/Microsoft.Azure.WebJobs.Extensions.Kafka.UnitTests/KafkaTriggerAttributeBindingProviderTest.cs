@@ -3,6 +3,7 @@
 
 using Avro.Generic;
 using Confluent.Kafka;
+using Confluent.Kafka.SyncOverAsync;
 using Confluent.SchemaRegistry.Serdes;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
@@ -197,7 +198,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
 
             Assert.NotNull(listener);
-            AssertIsCorrectKafkaListener(listener, expectedKeyType, typeof(GenericRecord), typeof(AvroDeserializer<GenericRecord>));            
+            AssertIsCorrectKafkaListener(listener, expectedKeyType, typeof(GenericRecord), typeof(SyncOverAsyncDeserializer<GenericRecord>));            
         }       
 
         [Theory]
@@ -234,7 +235,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
 
             Assert.NotNull(listener);
-            AssertIsCorrectKafkaListener(listener, expectedKeyType, typeof(MyAvroRecord), typeof(AvroDeserializer<MyAvroRecord>));
+            AssertIsCorrectKafkaListener(listener, expectedKeyType, typeof(MyAvroRecord), typeof(SyncOverAsyncDeserializer<MyAvroRecord>));
         }
 
         [Theory]

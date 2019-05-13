@@ -6,8 +6,8 @@
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Confluent.Kafka" Version="1.0.0-RC3" />
-    <PackageReference Include="Confluent.SchemaRegistry.Serdes" Version="1.0.0-RC3" />
+    <PackageReference Include="Confluent.Kafka" Version="1.0.0" />
+    <PackageReference Include="Confluent.SchemaRegistry.Serdes" Version="1.0.0" />
     <PackageReference Include="Google.Protobuf" Version="3.7.0" />
   </ItemGroup>
    <ItemGroup>
