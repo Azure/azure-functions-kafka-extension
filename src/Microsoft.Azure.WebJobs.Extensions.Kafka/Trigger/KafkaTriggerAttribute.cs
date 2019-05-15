@@ -56,7 +56,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// 
         /// sasl.mechanism in librdkafka
         /// </summary>
-        public BrokerAuthenticationMode AuthenticationMode { get; set; } = BrokerAuthenticationMode.NotSet;
+        public string AuthenticationMode { get; set; } = ((int)BrokerAuthenticationMode.NotSet).ToString();
 
         /// <summary>
         /// SASL username for use with the PLAIN and SASL-SCRAM-.. mechanisms
@@ -80,7 +80,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// 
         /// security.protocol in librdkafka
         /// </summary>
-        public BrokerProtocol Protocol { get; set; } = BrokerProtocol.NotSet;
+        public string Protocol { get; set; } = ((int)BrokerProtocol.NotSet).ToString();
 
         /// <summary>
         /// Path to client's private key (PEM) used for authentication.

@@ -93,21 +93,33 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 EventHubConnectionString = this.config.ResolveSecureSetting(nameResolver, attribute.EventHubConnectionString),
             };
 
-            if (attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet || 
-                attribute.Protocol != BrokerProtocol.NotSet)
+            BrokerAuthenticationMode authenticationMode;
+            if (!Enum.TryParse<BrokerAuthenticationMode>(attribute.AuthenticationMode, out authenticationMode))
+            {
+                authenticationMode = BrokerAuthenticationMode.NotSet;
+            }
+
+            BrokerProtocol protocol;
+            if (!Enum.TryParse<BrokerProtocol>(attribute.Protocol, out protocol))
+            {
+                protocol = BrokerProtocol.NotSet;
+            }
+
+            if (authenticationMode != BrokerAuthenticationMode.NotSet ||
+                protocol != BrokerProtocol.NotSet)
             {
                 consumerConfig.SaslPassword = this.config.ResolveSecureSetting(nameResolver, attribute.Password);
                 consumerConfig.SaslUsername = this.config.ResolveSecureSetting(nameResolver, attribute.Username);
-                consumerConfig.SslKeyLocation = attribute.SslKeyLocation;
+                consumerConfig.SslKeyLocation = this.config.ResolveSecureSetting(nameResolver, attribute.SslKeyLocation);
 
-                if (attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet)
+                if (authenticationMode != BrokerAuthenticationMode.NotSet)
                 {
-                    consumerConfig.SaslMechanism = (SaslMechanism)attribute.AuthenticationMode;
+                    consumerConfig.SaslMechanism = (SaslMechanism)authenticationMode;
                 }
 
-                if (attribute.Protocol != BrokerProtocol.NotSet)
+                if (protocol != BrokerProtocol.NotSet)
                 {
-                    consumerConfig.SecurityProtocol = (SecurityProtocol)attribute.Protocol;
+                    consumerConfig.SecurityProtocol = (SecurityProtocol)protocol;
                 }
             }
 
