@@ -22,14 +22,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         }
 
         [Fact]
-        public void When_No_Type_Is_Set_Should_Create_ByteArray_Listener()
+        public void When_No_Type_Is_Set_Should_Create_ByteArray_Producer()
         {
             var attribute = new KafkaAttribute("brokers:9092", "myTopic")
             {
             };
 
+            var entity = new KafkaProducerEntity()
+            {
+                Attribute = attribute,
+            };
+
             var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerProvider.Instance);
-            var producer = factory.Create(attribute);
+            var producer = factory.Create(entity);
 
             Assert.NotNull(producer);
             Assert.IsType<KafkaProducer<Null, byte[]>>(producer);
@@ -42,12 +47,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         {
             var attribute = new KafkaAttribute("brokers:9092", "myTopic")
             {
+            };
+
+            var entity = new KafkaProducerEntity()
+            {
+                Attribute = attribute,
                 ValueType = typeof(string),
             };
 
-
             var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerProvider.Instance);
-            var producer = factory.Create(attribute);
+            var producer = factory.Create(entity);
 
             Assert.NotNull(producer);
             Assert.IsType<KafkaProducer<Null, string>>(producer);
@@ -63,8 +72,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 AvroSchema = "fakeAvroSchema"
             };
 
+            var entity = new KafkaProducerEntity()
+            {
+                Attribute = attribute,
+                ValueType = typeof(GenericRecord),
+                AvroSchema = attribute.AvroSchema,
+            };
+
             var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerProvider.Instance);
-            var producer = factory.Create(attribute);
+            var producer = factory.Create(entity);
 
             Assert.NotNull(producer);
             Assert.IsType<KafkaProducer<Null, GenericRecord>>(producer);
@@ -79,11 +95,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         {
             var attribute = new KafkaAttribute("brokers:9092", "myTopic")
             {
-                ValueType = typeof(MyAvroRecord)
+            };
+
+
+            var entity = new KafkaProducerEntity()
+            {
+                Attribute = attribute,
+                ValueType = typeof(MyAvroRecord),
+                AvroSchema = MyAvroRecord.SchemaText,
             };
 
             var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerProvider.Instance);
-            var producer = factory.Create(attribute);
+            var producer = factory.Create(entity);
 
             Assert.NotNull(producer);
             Assert.IsType<KafkaProducer<Null, MyAvroRecord>>(producer);
@@ -97,11 +120,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         {
             var attribute = new KafkaAttribute("brokers:9092", "myTopic")
             {
-                ValueType = typeof(ProtoUser)
+            };
+
+            var entity = new KafkaProducerEntity()
+            {
+                Attribute = attribute,
+                ValueType = typeof(ProtoUser),
             };
 
             var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerProvider.Instance);
-            var producer = factory.Create(attribute);
+            var producer = factory.Create(entity);
 
             Assert.NotNull(producer);
             Assert.IsType<KafkaProducer<Null, ProtoUser>>(producer);
@@ -115,11 +143,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         {
             var attribute = new KafkaAttribute("brokers:9092", "myTopic")
             {
-                ValueType = typeof(ProtoUser)
+            };
+
+            var entity = new KafkaProducerEntity()
+            {
+                Attribute = attribute,
+                ValueType = typeof(ProtoUser),
             };
 
             var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerProvider.Instance);
-            var config = factory.GetProducerConfig(attribute);
+            var config = factory.GetProducerConfig(entity);
             Assert.Single(config);
             Assert.Equal("brokers:9092", config.BootstrapServers);
         }
@@ -129,15 +162,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         {
             var attribute = new KafkaAttribute("brokers:9092", "myTopic")
             {
-                ValueType = typeof(ProtoUser),
                 AuthenticationMode = BrokerAuthenticationMode.Plain,
                 Protocol = BrokerProtocol.SaslSsl,
                 Username = "myuser",
                 Password = "secret",
             };
 
+            var entity = new KafkaProducerEntity()
+            {
+                Attribute = attribute,
+                ValueType = typeof(ProtoUser),
+            };
+
             var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerProvider.Instance);
-            var config = factory.GetProducerConfig(attribute);
+            var config = factory.GetProducerConfig(entity);
             Assert.Equal(5, config.Count());
             Assert.Equal("brokers:9092", config.BootstrapServers);
             Assert.Equal(SecurityProtocol.SaslSsl, config.SecurityProtocol);

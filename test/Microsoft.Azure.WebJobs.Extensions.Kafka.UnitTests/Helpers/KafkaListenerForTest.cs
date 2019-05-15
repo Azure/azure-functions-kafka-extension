@@ -22,12 +22,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             bool singleDispatch,
             KafkaOptions options,
             KafkaListenerConfiguration kafkaListenerConfiguration,
-            object valueDeserializer,
+            bool requiresKey,
+            IDeserializer<TValue> valueDeserializer,
             ILogger logger)
             : base(executor,
                 singleDispatch,
                 options,
                 kafkaListenerConfiguration,
+                requiresKey,
                 valueDeserializer,
                 logger)
         {

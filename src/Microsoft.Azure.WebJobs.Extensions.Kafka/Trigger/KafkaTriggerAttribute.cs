@@ -41,32 +41,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// Gets or sets the consumer group
         /// </summary>
         public string ConsumerGroup { get; set; }
-
-        /// <summary>
-        /// Gets or sets the key element type
-        /// Default is Null
-        /// </summary>
-        public Type KeyType { get; set; }
-
-        Type valueType;
-
-        /// <summary>
-        /// Gets or sets the Avro data type
-        /// Must implement ISpecificRecord
-        /// </summary>
-        public Type ValueType
-        { 
-            get => this.valueType;
-            set
-            {
-                if (value != null && !IsValidValueType(value))
-                {
-                    throw new ArgumentException($"The value of {nameof(ValueType)} must be a byte[], string or a type that implements {nameof(ISpecificRecord)} or {nameof(Google.Protobuf.IMessage)}. The type {value.Name} does not.");
-                }
-
-                this.valueType = value;
-            }
-        }
+        
 
         /// <summary>
         /// Gets or sets the Avro schema.

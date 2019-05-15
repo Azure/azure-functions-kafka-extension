@@ -10,6 +10,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     /// </summary>
     public interface IKafkaProducerFactory
     {
-        IKafkaProducer Create(KafkaAttribute attribute);
+        IKafkaProducer Create(KafkaProducerEntity entity);
     }
 }
