@@ -63,7 +63,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return (ITriggerBinding)genericCreateBindingStrategy.Invoke(this, new object[] { parameterInfo, listenerConfiguration, requiresKey, valueDeserializer });
         }
 
-        private ITriggerBinding CreateBindingStrategy<TKey, TValue>(ParameterInfo parameter, KafkaListenerConfiguration listenerConfiguration, bool requiresKey, object valueDeserializer)
+        private ITriggerBinding CreateBindingStrategy<TKey, TValue>(ParameterInfo parameter, KafkaListenerConfiguration listenerConfiguration, bool requiresKey, IDeserializer<TValue> valueDeserializer)
         {
             // TODO: reuse connections if they match with others in same function app
             Task<IListener> listenerCreator(ListenerFactoryContext factoryContext, bool singleDispatch)

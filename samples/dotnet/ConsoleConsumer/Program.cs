@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avro.Generic;
 using Confluent.Kafka;
+using Confluent.Kafka.SyncOverAsync;
 using Confluent.SchemaRegistry.Serdes;
 using Newtonsoft.Json;
 
@@ -88,7 +89,7 @@ namespace ConsoleConsumer
                 // if (typeof(TKey) != typeof(Ignore))
                 //     builder.SetKeyDeserializer(new MagicAvroDeserializer<TKey>(new AvroDeserializer<TKey>(schemaRegistry)));
 
-                builder.SetValueDeserializer(new MagicAvroDeserializer<PageViewRegion>(new AvroDeserializer<PageViewRegion>(schemaRegistry)));
+                builder.SetValueDeserializer(new MagicAvroDeserializer<PageViewRegion>(new AvroDeserializer<PageViewRegion>(schemaRegistry).AsSyncOverAsync()));
             }
 
             var consumer = builder.Build();
@@ -162,7 +163,7 @@ namespace ConsoleConsumer
                 // if (typeof(TKey) != typeof(Ignore))
                 //     builder.SetKeyDeserializer(new MagicAvroDeserializer<TKey>(new AvroDeserializer<TKey>(schemaRegistry)));
 
-                builder.SetValueDeserializer(new MagicAvroDeserializer<PageViews>(new AvroDeserializer<PageViews>(schemaRegistry)));
+                builder.SetValueDeserializer(new MagicAvroDeserializer<PageViews>(new AvroDeserializer<PageViews>(schemaRegistry).AsSyncOverAsync()));
             }
 
             var consumer = builder.Build();
@@ -237,7 +238,7 @@ namespace ConsoleConsumer
                 //     builder.SetKeyDeserializer(new MagicAvroDeserializer<TKey>(new AvroDeserializer<TKey>(schemaRegistry)));
 
 
-                builder.SetValueDeserializer(new MagicAvroDeserializer<GenericRecord>(new AvroDeserializer<GenericRecord>(schemaRegistry)));
+                builder.SetValueDeserializer(new MagicAvroDeserializer<GenericRecord>(new AvroDeserializer<GenericRecord>(schemaRegistry).AsSyncOverAsync()));
             }
 
             var consumer = builder.Build();
@@ -312,7 +313,7 @@ namespace ConsoleConsumer
                 //     builder.SetKeyDeserializer(new MagicAvroDeserializer<TKey>(new AvroDeserializer<TKey>(schemaRegistry)));
 
 
-                builder.SetValueDeserializer(new MagicAvroDeserializer<GenericRecord>(new AvroDeserializer<GenericRecord>(schemaRegistry)));
+                builder.SetValueDeserializer(new MagicAvroDeserializer<GenericRecord>(new AvroDeserializer<GenericRecord>(schemaRegistry).AsSyncOverAsync()));
             }
 
             var consumer = builder.Build();

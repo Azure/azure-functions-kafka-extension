@@ -43,7 +43,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// Gets the value deserializer
         /// </summary>
         /// <value>The value deserializer.</value>
-        internal object ValueDeserializer { get; }
+        internal IDeserializer<TValue> ValueDeserializer { get; }
 
         public KafkaListener(
             ITriggeredFunctionExecutor executor,
@@ -51,7 +51,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             KafkaOptions options,
             KafkaListenerConfiguration kafkaListenerConfiguration,
             bool requiresKey,
-            object valueDeserializer,
+            IDeserializer<TValue> valueDeserializer,
             ILogger logger)
         {
             this.ValueDeserializer = valueDeserializer;
@@ -88,18 +88,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             if (ValueDeserializer != null)
             {
-                if (ValueDeserializer is IAsyncDeserializer<TValue> asyncValueDeserializer)
-                {
-                    builder.SetValueDeserializer(asyncValueDeserializer);
-                }
-                else if (ValueDeserializer is IDeserializer<TValue> syncValueDeserializer)
-                {
-                    builder.SetValueDeserializer(syncValueDeserializer);
-                }
-                else
-                {
-                    throw new InvalidOperationException($"Value deserializer must implement either IAsyncDeserializer or IDeserializer. Type {ValueDeserializer.GetType().Name} does not");
-                }
+                builder.SetValueDeserializer(ValueDeserializer);
             }
 
             this.consumer = builder.Build();
