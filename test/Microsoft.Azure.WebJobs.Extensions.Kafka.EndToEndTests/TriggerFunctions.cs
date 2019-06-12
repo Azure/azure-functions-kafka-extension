@@ -3,6 +3,7 @@
 
 using System;
 using System.Text;
+using Avro.Generic;
 using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
 
@@ -178,6 +179,35 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                 }
 
                 log.LogInformation("{key}:{ticks}:{value}", kafkaEvent.Key, myRecord.Ticks, myRecord.ID);
+            }
+        }
+    }
+
+    internal static class MultiItem_GenericAvro_With_String_Key_Trigger
+    {
+        public static void Trigger(
+            [KafkaTrigger("LocalBroker", Constants.MyAvroRecordTopicName, ConsumerGroup = Constants.ConsumerGroupID, AvroSchema = MyAvroRecord.SchemaText)] KafkaEventData<string, GenericRecord>[] kafkaEvents,
+            ILogger log)
+        {
+            foreach (var kafkaEvent in kafkaEvents)
+            {
+                var myRecord = kafkaEvent.Value;
+                if (myRecord == null)
+                {
+                    throw new Exception("MyAvro record is null");
+                }
+
+                if (!myRecord.TryGetValue("ticks", out var ticksValue))
+                {
+                    throw new Exception("MyAvro record does not have 'ticks' property");
+                }
+
+                if (!myRecord.TryGetValue("id", out var idValue))
+                {
+                    throw new Exception("MyAvro record does not have 'id' property");
+                }
+
+                log.LogInformation("{key}:{ticks}:{value}", kafkaEvent.Key, ticksValue, idValue);
             }
         }
     }
