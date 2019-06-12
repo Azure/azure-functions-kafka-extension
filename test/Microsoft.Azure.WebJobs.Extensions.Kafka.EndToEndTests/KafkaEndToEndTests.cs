@@ -573,6 +573,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             typeof(MultiItem_SpecificAvro_With_String_Key_Trigger),
             Constants.MyAvroRecordTopicName)]
         [InlineData(
+            nameof(KafkaOutputFunctions.Produce_AsyncCollector_Avro_With_String_key),
+            typeof(MultiItem_GenericAvro_With_String_Key_Trigger),
+            Constants.MyAvroRecordTopicName)]
+        [InlineData(
             nameof(KafkaOutputFunctions.Produce_AsyncCollector_Protobuf_With_String_Key),
             typeof(MultiItem_Protobuf_With_String_Key_Trigger),
             Constants.MyProtobufTopicName
