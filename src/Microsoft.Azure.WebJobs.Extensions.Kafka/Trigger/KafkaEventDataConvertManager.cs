@@ -60,6 +60,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                         return converter;
                     }
                 }
+                else if (typeof(IKafkaEventData).IsAssignableFrom(typeDest) && typeDest.IsGenericType && typeSource == typeof(IKafkaEventData))
+                {
+                    // Handles the scenario where the source == IKafkaEventData and the destination is of type KafkaEventData
+                    return ConvertFromIKafkaEventToGenericItem;
+                }
                 else if (SerializationHelper.IsDesSerType(typeDest))
                 {
                     return ConvertFromKafkaEventDataValueProperty;
@@ -67,6 +72,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
 
             return this.converterManager?.GetConverter<TAttribute>(typeSource, typeDest);
+        }
+
+        private Task<object> ConvertFromIKafkaEventToGenericItem(object src, Attribute attribute, ValueBindingContext context)
+        {
+            return Task.FromResult(src);
         }
 
         static Task<object> ConvertFromKafkaEventDataValueProperty(object src, Attribute attribute, ValueBindingContext context) => Task.FromResult<object>(((IKafkaEventData)src).Value);
