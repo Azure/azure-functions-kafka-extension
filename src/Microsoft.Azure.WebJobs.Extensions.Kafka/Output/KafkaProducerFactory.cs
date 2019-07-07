@@ -102,6 +102,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 SaslPassword = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.Password),
                 SaslUsername = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.Username),
                 SslKeyLocation = entity.Attribute.SslKeyLocation,
+                SslKeyPassword = entity.Attribute.SslKeyPassword,
+                SslCertificateLocation = entity.Attribute.SslCertificateLocation,
+                SslCaLocation = entity.Attribute.SslCaLocation
             };
 
             if (entity.Attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet)

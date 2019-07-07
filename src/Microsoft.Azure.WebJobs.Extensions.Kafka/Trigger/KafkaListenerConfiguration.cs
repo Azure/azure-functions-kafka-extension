@@ -76,6 +76,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// <value>The consumer group.</value>
         public string ConsumerGroup { get; set; }
 
+        /// <summary>
+        /// Path to CA certificate file for verifying the broker's certificate.
+        /// ssl.ca.location in librdkafka
+        /// </summary>
+        public string SslCaLocation { get; set; }
+
+        /// <summary>
+        /// Path to client's certificate.
+        /// ssl.certificate.location in librdkafka
+        /// </summary>
+        public string SslCertificateLocation { get; set; }
+
+        /// <summary>
+        /// Password for client's certificate.
+        /// ssl.key.password in librdkafka
+        /// </summary>
+        public string SslKeyPassword { get; set; }
+
         internal void ApplyToConfig(ClientConfig conf)
         {
             if (this.SaslMechanism.HasValue)

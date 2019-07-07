@@ -297,6 +297,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 BrokerList = "testBroker",
                 Topic = "topic",
                 ConsumerGroup = "group1",
+                SslKeyPassword = "password1",
+                SslCertificateLocation = "path/to/cert",
+                SslKeyLocation = "path/to/key",
+                SslCaLocation = "path/to/cacert"
             };
 
             var kafkaOptions = new KafkaOptions();
@@ -314,9 +318,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             await target.StartAsync(default);
 
-            Assert.Equal(6, target.ConsumerConfig.Count());
+            Assert.Equal(10, target.ConsumerConfig.Count());
             Assert.Equal("testBroker", target.ConsumerConfig.BootstrapServers);
             Assert.Equal("group1", target.ConsumerConfig.GroupId);
+            Assert.Equal("password1", target.ConsumerConfig.SslKeyPassword);
+            Assert.Equal("path/to/cert", target.ConsumerConfig.SslCertificateLocation);
+            Assert.Equal("path/to/key", target.ConsumerConfig.SslKeyLocation);
+            Assert.Equal("path/to/cacert", target.ConsumerConfig.SslCaLocation);
             Assert.Equal(kafkaOptions.AutoCommitIntervalMs, target.ConsumerConfig.AutoCommitIntervalMs);
             Assert.Equal(true, target.ConsumerConfig.EnableAutoCommit);
             Assert.Equal(false, target.ConsumerConfig.EnableAutoOffsetStore);

@@ -137,7 +137,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 SaslUsername = this.listenerConfiguration.SaslUsername,
                 SaslPassword = this.listenerConfiguration.SaslPassword,
                 SecurityProtocol = this.listenerConfiguration.SecurityProtocol,
-                SslCaLocation = this.listenerConfiguration.SslKeyLocation,
+                SslCaLocation = this.listenerConfiguration.SslCaLocation,
+                SslCertificateLocation = this.listenerConfiguration.SslCertificateLocation,
+                SslKeyLocation = this.listenerConfiguration.SslKeyLocation,
+                SslKeyPassword = this.listenerConfiguration.SslKeyPassword,
 
                 // Values from host configuration
                 StatisticsIntervalMs = this.options.StatisticsIntervalMs,

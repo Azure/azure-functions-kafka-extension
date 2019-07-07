@@ -183,5 +183,34 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal("secret", config.SaslPassword);
             Assert.Equal("myuser", config.SaslUsername);
         }
+
+        [Fact]
+        public void GetProducerConfig_When_Ssl_Auth_Defined_Should_Contain_Them()
+        {
+            var attribute = new KafkaAttribute("brokers:9092", "myTopic")
+            {
+                Protocol = BrokerProtocol.Ssl,
+                SslKeyLocation = "path/to/key",
+                SslKeyPassword = "password1",
+                SslCertificateLocation = "path/to/cert",
+                SslCaLocation = "path/to/cacert"
+            };
+
+            var entity = new KafkaProducerEntity()
+            {
+                Attribute = attribute,
+                ValueType = typeof(ProtoUser),
+            };
+
+            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerProvider.Instance);
+            var config = factory.GetProducerConfig(entity);
+            Assert.Equal(6, config.Count());
+            Assert.Equal("brokers:9092", config.BootstrapServers);
+            Assert.Equal(SecurityProtocol.Ssl, config.SecurityProtocol);
+            Assert.Equal("path/to/key", config.SslKeyLocation);
+            Assert.Equal("password1", config.SslKeyPassword);
+            Assert.Equal("path/to/cert", config.SslCertificateLocation);
+            Assert.Equal("path/to/cacert", config.SslCaLocation);
+        }
     }
 }
