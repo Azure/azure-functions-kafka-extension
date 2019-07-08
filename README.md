@@ -313,6 +313,9 @@ Both, trigger and output, can connect to a secure Kafka broker. The following at
 |Password|sasl.password|SASL password for use with the PLAIN and SASL-SCRAM|
 |Protocol|security.protocol|Security protocol used to communicate with brokers|
 |SslKeyLocation|ssl.key.location|Path to client's private key (PEM) used for authentication|
+|SslKeyPassword|ssl.key.password|Password for client's certificate|
+|SslCertificateLocation|ssl.certificate.location|Path to client's certificate|
+|SslCaLocation|ssl.ca.location|Path to CA certificate file for verifying the broker's certificate|
 
 Username and password should reference a Azure function configuration variable and not be hardcoded.
 

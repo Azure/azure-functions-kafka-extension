@@ -99,6 +99,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 consumerConfig.SaslPassword = this.config.ResolveSecureSetting(nameResolver, attribute.Password);
                 consumerConfig.SaslUsername = this.config.ResolveSecureSetting(nameResolver, attribute.Username);
                 consumerConfig.SslKeyLocation = attribute.SslKeyLocation;
+                consumerConfig.SslKeyPassword = attribute.SslKeyPassword;
+                consumerConfig.SslCertificateLocation = attribute.SslCertificateLocation;
+                consumerConfig.SslCaLocation = attribute.SslCaLocation;
 
                 if (attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet)
                 {
