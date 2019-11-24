@@ -2,16 +2,14 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Confluent.Kafka;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
@@ -21,6 +19,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     /// </summary>
     internal class KafkaListener<TKey, TValue> : IListener
     {
+        internal const string EventHubsBrokerVersionFallback = "1.0.0";
+        internal const string EventHubsSaslUsername = "$ConnectionString";
+        internal const string EventHubsBrokerListDns = ".servicebus.windows.net";
+        internal const int EventHubsBrokerListPort = 9093;
+
         /// <summary>
         /// The time to wait for running process to end.
         /// </summary>
@@ -71,6 +74,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
+            AzureFunctionsFileHelper.InitializeLibrdKafka(this.logger);
+
             var builder = this.CreateConsumerBuilder(GetConsumerConfiguration());
 
             builder.SetErrorHandler((_, e) =>
@@ -164,24 +169,60 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 // Setup eventhubs kafka head configuration
                 var ehBrokerList = this.listenerConfiguration.BrokerList;
-                if (!ehBrokerList.Contains(".servicebus.windows.net"))
+                if (!ehBrokerList.Contains(EventHubsBrokerListDns))
                 {
-                    ehBrokerList = $"{ this.listenerConfiguration.BrokerList}.servicebus.windows.net:9093";
+                    ehBrokerList = $"{this.listenerConfiguration.BrokerList}{EventHubsBrokerListDns}:{EventHubsBrokerListPort}";
                 }
 
                 var consumerGroupToUse = string.IsNullOrEmpty(this.listenerConfiguration.ConsumerGroup) ? "$Default" : this.listenerConfiguration.ConsumerGroup;
-
                 conf.BootstrapServers = ehBrokerList;
                 conf.SecurityProtocol = SecurityProtocol.SaslSsl;
                 conf.SaslMechanism = SaslMechanism.Plain;
-                conf.SaslUsername = "$ConnectionString";
+                conf.SaslUsername = EventHubsSaslUsername;
                 conf.SaslPassword = this.listenerConfiguration.EventHubConnectionString;
-                conf.SslCaLocation= string.IsNullOrEmpty(conf.SslCaLocation) ? "./cacert.pem" : conf.SslCaLocation;
+                conf.SslCaLocation= this.EnsureValidEventHubsCertificateLocation(this.listenerConfiguration.SslCaLocation);
                 conf.GroupId = consumerGroupToUse;
-                conf.BrokerVersionFallback = "1.0.0";
+                conf.BrokerVersionFallback = EventHubsBrokerVersionFallback;
             }
 
             return conf;
+        }
+
+        string EnsureValidEventHubsCertificateLocation(string userProvidedLocation)
+        {
+            const string eventhubsCertificateFilename = "cacert.pem";
+            const string defaultEventhubsCertificateFilePath = "./cacert.pem";
+
+            if (!string.IsNullOrWhiteSpace(userProvidedLocation))
+            {
+                if (!File.Exists(userProvidedLocation))
+                {
+                    throw new InvalidOperationException($"Could not find user provided event hubs certificate file '{userProvidedLocation}");
+                }
+
+                return userProvidedLocation;
+            }
+
+            // try to find out based on current environment
+            var certificateFilePath = defaultEventhubsCertificateFilePath;
+            if (File.Exists(certificateFilePath))
+            {
+                return certificateFilePath;
+            }
+
+            // In Azure HOME contains the main folder where the function is located (windows) = D:\home
+            // By default the Azure function will be located under D:\home\site\wwwroot
+            var azureFunctionBasePath = AzureFunctionsFileHelper.GetAzureFunctionBaseFolder();
+            if (!string.IsNullOrWhiteSpace(azureFunctionBasePath))
+            {
+                certificateFilePath = Path.Combine(azureFunctionBasePath, eventhubsCertificateFilename);
+                if (File.Exists(certificateFilePath))
+                {
+                    return certificateFilePath;
+                }
+            }
+
+            throw new InvalidOperationException($"Could not find event hubs certificate file '{certificateFilePath}'");
         }
 
         private void ProcessSubscription(object parameter)
@@ -234,7 +275,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                             }
                             else
                             {
-                                // TODO: maybe slow down if don't have much data incoming
+                                // TODO: maybe slow down if there isn't much incoming data
                                 break;
                             }
                         }
@@ -316,7 +357,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public void Dispose()
         {
             Dispose(true);
-            GC.SuppressFinalize(this);
         }
     }
 }
