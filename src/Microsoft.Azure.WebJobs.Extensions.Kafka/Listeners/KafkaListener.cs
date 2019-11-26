@@ -190,39 +190,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         string EnsureValidEventHubsCertificateLocation(string userProvidedLocation)
         {
-            const string eventhubsCertificateFilename = "cacert.pem";
             const string defaultEventhubsCertificateFilePath = "./cacert.pem";
 
             if (!string.IsNullOrWhiteSpace(userProvidedLocation))
             {
-                if (!File.Exists(userProvidedLocation))
+                if (!AzureFunctionsFileHelper.TryGetValidFilePath(userProvidedLocation, out var validatedUserProvidedLocation))
                 {
                     throw new InvalidOperationException($"Could not find user provided event hubs certificate file '{userProvidedLocation}");
                 }
 
-                return userProvidedLocation;
+                return validatedUserProvidedLocation;
             }
 
-            // try to find out based on current environment
-            var certificateFilePath = defaultEventhubsCertificateFilePath;
-            if (File.Exists(certificateFilePath))
+
+            if (!AzureFunctionsFileHelper.TryGetValidFilePath(defaultEventhubsCertificateFilePath, out var validatedCertificateFilePath))
             {
-                return certificateFilePath;
+                throw new InvalidOperationException($"Could not find event hubs certificate file '{defaultEventhubsCertificateFilePath}'");
             }
 
-            // In Azure HOME contains the main folder where the function is located (windows) = D:\home
-            // By default the Azure function will be located under D:\home\site\wwwroot
-            var azureFunctionBasePath = AzureFunctionsFileHelper.GetAzureFunctionBaseFolder();
-            if (!string.IsNullOrWhiteSpace(azureFunctionBasePath))
-            {
-                certificateFilePath = Path.Combine(azureFunctionBasePath, eventhubsCertificateFilename);
-                if (File.Exists(certificateFilePath))
-                {
-                    return certificateFilePath;
-                }
-            }
-
-            throw new InvalidOperationException($"Could not find event hubs certificate file '{certificateFilePath}'");
+            return validatedCertificateFilePath;
         }
 
         private void ProcessSubscription(object parameter)

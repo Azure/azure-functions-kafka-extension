@@ -111,5 +111,44 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 }
             }
         }
+
+        /// <summary>
+        /// Ensure file exists, checking for azure function base folder if not found in provided path
+        /// </summary>
+        /// <param name="filePath">The file path to validate</param>
+        /// <param name="resultFilePath">The valid file path</param>
+        /// <returns>True if the file returned by <paramref name="resultFilePath"/> exists, otherwise false</returns>
+        internal static bool TryGetValidFilePath(string filePath, out string resultFilePath)
+        {
+            resultFilePath = null;
+
+            if (string.IsNullOrWhiteSpace(filePath))
+            {
+                return false;
+            }
+
+            if (File.Exists(filePath))
+            {
+                resultFilePath = filePath;
+                return true;
+            }
+
+            // try to search for in Azure function folder
+            var basePath = GetAzureFunctionBaseFolder();
+            if (string.IsNullOrWhiteSpace(basePath))
+            {
+                return false;
+            }
+
+            var filename = Path.GetFileName(filePath);
+            var filePathInAzureFunctionFolder = Path.Combine(basePath, filename);
+            if (File.Exists(filePathInAzureFunctionFolder))
+            { 
+                resultFilePath = filePathInAzureFunctionFolder;
+                return true;
+            }
+
+            return false;
+        }
     }
 }
