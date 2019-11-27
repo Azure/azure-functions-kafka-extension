@@ -3,12 +3,11 @@
 
 using Confluent.Kafka;
 using Microsoft.Azure.WebJobs.Host.Executors;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -376,6 +375,81 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal("mypassword", target.ConsumerConfig.SaslPassword);
             Assert.Equal("myusername", target.ConsumerConfig.SaslUsername);
             Assert.Equal(SecurityProtocol.SaslSsl, target.ConsumerConfig.SecurityProtocol);
+
+            await target.StopAsync(default);
+        }
+
+        [Fact]
+        public async Task When_Using_Invalid_Eventhubs_Certificate_File_Should_Fail()
+        {
+            var executor = new Mock<ITriggeredFunctionExecutor>();
+            var consumer = new Mock<IConsumer<Null, string>>();
+
+            var listenerConfig = new KafkaListenerConfiguration()
+            {
+                BrokerList = "testBroker",
+                Topic = "topic",
+                EventHubConnectionString = "Endpoint=sb://fake.servicebus.windows.net/;SharedAccessKeyName=reader;SharedAccessKey=fake",
+                ConsumerGroup = "group1",
+                SslCaLocation = "does-not-exists.pem",
+            };
+
+            var kafkaOptions = new KafkaOptions();
+            var target = new KafkaListenerForTest<Null, string>(
+                executor.Object,
+                true,
+                kafkaOptions,
+                listenerConfig,
+                requiresKey: true,
+                valueDeserializer: null,
+                NullLogger.Instance
+                );
+
+            target.SetConsumer(consumer.Object);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => target.StartAsync(default));
+        }
+
+        [Fact]
+        public async Task When_Using_Default_Eventhubs_Certificate_File_Should_Contain_File_Location()
+        {
+            const string eventhubsConnectionString = "Endpoint=sb://fake.servicebus.windows.net/;SharedAccessKeyName=reader;SharedAccessKey=fake";
+            const string broker = "testBroker";
+            var executor = new Mock<ITriggeredFunctionExecutor>();
+            var consumer = new Mock<IConsumer<Null, string>>();
+
+            var listenerConfig = new KafkaListenerConfiguration()
+            {
+                BrokerList = broker,
+                Topic = "topic",
+                EventHubConnectionString = eventhubsConnectionString,
+                ConsumerGroup = "group1",
+            };
+
+            var kafkaOptions = new KafkaOptions();
+            var target = new KafkaListenerForTest<Null, string>(
+                executor.Object,
+                true,
+                kafkaOptions,
+                listenerConfig,
+                requiresKey: true,
+                valueDeserializer: null,
+                NullLogger.Instance
+                );
+
+            target.SetConsumer(consumer.Object);
+
+            await target.StartAsync(default);
+
+            Assert.NotEmpty(target.ConsumerConfig.SslCaLocation);
+            Assert.True(File.Exists(target.ConsumerConfig.SslCaLocation));
+            var expectedBootstrapServers = $"{broker}{KafkaListenerForTest<Null, string>.EventHubsBrokerListDns}:{KafkaListenerForTest<Null, string>.EventHubsBrokerListPort}";
+            Assert.Equal(expectedBootstrapServers, target.ConsumerConfig.BootstrapServers);
+            Assert.Equal(KafkaListenerForTest<Null, string>.EventHubsSaslUsername, target.ConsumerConfig.SaslUsername);
+            Assert.Equal(eventhubsConnectionString, target.ConsumerConfig.SaslPassword);
+            Assert.Equal(SecurityProtocol.SaslSsl, target.ConsumerConfig.SecurityProtocol);
+            Assert.Equal(SaslMechanism.Plain, target.ConsumerConfig.SaslMechanism);
+            Assert.Equal(KafkaListenerForTest<Null, string>.EventHubsBrokerVersionFallback, target.ConsumerConfig.BrokerVersionFallback);
 
             await target.StopAsync(default);
         }

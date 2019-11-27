@@ -39,6 +39,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public IKafkaProducer Create(KafkaProducerEntity entity)
         {
+            AzureFunctionsFileHelper.InitializeLibrdKafka(this.loggerProvider.CreateLogger(LogCategories.CreateTriggerCategory("Kafka")));
+
             // Goal is to create as less producers as possible
             // We can group producers based on following criterias
             // - Broker List
