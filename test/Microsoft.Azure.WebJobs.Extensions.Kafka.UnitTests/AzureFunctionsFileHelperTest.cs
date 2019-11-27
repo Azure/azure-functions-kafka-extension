@@ -81,7 +81,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             var actual = AzureFunctionsFileHelper.GetFunctionBaseFolder();
             Assert.NotEmpty(actual);
-            Assert.Equal(@"d:\Home\site\wwwroot", actual);
+
+            var expected = $"d:\\Home{Path.DirectorySeparatorChar}site{Path.DirectorySeparatorChar}wwwroot";
+            Assert.Equal(expected, actual);
         }
 
         [Fact]
