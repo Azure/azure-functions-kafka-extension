@@ -14,14 +14,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     internal sealed class AzureFunctionsFileHelper
     {
         internal const string AzureHomeEnvVarName = "HOME";
+        internal const string AzureWebJobsScriptRootEnvVarName = "AzureWebJobsScriptRoot";
         internal const string AzureDefaultFunctionPath = "site/wwwroot";
-        internal const string AzureFunctionRuntimeVersionEnvVarName = "FUNCTIONS_EXTENSION_VERSION";
-        internal const string AzureWebSiteHostNameEnvVarName = "WEBSITE_HOSTNAME";
+        internal const string AzureFunctionWorkerRuntimeEnvVarName = "FUNCTIONS_WORKER_RUNTIME";
         internal const string ProcessArchitecturex86Value = "x86";
         internal const string RuntimesFolderName = "runtimes";
         internal const string NativeFolderName = "native";
         internal const string LibrdKafkaWindowsFileName = "librdkafka.dll";
-        internal const string LibrdKafkaLinuxFileName = "librdkafka.so";
         internal const string Windows32ArchFolderName = "win-x86";
         internal const string Windows64ArchFolderName = "win-x64";
         internal const string Linux64ArchFolderName = "linux-x64";
@@ -29,26 +28,34 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         internal const string SiteBitnessEnvVarName = "SITE_BITNESS";
 
         /// <summary>
-        /// Indicates if the current excecution environment is inside a Function running in Azure
+        /// Indicates if the current excecution environment is either a function hosted in Azure or 
+        /// a function hosted in a container
         /// </summary>
-        internal static bool IsFunctionRunningInAzure()
+        internal static bool IsRunningAsFunctionInAzureOrContainer()
         {
-            return !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(AzureFunctionRuntimeVersionEnvVarName)) &&
-                   !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(AzureWebSiteHostNameEnvVarName));
+            return !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(AzureFunctionWorkerRuntimeEnvVarName));
         }
 
         /// <summary>
-        /// Gets the Azure Function base folder
-        /// Default is D:\home\site\wwwroot
-        /// If not running in Azure as a function returns a different value
+        /// Gets the function base folder when running as Azure Function App or as a container
+        /// When running in Azure Function App default is D:\home\site\wwwroot
+        /// When running in Azure Function container default is /home/site/wwwroot
+        /// If not running in Azure or container returns null
         /// </summary>
-        internal static string GetAzureFunctionBaseFolder()
+        internal static string GetFunctionBaseFolder()
         {
-            if (!IsFunctionRunningInAzure())
+            if (!IsRunningAsFunctionInAzureOrContainer())
             {
                 return null;
             }
-                
+
+            // When running in container the path will be defined at AzureWebJobsScriptRoot
+            var azureWebJobsScriptRoot = Environment.GetEnvironmentVariable(AzureWebJobsScriptRootEnvVarName, EnvironmentVariableTarget.Process);
+            if (!string.IsNullOrWhiteSpace(azureWebJobsScriptRoot))
+            {
+                return azureWebJobsScriptRoot;
+            }
+
             // In Azure HOME contains the main folder where the function is located (windows) = D:\home
             // By default the Azure function will be located under D:\home\site\wwwroot
             var homeDir = Environment.GetEnvironmentVariable(AzureHomeEnvVarName, EnvironmentVariableTarget.Process);
@@ -77,39 +84,40 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 return;
             }
 
-            if (IsFunctionRunningInAzure())
+            if (!IsRunningAsFunctionInAzureOrContainer())
             {
-                string librdKafkaLibraryPath = null;
+                return;
+            }
 
-                var os = Environment.GetEnvironmentVariable(OSEnvVarName, EnvironmentVariableTarget.Process) ?? string.Empty;
-                var isWindows = os.IndexOf("windows", 0, StringComparison.InvariantCultureIgnoreCase) != -1;
+            string librdKafkaLibraryPath = null;
+
+            var os = Environment.GetEnvironmentVariable(OSEnvVarName, EnvironmentVariableTarget.Process) ?? string.Empty;
+            var isWindows = os.IndexOf("windows", 0, StringComparison.InvariantCultureIgnoreCase) != -1;
                 
-                if (isWindows)
+            if (isWindows)
+            {
+                var websiteBitness = Environment.GetEnvironmentVariable(SiteBitnessEnvVarName) ?? string.Empty;
+                var is32 = websiteBitness.Equals(ProcessArchitecturex86Value, StringComparison.InvariantCultureIgnoreCase);
+                var architectureFolderName = is32 ? Windows32ArchFolderName : Windows64ArchFolderName;
+                librdKafkaLibraryPath = Path.Combine(GetFunctionBaseFolder(), RuntimesFolderName, architectureFolderName, NativeFolderName, LibrdKafkaWindowsFileName);
+            }
+            else
+            {
+                logger.LogInformation("Running in non-Windows OS, expecting librdkafka to be there");
+            }
+
+            if (librdKafkaLibraryPath != null)
+            {
+                if (File.Exists(librdKafkaLibraryPath))
                 {
-                    var websiteBitness = Environment.GetEnvironmentVariable(SiteBitnessEnvVarName) ?? string.Empty;
-                    var is32 = websiteBitness.Equals(ProcessArchitecturex86Value, StringComparison.InvariantCultureIgnoreCase);
-                    var architectureFolderName = is32 ? Windows32ArchFolderName : Windows64ArchFolderName;
-                    librdKafkaLibraryPath = Path.Combine(GetAzureFunctionBaseFolder(), RuntimesFolderName, architectureFolderName, NativeFolderName, LibrdKafkaWindowsFileName);
+                    logger.LogInformation("Loading librdkafka from {librdkafkaPath}", librdKafkaLibraryPath);
+                    Confluent.Kafka.Library.Load(librdKafkaLibraryPath);
                 }
                 else
                 {
-                    // for now we just assume that is linux
-                    librdKafkaLibraryPath = Path.Combine(GetAzureFunctionBaseFolder(), RuntimesFolderName, Linux64ArchFolderName, NativeFolderName, LibrdKafkaLinuxFileName);
+                    logger.LogError("Did not attempt to load librdkafka because the desired file does not exist: '{librdkafkaPath}'", librdKafkaLibraryPath);
                 }
-
-                if (librdKafkaLibraryPath != null)
-                {
-                    if (File.Exists(librdKafkaLibraryPath))
-                    {
-                        logger.LogInformation("Loading librdkafka from {librdkafkaPath}", librdKafkaLibraryPath);
-                        Confluent.Kafka.Library.Load(librdKafkaLibraryPath);
-                    }
-                    else
-                    {
-                        logger.LogError("Did not attempt to load librdkafka because the desired file does not exist: '{librdkafkaPath}'", librdKafkaLibraryPath);
-                    }
-                }
-            }
+            }            
         }
 
         /// <summary>
@@ -133,8 +141,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 return true;
             }
 
-            // try to search for in Azure function folder
-            var basePath = GetAzureFunctionBaseFolder();
+            // try to search for in Azure function or container folder
+            var basePath = GetFunctionBaseFolder();
             if (string.IsNullOrWhiteSpace(basePath))
             {
                 return false;
@@ -149,6 +157,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
 
             return false;
-        }
+        }        
     }
 }
