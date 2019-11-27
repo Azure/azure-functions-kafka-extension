@@ -15,7 +15,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     {
         internal const string AzureHomeEnvVarName = "HOME";
         internal const string AzureWebJobsScriptRootEnvVarName = "AzureWebJobsScriptRoot";
-        internal const string AzureDefaultFunctionPath = "site/wwwroot";
+        internal const string AzureDefaultFunctionPathPart1 = "site";
+        internal const string AzureDefaultFunctionPathPart2 = "wwwroot";
         internal const string AzureFunctionWorkerRuntimeEnvVarName = "FUNCTIONS_WORKER_RUNTIME";
         internal const string ProcessArchitecturex86Value = "x86";
         internal const string RuntimesFolderName = "runtimes";
@@ -61,7 +62,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var homeDir = Environment.GetEnvironmentVariable(AzureHomeEnvVarName, EnvironmentVariableTarget.Process);
             if (!string.IsNullOrWhiteSpace(homeDir))
             {
-                return Path.Combine(homeDir, AzureDefaultFunctionPath);
+                return Path.Combine(homeDir, AzureDefaultFunctionPathPart1, AzureDefaultFunctionPathPart2);
             }
 
             return null;

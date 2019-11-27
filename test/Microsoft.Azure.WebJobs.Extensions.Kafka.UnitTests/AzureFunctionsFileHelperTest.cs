@@ -33,8 +33,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
         void SetRunningInAzureEnvVars()
         {
-            SetEnvironmentVariable(AzureFunctionsFileHelper.AzureFunctionRuntimeVersionEnvVarName, "~2");
-            SetEnvironmentVariable(AzureFunctionsFileHelper.AzureWebSiteHostNameEnvVarName, "kafka.azurewebsites.net");
+            SetEnvironmentVariable(AzureFunctionsFileHelper.AzureFunctionWorkerRuntimeEnvVarName, "dotnet");            
         }
 
         public void Dispose()
@@ -82,7 +81,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             var actual = AzureFunctionsFileHelper.GetFunctionBaseFolder();
             Assert.NotEmpty(actual);
-            Assert.Equal(@"d:\Home/site/wwwroot", actual);
+            Assert.Equal(@"d:\Home\site\wwwroot", actual);
+        }
+
+        [Fact]
+        public void GetAzureFunctionBaseFolder_When_Running_In_Container_Should_Return_Not_Null()
+        {
+            const string pathInContainer = @"home/site/wwwroot";
+
+            SetRunningInAzureEnvVars();
+            SetEnvironmentVariable(AzureFunctionsFileHelper.AzureWebJobsScriptRootEnvVarName, pathInContainer);
+
+            var actual = AzureFunctionsFileHelper.GetFunctionBaseFolder();
+            Assert.NotEmpty(actual);
+            Assert.Equal(pathInContainer, actual);
         }
     }
 }
