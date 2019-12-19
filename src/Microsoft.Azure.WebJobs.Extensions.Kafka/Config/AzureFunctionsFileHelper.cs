@@ -69,7 +69,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         }
 
         // Holds whether or not librdkafka has been initialized
-        static int librdkafkaInitialized;
+        static bool librdkafkaInitialized;
+
+        // Ensure that we return only once the initialization is finished
+        static object librdkafkaInitializationLock = new object();
 
         /// <summary>
         /// Initializes the librdkafka library from a specific place
@@ -78,45 +81,61 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// </summary>
         internal static void InitializeLibrdKafka(ILogger logger)
         {
-            // Initialize a single time
-            var originalInitializedValue = Interlocked.Exchange(ref librdkafkaInitialized, 1);
-            if (originalInitializedValue == 1)
+            lock (librdkafkaInitializationLock)
             {
-                return;
-            }
-
-            if (!IsRunningAsFunctionInAzureOrContainer())
-            {
-                return;
-            }
-
-            string librdKafkaLibraryPath = null;
-
-            var os = Environment.GetEnvironmentVariable(OSEnvVarName, EnvironmentVariableTarget.Process) ?? string.Empty;
-            var isWindows = os.IndexOf("windows", 0, StringComparison.InvariantCultureIgnoreCase) != -1;
-                
-            if (isWindows)
-            {
-                var websiteBitness = Environment.GetEnvironmentVariable(SiteBitnessEnvVarName) ?? string.Empty;
-                var is32 = websiteBitness.Equals(ProcessArchitecturex86Value, StringComparison.InvariantCultureIgnoreCase);
-                var architectureFolderName = is32 ? Windows32ArchFolderName : Windows64ArchFolderName;
-                librdKafkaLibraryPath = Path.Combine(GetFunctionBaseFolder(), RuntimesFolderName, architectureFolderName, NativeFolderName, LibrdKafkaWindowsFileName);
-            }
-            else
-            {
-                logger.LogInformation("Running in non-Windows OS, expecting librdkafka to be there");
-            }
-
-            if (librdKafkaLibraryPath != null)
-            {
-                if (File.Exists(librdKafkaLibraryPath))
+                if (librdkafkaInitialized)
                 {
-                    logger.LogInformation("Loading librdkafka from {librdkafkaPath}", librdKafkaLibraryPath);
-                    Confluent.Kafka.Library.Load(librdKafkaLibraryPath);
+                    if (logger.IsEnabled(LogLevel.Debug))
+                    {
+                        logger.LogDebug("Librdkafka initialization: skipping as the initialization already happened");
+                    }
+                    return;
+                }
+
+                librdkafkaInitialized = true;
+
+                if (!IsRunningAsFunctionInAzureOrContainer())
+                {
+                    if (logger.IsEnabled(LogLevel.Debug))
+                    {
+                        logger.LogDebug("Librdkafka initialization: skipping as we are not running in Azure or a container");
+                    }
+
+                    return;
+                }
+
+                string librdKafkaLibraryPath = null;
+
+                var os = Environment.GetEnvironmentVariable(OSEnvVarName, EnvironmentVariableTarget.Process) ?? string.Empty;
+                var isWindows = os.IndexOf("windows", 0, StringComparison.InvariantCultureIgnoreCase) != -1;
+
+                if (isWindows)
+                {
+                    var websiteBitness = Environment.GetEnvironmentVariable(SiteBitnessEnvVarName) ?? string.Empty;
+                    var is32 = websiteBitness.Equals(ProcessArchitecturex86Value, StringComparison.InvariantCultureIgnoreCase);
+                    var architectureFolderName = is32 ? Windows32ArchFolderName : Windows64ArchFolderName;
+                    librdKafkaLibraryPath = Path.Combine(GetFunctionBaseFolder(), RuntimesFolderName, architectureFolderName, NativeFolderName, LibrdKafkaWindowsFileName);
                 }
                 else
                 {
-                    logger.LogError("Did not attempt to load librdkafka because the desired file does not exist: '{librdkafkaPath}'", librdKafkaLibraryPath);
+                    logger.LogInformation("Librdkafka initialization: running in non-Windows OS, expecting librdkafka to be there");
+                }
+
+                if (librdKafkaLibraryPath != null)
+                {
+                    if (File.Exists(librdKafkaLibraryPath))
+                    {
+                        logger.LogInformation("Librdkafka initialization: loading librdkafka from {librdkafkaPath}", librdKafkaLibraryPath);
+                        Confluent.Kafka.Library.Load(librdKafkaLibraryPath);
+                    }
+                    else
+                    {
+                        logger.LogError("Librdkafka initialization: did not attempt to load librdkafka because the desired file does not exist: '{librdkafkaPath}'", librdKafkaLibraryPath);
+                    }
+                }
+                else
+                {
+                    logger.LogInformation("Librdkafka initialization: could not find dll location");
                 }
             }            
         }

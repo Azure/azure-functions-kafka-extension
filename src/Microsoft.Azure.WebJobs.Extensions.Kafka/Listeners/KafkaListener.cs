@@ -202,7 +202,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 return validatedUserProvidedLocation;
             }
 
-
             if (!AzureFunctionsFileHelper.TryGetValidFilePath(defaultEventhubsCertificateFilePath, out var validatedCertificateFilePath))
             {
                 throw new InvalidOperationException($"Could not find event hubs certificate file '{defaultEventhubsCertificateFilePath}'");
@@ -293,31 +292,37 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             await SafeCloseConsumerAsync();
         }
 
-        bool isClosed = false;        
+        int isClosed = 0;
 
         private async Task SafeCloseConsumerAsync()
         {
-            if (this.isClosed)
+            if (Interlocked.Exchange(ref isClosed, 1) == 1)
             {
                 return;
             }
 
             try
             {
-                this.isClosed = true;
-
                 // Stop subscriber thread
                 this.cancellationTokenSource.Cancel();
 
-                // Stop function executor
-                await this.functionExecutor?.CloseAsync(TimeSpan.FromMilliseconds(TimeToWaitForRunningProcessToEnd));
+                // Stop function executor                
+                if (this.functionExecutor != null)
+                {
+                    await this.functionExecutor.CloseAsync(TimeSpan.FromMilliseconds(TimeToWaitForRunningProcessToEnd));
+                }
 
-                // Wait for subscriber thread to end
-                await this.subscriberFinished?.WaitAsync(TimeToWaitForRunningProcessToEnd);
+                // Wait for subscriber thread to end                
+                if (this.subscriberFinished != null)
+                {
+                    await this.subscriberFinished.WaitAsync(TimeToWaitForRunningProcessToEnd);
+                }
 
                 this.consumer?.Unsubscribe();
                 this.consumer?.Dispose();
                 this.functionExecutor?.Dispose();
+                this.subscriberFinished?.Dispose();
+                this.cancellationTokenSource.Dispose();                
             }
             catch (Exception ex)
             {
