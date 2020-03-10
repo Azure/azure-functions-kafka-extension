@@ -45,8 +45,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private SemaphoreSlim subscriberFinished;
         private readonly String consumerGroup;
         private readonly String topicName;
-        private readonly ScaleMonitorDescriptor _scaleMonitorDescriptor;
-        private readonly string _functionId;
+        private readonly ScaleMonitorDescriptor scaleMonitorDescriptor;
+        private readonly string functionId;
         //protected for the unit test
         protected KafkaTopicScaler<TKey, TValue> topicScaler;
 
@@ -76,17 +76,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.cancellationTokenSource = new CancellationTokenSource();
             this.consumerGroup = string.IsNullOrEmpty(this.listenerConfiguration.ConsumerGroup) ? "$Default" : this.listenerConfiguration.ConsumerGroup;
             this.topicName = this.listenerConfiguration.Topic;
-            this._functionId = functionDescriptor.Id;
-            this._scaleMonitorDescriptor = new ScaleMonitorDescriptor($"{_functionId}-kafka-{topicName}-{consumerGroup}".ToLower());
+            this.functionId = functionDescriptor.Id;
+            this.scaleMonitorDescriptor = new ScaleMonitorDescriptor($"{functionId}-kafka-{topicName}-{consumerGroup}".ToLower());
         }
 
-        public ScaleMonitorDescriptor Descriptor
-        {
-            get
-            {
-                return _scaleMonitorDescriptor;
-            }
-        }
+        
 
 
         public void Cancel()
@@ -129,7 +123,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             consumer.Subscribe(this.listenerConfiguration.Topic);
 
-            this.topicScaler = new KafkaTopicScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.logger, consumer, new AdminClientConfig(GetConsumerConfiguration()));
+            this.topicScaler = new KafkaTopicScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.consumerGroup, scaleMonitorDescriptor, consumer, new AdminClientConfig(GetConsumerConfiguration()), this.logger);
 
             // Using a thread as opposed to a task since this will be long running
             var thread = new Thread(ProcessSubscription)
@@ -374,145 +368,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             Dispose(true);
         }
 
+        public ScaleMonitorDescriptor Descriptor => scaleMonitorDescriptor;
+
+        public Task<KafkaTriggerMetrics> GetMetricsAsync() => topicScaler.GetMetricsAsync();
+
         async Task<ScaleMetrics> IScaleMonitor.GetMetricsAsync()
         {
-            return await GetMetricsAsync();
+            return await topicScaler.GetMetricsAsync();
         }
 
-        public Task<KafkaTriggerMetrics> GetMetricsAsync()
-        {
-            var reportLag = topicScaler.ReportLag();
-            KafkaTriggerMetrics metrics = new KafkaTriggerMetrics()
-            {
-                TotalLag = reportLag.TotalLag,
-                PartitionCount = reportLag.PartitionCount,
-                Timestamp = DateTime.UtcNow,
-            };
+        public ScaleStatus GetScaleStatus(ScaleStatusContext<KafkaTriggerMetrics> context) => topicScaler.GetScaleStatus(context);
 
-            return Task.FromResult(metrics);
-        }
-
-        ScaleStatus IScaleMonitor.GetScaleStatus(ScaleStatusContext context)
-        {
-            return GetScaleStatusCore(context.WorkerCount, context.Metrics?.OfType<KafkaTriggerMetrics>().ToArray());
-        }
-
-        public ScaleStatus GetScaleStatus(ScaleStatusContext<KafkaTriggerMetrics> context)
-        {
-            return GetScaleStatusCore(context.WorkerCount, context.Metrics?.ToArray());
-        }
-
-        private ScaleStatus GetScaleStatusCore(int workerCount, KafkaTriggerMetrics[] metrics)
-        {
-            var status = new ScaleStatus
-            {
-                Vote = ScaleVote.None,
-            };
-
-            const int NumberOfSamplesToConsider = 5;
-
-            // At least 5 samples are required to make a scale decision for the rest of the checks.
-            if (metrics == null || metrics.Length < NumberOfSamplesToConsider)
-            {
-                return status;
-            }
-
-            var lastMetrics = metrics.Last();
-            long totalLag = lastMetrics.TotalLag;
-            long partitionCount = lastMetrics.PartitionCount;
-            long lagThreshold = 1000L;
-
-            if (partitionCount > 0 && partitionCount < workerCount)
-            {
-                status.Vote = ScaleVote.ScaleIn;
-
-                if (this.logger.IsEnabled(LogLevel.Information))
-                {
-                    this.logger.LogInformation("WorkerCount ({workerCount}) > PartitionCount ({partitionCount}). For topic {topicName}, for consumer group {consumerGroup}.", workerCount, partitionCount, this.topicName, this.consumerGroup);
-                    this.logger.LogInformation("Number of instances ({workerCount}) is too high relative to number of partitions ({partitionCount}). For topic {topicName}, for consumer group {consumerGroup}.", workerCount, partitionCount, this.topicName, this.consumerGroup);
-                }
-                
-                return status;
-            }
-
-
-            // Check to see if the Kafka consumer has been empty for a while. Only if all metrics samples are empty do we scale down.
-            bool partitionIsIdle = metrics.All(p => p.TotalLag == 0);
-
-            if (partitionIsIdle)
-            {
-                // TODO: Do we need to scale down if the worker count == 1?
-                status.Vote = ScaleVote.ScaleIn;
-                if (this.logger.IsEnabled(LogLevel.Information))
-                {
-                    this.logger.LogInformation("Topic '{topicName}', for consumer group {consumerGroup}' is idle.", this.topicName, this.consumerGroup);
-                }
-
-                return status;
-            }
-
-
-            // don't scale out beyond the number of partitions, Maintain a minimum ratio of 1 worker per 1,000 unprocessed messages.
-            if (metrics[0].TotalLag > 0 && totalLag / lagThreshold > partitionCount)
-            {
-                if (workerCount < partitionCount)
-                {
-                    bool queueLengthIncreasing =
-                    IsTrueForLast(
-                       metrics,
-                       NumberOfSamplesToConsider,
-                       (prev, next) => prev.TotalLag < next.TotalLag) && metrics[0].TotalLag > 0;
-
-                    if (queueLengthIncreasing)
-                    {
-                        status.Vote = ScaleVote.ScaleOut;
-
-                        if (this.logger.IsEnabled(LogLevel.Information))
-                        {
-                            this.logger.LogInformation("Total lag ({totalLag}) is less than the number of instances ({workerCount}). Scale out, for topic {topicName}, for consumer group {consumerGroup}.", totalLag, workerCount, topicName, consumerGroup);
-                        }
-                        
-                        return status;
-                    }
-                }
-                return status;
-            }
-
-            bool queueLengthDecreasing =
-                IsTrueForLast(
-                    metrics,
-                    NumberOfSamplesToConsider,
-                    (prev, next) => prev.TotalLag > next.TotalLag);
-
-            if (queueLengthDecreasing)
-            {
-                status.Vote = ScaleVote.ScaleIn;
-
-                if (this.logger.IsEnabled(LogLevel.Information))
-                {
-                    this.logger.LogInformation("Total lag length is decreasing for topic {topicName}, for consumer group {consumerGroup}.", this.topicName, this.consumerGroup);
-                }
-            }
-            return status;
-        }
-
-        private static bool IsTrueForLast(IList<KafkaTriggerMetrics> samples, int count, Func<KafkaTriggerMetrics, KafkaTriggerMetrics, bool> predicate)
-        {
-            if (samples.Count < count)
-            {
-                return false;
-            }
-
-            // Walks through the list from left to right starting at len(samples) - count.
-            for (int i = samples.Count - count; i < samples.Count - 1; i++)
-            {
-                if (!predicate(samples[i], samples[i + 1]))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
+        public ScaleStatus GetScaleStatus(ScaleStatusContext context) => topicScaler.GetScaleStatus(context);
     }
 }
