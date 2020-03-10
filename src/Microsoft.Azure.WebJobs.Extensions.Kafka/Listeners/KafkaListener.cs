@@ -4,11 +4,14 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Confluent.Kafka;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
+using Microsoft.Azure.WebJobs.Host.Protocols;
+using Microsoft.Azure.WebJobs.Host.Scale;
 using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
@@ -17,7 +20,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     /// Kafka listener.
     /// Connects a Kafka trigger function with a Kafka Consumer
     /// </summary>
-    internal class KafkaListener<TKey, TValue> : IListener
+    internal class KafkaListener<TKey, TValue> : IListener, IScaleMonitor<KafkaTriggerMetrics>
     {
         internal const string EventHubsBrokerVersionFallback = "1.0.0";
         internal const string EventHubsSaslUsername = "$ConnectionString";
@@ -41,6 +44,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private bool disposed;
         private CancellationTokenSource cancellationTokenSource;
         private SemaphoreSlim subscriberFinished;
+        private readonly String consumerGroup;
+        private readonly String topicName;
+        private readonly ScaleMonitorDescriptor _scaleMonitorDescriptor;
+        private readonly string _functionId;
+        //protected for the unit test
+        protected KafkaTopicScaler<TKey, TValue> topicScaler;
 
         /// <summary>
         /// Gets the value deserializer
@@ -55,7 +64,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             KafkaListenerConfiguration kafkaListenerConfiguration,
             bool requiresKey,
             IDeserializer<TValue> valueDeserializer,
-            ILogger logger)
+            ILogger logger,
+            FunctionDescriptor functionDescriptor)
         {
             this.ValueDeserializer = valueDeserializer;
             this.executor = executor;
@@ -65,7 +75,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.requiresKey = requiresKey;
             this.logger = logger;
             this.cancellationTokenSource = new CancellationTokenSource();
+            this.consumerGroup = string.IsNullOrEmpty(this.listenerConfiguration.ConsumerGroup) ? "$Default" : this.listenerConfiguration.ConsumerGroup;
+            this.topicName = this.listenerConfiguration.Topic;
+            this._functionId = functionDescriptor.Id;
+            this._scaleMonitorDescriptor = new ScaleMonitorDescriptor($"{_functionId}-Kafka-{topicName}-{consumerGroup}".ToLower());
         }
+
+        public ScaleMonitorDescriptor Descriptor
+        {
+            get
+            {
+                return _scaleMonitorDescriptor;
+            }
+        }
+
 
         public void Cancel()
         {
@@ -97,6 +120,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
 
             this.consumer = builder.Build();
+            
 
             var commitStrategy = new AsyncCommitStrategy<TKey, TValue>(consumer, this.logger);
 
@@ -105,6 +129,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 new MultipleItemFunctionExecutor<TKey, TValue>(executor, consumer, this.options.ExecutorChannelCapacity, this.options.ChannelFullRetryIntervalInMs, commitStrategy, logger);
 
             consumer.Subscribe(this.listenerConfiguration.Topic);
+
+            this.topicScaler = new KafkaTopicScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.logger, consumer, new AdminClientConfig(GetConsumerConfiguration()));
 
             // Using a thread as opposed to a task since this will be long running
             var thread = new Thread(ProcessSubscription)
@@ -348,6 +374,127 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public void Dispose()
         {
             Dispose(true);
+        }
+
+        async Task<ScaleMetrics> IScaleMonitor.GetMetricsAsync()
+        {
+            return await GetMetricsAsync();
+        }
+
+        public Task<KafkaTriggerMetrics> GetMetricsAsync()
+        {
+            var reportLag = topicScaler.ReportLag();
+            KafkaTriggerMetrics metrics = new KafkaTriggerMetrics()
+            {
+                TotalLag = reportLag.Item1,
+                PartitionCount = reportLag.Item2,
+                Timestamp = DateTime.UtcNow,
+            };
+
+            return Task.FromResult(metrics);
+        }
+
+        ScaleStatus IScaleMonitor.GetScaleStatus(ScaleStatusContext context)
+        {
+            return GetScaleStatusCore(context.WorkerCount, context.Metrics?.Cast<KafkaTriggerMetrics>().ToArray());
+        }
+
+        public ScaleStatus GetScaleStatus(ScaleStatusContext<KafkaTriggerMetrics> context)
+        {
+            return GetScaleStatusCore(context.WorkerCount, context.Metrics?.ToArray());
+        }
+
+        private ScaleStatus GetScaleStatusCore(int workerCount, KafkaTriggerMetrics[] metrics)
+        {
+            ScaleStatus status = new ScaleStatus
+            {
+                Vote = ScaleVote.None,
+            };
+
+            const int NumberOfSamplesToConsider = 5;
+
+            if (metrics == null || metrics.Length < NumberOfSamplesToConsider)
+            {
+                return status;
+            }
+
+            var lastMetrics = metrics.Last();
+            long totalLag = lastMetrics.TotalLag;
+            long partitionCount = lastMetrics.PartitionCount;
+            long lagThreshold = 1000L;
+
+            if (partitionCount > 0 && partitionCount < workerCount)
+            {
+                status.Vote = ScaleVote.ScaleIn;
+                this.logger.LogInformation($"WorkerCount ({workerCount}) > PartitionCount ({partitionCount}). For topic {this.topicName}, for consumer group {this.consumerGroup}.");
+                this.logger.LogInformation($"Number of instances ({workerCount}) is too high relative to number " + $"of partitions ({partitionCount}). For topic {this.topicName}, for consumer group {this.consumerGroup}.");
+                return status;
+            }
+
+            // At least 5 samples are required to make a scale decision for the rest of the checks.
+            if (metrics.Length < NumberOfSamplesToConsider)
+            {
+                return status;
+            }
+
+            // Check to see if the Kafka consumer has been empty for a while. Only if all metrics samples are empty do we scale down.
+            bool partitionIsIdle = metrics.All(p => p.TotalLag == 0);
+
+            if (partitionIsIdle)
+            {
+                status.Vote = ScaleVote.ScaleIn;
+                this.logger.LogInformation($"'Topic {this.topicName}, for consumer group {this.consumerGroup}' is idle.");
+                return status;
+            }
+
+
+            // don't scale out beyond the number of partitions, Maintain a minimum ratio of 1 worker per 1,000 unprocessed messages.
+            if (metrics[0].TotalLag > 0 && totalLag / lagThreshold > partitionCount)
+            {
+                if (workerCount < partitionCount)
+                {
+                    bool queueLengthIncreasing =
+                    IsTrueForLast(
+                       metrics,
+                       NumberOfSamplesToConsider,
+                       (prev, next) => prev.TotalLag < next.TotalLag) && metrics[0].TotalLag > 0;
+
+                    if (queueLengthIncreasing && workerCount < partitionCount)
+                    {
+                        status.Vote = ScaleVote.ScaleOut;
+                        this.logger.LogInformation($"TotalLag ({totalLag}) is less than the number of instances ({workerCount}). Scale out, for topic {this.topicName}, for consumer group {this.consumerGroup}.");
+                        return status;
+                    }
+                }
+                return status;
+            }
+
+            bool queueLengthDecreasing =
+                IsTrueForLast(
+                    metrics,
+                    NumberOfSamplesToConsider,
+                    (prev, next) => prev.TotalLag > next.TotalLag);
+
+            if (queueLengthDecreasing)
+            {
+                status.Vote = ScaleVote.ScaleIn;
+                this.logger.LogInformation($"TotalLag length is decreasing for topic {this.topicName}, for consumer group {this.consumerGroup}.");
+            }
+            return status;
+        }
+
+        private static bool IsTrueForLast(IList<KafkaTriggerMetrics> samples, int count, Func<KafkaTriggerMetrics, KafkaTriggerMetrics, bool> predicate)
+        {
+            // Walks through the list from left to right starting at len(samples) - count.
+            for (int i = samples.Count - count; i < samples.Count - 1; i++)
+            {
+                if (!predicate(samples[i], samples[i + 1]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 }

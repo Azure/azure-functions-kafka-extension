@@ -4,7 +4,9 @@
 using System;
 using Confluent.Kafka;
 using Microsoft.Azure.WebJobs.Host.Executors;
+using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Extensions.Logging;
+using Moq;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 {
@@ -24,15 +26,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             KafkaListenerConfiguration kafkaListenerConfiguration,
             bool requiresKey,
             IDeserializer<TValue> valueDeserializer,
-            ILogger logger)
+            ILogger logger, 
+            FunctionDescriptor mockDescriptor)
             : base(executor,
                 singleDispatch,
                 options,
                 kafkaListenerConfiguration,
                 requiresKey,
                 valueDeserializer,
-                logger)
+                logger, 
+                mockDescriptor)
         {
+         //   var mock = new Mock<KafkaTopicScaler<TKey, TValue>>();
+         //   mock.Setup(m => m.ReportLag()).Returns((3, 1));
+         //   this.topicScaler = mock.Object;
         }
 
         public void SetConsumerBuilder(ConsumerBuilder<TKey, TValue> consumerBuilder) => this.consumerBuilder = consumerBuilder;

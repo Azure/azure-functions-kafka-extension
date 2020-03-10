@@ -3,6 +3,7 @@
 
 using Confluent.Kafka;
 using Microsoft.Azure.WebJobs.Host.Executors;
+using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using System;
@@ -80,7 +81,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
-                logger: NullLogger.Instance
+                logger: NullLogger.Instance,
+                new Mock<FunctionDescriptor>().Object
                 );
 
             target.SetConsumer(consumer.Object);
@@ -142,7 +144,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
-                logger: NullLogger.Instance
+                logger: NullLogger.Instance,
+                mockDescriptor: new Mock<FunctionDescriptor>().Object
                 );
 
             target.SetConsumer(consumer.Object);
@@ -154,6 +157,62 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             await target.StopAsync(default(CancellationToken));
 
             executor.Verify(x => x.TryExecuteAsync(It.IsNotNull<TriggeredFunctionData>(), It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Fact]
+        public void ScaleMonitor_Id_ReturnsExpectedValue()
+        {
+            const int ExpectedEventCount = 10;
+
+            var executor = new Mock<ITriggeredFunctionExecutor>();
+            var consumer = new Mock<IConsumer<Null, string>>();
+
+            var offset = 0L;
+            consumer.Setup(x => x.Consume(It.IsNotNull<TimeSpan>()))
+                .Returns(() =>
+                {
+                    if (offset < ExpectedEventCount)
+                    {
+                        offset++;
+
+                        return CreateConsumeResult<Null, string>(offset.ToString(), 0, offset);
+                    }
+
+                    return null;
+                });
+
+            var executorFinished = new SemaphoreSlim(0);
+            var processedItemCount = 0;
+            executor.Setup(x => x.TryExecuteAsync(It.IsNotNull<TriggeredFunctionData>(), It.IsAny<CancellationToken>()))
+                .Callback<TriggeredFunctionData, CancellationToken>((td, _) =>
+                {
+                    var triggerData = (KafkaTriggerInput)td.TriggerValue;
+                    var alreadyProcessed = Interlocked.Add(ref processedItemCount, triggerData.Events.Length);
+                    if (alreadyProcessed == ExpectedEventCount)
+                    {
+                        executorFinished.Release();
+                    }
+                })
+                .ReturnsAsync(new FunctionResult(true));
+
+            var listenerConfig = new KafkaListenerConfiguration()
+            {
+                BrokerList = "testBroker",
+                Topic = "topic",
+                ConsumerGroup = "group1",
+            };
+
+            var target = new KafkaListenerForTest<Null, string>(
+                executor.Object,
+                singleDispatch: false,
+                options: new KafkaOptions(),
+                listenerConfig,
+                requiresKey: true,
+                valueDeserializer: null,
+                logger: NullLogger.Instance,
+                mockDescriptor: new FunctionDescriptor { Id = "TestFunction" }
+                );
+            Assert.Equal("testfunction-kafka-topic-group1", target.Descriptor.Id);
         }
 
         [Theory]
@@ -259,7 +318,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
-                NullLogger.Instance
+                NullLogger.Instance,
+                new Mock<FunctionDescriptor>().Object
                 );
 
             target.SetConsumer(consumer.Object);
@@ -310,7 +370,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
-                NullLogger.Instance
+                NullLogger.Instance,
+                new Mock<FunctionDescriptor>().Object
                 );
 
             target.SetConsumer(consumer.Object);
@@ -357,7 +418,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
-                NullLogger.Instance
+                NullLogger.Instance,
+                new Mock<FunctionDescriptor>().Object
                 );
 
             target.SetConsumer(consumer.Object);
@@ -402,7 +464,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
-                NullLogger.Instance
+                NullLogger.Instance,
+                new Mock<FunctionDescriptor>().Object
                 );
 
             target.SetConsumer(consumer.Object);
@@ -434,7 +497,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
-                NullLogger.Instance
+                NullLogger.Instance,
+                new Mock<FunctionDescriptor>().Object
                 );
 
             target.SetConsumer(consumer.Object);
@@ -453,5 +517,40 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             await target.StopAsync(default);
         }
+
+        /*[Fact]
+        public async Task GetMetrics_ReturnsExpectedResult()
+        {
+            const string eventhubsConnectionString = "Endpoint=sb://fake.servicebus.windows.net/;SharedAccessKeyName=reader;SharedAccessKey=fake";
+            const string broker = "testBroker";
+            var executor = new Mock<ITriggeredFunctionExecutor>();
+            var consumer = new Mock<IConsumer<Null, string>>();
+
+            var listenerConfig = new KafkaListenerConfiguration()
+            {
+                BrokerList = broker,
+                Topic = "topic",
+                EventHubConnectionString = eventhubsConnectionString,
+                ConsumerGroup = "group1",
+            };
+
+            var kafkaOptions = new KafkaOptions();
+            var listener = new KafkaListenerForTest<Null, string>(
+                executor.Object,
+                true,
+                kafkaOptions,
+                listenerConfig,
+                requiresKey: true,
+                valueDeserializer: null,
+                NullLogger.Instance,
+                new Mock<FunctionDescriptor>().Object
+                );
+
+
+            KafkaTriggerMetrics metrics = await listener.GetMetricsAsync();
+
+            Assert.Equal((uint)3, metrics.TotalLag);
+            Assert.Equal((uint)1, metrics.PartitionCount);
+        }*/
     }
 }
