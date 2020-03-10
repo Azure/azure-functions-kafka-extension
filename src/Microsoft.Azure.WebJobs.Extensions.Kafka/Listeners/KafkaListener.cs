@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -78,7 +77,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.consumerGroup = string.IsNullOrEmpty(this.listenerConfiguration.ConsumerGroup) ? "$Default" : this.listenerConfiguration.ConsumerGroup;
             this.topicName = this.listenerConfiguration.Topic;
             this._functionId = functionDescriptor.Id;
-            this._scaleMonitorDescriptor = new ScaleMonitorDescriptor($"{_functionId}-Kafka-{topicName}-{consumerGroup}".ToLower());
+            this._scaleMonitorDescriptor = new ScaleMonitorDescriptor($"{_functionId}-kafka-{topicName}-{consumerGroup}".ToLower());
         }
 
         public ScaleMonitorDescriptor Descriptor
@@ -240,7 +239,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             this.subscriberFinished = new SemaphoreSlim(0, 1);
             var cancellationToken = (CancellationToken)parameter;
-            var messages = new List<ConsumeResult<TKey, TValue>>(this.options.MaxBatchSize);
             var maxBatchSize = this.options.MaxBatchSize;
             var maxBatchReleaseTime = TimeSpan.FromSeconds(this.options.SubscriberIntervalInSeconds);
 
@@ -386,8 +384,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var reportLag = topicScaler.ReportLag();
             KafkaTriggerMetrics metrics = new KafkaTriggerMetrics()
             {
-                TotalLag = reportLag.Item1,
-                PartitionCount = reportLag.Item2,
+                TotalLag = reportLag.TotalLag,
+                PartitionCount = reportLag.PartitionCount,
                 Timestamp = DateTime.UtcNow,
             };
 
@@ -396,7 +394,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         ScaleStatus IScaleMonitor.GetScaleStatus(ScaleStatusContext context)
         {
-            return GetScaleStatusCore(context.WorkerCount, context.Metrics?.Cast<KafkaTriggerMetrics>().ToArray());
+            return GetScaleStatusCore(context.WorkerCount, context.Metrics?.OfType<KafkaTriggerMetrics>().ToArray());
         }
 
         public ScaleStatus GetScaleStatus(ScaleStatusContext<KafkaTriggerMetrics> context)
@@ -406,13 +404,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         private ScaleStatus GetScaleStatusCore(int workerCount, KafkaTriggerMetrics[] metrics)
         {
-            ScaleStatus status = new ScaleStatus
+            var status = new ScaleStatus
             {
                 Vote = ScaleVote.None,
             };
 
             const int NumberOfSamplesToConsider = 5;
 
+            // At least 5 samples are required to make a scale decision for the rest of the checks.
             if (metrics == null || metrics.Length < NumberOfSamplesToConsider)
             {
                 return status;
@@ -426,24 +425,29 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             if (partitionCount > 0 && partitionCount < workerCount)
             {
                 status.Vote = ScaleVote.ScaleIn;
-                this.logger.LogInformation($"WorkerCount ({workerCount}) > PartitionCount ({partitionCount}). For topic {this.topicName}, for consumer group {this.consumerGroup}.");
-                this.logger.LogInformation($"Number of instances ({workerCount}) is too high relative to number " + $"of partitions ({partitionCount}). For topic {this.topicName}, for consumer group {this.consumerGroup}.");
+
+                if (this.logger.IsEnabled(LogLevel.Information))
+                {
+                    this.logger.LogInformation("WorkerCount ({workerCount}) > PartitionCount ({partitionCount}). For topic {topicName}, for consumer group {consumerGroup}.", workerCount, partitionCount, this.topicName, this.consumerGroup);
+                    this.logger.LogInformation("Number of instances ({workerCount}) is too high relative to number of partitions ({partitionCount}). For topic {topicName}, for consumer group {consumerGroup}.", workerCount, partitionCount, this.topicName, this.consumerGroup);
+                }
+                
                 return status;
             }
 
-            // At least 5 samples are required to make a scale decision for the rest of the checks.
-            if (metrics.Length < NumberOfSamplesToConsider)
-            {
-                return status;
-            }
 
             // Check to see if the Kafka consumer has been empty for a while. Only if all metrics samples are empty do we scale down.
             bool partitionIsIdle = metrics.All(p => p.TotalLag == 0);
 
             if (partitionIsIdle)
             {
+                // TODO: Do we need to scale down if the worker count == 1?
                 status.Vote = ScaleVote.ScaleIn;
-                this.logger.LogInformation($"'Topic {this.topicName}, for consumer group {this.consumerGroup}' is idle.");
+                if (this.logger.IsEnabled(LogLevel.Information))
+                {
+                    this.logger.LogInformation("Topic '{topicName}', for consumer group {consumerGroup}' is idle.", this.topicName, this.consumerGroup);
+                }
+
                 return status;
             }
 
@@ -459,10 +463,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                        NumberOfSamplesToConsider,
                        (prev, next) => prev.TotalLag < next.TotalLag) && metrics[0].TotalLag > 0;
 
-                    if (queueLengthIncreasing && workerCount < partitionCount)
+                    if (queueLengthIncreasing)
                     {
                         status.Vote = ScaleVote.ScaleOut;
-                        this.logger.LogInformation($"TotalLag ({totalLag}) is less than the number of instances ({workerCount}). Scale out, for topic {this.topicName}, for consumer group {this.consumerGroup}.");
+
+                        if (this.logger.IsEnabled(LogLevel.Information))
+                        {
+                            this.logger.LogInformation("Total lag ({totalLag}) is less than the number of instances ({workerCount}). Scale out, for topic {topicName}, for consumer group {consumerGroup}.", totalLag, workerCount, topicName, consumerGroup);
+                        }
+                        
                         return status;
                     }
                 }
@@ -478,13 +487,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             if (queueLengthDecreasing)
             {
                 status.Vote = ScaleVote.ScaleIn;
-                this.logger.LogInformation($"TotalLag length is decreasing for topic {this.topicName}, for consumer group {this.consumerGroup}.");
+
+                if (this.logger.IsEnabled(LogLevel.Information))
+                {
+                    this.logger.LogInformation("Total lag length is decreasing for topic {topicName}, for consumer group {consumerGroup}.", this.topicName, this.consumerGroup);
+                }
             }
             return status;
         }
 
         private static bool IsTrueForLast(IList<KafkaTriggerMetrics> samples, int count, Func<KafkaTriggerMetrics, KafkaTriggerMetrics, bool> predicate)
         {
+            if (samples.Count < count)
+            {
+                return false;
+            }
+
             // Walks through the list from left to right starting at len(samples) - count.
             for (int i = samples.Count - count; i < samples.Count - 1; i++)
             {

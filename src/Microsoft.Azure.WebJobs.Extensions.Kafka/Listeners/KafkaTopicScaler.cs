@@ -40,7 +40,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 var metadata = adminClient.GetMetadata(this.topic, timeout);
                 if (metadata.Topics == null || metadata.Topics.Count == 0)
                 {
-                    logger.LogInformation("Could not load metadata information about topic '{topic}'", this.topic);
+                    logger.LogError("Could not load metadata information about topic '{topic}'", this.topic);
                     return new List<TopicPartition>();
                 }
 
@@ -48,7 +48,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 var partitions = topicMetadata.Partitions;
                 if (partitions == null || partitions.Count == 0)
                 {
-                    logger.LogInformation("Could not load partition information about topic '{topic}'", this.topic);
+                    logger.LogError("Could not load partition information about topic '{topic}'", this.topic);
                     return new List<TopicPartition>();
                 }
 
@@ -66,7 +66,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// For debugging purposes
         /// Logs the current lag in the topic
         /// </summary>
-        internal (long, long) ReportLag()
+        internal (long TotalLag, long PartitionCount) ReportLag()
         {
             var operationTimeout = TimeSpan.FromSeconds(5);
             var allPartitions = topicPartitions.Value;
