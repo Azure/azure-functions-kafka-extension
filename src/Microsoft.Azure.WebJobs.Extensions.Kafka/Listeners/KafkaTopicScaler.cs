@@ -188,8 +188,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 if (workerCount < partitionCount)
                 {
-                    bool queueLengthIncreasing =
-                    IsTrueForLast(
+                    bool queueLengthIncreasing = IsTrueForLast(
                        metrics,
                        NumberOfSamplesToConsider,
                        (prev, next) => prev.TotalLag < next.TotalLag) && metrics[0].TotalLag > 0;
