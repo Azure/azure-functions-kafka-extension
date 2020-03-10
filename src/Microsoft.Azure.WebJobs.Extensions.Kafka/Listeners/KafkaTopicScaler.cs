@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
-    public class KafkaTopicScaler<TKey, TValue> : IScaleMonitor<KafkaTriggerMetrics>
+    public class KafkaTopicScaler<TKey, TValue>
     {
         private readonly string topicName;
         private readonly string consumerGroup;
@@ -68,15 +68,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"Failed to load partition information from topic '{this.topicName}'");
+                logger.LogError(ex, "Failed to load partition information from topic '{topic}'", this.topicName);
             }
 
             return new List<TopicPartition>();
-        }
-
-        async Task<ScaleMetrics> IScaleMonitor.GetMetricsAsync()
-        {
-            return await GetMetricsAsync();
         }
 
         public Task<KafkaTriggerMetrics> GetMetricsAsync()
@@ -178,7 +173,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             if (partitionIsIdle)
             {
-                // TODO: Do we need to scale down if the worker count == 1?
                 status.Vote = ScaleVote.ScaleIn;
                 if (this.logger.IsEnabled(LogLevel.Information))
                 {
