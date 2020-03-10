@@ -164,6 +164,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 // Setup native kafka configuration
                 conf.BootstrapServers = this.listenerConfiguration.BrokerList;
                 conf.GroupId = this.listenerConfiguration.ConsumerGroup;
+
+                if (!string.IsNullOrWhiteSpace(conf.SslCaLocation))
+                {
+                    if (AzureFunctionsFileHelper.TryGetValidFilePath(conf.SslCaLocation, out var resolvedSslCaLocation))
+                    {
+                        this.logger.LogDebug("Found SslCaLocation in {filePath}", resolvedSslCaLocation);
+                        conf.SslCaLocation = resolvedSslCaLocation;
+                    }
+                }                
             }
             else
             {
