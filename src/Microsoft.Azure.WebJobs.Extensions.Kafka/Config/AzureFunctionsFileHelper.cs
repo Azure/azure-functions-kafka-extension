@@ -11,13 +11,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     /// <summary>
     /// Helper class for file related operations in functions running in Azure
     /// </summary>
-    internal sealed class AzureFunctionsFileHelper
+    internal static class AzureFunctionsFileHelper
     {
         internal const string AzureHomeEnvVarName = "HOME";
         internal const string AzureWebJobsScriptRootEnvVarName = "AzureWebJobsScriptRoot";
         internal const string AzureDefaultFunctionPathPart1 = "site";
         internal const string AzureDefaultFunctionPathPart2 = "wwwroot";
         internal const string AzureFunctionWorkerRuntimeEnvVarName = "FUNCTIONS_WORKER_RUNTIME";
+        internal const string AzureFunctionEnvironmentEnvVarName = "AZURE_FUNCTIONS_ENVIRONMENT";
+        internal const string DevelopmentEnvironmentName = "Development";
         internal const string ProcessArchitecturex86Value = "x86";
         internal const string RuntimesFolderName = "runtimes";
         internal const string NativeFolderName = "native";
@@ -34,7 +36,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// </summary>
         internal static bool IsRunningAsFunctionInAzureOrContainer()
         {
-            return !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(AzureFunctionWorkerRuntimeEnvVarName));
+            // Not running in development and has a worker runtime
+            return !string.Equals(DevelopmentEnvironmentName, Environment.GetEnvironmentVariable(AzureFunctionEnvironmentEnvVarName), StringComparison.OrdinalIgnoreCase) &&
+                !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(AzureFunctionWorkerRuntimeEnvVarName));
         }
 
         /// <summary>
