@@ -11,6 +11,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public long TotalLag { get; set; }
         public long PartitionCount { get; set; }
 
+        public KafkaTriggerMetrics()
+        {
+        }
+
         public KafkaTriggerMetrics(long totalLag, int partitionCount)
         {
             TotalLag = totalLag;
