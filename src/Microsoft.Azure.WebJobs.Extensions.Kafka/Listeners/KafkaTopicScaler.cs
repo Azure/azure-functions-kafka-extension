@@ -154,6 +154,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             long partitionCount = lastMetrics.PartitionCount;
             long lagThreshold = 1000L;
 
+            //This case shouldn't ever happens as we do not scale out in case workerCount >= partitionCount
             if (partitionCount > 0 && partitionCount < workerCount)
             {
                 status.Vote = ScaleVote.ScaleIn;

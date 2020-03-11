@@ -150,5 +150,111 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.NotNull(result);
             Assert.Equal(ScaleVote.None, result.Vote);
         }
+
+
+        [Fact]
+        public void When_WorkerCount_More_PartitionCount_Should_Vote_Scale_Down()
+        {
+            var context = new ScaleStatusContext<KafkaTriggerMetrics>()
+            {
+                Metrics = new KafkaTriggerMetrics[]
+                {
+                    new KafkaTriggerMetrics(5, partitions.Count),
+                    new KafkaTriggerMetrics(6, partitions.Count),
+                    new KafkaTriggerMetrics(76, partitions.Count),
+                    new KafkaTriggerMetrics(22, partitions.Count),
+                    new KafkaTriggerMetrics(11, partitions.Count),
+                },
+                WorkerCount = partitions.Count + 1,
+            };
+
+            var result = topicScaler.GetScaleStatus(context);
+            Assert.NotNull(result);
+            Assert.Equal(ScaleVote.ScaleIn, result.Vote);
+        }
+
+        [Fact]
+        public void When_LagIncreasing_Should_Vote_Scale_Up()
+        {
+            var context = new ScaleStatusContext<KafkaTriggerMetrics>()
+            {
+                Metrics = new KafkaTriggerMetrics[]
+                {
+                    new KafkaTriggerMetrics(10, partitions.Count),
+                    new KafkaTriggerMetrics(212, partitions.Count),
+                    new KafkaTriggerMetrics(32323, partitions.Count),
+                    new KafkaTriggerMetrics(121222, partitions.Count),
+                    new KafkaTriggerMetrics(123456, partitions.Count),
+                },
+                WorkerCount = 1,
+            };
+
+            var result = topicScaler.GetScaleStatus(context);
+            Assert.NotNull(result);
+            Assert.Equal(ScaleVote.ScaleOut, result.Vote);
+        }
+
+        [Fact]
+        public void When_LagIncreasing_Last_Lag_Less_LagThreshold_Should_Vote_Scale_None()
+        {
+            var context = new ScaleStatusContext<KafkaTriggerMetrics>()
+            {
+                Metrics = new KafkaTriggerMetrics[]
+                {
+                    new KafkaTriggerMetrics(10, partitions.Count),
+                    new KafkaTriggerMetrics(212, partitions.Count),
+                    new KafkaTriggerMetrics(333, partitions.Count),
+                    new KafkaTriggerMetrics(1122, partitions.Count),
+                    new KafkaTriggerMetrics(1356, partitions.Count),
+                },
+                WorkerCount = 1,
+            };
+
+            var result = topicScaler.GetScaleStatus(context);
+            Assert.NotNull(result);
+            Assert.Equal(ScaleVote.None, result.Vote);
+        }
+
+        [Fact]
+        public void When_LagIncreasing_Equal_PartionCount_Should_Vote_Scale_None()
+        {
+            var context = new ScaleStatusContext<KafkaTriggerMetrics>()
+            {
+                Metrics = new KafkaTriggerMetrics[]
+                {
+                    new KafkaTriggerMetrics(10, partitions.Count),
+                    new KafkaTriggerMetrics(212, partitions.Count),
+                    new KafkaTriggerMetrics(32323, partitions.Count),
+                    new KafkaTriggerMetrics(121222, partitions.Count),
+                    new KafkaTriggerMetrics(123456, partitions.Count),
+                },
+                WorkerCount = partitions.Count,
+            };
+
+            var result = topicScaler.GetScaleStatus(context);
+            Assert.NotNull(result);
+            Assert.Equal(ScaleVote.None, result.Vote);
+        }
+
+        [Fact]
+        public void When_LagDecreasing_Should_Vote_Scale_In()
+        {
+            var context = new ScaleStatusContext<KafkaTriggerMetrics>()
+            {
+                Metrics = new KafkaTriggerMetrics[]
+                {
+                    new KafkaTriggerMetrics(10, partitions.Count),
+                    new KafkaTriggerMetrics(9, partitions.Count),
+                    new KafkaTriggerMetrics(8, partitions.Count),
+                    new KafkaTriggerMetrics(7, partitions.Count),
+                    new KafkaTriggerMetrics(6, partitions.Count),
+                },
+                WorkerCount = partitions.Count,
+            };
+
+            var result = topicScaler.GetScaleStatus(context);
+            Assert.NotNull(result);
+            Assert.Equal(ScaleVote.ScaleIn, result.Vote);
+        }
     }
 }

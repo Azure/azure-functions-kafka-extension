@@ -517,40 +517,5 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             await target.StopAsync(default);
         }
-
-        /*[Fact]
-        public async Task GetMetrics_ReturnsExpectedResult()
-        {
-            const string eventhubsConnectionString = "Endpoint=sb://fake.servicebus.windows.net/;SharedAccessKeyName=reader;SharedAccessKey=fake";
-            const string broker = "testBroker";
-            var executor = new Mock<ITriggeredFunctionExecutor>();
-            var consumer = new Mock<IConsumer<Null, string>>();
-
-            var listenerConfig = new KafkaListenerConfiguration()
-            {
-                BrokerList = broker,
-                Topic = "topic",
-                EventHubConnectionString = eventhubsConnectionString,
-                ConsumerGroup = "group1",
-            };
-
-            var kafkaOptions = new KafkaOptions();
-            var listener = new KafkaListenerForTest<Null, string>(
-                executor.Object,
-                true,
-                kafkaOptions,
-                listenerConfig,
-                requiresKey: true,
-                valueDeserializer: null,
-                NullLogger.Instance,
-                new Mock<FunctionDescriptor>().Object
-                );
-
-
-            KafkaTriggerMetrics metrics = await listener.GetMetricsAsync();
-
-            Assert.Equal((uint)3, metrics.TotalLag);
-            Assert.Equal((uint)1, metrics.PartitionCount);
-        }*/
     }
 }

@@ -37,9 +37,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 logger, 
                 mockDescriptor)
         {
-         //   var mock = new Mock<KafkaTopicScaler<TKey, TValue>>();
-         //   mock.Setup(m => m.ReportLag()).Returns((3, 1));
-         //   this.topicScaler = mock.Object;
         }
 
         public void SetConsumerBuilder(ConsumerBuilder<TKey, TValue> consumerBuilder) => this.consumerBuilder = consumerBuilder;
