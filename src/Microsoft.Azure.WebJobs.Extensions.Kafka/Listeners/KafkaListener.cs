@@ -43,8 +43,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private bool disposed;
         private CancellationTokenSource cancellationTokenSource;
         private SemaphoreSlim subscriberFinished;
-        private readonly String consumerGroup;
-        private readonly String topicName;
+        private readonly string consumerGroup;
+        private readonly string topicName;
         private readonly ScaleMonitorDescriptor scaleMonitorDescriptor;
         private readonly string functionId;
         //protected for the unit test

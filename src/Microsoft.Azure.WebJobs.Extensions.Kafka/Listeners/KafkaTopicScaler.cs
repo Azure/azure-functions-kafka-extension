@@ -202,8 +202,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                         {
                             this.logger.LogInformation("Total lag ({totalLag}) is less than the number of instances ({workerCount}). Scale out, for topic {topicName}, for consumer group {consumerGroup}.", totalLag, workerCount, topicName, consumerGroup);
                         }
-
-                        return status;
                     }
                 }
                 return status;

@@ -19,7 +19,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             TotalLag = totalLag;
             PartitionCount = partitionCount;
-            Timestamp = DateTime.UtcNow;
         }
     }
 }

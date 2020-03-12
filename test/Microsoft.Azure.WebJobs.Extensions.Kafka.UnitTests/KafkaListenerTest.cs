@@ -82,7 +82,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 requiresKey: true,
                 valueDeserializer: null,
                 logger: NullLogger.Instance,
-                new Mock<FunctionDescriptor>().Object
+                Mock.Of<FunctionDescriptor>()
                 );
 
             target.SetConsumer(consumer.Object);
@@ -145,7 +145,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 requiresKey: true,
                 valueDeserializer: null,
                 logger: NullLogger.Instance,
-                mockDescriptor: new Mock<FunctionDescriptor>().Object
+                mockDescriptor: Mock.Of<FunctionDescriptor>()
                 );
 
             target.SetConsumer(consumer.Object);
@@ -319,7 +319,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 requiresKey: true,
                 valueDeserializer: null,
                 NullLogger.Instance,
-                new Mock<FunctionDescriptor>().Object
+                Mock.Of<FunctionDescriptor>()
                 );
 
             target.SetConsumer(consumer.Object);
@@ -371,7 +371,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 requiresKey: true,
                 valueDeserializer: null,
                 NullLogger.Instance,
-                new Mock<FunctionDescriptor>().Object
+                Mock.Of<FunctionDescriptor>()
                 );
 
             target.SetConsumer(consumer.Object);
@@ -419,7 +419,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 requiresKey: true,
                 valueDeserializer: null,
                 NullLogger.Instance,
-                new Mock<FunctionDescriptor>().Object
+                Mock.Of<FunctionDescriptor>()
                 );
 
             target.SetConsumer(consumer.Object);
@@ -465,7 +465,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 requiresKey: true,
                 valueDeserializer: null,
                 NullLogger.Instance,
-                new Mock<FunctionDescriptor>().Object
+                Mock.Of<FunctionDescriptor>()
                 );
 
             target.SetConsumer(consumer.Object);
@@ -498,7 +498,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 requiresKey: true,
                 valueDeserializer: null,
                 NullLogger.Instance,
-                new Mock<FunctionDescriptor>().Object
+                Mock.Of<FunctionDescriptor>()
                 );
 
             target.SetConsumer(consumer.Object);
