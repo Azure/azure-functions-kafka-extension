@@ -161,6 +161,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         [InlineData(false)]
         public async Task When_Topic_Has_Multiple_Partitions_Should_Execute_And_Commit_In_Order(bool singleDispatch)
         {
+            const int MessagesPerPartition = 5;
+            const int PartitionCount = 2;
+            const int BatchCount = 2;
+
             const long Offset_A = 0;
             const long Offset_B = 1;
             const long Offset_C = 2;
@@ -278,9 +282,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             // Batch 1: AB12C
             // Batch 2: 34DE5
             var committedArray = committed.ToArray();
-            Assert.Equal(4, committedArray.Length);
-            Assert.Equal(new[] { Offset_C + 1, Offset_E + 1 }, committedArray.Where(x => x.Partition == 0).Select(x => (long)x.Offset).ToArray());
-            Assert.Equal(new[] { Offset_2 + 1, Offset_5 + 1 }, committedArray.Where(x => x.Partition == 1).Select(x => (long)x.Offset).ToArray());
+
+            if (singleDispatch)
+            {
+                // In single dispatch we expected to commit once per message / per partition
+                Assert.Equal(MessagesPerPartition * PartitionCount, committedArray.Length);
+
+                // In single dispatch each item will be committed individually
+                Assert.Equal(new[] { Offset_A + 1, Offset_B + 1, Offset_C + 1, Offset_D + 1, Offset_E + 1 }, committedArray.Where(x => x.Partition == 0).Select(x => (long)x.Offset).ToArray());
+                Assert.Equal(new[] { Offset_1 + 1, Offset_2 + 1, Offset_3 + 1, Offset_4 + 1, Offset_5 + 1 }, committedArray.Where(x => x.Partition == 1).Select(x => (long)x.Offset).ToArray());
+            }
+            else
+            {
+                // In multi dispatch we expected to commit once per batch / per partition
+                Assert.Equal(BatchCount * PartitionCount, committedArray.Length);
+
+                // In multi dispatch we batch/partition pair will be committed
+                Assert.Equal(new[] { Offset_C + 1, Offset_E + 1 }, committedArray.Where(x => x.Partition == 0).Select(x => (long)x.Offset).ToArray());
+                Assert.Equal(new[] { Offset_2 + 1, Offset_5 + 1 }, committedArray.Where(x => x.Partition == 1).Select(x => (long)x.Offset).ToArray());
+            }                       
 
             await target.StopAsync(default(CancellationToken));
         }
@@ -452,6 +472,104 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(KafkaListenerForTest<Null, string>.EventHubsBrokerVersionFallback, target.ConsumerConfig.BrokerVersionFallback);
 
             await target.StopAsync(default);
+        }
+
+
+        /// <summary>
+        /// Ensures that delays while processing a particular partition won't affect commits in different partitions
+        /// Example:
+        /// - Processing partition 0 is slow
+        /// - Processing partition 1 is fast
+        /// 
+        /// Expected result is that partition 1 offset is commit without waiting for partition 0 to be finished
+        /// </summary>
+        [Fact]
+        public async Task When_Using_Single_Dispatcher_Slow_Partition_Processing_Should_Not_Delay_Other_Partitions()
+        {
+            const int Offset1 = 1;
+            const int Offset2 = 2;
+            const int Offset3 = 3;
+            const int Offset4 = 4;
+            const int Offset5 = 5;
+
+
+            var executor = new Mock<ITriggeredFunctionExecutor>();
+            var consumer = new Mock<IConsumer<Null, string>>();
+
+            DateTime? partitionDone0Time = null;
+            var partition0Done = new ManualResetEvent(false);
+
+            DateTime? partitionDone1Time = null;
+            var partition1Done = new ManualResetEvent(false);            
+
+            consumer.Setup(x => x.StoreOffset(It.IsNotNull<TopicPartitionOffset>()))
+                .Callback<TopicPartitionOffset>((topicPartitionOffset) =>
+                {
+                    // If it is the last offset
+                    if (topicPartitionOffset.Offset == (1 + Offset5))
+                    {
+                        switch (topicPartitionOffset.Partition)
+                        {
+                            case 0:
+                                partitionDone0Time = DateTime.UtcNow;
+                                partition0Done.Set();
+                                break;
+
+                            case 1:
+                                partitionDone1Time = DateTime.UtcNow;
+                                partition1Done.Set();
+                                break;
+                        }
+                    }
+                });
+
+            // Batch: A12345
+            consumer.SetupSequence(x => x.Consume(It.IsNotNull<TimeSpan>()))
+                .Returns(CreateConsumeResult<Null, string>("A", 0, Offset5))
+                .Returns(CreateConsumeResult<Null, string>("1", 1, Offset1))
+                .Returns(CreateConsumeResult<Null, string>("2", 1, Offset2))
+                .Returns(CreateConsumeResult<Null, string>("3", 1, Offset3))
+                .Returns(CreateConsumeResult<Null, string>("4", 1, Offset4))
+                .Returns(CreateConsumeResult<Null, string>("5", 1, Offset5))
+                .Returns((ConsumeResult<Null, string>)null);
+
+            executor.Setup(x => x.TryExecuteAsync(
+                It.Is<TriggeredFunctionData>(t => ((KafkaTriggerInput)t.TriggerValue).Events[0].Partition == 0),
+                It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new FunctionResult(true), TimeSpan.FromSeconds(1));
+
+            executor.Setup(x => x.TryExecuteAsync(
+                It.Is<TriggeredFunctionData>(t => ((KafkaTriggerInput)t.TriggerValue).Events[0].Partition == 1),
+                It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new FunctionResult(true));
+
+            var listenerConfig = new KafkaListenerConfiguration()
+            {
+                BrokerList = "testBroker",
+                Topic = "topic",
+                ConsumerGroup = "group1",
+            };
+
+            var target = new KafkaListenerForTest<Null, string>(
+                executor.Object,
+                singleDispatch: true,
+                new KafkaOptions(),
+                listenerConfig,
+                requiresKey: true,
+                valueDeserializer: null,
+                NullLogger.Instance
+                );
+
+            target.SetConsumer(consumer.Object);
+
+            await target.StartAsync(default);
+
+            Assert.True(partition1Done.WaitOne(TimeSpan.FromSeconds(5)));
+            Assert.True(partition0Done.WaitOne(TimeSpan.FromSeconds(5)));
+
+            Assert.True(partitionDone1Time < partitionDone0Time, "Partition 1 should have been committed before partition 0");
+
+            await target.StopAsync(default(CancellationToken));
         }
     }
 }
