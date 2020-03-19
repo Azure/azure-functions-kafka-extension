@@ -107,7 +107,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             var commitStrategy = new AsyncCommitStrategy<TKey, TValue>(consumer, this.logger);
 
-            functionExecutor = singleDispatch ?
+            this.functionExecutor = singleDispatch ?
                 (FunctionExecutorBase<TKey, TValue>)new SingleItemFunctionExecutor<TKey, TValue>(executor, consumer, this.options.ExecutorChannelCapacity, this.options.ChannelFullRetryIntervalInMs, commitStrategy, logger) :
                 new MultipleItemFunctionExecutor<TKey, TValue>(executor, consumer, this.options.ExecutorChannelCapacity, this.options.ChannelFullRetryIntervalInMs, commitStrategy, logger);
 
