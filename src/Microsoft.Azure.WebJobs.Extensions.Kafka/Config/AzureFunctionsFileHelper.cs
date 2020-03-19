@@ -2,8 +2,8 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Threading;
 using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
@@ -23,6 +23,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         internal const string ProcessArchitecturex86Value = "x86";
         internal const string RuntimesFolderName = "runtimes";
         internal const string NativeFolderName = "native";
+        internal const string BinFolderName = "bin";
         internal const string LibrdKafkaWindowsFileName = "librdkafka.dll";
         internal const string Windows32ArchFolderName = "win-x86";
         internal const string Windows64ArchFolderName = "win-x64";
@@ -108,7 +109,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     return;
                 }
 
-                string librdKafkaLibraryPath = null;
+                var possibleLibrdKafkaLibraryPaths = new List<string>();
 
                 var os = Environment.GetEnvironmentVariable(OSEnvVarName, EnvironmentVariableTarget.Process) ?? string.Empty;
                 var isWindows = os.IndexOf("windows", 0, StringComparison.InvariantCultureIgnoreCase) != -1;
@@ -118,24 +119,33 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     var websiteBitness = Environment.GetEnvironmentVariable(SiteBitnessEnvVarName) ?? string.Empty;
                     var is32 = websiteBitness.Equals(ProcessArchitecturex86Value, StringComparison.InvariantCultureIgnoreCase);
                     var architectureFolderName = is32 ? Windows32ArchFolderName : Windows64ArchFolderName;
-                    librdKafkaLibraryPath = Path.Combine(GetFunctionBaseFolder(), RuntimesFolderName, architectureFolderName, NativeFolderName, LibrdKafkaWindowsFileName);
+
+                    var functionBaseFolder = GetFunctionBaseFolder();
+
+                    // Functions v2 have the runtime under 'D:\home\site\wwwroot\runtimes'
+                    possibleLibrdKafkaLibraryPaths.Add(Path.Combine(functionBaseFolder, RuntimesFolderName, architectureFolderName, NativeFolderName, LibrdKafkaWindowsFileName));
+
+                    // Functions v3 have the runtime under 'D:\home\site\wwwroot\bin\runtimes'
+                    possibleLibrdKafkaLibraryPaths.Add(Path.Combine(functionBaseFolder, BinFolderName, RuntimesFolderName, architectureFolderName, NativeFolderName, LibrdKafkaWindowsFileName));
                 }
                 else
                 {
                     logger.LogInformation("Librdkafka initialization: running in non-Windows OS, expecting librdkafka to be there");
                 }
 
-                if (librdKafkaLibraryPath != null)
+                if (possibleLibrdKafkaLibraryPaths.Count > 0)
                 {
-                    if (File.Exists(librdKafkaLibraryPath))
+                    foreach (var librdKafkaLibraryPath in possibleLibrdKafkaLibraryPaths)
                     {
-                        logger.LogInformation("Librdkafka initialization: loading librdkafka from {librdkafkaPath}", librdKafkaLibraryPath);
-                        Confluent.Kafka.Library.Load(librdKafkaLibraryPath);
+                        if (File.Exists(librdKafkaLibraryPath))
+                        {
+                            logger.LogDebug("Librdkafka initialization: loading librdkafka from {librdkafkaPath}", librdKafkaLibraryPath);
+                            Confluent.Kafka.Library.Load(librdKafkaLibraryPath);
+                            return;
+                        }
                     }
-                    else
-                    {
-                        logger.LogError("Librdkafka initialization: did not attempt to load librdkafka because the desired file does not exist: '{librdkafkaPath}'", librdKafkaLibraryPath);
-                    }
+
+                    logger.LogError("Librdkafka initialization: did not attempt to load librdkafka because the desired file(s) does not exist: '{searchedPaths}'", string.Join(",", possibleLibrdKafkaLibraryPaths));
                 }
                 else
                 {
