@@ -76,14 +76,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.consumerGroup = string.IsNullOrEmpty(this.listenerConfiguration.ConsumerGroup) ? "$Default" : this.listenerConfiguration.ConsumerGroup;
             this.topicName = this.listenerConfiguration.Topic;
             this.functionId = functionDescriptorId;
+            init();
         }
 
-        public void Cancel()
-        {
-            this.SafeCloseConsumerAsync().GetAwaiter().GetResult();
-        }
-
-        public Task StartAsync(CancellationToken cancellationToken)
+        private void init()
         {
             AzureFunctionsFileHelper.InitializeLibrdKafka(this.logger);
 
@@ -108,7 +104,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
 
             this.consumer = builder.Build();
-            
 
             var commitStrategy = new AsyncCommitStrategy<TKey, TValue>(consumer, this.logger);
 
@@ -119,7 +114,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             consumer.Subscribe(this.listenerConfiguration.Topic);
 
             this.topicScaler = new Lazy<KafkaTopicScaler<TKey, TValue>>(() => new KafkaTopicScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.consumerGroup, this.functionId, consumer, new AdminClientConfig(GetConsumerConfiguration()), this.logger));
+        }
 
+        public void Cancel()
+        {
+            this.SafeCloseConsumerAsync().GetAwaiter().GetResult();
+        }
+
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
             // Using a thread as opposed to a task since this will be long running
             var thread = new Thread(ProcessSubscription)
             {

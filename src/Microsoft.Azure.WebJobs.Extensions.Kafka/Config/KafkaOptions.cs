@@ -156,12 +156,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
         }
 
-        int executorChannelCapacity = 10;
+        int executorChannelCapacity = 1;
         /// <summary>
         /// Defines the channel capacity in which messages will be sent to functions
         /// Once the capacity is reached the Kafka subscriber will pause until the function catches up
         /// 
-        /// default: 10
+        /// default: 1
         /// </summary>
         public int ExecutorChannelCapacity
         {
