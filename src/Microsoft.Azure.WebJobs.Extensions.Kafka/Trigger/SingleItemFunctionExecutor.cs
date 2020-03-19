@@ -63,12 +63,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
                             i++;
                             await Task.WhenAll(pendingTasks);
-                        } while (!cancellationToken.IsCancellationRequested && pendingTasks.Count > 0);
-
-                        if (!cancellationToken.IsCancellationRequested)
-                        {
                             this.Commit(partitionOffsets.Select((kv) => new TopicPartitionOffset(new TopicPartition(itemsToExecute[0].Topic, kv.Key), kv.Value)));
-                        }
+                        } while (!cancellationToken.IsCancellationRequested && pendingTasks.Count > 0);
                     }
                     catch (Exception ex)
                     {
