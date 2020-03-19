@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Confluent.Kafka;
@@ -172,6 +171,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                         this.logger.LogDebug("Found SslCaLocation in {filePath}", resolvedSslCaLocation);
                         conf.SslCaLocation = resolvedSslCaLocation;
                     }
+                    else
+                    {
+                        this.logger.LogWarning("Could not find valid file path for SslCaLocation {filePath}", conf.SslCaLocation);
+                    }
                 }                
             }
             else
@@ -223,7 +226,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             this.subscriberFinished = new SemaphoreSlim(0, 1);
             var cancellationToken = (CancellationToken)parameter;
-            var messages = new List<ConsumeResult<TKey, TValue>>(this.options.MaxBatchSize);
             var maxBatchSize = this.options.MaxBatchSize;
             var maxBatchReleaseTime = TimeSpan.FromSeconds(this.options.SubscriberIntervalInSeconds);
 
