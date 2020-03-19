@@ -82,7 +82,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 requiresKey: true,
                 valueDeserializer: null,
                 logger: NullLogger.Instance,
-                new FunctionDescriptor()
+                functionId: "testId"
                 );
 
             target.SetConsumer(consumer.Object);
@@ -145,7 +145,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 requiresKey: true,
                 valueDeserializer: null,
                 logger: NullLogger.Instance,
-                mockDescriptor: new FunctionDescriptor()
+                functionId: "testId"
                 );
 
             target.SetConsumer(consumer.Object);
@@ -157,62 +157,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             await target.StopAsync(default(CancellationToken));
 
             executor.Verify(x => x.TryExecuteAsync(It.IsNotNull<TriggeredFunctionData>(), It.IsAny<CancellationToken>()), Times.Once);
-        }
-
-        [Fact]
-        public void ScaleMonitor_Id_ReturnsExpectedValue()
-        {
-            const int ExpectedEventCount = 10;
-
-            var executor = new Mock<ITriggeredFunctionExecutor>();
-            var consumer = new Mock<IConsumer<Null, string>>();
-
-            var offset = 0L;
-            consumer.Setup(x => x.Consume(It.IsNotNull<TimeSpan>()))
-                .Returns(() =>
-                {
-                    if (offset < ExpectedEventCount)
-                    {
-                        offset++;
-
-                        return CreateConsumeResult<Null, string>(offset.ToString(), 0, offset);
-                    }
-
-                    return null;
-                });
-
-            var executorFinished = new SemaphoreSlim(0);
-            var processedItemCount = 0;
-            executor.Setup(x => x.TryExecuteAsync(It.IsNotNull<TriggeredFunctionData>(), It.IsAny<CancellationToken>()))
-                .Callback<TriggeredFunctionData, CancellationToken>((td, _) =>
-                {
-                    var triggerData = (KafkaTriggerInput)td.TriggerValue;
-                    var alreadyProcessed = Interlocked.Add(ref processedItemCount, triggerData.Events.Length);
-                    if (alreadyProcessed == ExpectedEventCount)
-                    {
-                        executorFinished.Release();
-                    }
-                })
-                .ReturnsAsync(new FunctionResult(true));
-
-            var listenerConfig = new KafkaListenerConfiguration()
-            {
-                BrokerList = "testBroker",
-                Topic = "topic",
-                ConsumerGroup = "group1",
-            };
-
-            var target = new KafkaListenerForTest<Null, string>(
-                executor.Object,
-                singleDispatch: false,
-                options: new KafkaOptions(),
-                listenerConfig,
-                requiresKey: true,
-                valueDeserializer: null,
-                logger: NullLogger.Instance,
-                mockDescriptor: new FunctionDescriptor { Id = "TestFunction" }
-                );
-            Assert.Equal("testfunction-kafka-topic-group1", target.Descriptor.Id);
         }
 
         [Theory]
@@ -319,7 +263,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 requiresKey: true,
                 valueDeserializer: null,
                 NullLogger.Instance,
-                new FunctionDescriptor()
+                functionId: "testId"
                 );
 
             target.SetConsumer(consumer.Object);
@@ -371,7 +315,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 requiresKey: true,
                 valueDeserializer: null,
                 NullLogger.Instance,
-                new FunctionDescriptor()
+                functionId: "testId"
                 );
 
             target.SetConsumer(consumer.Object);
@@ -419,7 +363,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 requiresKey: true,
                 valueDeserializer: null,
                 NullLogger.Instance,
-                new FunctionDescriptor()
+                functionId: "testId"
                 );
 
             target.SetConsumer(consumer.Object);
@@ -465,7 +409,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 requiresKey: true,
                 valueDeserializer: null,
                 NullLogger.Instance,
-                new FunctionDescriptor()
+                functionId: "testId"
                 );
 
             target.SetConsumer(consumer.Object);
@@ -498,7 +442,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 requiresKey: true,
                 valueDeserializer: null,
                 NullLogger.Instance,
-                new FunctionDescriptor()
+                functionId: "testId"
                 );
 
             target.SetConsumer(consumer.Object);

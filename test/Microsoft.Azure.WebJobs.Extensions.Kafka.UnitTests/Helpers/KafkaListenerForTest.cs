@@ -27,15 +27,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             bool requiresKey,
             IDeserializer<TValue> valueDeserializer,
             ILogger logger, 
-            FunctionDescriptor mockDescriptor)
+            string functionId)
             : base(executor,
                 singleDispatch,
                 options,
                 kafkaListenerConfiguration,
                 requiresKey,
                 valueDeserializer,
-                logger, 
-                mockDescriptor)
+                logger,
+                functionId)
         {
         }
 

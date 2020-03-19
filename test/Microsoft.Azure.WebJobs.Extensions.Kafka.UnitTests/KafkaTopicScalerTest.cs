@@ -15,7 +15,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
     public class KafkaTopicScalerTest
     {
-        const string TopicName = "test-topic";
+        const string TopicName = "topicTest";
 
         private readonly TopicPartition partition0;
         private readonly TopicPartition partition1;
@@ -48,12 +48,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             topicScaler = new KafkaTopicScalerForTest<string, byte[]>(
                 TopicName,
-                "test-consumer-group",
-                new ScaleMonitorDescriptor("test"),
+                "consumer-group-test",
+                "testfunction",
                 consumer.Object, new AdminClientConfig(),
                 NullLogger.Instance);
 
             topicScaler.WithPartitions(partitions);    
+        }
+
+        
+        [Fact]
+        public void ScaleMonitor_Id_ReturnsExpectedValue()
+        {
+            Assert.Equal("testfunction-kafkatrigger-topictest-consumer-group-test", topicScaler.Descriptor.Id);
         }
 
         [Fact]

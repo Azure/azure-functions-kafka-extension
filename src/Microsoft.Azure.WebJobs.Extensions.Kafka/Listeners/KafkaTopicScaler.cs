@@ -22,7 +22,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public ScaleMonitorDescriptor Descriptor { get; }
 
-        public KafkaTopicScaler(string topic, string consumerGroup, ScaleMonitorDescriptor scaleMonitorDescriptor, IConsumer<TKey, TValue> consumer, AdminClientConfig adminClientConfig, ILogger logger)
+        public KafkaTopicScaler(string topic, string consumerGroup, string functionId, IConsumer<TKey, TValue> consumer, AdminClientConfig adminClientConfig, ILogger logger)
         {
             if (string.IsNullOrWhiteSpace(topic))
             {
@@ -37,11 +37,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.adminClientConfig = adminClientConfig ?? throw new ArgumentNullException(nameof(adminClientConfig));
             this.consumer = consumer ?? throw new ArgumentNullException(nameof(consumer));
-            this.Descriptor = scaleMonitorDescriptor ?? throw new ArgumentNullException(nameof(scaleMonitorDescriptor));
-            this.topicName = topic;            
+            this.topicName = topic;
+            this.Descriptor = new ScaleMonitorDescriptor($"{functionId}-kafkatrigger-{topicName}-{consumerGroup}".ToLower());
             this.topicPartitions = new Lazy<List<TopicPartition>>(LoadTopicPartitions);
             this.consumerGroup = consumerGroup;
         }
+
+
 
         protected virtual List<TopicPartition> LoadTopicPartitions()
         {

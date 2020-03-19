@@ -45,7 +45,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private SemaphoreSlim subscriberFinished;
         private readonly string consumerGroup;
         private readonly string topicName;
-        private readonly ScaleMonitorDescriptor scaleMonitorDescriptor;
         private readonly string functionId;
         //protected for the unit test
         protected Lazy<KafkaTopicScaler<TKey, TValue>> topicScaler;
@@ -77,7 +76,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.consumerGroup = string.IsNullOrEmpty(this.listenerConfiguration.ConsumerGroup) ? "$Default" : this.listenerConfiguration.ConsumerGroup;
             this.topicName = this.listenerConfiguration.Topic;
             this.functionId = functionDescriptorId;
-            this.scaleMonitorDescriptor = new ScaleMonitorDescriptor($"{functionId}-kafkatrigger-{topicName}-{consumerGroup}".ToLower());
         }
 
         public void Cancel()
@@ -120,7 +118,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             consumer.Subscribe(this.listenerConfiguration.Topic);
 
-            this.topicScaler = new Lazy<KafkaTopicScaler<TKey, TValue>>(() => new KafkaTopicScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.consumerGroup, scaleMonitorDescriptor, consumer, new AdminClientConfig(GetConsumerConfiguration()), this.logger));
+            this.topicScaler = new Lazy<KafkaTopicScaler<TKey, TValue>>(() => new KafkaTopicScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.consumerGroup, this.functionId, consumer, new AdminClientConfig(GetConsumerConfiguration()), this.logger));
 
             // Using a thread as opposed to a task since this will be long running
             var thread = new Thread(ProcessSubscription)
@@ -369,7 +367,5 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             return topicScaler.Value;
         }
-
-        public ScaleMonitorDescriptor Descriptor => scaleMonitorDescriptor;
     }
 }

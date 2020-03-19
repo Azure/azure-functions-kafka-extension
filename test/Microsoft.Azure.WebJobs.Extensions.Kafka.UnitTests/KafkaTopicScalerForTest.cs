@@ -12,8 +12,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
     {
         private List<TopicPartition> partitions;
 
-        public KafkaTopicScalerForTest(string topic, string consumerGroup, ScaleMonitorDescriptor scaleMonitorDescriptor, IConsumer<TKey, TValue> consumer, AdminClientConfig adminClientConfig, ILogger logger)
-            : base(topic, consumerGroup, scaleMonitorDescriptor, consumer, adminClientConfig, logger)
+        public KafkaTopicScalerForTest(string topic, string consumerGroup, string functionId, IConsumer<TKey, TValue> consumer, AdminClientConfig adminClientConfig, ILogger logger)
+            : base(topic, consumerGroup, functionId, consumer, adminClientConfig, logger)
         {
         }
 
