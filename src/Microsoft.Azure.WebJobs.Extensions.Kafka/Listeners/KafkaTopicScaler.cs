@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
-    public class KafkaTopicScaler<TKey, TValue>
+    public class KafkaTopicScaler<TKey, TValue> : IScaleMonitor<KafkaTriggerMetrics>
     {
         private readonly string topicName;
         private readonly string consumerGroup;
@@ -72,6 +72,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
 
             return new List<TopicPartition>();
+        }
+
+        async Task<ScaleMetrics> IScaleMonitor.GetMetricsAsync()
+        {
+            return await GetMetricsAsync();
         }
 
         public Task<KafkaTriggerMetrics> GetMetricsAsync()
@@ -154,7 +159,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             long partitionCount = lastMetrics.PartitionCount;
             long lagThreshold = 1000L;
 
-            //This case shouldn't ever happens as we do not scale out in case workerCount >= partitionCount
+            // We shouldn't assign more workers than there are partitions
+            // This check is first, because it is independent of load or number of samples.
             if (partitionCount > 0 && partitionCount < workerCount)
             {
                 status.Vote = ScaleVote.ScaleIn;

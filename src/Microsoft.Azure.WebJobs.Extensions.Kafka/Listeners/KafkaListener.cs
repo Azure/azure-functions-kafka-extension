@@ -19,7 +19,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     /// Kafka listener.
     /// Connects a Kafka trigger function with a Kafka Consumer
     /// </summary>
-    internal class KafkaListener<TKey, TValue> : IListener, IScaleMonitor<KafkaTriggerMetrics>
+    internal class KafkaListener<TKey, TValue> : IListener, IScaleMonitorProvider
     {
         internal const string EventHubsBrokerVersionFallback = "1.0.0";
         internal const string EventHubsSaslUsername = "$ConnectionString";
@@ -48,7 +48,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly ScaleMonitorDescriptor scaleMonitorDescriptor;
         private readonly string functionId;
         //protected for the unit test
-        protected KafkaTopicScaler<TKey, TValue> topicScaler;
+        protected Lazy<KafkaTopicScaler<TKey, TValue>> topicScaler;
 
         /// <summary>
         /// Gets the value deserializer
@@ -64,7 +64,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             bool requiresKey,
             IDeserializer<TValue> valueDeserializer,
             ILogger logger,
-            FunctionDescriptor functionDescriptor)
+            string functionDescriptorId)
         {
             this.ValueDeserializer = valueDeserializer;
             this.executor = executor;
@@ -76,12 +76,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.cancellationTokenSource = new CancellationTokenSource();
             this.consumerGroup = string.IsNullOrEmpty(this.listenerConfiguration.ConsumerGroup) ? "$Default" : this.listenerConfiguration.ConsumerGroup;
             this.topicName = this.listenerConfiguration.Topic;
-            this.functionId = functionDescriptor.Id;
-            this.scaleMonitorDescriptor = new ScaleMonitorDescriptor($"{functionId}-kafka-{topicName}-{consumerGroup}".ToLower());
+            this.functionId = functionDescriptorId;
+            this.scaleMonitorDescriptor = new ScaleMonitorDescriptor($"{functionId}-kafkatrigger-{topicName}-{consumerGroup}".ToLower());
         }
-
-        
-
 
         public void Cancel()
         {
@@ -123,7 +120,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             consumer.Subscribe(this.listenerConfiguration.Topic);
 
-            this.topicScaler = new KafkaTopicScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.consumerGroup, scaleMonitorDescriptor, consumer, new AdminClientConfig(GetConsumerConfiguration()), this.logger);
+            this.topicScaler = new Lazy<KafkaTopicScaler<TKey, TValue>>(() => new KafkaTopicScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.consumerGroup, scaleMonitorDescriptor, consumer, new AdminClientConfig(GetConsumerConfiguration()), this.logger));
 
             // Using a thread as opposed to a task since this will be long running
             var thread = new Thread(ProcessSubscription)
@@ -368,17 +365,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             Dispose(true);
         }
 
-        public ScaleMonitorDescriptor Descriptor => scaleMonitorDescriptor;
-
-        public Task<KafkaTriggerMetrics> GetMetricsAsync() => topicScaler.GetMetricsAsync();
-
-        async Task<ScaleMetrics> IScaleMonitor.GetMetricsAsync()
+        public IScaleMonitor GetMonitor()
         {
-            return await topicScaler.GetMetricsAsync();
+            return topicScaler.Value;
         }
 
-        public ScaleStatus GetScaleStatus(ScaleStatusContext<KafkaTriggerMetrics> context) => topicScaler.GetScaleStatus(context);
-
-        public ScaleStatus GetScaleStatus(ScaleStatusContext context) => topicScaler.GetScaleStatus(context);
+        public ScaleMonitorDescriptor Descriptor => scaleMonitorDescriptor;
     }
 }

@@ -8,12 +8,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
     public class KafkaTriggerMetrics : ScaleMetrics
     {
+        /// <summary>
+        /// The total lag accross all partitions.
+        /// </summary>
         public long TotalLag { get; set; }
+        
+        /// <summary>
+        /// The number of partitions.
+        /// </summary>
         public long PartitionCount { get; set; }
-
-        public KafkaTriggerMetrics()
-        {
-        }
 
         public KafkaTriggerMetrics(long totalLag, int partitionCount)
         {
