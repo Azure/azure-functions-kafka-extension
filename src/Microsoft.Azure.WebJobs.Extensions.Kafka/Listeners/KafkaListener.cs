@@ -76,10 +76,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.consumerGroup = string.IsNullOrEmpty(this.listenerConfiguration.ConsumerGroup) ? "$Default" : this.listenerConfiguration.ConsumerGroup;
             this.topicName = this.listenerConfiguration.Topic;
             this.functionId = functionDescriptorId;
-            init();
+            Init();
         }
 
-        private void init()
+        private void Init()
         {
             AzureFunctionsFileHelper.InitializeLibrdKafka(this.logger);
 
