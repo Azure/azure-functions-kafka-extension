@@ -202,6 +202,69 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         }
 
         [Fact]
+        public void When_LagDecreasing_Slowly_Should_Vote_None()
+        {
+            var context = new ScaleStatusContext<KafkaTriggerMetrics>()
+            {
+                Metrics = new KafkaTriggerMetrics[]
+                {
+                    new KafkaTriggerMetrics(10_005, partitions.Count),
+                    new KafkaTriggerMetrics(10_004, partitions.Count),
+                    new KafkaTriggerMetrics(10_003, partitions.Count),
+                    new KafkaTriggerMetrics(10_002, partitions.Count),
+                    new KafkaTriggerMetrics(10_001, partitions.Count),
+                },
+                WorkerCount = partitions.Count,
+            };
+
+            var result = topicScaler.GetScaleStatus(context);
+            Assert.NotNull(result);
+            Assert.Equal(ScaleVote.None, result.Vote);
+        }
+
+        [Fact]
+        public void When_LagDecreasing_Slowly_At_Threshold_Should_Vote_None()
+        {
+            var context = new ScaleStatusContext<KafkaTriggerMetrics>()
+            {
+                Metrics = new KafkaTriggerMetrics[]
+                {
+                    new KafkaTriggerMetrics(4_000, partitions.Count),
+                    new KafkaTriggerMetrics(3_999, partitions.Count),
+                    new KafkaTriggerMetrics(3_998, partitions.Count),
+                    new KafkaTriggerMetrics(3_997, partitions.Count),
+                    new KafkaTriggerMetrics(3_996, partitions.Count),
+                },
+                WorkerCount = partitions.Count,
+            };
+
+            var result = topicScaler.GetScaleStatus(context);
+            Assert.NotNull(result);
+            Assert.Equal(ScaleVote.None, result.Vote);
+        }
+
+        [Fact]
+        public void When_LagDecreasing_Slowly_Under_Threshold_Should_Vote_ScaleIn()
+        {
+            var context = new ScaleStatusContext<KafkaTriggerMetrics>()
+            {
+                Metrics = new KafkaTriggerMetrics[]
+                {
+                    new KafkaTriggerMetrics(4_000, partitions.Count),
+                    new KafkaTriggerMetrics(3_999, partitions.Count),
+                    new KafkaTriggerMetrics(3_998, partitions.Count),
+                    new KafkaTriggerMetrics(3_997, partitions.Count),
+                    new KafkaTriggerMetrics(2_999, partitions.Count),
+                },
+                WorkerCount = partitions.Count,
+            };
+
+            var result = topicScaler.GetScaleStatus(context);
+            Assert.NotNull(result);
+            Assert.Equal(ScaleVote.ScaleIn, result.Vote);
+        }
+
+        [Fact]
         public void When_LagIncreasing_Last_Lag_Less_LagThreshold_Should_Vote_Scale_Out()
         {
             var context = new ScaleStatusContext<KafkaTriggerMetrics>()

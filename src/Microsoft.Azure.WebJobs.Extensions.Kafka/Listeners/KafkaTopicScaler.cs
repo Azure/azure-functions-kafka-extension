@@ -43,8 +43,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.consumerGroup = consumerGroup;
         }
 
-
-
         protected virtual List<TopicPartition> LoadTopicPartitions()
         {
             try
@@ -176,7 +174,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 return status;
             }
 
-
             // Check to see if the Kafka consumer has been empty for a while. Only if all metrics samples are empty do we scale down.
             bool partitionIsIdle = metrics.All(p => p.TotalLag == 0);
 
@@ -191,59 +188,70 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 return status;
             }
 
-            if (workerCount < partitionCount)
+            // Maintain a minimum ratio of 1 worker per lagThreshold --1,000 unprocessed message.
+            if (totalLag > workerCount * lagThreshold)
             {
-                // Maintain a minimum ratio of 1 worker per lagThreshold --1,000 unprocessed message.
-                if (totalLag > workerCount * lagThreshold)
-                {
+                if (workerCount < partitionCount)
+                { 
                     status.Vote = ScaleVote.ScaleOut;
 
                     if (this.logger.IsEnabled(LogLevel.Information))
                     {
                         this.logger.LogInformation("Total lag ({totalLag}) is less than the number of instances ({workerCount}). Scale out, for topic {topicName}, for consumer group {consumerGroup}.", totalLag, workerCount, topicName, consumerGroup);
                     }
-                    return status;
                 }
-                // Samples are in chronological order. Check for a continuous increase in unprocessed message count.
-                // If detected, this results in an automatic scale out for the site container.
-                else if (metrics[0].TotalLag > 0)
+                return status;
+            }
+            
+            // Samples are in chronological order. Check for a continuous increase in unprocessed message count.
+            // If detected, this results in an automatic scale out for the site container.
+            if (metrics[0].TotalLag > 0)
+            {
+                if (workerCount < partitionCount)
                 {
-                    if (workerCount < partitionCount)
+                    bool queueLengthIncreasing = IsTrueForLast(
+                        metrics,
+                        NumberOfSamplesToConsider,
+                        (prev, next) => prev.TotalLag < next.TotalLag) && metrics[0].TotalLag > 0;
+
+                    if (queueLengthIncreasing)
                     {
-                        bool queueLengthIncreasing = IsTrueForLast(
-                           metrics,
-                           NumberOfSamplesToConsider,
-                           (prev, next) => prev.TotalLag < next.TotalLag) && metrics[0].TotalLag > 0;
+                        status.Vote = ScaleVote.ScaleOut;
 
-                        if (queueLengthIncreasing)
+                        if (this.logger.IsEnabled(LogLevel.Information))
                         {
-                            status.Vote = ScaleVote.ScaleOut;
-
-                            if (this.logger.IsEnabled(LogLevel.Information))
-                            {
-                                this.logger.LogInformation("Total lag ({totalLag}) is less than the number of instances ({workerCount}). Scale out, for topic {topicName}, for consumer group {consumerGroup}.", totalLag, workerCount, topicName, consumerGroup);
-                            }
-                            return status;
+                            this.logger.LogInformation("Total lag ({totalLag}) is less than the number of instances ({workerCount}). Scale out, for topic {topicName}, for consumer group {consumerGroup}.", totalLag, workerCount, topicName, consumerGroup);
                         }
+                        return status;
                     }
                 }
             }
-              
-            bool queueLengthDecreasing =
-                IsTrueForLast(
+            
+            if (workerCount > 1)
+            {
+                bool queueLengthDecreasing = IsTrueForLast(
                     metrics,
                     NumberOfSamplesToConsider,
                     (prev, next) => prev.TotalLag > next.TotalLag);
 
-            if (queueLengthDecreasing)
-            {
-                status.Vote = ScaleVote.ScaleIn;
-
-                if (this.logger.IsEnabled(LogLevel.Information))
+                if (queueLengthDecreasing)
                 {
-                    this.logger.LogInformation("Total lag length is decreasing for topic {topicName}, for consumer group {consumerGroup}.", this.topicName, this.consumerGroup);
+                    // Only vote down if the new workerCount / totalLag < threshold
+                    // Example: 4 workers, only scale in if totalLag <= 2999 (3000 < (3 * 1000))
+                    var proposedWorkerCount = workerCount - 1;
+                    var proposedLagPerWorker = totalLag / proposedWorkerCount;
+                    if (proposedLagPerWorker < lagThreshold)
+                    {
+                        status.Vote = ScaleVote.ScaleIn;
+
+                        if (this.logger.IsEnabled(LogLevel.Information))
+                        {
+                            this.logger.LogInformation("Total lag length is decreasing for topic {topicName}, for consumer group {consumerGroup}.", this.topicName, this.consumerGroup);
+                        }                    
+                    }                
                 }
             }
+              
             return status;
         }
 

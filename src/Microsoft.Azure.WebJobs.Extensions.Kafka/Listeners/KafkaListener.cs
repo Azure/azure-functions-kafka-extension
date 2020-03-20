@@ -39,7 +39,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly bool requiresKey;
         private readonly ILogger logger;
         private FunctionExecutorBase<TKey, TValue> functionExecutor;
-        private IConsumer<TKey, TValue> consumer;
+        private Lazy<IConsumer<TKey, TValue>> consumer;
         private bool disposed;
         private CancellationTokenSource cancellationTokenSource;
         private SemaphoreSlim subscriberFinished;
@@ -63,7 +63,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             bool requiresKey,
             IDeserializer<TValue> valueDeserializer,
             ILogger logger,
-            string functionDescriptorId)
+            string functionId)
         {
             this.ValueDeserializer = valueDeserializer;
             this.executor = executor;
@@ -75,11 +75,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.cancellationTokenSource = new CancellationTokenSource();
             this.consumerGroup = string.IsNullOrEmpty(this.listenerConfiguration.ConsumerGroup) ? "$Default" : this.listenerConfiguration.ConsumerGroup;
             this.topicName = this.listenerConfiguration.Topic;
-            this.functionId = functionDescriptorId;
-            Init();
+            this.functionId = functionId;
+            this.consumer = new Lazy<IConsumer<TKey, TValue>>(() => CreateConsumer());
+            this.topicScaler = new Lazy<KafkaTopicScaler<TKey, TValue>>(() => CreateTopicScaler());
         }
 
-        private void Init()
+        private IConsumer<TKey, TValue> CreateConsumer()
         {
             AzureFunctionsFileHelper.InitializeLibrdKafka(this.logger);
 
@@ -103,17 +104,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 builder.SetValueDeserializer(ValueDeserializer);
             }
 
-            this.consumer = builder.Build();
+            return builder.Build();
+        }
 
-            var commitStrategy = new AsyncCommitStrategy<TKey, TValue>(consumer, this.logger);
-
-            this.functionExecutor = singleDispatch ?
-                (FunctionExecutorBase<TKey, TValue>)new SingleItemFunctionExecutor<TKey, TValue>(executor, consumer, this.options.ExecutorChannelCapacity, this.options.ChannelFullRetryIntervalInMs, commitStrategy, logger) :
-                new MultipleItemFunctionExecutor<TKey, TValue>(executor, consumer, this.options.ExecutorChannelCapacity, this.options.ChannelFullRetryIntervalInMs, commitStrategy, logger);
-
-            consumer.Subscribe(this.listenerConfiguration.Topic);
-
-            this.topicScaler = new Lazy<KafkaTopicScaler<TKey, TValue>>(() => new KafkaTopicScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.consumerGroup, this.functionId, consumer, new AdminClientConfig(GetConsumerConfiguration()), this.logger));
+        private KafkaTopicScaler<TKey, TValue> CreateTopicScaler()
+        {
+            return new KafkaTopicScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.consumerGroup, this.functionId, this.consumer.Value, new AdminClientConfig(GetConsumerConfiguration()), this.logger);
         }
 
         public void Cancel()
@@ -123,6 +119,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
+            var localConsumer = this.consumer.Value;
+            var commitStrategy = new AsyncCommitStrategy<TKey, TValue>(localConsumer, this.logger);
+
+            this.functionExecutor = singleDispatch ?
+                (FunctionExecutorBase<TKey, TValue>)new SingleItemFunctionExecutor<TKey, TValue>(executor, localConsumer, this.options.ExecutorChannelCapacity, this.options.ChannelFullRetryIntervalInMs, commitStrategy, logger) :
+                new MultipleItemFunctionExecutor<TKey, TValue>(executor, localConsumer, this.options.ExecutorChannelCapacity, this.options.ChannelFullRetryIntervalInMs, commitStrategy, logger);
+
+            localConsumer.Subscribe(this.listenerConfiguration.Topic);
             // Using a thread as opposed to a task since this will be long running
             var thread = new Thread(ProcessSubscription)
             {
@@ -233,7 +237,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var cancellationToken = (CancellationToken)parameter;
             var maxBatchSize = this.options.MaxBatchSize;
             var maxBatchReleaseTime = TimeSpan.FromSeconds(this.options.SubscriberIntervalInSeconds);
-
+            var localConsumer = this.consumer.Value;
             try
             {
                 var alreadyFlushedInCurrentExecution = false;
@@ -247,7 +251,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     {
                         try
                         {
-                            var consumeResult = consumer.Consume(availableTime);
+                            var consumeResult = localConsumer.Consume(availableTime);
 
                             // If no message was consumed during the available time, returns null
                             if (consumeResult != null)
@@ -334,8 +338,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     await this.subscriberFinished.WaitAsync(TimeToWaitForRunningProcessToEnd);
                 }
 
-                this.consumer?.Unsubscribe();
-                this.consumer?.Dispose();
+                if (this.consumer.IsValueCreated)
+                {
+                    var localConsumer = this.consumer.Value;
+                    localConsumer.Unsubscribe();
+                    localConsumer.Dispose();
+                }
+                
                 this.functionExecutor?.Dispose();
                 this.subscriberFinished?.Dispose();
                 this.cancellationTokenSource.Dispose();                
