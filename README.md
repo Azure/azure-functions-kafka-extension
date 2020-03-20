@@ -281,7 +281,7 @@ Confluent.Kafka is based on librdkafka C library. Some of the configuration requ
 |-|-|-|
 |MaxBatchSize|Maximum batch size when calling a Kafka trigger function|64
 |SubscriberIntervalInSeconds|Defines the minimum frequency in which messages will be executed by function. Only if the message volume is less than MaxBatchSize / SubscriberIntervalInSeconds|1
-|ExecutorChannelCapacity|Defines the channel capacity in which messages will be sent to functions. Once the capacity is reached the Kafka subscriber will pause until the function catches up|10
+|ExecutorChannelCapacity|Defines the channel capacity in which messages will be sent to functions. Once the capacity is reached the Kafka subscriber will pause until the function catches up|1
 |ChannelFullRetryIntervalInMs|Defines the interval in milliseconds in which the subscriber should retry adding items to channel once it reaches the capacity|50
 
 #### librdkafka configuration
