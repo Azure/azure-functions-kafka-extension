@@ -4,6 +4,7 @@
 using Confluent.Kafka;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Protocols;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using System;
@@ -212,6 +213,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var partition0 = new ConcurrentQueue<string>();
             var partition1 = new ConcurrentQueue<string>();
             var executorFinished = new SemaphoreSlim(0);
+            var logger = new Mock<ILogger>();
 
             executor.Setup(x => x.TryExecuteAsync(It.IsNotNull<TriggeredFunctionData>(), It.IsAny<CancellationToken>()))
                 .Callback<TriggeredFunctionData, CancellationToken>((t, _) =>
@@ -262,7 +264,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
-                NullLogger.Instance,
+                logger.Object,
                 functionId: "testId"
                 );
 
@@ -386,10 +388,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         }
 
         [Fact]
-        public async Task When_Using_Invalid_Eventhubs_Certificate_File_Should_Fail()
+        public void When_Using_Invalid_Eventhubs_Certificate_File_Should_Fail()
         {
             var executor = new Mock<ITriggeredFunctionExecutor>();
             var consumer = new Mock<IConsumer<Null, string>>();
+            var logger = new Mock<ILogger>();
 
             var listenerConfig = new KafkaListenerConfiguration()
             {
@@ -399,22 +402,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 ConsumerGroup = "group1",
                 SslCaLocation = "does-not-exists.pem",
             };
+             var kafkaOptions = new KafkaOptions();
 
-            var kafkaOptions = new KafkaOptions();
-            var target = new KafkaListenerForTest<Null, string>(
+            Assert.Throws<InvalidOperationException>(() => new KafkaListenerForTest<Null, string>(
                 executor.Object,
                 true,
                 kafkaOptions,
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
-                NullLogger.Instance,
+                logger.Object,
                 functionId: "testId"
-                );
-
-            target.SetConsumer(consumer.Object);
-
-            await Assert.ThrowsAsync<InvalidOperationException>(() => target.StartAsync(default));
+                ));
         }
 
         [Fact]

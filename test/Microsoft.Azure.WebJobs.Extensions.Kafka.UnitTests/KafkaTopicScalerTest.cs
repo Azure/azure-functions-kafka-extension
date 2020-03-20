@@ -202,7 +202,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         }
 
         [Fact]
-        public void When_LagIncreasing_Last_Lag_Less_LagThreshold_Should_Vote_Scale_None()
+        public void When_LagIncreasing_Last_Lag_Less_LagThreshold_Should_Vote_Scale_Out()
         {
             var context = new ScaleStatusContext<KafkaTriggerMetrics>()
             {
@@ -219,7 +219,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             var result = topicScaler.GetScaleStatus(context);
             Assert.NotNull(result);
-            Assert.Equal(ScaleVote.None, result.Vote);
+            Assert.Equal(ScaleVote.ScaleOut, result.Vote);
         }
 
         [Fact]
