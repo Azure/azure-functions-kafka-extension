@@ -26,7 +26,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         protected override async Task ReaderAsync(ChannelReader<IKafkaEventData[]> reader, CancellationToken cancellationToken, ILogger logger)
         {
-            var pendingTasks = new List<Task<FunctionResult>>();
+            var partitionTasks = new List<Task>();
 
             while (!cancellationToken.IsCancellationRequested && await reader.WaitToReadAsync(cancellationToken))
             {
@@ -34,41 +34,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 {
                     try
                     {
-                        // Execute multiple topic in parallel.
+                        partitionTasks.Clear();
+
+                        // Create one task per partition, this way slow partition executions will not delay others
                         // Order in a partition must be followed.
-                        var partitionOffsets = new Dictionary<int, long>();
                         var itemsByPartition = itemsToExecute.GroupBy(x => x.Partition);
 
-                        var i = 0;
-                        do
+                        foreach (var partitionAndEvents in itemsByPartition)
                         {
-                            pendingTasks.Clear();
+                            var partition = partitionAndEvents.Key;
+                            var kafkaEvents = partitionAndEvents;
 
-                            foreach (var partition in itemsByPartition)
-                            {
-                                var kafkaEventData = partition.ElementAtOrDefault(i);
-                                if (kafkaEventData != null)
-                                {
-                                    var triggerInput = KafkaTriggerInput.New(kafkaEventData);
-                                    var triggerData = new TriggeredFunctionData
-                                    {
-                                        TriggerValue = triggerInput,
-                                    };
-
-                                    partitionOffsets[partition.Key] = kafkaEventData.Offset + 1;  // offset is inclusive when resuming
-
-                                    pendingTasks.Add(this.ExecuteFunctionAsync(triggerData, cancellationToken));
-                                }
-                            }
-
-                            i++;
-                            await Task.WhenAll(pendingTasks);
-                        } while (!cancellationToken.IsCancellationRequested && pendingTasks.Count > 0);
-
-                        if (!cancellationToken.IsCancellationRequested)
-                        {
-                            this.Commit(partitionOffsets.Select((kv) => new TopicPartitionOffset(new TopicPartition(itemsToExecute[0].Topic, kv.Key), kv.Value)));
+                            partitionTasks.Add(ProcessPartitionItemsAsync(partition, kafkaEvents, cancellationToken));
                         }
+
+                        await Task.WhenAll(partitionTasks);
                     }
                     catch (Exception ex)
                     {
@@ -78,6 +58,32 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
 
             logger.LogInformation("Exiting reader {processName}", nameof(SingleItemFunctionExecutor<TKey, TValue>));
+        }
+
+        private async Task ProcessPartitionItemsAsync(int partition, IEnumerable<IKafkaEventData> events, CancellationToken cancellationToken)
+        {
+            TopicPartition topicPartition = null;
+            foreach (var kafkaEventData in events)
+            {
+                var triggerInput = KafkaTriggerInput.New(kafkaEventData);
+                var triggerData = new TriggeredFunctionData
+                {
+                    TriggerValue = triggerInput,
+                };
+
+                await this.ExecuteFunctionAsync(triggerData, cancellationToken);
+
+                if (topicPartition == null)
+                {
+                    topicPartition = new TopicPartition(kafkaEventData.Topic, partition);
+                }
+
+                // Commiting after each function execution plays nicer with function scaler.
+                // When processing a large batch of events where the execution of each event takes time
+                // it would take Events_In_Batch_For_Partition * Event_Processing_Time to update the current offset.
+                // Doing it after each event minimizes the delay
+                this.Commit(new[] { new TopicPartitionOffset(topicPartition, kafkaEventData.Offset + 1) });  // offset is inclusive when resuming
+            }
         }
     }
 }
