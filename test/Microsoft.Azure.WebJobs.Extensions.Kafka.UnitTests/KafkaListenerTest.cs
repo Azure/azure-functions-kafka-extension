@@ -3,6 +3,7 @@
 
 using Confluent.Kafka;
 using Microsoft.Azure.WebJobs.Host.Executors;
+using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using System;
@@ -80,7 +81,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
-                logger: NullLogger.Instance
+                logger: NullLogger.Instance,
+                functionId: "testId"
                 );
 
             target.SetConsumer(consumer.Object);
@@ -142,7 +144,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
-                logger: NullLogger.Instance
+                logger: NullLogger.Instance,
+                functionId: "testId"
                 );
 
             target.SetConsumer(consumer.Object);
@@ -259,7 +262,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
-                NullLogger.Instance
+                NullLogger.Instance,
+                functionId: "testId"
                 );
 
             target.SetConsumer(consumer.Object);
@@ -310,7 +314,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
-                NullLogger.Instance
+                NullLogger.Instance,
+                functionId: "testId"
                 );
 
             target.SetConsumer(consumer.Object);
@@ -357,7 +362,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
-                NullLogger.Instance
+                NullLogger.Instance,
+                functionId: "testId"
                 );
 
             target.SetConsumer(consumer.Object);
@@ -402,7 +408,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
-                NullLogger.Instance
+                NullLogger.Instance,
+                functionId: "testId"
                 );
 
             target.SetConsumer(consumer.Object);
@@ -434,7 +441,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
-                NullLogger.Instance
+                NullLogger.Instance,
+                functionId: "testId"
                 );
 
             target.SetConsumer(consumer.Object);

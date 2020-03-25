@@ -4,7 +4,9 @@
 using System;
 using Confluent.Kafka;
 using Microsoft.Azure.WebJobs.Host.Executors;
+using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Extensions.Logging;
+using Moq;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 {
@@ -24,14 +26,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             KafkaListenerConfiguration kafkaListenerConfiguration,
             bool requiresKey,
             IDeserializer<TValue> valueDeserializer,
-            ILogger logger)
+            ILogger logger, 
+            string functionId)
             : base(executor,
                 singleDispatch,
                 options,
                 kafkaListenerConfiguration,
                 requiresKey,
                 valueDeserializer,
-                logger)
+                logger,
+                functionId)
         {
         }
 

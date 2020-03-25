@@ -75,7 +75,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     listenerConfiguration,
                     requiresKey,
                     valueDeserializer,
-                    this.logger);
+                    this.logger,
+                    factoryContext.Descriptor.Id);
                 
                 return Task.FromResult<IListener>(listener);
             }
