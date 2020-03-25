@@ -19,6 +19,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         internal const string AzureDefaultFunctionPathPart2 = "wwwroot";
         internal const string AzureFunctionWorkerRuntimeEnvVarName = "FUNCTIONS_WORKER_RUNTIME";
         internal const string AzureFunctionEnvironmentEnvVarName = "AZURE_FUNCTIONS_ENVIRONMENT";
+        internal const string LibrdKafkaLocationEnvVarName = "LIBRDKAFKA_LOCATION";
         internal const string DevelopmentEnvironmentName = "Development";
         internal const string ProcessArchitecturex86Value = "x86";
         internal const string RuntimesFolderName = "runtimes";
@@ -98,6 +99,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 }
 
                 librdkafkaInitialized = true;
+
+                var userSpecifiedLibrdKafkaLocation = Environment.GetEnvironmentVariable(LibrdKafkaLocationEnvVarName);
+                if (!string.IsNullOrWhiteSpace(userSpecifiedLibrdKafkaLocation))
+                {
+                    logger.LogDebug("Librdkafka initialization: loading librdkafka from user specified location: {librdkafkaPath}", userSpecifiedLibrdKafkaLocation);
+                    Confluent.Kafka.Library.Load(userSpecifiedLibrdKafkaLocation);
+                    return;
+                }
 
                 if (!IsRunningAsFunctionInAzureOrContainer())
                 {
