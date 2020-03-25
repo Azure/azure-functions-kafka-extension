@@ -565,7 +565,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
-                NullLogger.Instance
+                NullLogger.Instance,
+                functionId: "testId"
                 );
 
             target.SetConsumer(consumer.Object);
