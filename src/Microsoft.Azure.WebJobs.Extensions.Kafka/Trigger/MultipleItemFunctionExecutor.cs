@@ -44,14 +44,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                         var offsetsToCommit = new Dictionary<int, TopicPartitionOffset>();
                         for (var i=itemsToExecute.Length - 1; i >= 0; i--)
                         {
-                            if (!offsetsToCommit.ContainsKey(itemsToExecute[i].Partition))
+                            var currentItem = itemsToExecute[i];
+                            if (!offsetsToCommit.ContainsKey(currentItem.Partition))
                             {
                                 offsetsToCommit.Add(
-                                    itemsToExecute[i].Partition, 
+                                    currentItem.Partition, 
                                     new TopicPartitionOffset(
-                                        itemsToExecute[i].Topic,
-                                        itemsToExecute[i].Partition,
-                                        itemsToExecute[i].Offset + 1)); // offset is inclusive when resuming
+                                        currentItem.Topic,
+                                        currentItem.Partition,
+                                        currentItem.Offset + 1)); // offset is inclusive when resuming
                             }
                         }
 
