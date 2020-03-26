@@ -26,12 +26,6 @@ A sample function is provided in folder samples/dotnet/KafkaFunctionSample. It d
 
 If you have problems connecting to localhost:9092 try to add `broker    127.0.0.1` to your host file and use instead of localhost.
 
-[TODO: add information about .NET consumer sample]
-
-[TODO: add information about .NET producer sample]
-
-[TODO: add information about .NET Host sample]
-
 ## Python Consumer
 
 A sample Python consumer function is provided in samples/python/KafkaTrigger. It depends on the Kafka installed locally (localhost:9092), as described in previous section.
@@ -42,3 +36,37 @@ A sample Python consumer function is provided in samples/python/KafkaTrigger. It
 
 2. Make sure you have [latest version](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local) of functions core tools.
 [TODO: add information Java samples]
+
+## JavaScript Consumer
+
+A sample JavaScript (using Typescript) function is provided in samples/javascript/kafka-trigger. It can be executed locally or using [Visual Studio Code Remote Containers](https://code.visualstudio.com/docs/remote/remote-overview):
+
+### Locally
+
+Having Kafka installed locally as described in [previous section](#Getting-started-with-Kafka-locally). Then run the function locally using the following local.settings.json:
+
+```json
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "AzureWebJobsStorage": "{AzureWebJobsStorage}",
+    "BrokerList":"localhost:9092"
+  }
+}
+```
+
+### Visual Studio Code Remote Containers
+
+The sample provides a devcontainer profile. Open the folder in VsCode and perform the action `Remote-Containers: Reopen in Container`. The action will reopen VsCode inside a container,  together with the Confluent's Kafka starter sample. Then run the function inside the remote container using the following local.settings.json file:
+
+```json
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "AzureWebJobsStorage": "{AzureWebJobsStorage}",
+    "BrokerList":"broker:29092"
+  }
+}
+```
