@@ -37,9 +37,9 @@ A sample Python consumer function is provided in samples/python/KafkaTrigger. It
 2. Make sure you have [latest version](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local) of functions core tools.
 [TODO: add information Java samples]
 
-## JavaScript Consumer
+## Typescript Consumer
 
-A sample JavaScript (using Typescript) function is provided in samples/javascript/kafka-trigger. It can be executed locally or using [Visual Studio Code Remote Containers](https://code.visualstudio.com/docs/remote/remote-overview):
+A sample Typescript function is provided in samples/typescript/kafka-trigger. It can be executed locally or using [Visual Studio Code Remote Containers](https://code.visualstudio.com/docs/remote/remote-overview):
 
 ### Locally
 
