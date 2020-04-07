@@ -320,6 +320,11 @@ Both, trigger and output, can connect to a secure Kafka broker. The following at
 
 Username and password should reference a Azure function configuration variable and not be hardcoded.
 
+## Linux premium plan configuration
+|Setting|Value|Description|
+|-|-|-|
+|LD_LIBRARY_PATH|/home/site/wwwroot/bin/runtimes/linux-x64/native|Librakafka libarary path|
+
 ## Quickstart
 
 For samples take a look at the [samples folder](./samples).
