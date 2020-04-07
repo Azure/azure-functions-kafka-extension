@@ -1,7 +1,7 @@
 <Project>
   <PropertyGroup>
     <!-- Extensions can have independent versions and only increment when released -->
-    <Version>1.0.3-alpha$(VersionSuffix)</Version>
+    <Version>1.0.0-beta$(VersionSuffix)</Version>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Authors>Microsoft</Authors>
     <Company>Microsoft</Company>
