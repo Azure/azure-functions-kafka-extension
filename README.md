@@ -320,10 +320,12 @@ Both, trigger and output, can connect to a secure Kafka broker. The following at
 
 Username and password should reference a Azure function configuration variable and not be hardcoded.
 
-## Linux premium plan configuration
+## Linux Premium plan configuration
+Currently when running a function in a Linux Premium plan environment there will be an error indicating that we could not load the librdkafka library. To address the problem, at least for now, please add the setting below. It will include the extension location as one of the paths where libraries are searched. We are working on avoiding this setting in future releases.
+
 |Setting|Value|Description|
 |-|-|-|
-|LD_LIBRARY_PATH|/home/site/wwwroot/bin/runtimes/linux-x64/native|Librakafka libarary path|
+|LD_LIBRARY_PATH|/home/site/wwwroot/bin/runtimes/linux-x64/native|Librakafka library path|
 
 ## Quickstart
 
