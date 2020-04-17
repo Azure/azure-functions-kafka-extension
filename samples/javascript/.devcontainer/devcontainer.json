@@ -3,6 +3,7 @@
 	"dockerComposeFile": "docker-compose.yml",
 	"service": "myfunction",
 	"workspaceFolder": "/workspace",
+	"workspaceMount": "src=${localWorkspaceFolder},dst=/workspace,type=bind",
 	"forwardPorts": [
 		7071,
 		9021
