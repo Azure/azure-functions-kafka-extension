@@ -7,12 +7,7 @@
             "topic": "%KafkaTopic%",
             "brokerList": "%KafkaBroker%",
             "consumerGroup": "%KafkaConsumerGroup%",
-            "dataType": "binary",
-            "AuthenticationMode": "PLAIN",
-            "Protocol": "SaslSsl",
-            "username": "%KafkaUsername%",
-            "password": "%KafkaPassword%",
-            "SslCaLocation": "%CertLocation%"
+            "dataType": "binary"
         }
     ]
 }
