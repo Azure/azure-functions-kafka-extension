@@ -5,9 +5,9 @@ Azure Functions extensions for Apache Kafka
 |master|[![Build Status](https://azfunc.visualstudio.com/Azure%20Functions/_apis/build/status/azure-functions-kafka-extension-ci?branchName=master)](https://azfunc.visualstudio.com/Azure%20Functions/_build/latest?definitionId=7&branchName=master)
 |dev|[![Build Status](https://azfunc.visualstudio.com/Azure%20Functions/_apis/build/status/azure-functions-kafka-extension-ci?branchName=dev)](https://azfunc.visualstudio.com/Azure%20Functions/_build/latest?definitionId=7&branchName=dev)
 
-This repository contains Kafka binding extensions for the **Azure WebJobs SDK**. The extension status is experimental/under development. The communcation with Kafka is based on library **Confluent.Kafka**.
+This repository contains Kafka binding extensions for the **Azure WebJobs SDK**. The extension status is in beta. The communcation with Kafka is based on library **Confluent.Kafka**.
 
-**DISCLAIMER**: This library is supported in the Premium Plan, however currently, you would still need to manage scaling yourself. It is fully supported when using Azure Functions on Kubernetes where scaling will be handed by KEDA - scaling based on Kafka queue length.
+**DISCLAIMER**: This library is supported in the Premium Plan along with support for scaling. It is fully supported when using Azure Functions on Kubernetes where scaling will be handed by KEDA - scaling based on Kafka queue length. It is currently not supported on the Consumption plan (there will no scale from zero).
 
 ## Bindings
 
