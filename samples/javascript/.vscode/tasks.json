@@ -6,7 +6,17 @@
       "command": "host start",
       "problemMatcher": "$func-watch",
       "isBackground": true,
-      "dependsOn": "npm install"
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "func extensions install"
+      ]
+    },
+    {
+      "type": "func",
+      "label": "func extensions install",
+      "command": "extensions install",
+      "problemMatcher": "$func-watch",
+      "isBackground": true
     },
     {
       "type": "shell",
