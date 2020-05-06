@@ -43,7 +43,10 @@ A sample Typescript function is provided in samples/typescript/kafka-trigger. It
 
 ### Locally
 
-Having Kafka installed locally as described in [previous section](#Getting-started-with-Kafka-locally). Then run the function locally using the following local.settings.json:
+1.  Having Kafka installed locally as described in [previous section](#Getting-started-with-Kafka-locally) with the following minor change:
+    - When specifying the configuration values for the Kafka connector, type `org.apache.kafka.connect.json.JsonConverter` in the **Value converter class** field.
+  
+2.  Then run the function locally using the following local.settings.json:
 
 ```json
 {
