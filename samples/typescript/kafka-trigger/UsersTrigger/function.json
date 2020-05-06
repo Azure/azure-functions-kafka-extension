@@ -7,7 +7,7 @@
       "topic": "users",
       "consumerGroup": "functions",
       "brokerList": "BrokerList",
-      "dataType": "binary"
+      "dataType": "string"
     }
   ],
   "scriptFile": "../dist/UsersTrigger/index.js"
