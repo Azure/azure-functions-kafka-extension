@@ -46,7 +46,7 @@ Go to the Azure Functions directory that is created by the package command. Plea
 
 ```
 $ cd target/azure-functions/kafka-function-20190419163130420/
-$ func extensions install -p Microsoft.Azure.WebJobs.Extensions.Kafka -v 1.0.0-alpha
+$ func extensions install Microsoft.Azure.WebJobs.Extensions.Kafka --version 2.0.0-beta
 ```
 
 Check if there is dll packages under the `target/azure-functions/kafka-function-(some number)/bin`. If it is sucess, you will find `Microsoft.Azure.WebJobs.Extensions.Kafka.dll` on it. 
