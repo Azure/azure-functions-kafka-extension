@@ -7,6 +7,8 @@ Azure Functions extensions for Apache Kafka
 
 This repository contains Kafka binding extensions for the **Azure WebJobs SDK**. The extension status is in beta. The communication with Kafka is based on library **Confluent.Kafka**.
 
+Please find samples here
+
 **DISCLAIMER**: This library is supported in the Premium Plan along with support for scaling. It is fully supported when using Azure Functions on Kubernetes where scaling will be handed by KEDA - scaling based on Kafka queue length. It is currently not supported on the Consumption plan (there will be no scale from zero).
 
 ## Bindings
