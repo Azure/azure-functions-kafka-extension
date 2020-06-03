@@ -322,6 +322,14 @@ Both, trigger and output, can connect to a secure Kafka broker. The following at
 
 Username and password should reference a Azure function configuration variable and not be hardcoded.
 
+## Language support configuration
+
+For the non-C# languages, you can specify `cardinality` for choosing if the KafkaTrigger is executed in batch. 
+|Setting|Description|Option|
+|-|-|-|
+|cardinality|Set to many in order to enable batching. If omitted or set to one, a single message is passed to the function. For Java functions, if you set "MANY", you need to set a `dataType`. |"ONE", "MANY"|
+|dataType|For java functions, the type of the deserialize a kafka event. It requires when you use cardinality = "MANY" |"string", "binary", "stream"|
+
 ## Linux Premium plan configuration
 Currently when running a function in a Linux Premium plan environment there will be an error indicating that we could not load the librdkafka library. To address the problem, at least for now, please add the setting below. It will include the extension location as one of the paths where libraries are searched. We are working on avoiding this setting in future releases.
 
