@@ -9,6 +9,8 @@ import com.microsoft.azure.functions.annotation.CustomBinding;
 import com.microsoft.azure.functions.kafka.BrokerAuthenticationMode;
 import com.microsoft.azure.functions.kafka.BrokerProtocol;
 
+import com.microsoft.azure.functions.annotation.Cardinality;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.lang.annotation.RetentionPolicy;
@@ -36,6 +38,20 @@ public @interface KafkaTrigger {
      * Gets or sets the EventHub connection string when using KafkaOutput protocol header feature of Azure EventHubs.
      */
     String eventHubConnectionString() default "";
+    /**
+     * Cardinality of the trigger input.
+     * Choose 'One' if the input is a single message or 'Many' if the input is an array of messages.
+     * If you choose 'Many', please set a dataType. 
+     * Default: 'One'
+     */
+    Cardinality cardinality() default Cardinality.ONE;
+    /**
+     * DataType for the Cardinality settings. If you set the cardinality as Cardinality.MANY, Azure Functions Host will deserialize
+     * the kafka events as an array of this type.
+     * Allowed values: string, binary, stream
+     * Default: ""
+     */
+    String dataType() default "";
 
     /**
      * Gets or sets the consumer group.
@@ -47,7 +63,7 @@ public @interface KafkaTrigger {
      * Allowed values: Gssapi, Plain, ScramSha256, ScramSha512
      * Default: PLAIN
      */
-    BrokerAuthenticationMode authenticationMode() default BrokerAuthenticationMode.NOTSET; // TODO double check if it is OK
+    BrokerAuthenticationMode authenticationMode() default BrokerAuthenticationMode.NOTSET;
 
     /**
      * SASL username with the PLAIN and SASL-SCRAM-.. mechanisms
