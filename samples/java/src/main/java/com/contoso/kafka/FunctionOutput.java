@@ -11,6 +11,13 @@ import com.microsoft.azure.functions.kafka.*;
 import java.util.Optional;
 
 public class FunctionOutput {
+    /**
+     * This function listens at endpoint "api/KafkaInput-Java" and send message to the conluent-topic. Two ways to invoke it using "curl" command in bash:
+     * 1. curl -d "HTTP BODY" {your host}/api/KafkaInput-Java
+     * 2. curl "{your host}/api/KafkaInput-Java?message=hello"
+     * This sample is for a local cluster. Modify topic and brokerList on the @KafkaOutput annotataion
+     * For the Confluence Cloud example, please refer the KafkaTrigger-Java-Many on the `TriggerFunction.java`.
+     */
     @FunctionName("KafkaInput-Java")
     public HttpResponseMessage input(
             @HttpTrigger(name = "req", methods = {HttpMethod.GET, HttpMethod.POST}, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
