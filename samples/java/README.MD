@@ -173,6 +173,19 @@ Go to Azure Portal, select the FunctionAPp, then go to Configuration > Applicati
 | ConfluentCloudUsername | Username of Confluent Cloud | - |
 | ConfluentCloudPassword | Password of Confluent Cloud | - |
 | LD_LIBRARY_PATH | /home/site/wwwroot/bin/runtimes/linux-x64/native | Linux only |
+
+#### Send kakfka event.
+
+Send kafka events from producer. You can call `KafkaInput-Java` for a local cluster, or you can use `ccloud` command 
+for confluent cloud. 
+
+```
+$ ccloud login 
+$ ccloud kafka topic produce message
+```
+
+For more details, Go to [ccloud](https://docs.confluent.io/current/cloud/cli/command-reference/ccloud.html). 
+
 # Resource
 
 * [Quickstart: Create a function in Azure that responds to HTTP requests](https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-first-azure-function-azure-cli?pivots=programming-language-java&tabs=bash%2Cbrowser)
