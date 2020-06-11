@@ -155,6 +155,16 @@ The maven target will create a function app if it is not exists then deploy the 
 $ mvn azure-functions:deploy -e
 ```
 
+#### Configure AppSettings 
+
+Go to Azure Portal, select the FunctionAPp, then go to Configuration > Application settings. You need to configure these application settings. `BrokerList`, `ConfluentCloudUsername` and `ConfluentCloudPassowrd` are required for the sample. 
+`LD_LIBRARY_PATH` is required for Linux based Function App. That is references so library that is included on the Kafka extensions. 
+
+| Name | Description | NOTE |
+| BrokerList | Kafka Broker List | e.g. changeme.eastus.azure.confluent.cloud:9092 |
+| ConfluentCloudUsername | Username of Confluent Cloud | - |
+| ConfluentCloudPassword | Password of Confluent Cloud | - |
+| LD_LIBRARY_PATH | /home/site/wwwroot/bin/runtimes/linux-x64/native | Linux only |
 # Resource
 
 * [Quickstart: Create a function in Azure that responds to HTTP requests](https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-first-azure-function-azure-cli?pivots=programming-language-java&tabs=bash%2Cbrowser)
