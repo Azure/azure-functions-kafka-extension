@@ -38,12 +38,13 @@ public class TriggerFunction {
                 topic = "message", 
                 brokerList="%BrokerList%",
                 consumerGroup="$Default", 
-                username = "%UserName%", 
-                password = "%Password%",
+                username = "%ConfluentCloudUsername%", 
+                password = "%ConfluentCloudPassword%",
                 authenticationMode = BrokerAuthenticationMode.PLAIN,
                 protocol = BrokerProtocol.SASLSSL,
                 cardinality = Cardinality.MANY,
-                dataType = "string"
+                dataType = "string",
+                sslCaLocation = "confluent_cloud_cacert.pem"
              ) String[] kafkaEventData,
             final ExecutionContext context) {
             for (String message: kafkaEventData) {

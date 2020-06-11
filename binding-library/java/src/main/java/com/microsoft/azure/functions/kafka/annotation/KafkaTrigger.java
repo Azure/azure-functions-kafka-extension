@@ -91,4 +91,22 @@ public @interface KafkaTrigger {
      * ssl.key.location in librdkafka
      */
     String sslKeyLocation() default "";
+
+    /**
+     * Path to CA certificate file for verifying the broker's certificate.
+     * ssl.ca.location in librdkafka
+     */
+    String sslCaLocation() default "";
+
+    /**
+     * Path to client's certificate.
+     * ssl.certificate.location in librdkafka
+     */
+    String sslCertificateLocation() default "";
+
+    /**
+     * Password for client's certificate.
+     * ssl.key.password in librdkafka
+     */
+    String sslKeyPassword() default "";
 }
