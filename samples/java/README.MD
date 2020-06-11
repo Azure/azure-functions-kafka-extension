@@ -67,6 +67,14 @@ _install_extension.sh_
 FUNCTION_APP_NAME=kafka-function-20190419163130420
 ```
 
+### Modify TriggerFunction.java (Mac/Linux user only)
+
+Remove following line. This line is windows only. 
+
+```java                 
+sslCaLocation = "confluent_cloud_cacert.pem", // Remove this attribute for Linux/Mac users.
+```
+
 ### Build and package the app
 
 ```
