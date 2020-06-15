@@ -1,0 +1,18 @@
+{
+      "scriptFile": "main.py",
+      "bindings": [
+        {
+            "type" : "kafkaTrigger",
+            "direction": "in",
+            "name" : "kevent",
+            "protocol" : "SASLSSL",
+            "password" : "%ConfluentCloudPassword%",
+            "topic" : "message",
+            "authenticationMode" : "PLAIN",
+            "cardinality" : "ONE",
+            "consumerGroup" : "$Default",
+            "username" : "%ConfluentCloudUserName%",
+            "brokerList" : "%BrokerList%"    
+        }
+    ]
+}
