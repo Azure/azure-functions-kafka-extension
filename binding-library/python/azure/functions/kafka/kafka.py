@@ -60,6 +60,9 @@ class KafkaEvent(AbstractKafkaEvent):
 class KafkaConverter(meta.InConverter, meta.OutConverter, binding='kafka'):
     @classmethod
     def check_input_type_annotation(cls, pytype) -> bool:
+        if pytype is None:
+            return False
+
         return issubclass(pytype, KafkaEvent)
 
     @classmethod
