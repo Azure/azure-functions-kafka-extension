@@ -1,6 +1,7 @@
 import abc
 import typing
 
+
 class AbstractKafkaEvent(abc.ABC):
 
     @abc.abstractmethod
@@ -11,7 +12,7 @@ class AbstractKafkaEvent(abc.ABC):
     @abc.abstractmethod
     def key(self) -> typing.Optional[str]:
         pass
-    
+
     @property
     @abc.abstractmethod
     def offset(self) -> typing.Optional[int]:
