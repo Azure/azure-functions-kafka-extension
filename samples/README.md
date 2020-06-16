@@ -37,6 +37,10 @@ A sample Python consumer function is provided in samples/python/KafkaTrigger. It
 2. Make sure you have [latest version](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local) of functions core tools.
 [TODO: add information Java samples]
 
+### Using the Auzre Functions Java kafka Trigger
+
+Go to [Developers guid for Kafka Functions for Java](java/README.MD). You can find the step-by-step instruction.
+
 ## Typescript Consumer
 
 A sample Typescript function is provided in samples/typescript/kafka-trigger. It can be executed locally or using [Visual Studio Code Remote Containers](https://code.visualstudio.com/docs/remote/remote-overview):

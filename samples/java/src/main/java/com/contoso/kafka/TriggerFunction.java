@@ -38,10 +38,11 @@ public class TriggerFunction {
                 topic = "message", 
                 brokerList="%BrokerList%",
                 consumerGroup="$Default", 
-                username = "%UserName%", 
-                password = "%Password%",
+                username = "%ConfluentCloudUsername%", 
+                password = "%ConfluentCloudPassword%",
                 authenticationMode = BrokerAuthenticationMode.PLAIN,
                 protocol = BrokerProtocol.SASLSSL,
+                sslCaLocation = "confluent_cloud_cacert.pem", // Remove this attribute for Linux/Mac users.
                 cardinality = Cardinality.MANY,
                 dataType = "string"
              ) String[] kafkaEventData,
