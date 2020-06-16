@@ -78,13 +78,13 @@ class KafkaConverter(meta.InConverter, meta.OutConverter, binding='kafka'):
         data_type = data.type
 
         if data_type == 'string':
-            body = data.string.encode('utf-8')
+            body = data.value.encode('utf-8')
 
         elif data_type == 'bytes':
-            body = data.bytes
+            body = data.value
 
         elif data_type == 'json':
-            body = data.json.encode('utf-8')
+            body = data.value.encode('utf-8')
 
         else:
             raise NotImplementedError(
@@ -109,13 +109,13 @@ class KafkaTriggerConverter(KafkaConverter,
         data_type = data.type
 
         if data_type == 'string':
-            body = data.string.encode('utf-8')
+            body = data.value.encode('utf-8')
 
         elif data_type == 'bytes':
-            body = data.bytes
+            body = data.value
 
         elif data_type == 'json':
-            body = data.json.encode('utf-8')
+            body = data.value.encode('utf-8')
 
         else:
             raise NotImplementedError(
