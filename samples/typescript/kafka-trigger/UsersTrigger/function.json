@@ -6,7 +6,8 @@
       "name": "event",
       "topic": "users",
       "consumerGroup": "functions",
-      "brokerList": "BrokerList",
+      "brokerList": "broker:29092",
+      "cardinality": "MANY",
       "dataType": "string"
     }
   ],

@@ -4,10 +4,15 @@
             "type": "kafkaTrigger",
             "name": "event",
             "direction": "in",
-            "topic": "%KafkaTopic%",
-            "brokerList": "%KafkaBroker%",
-            "consumerGroup": "%KafkaConsumerGroup%",
-            "dataType": "binary"
+            "protocol" : "SASLSSL",
+            "password" : "%ConfluentCloudPassword%",
+            "dataType" : "binary",
+            "topic" : "message",
+            "authenticationMode" : "PLAIN",
+            "cardinality" : "MANY",
+            "consumerGroup" : "$Default",
+            "username" : "%ConfluentCloudUserName%",
+            "brokerList" : "%BrokerList%"
         }
     ]
 }

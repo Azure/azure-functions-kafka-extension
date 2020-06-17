@@ -1,9 +1,10 @@
 version: '3'
 services:
   myfunction:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    #build:
+    image: mcr.microsoft.com/azure-functions/node:3.0-node12-core-tools
+      #context: .
+      #dockerfile: Dockerfile
     links: 
       - broker
     ports:
