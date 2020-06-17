@@ -1,0 +1,8 @@
+{
+    "IsEncrypted": false,
+    "Values": {
+    "BrokerList": "YOUR_BROKER_LIST_HERE",
+    "ConfluentCloudUsername": "YOUR_CONFLUENT_USER_NAME_HERE",
+    "ConfluentCloudPassword": "YOUR_CONFLUENT_PASSWORD_HERE"
+    }
+}
