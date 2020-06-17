@@ -1,10 +1,9 @@
-import json
 import typing
+
+from azure.functions import meta
 
 from ._kafka import AbstractKafkaEvent
 
-from azure.functions_worker.bindings import meta
-from azure.functions_worker import protos
 
 class KafkaEvent(AbstractKafkaEvent):
     """A concrete implementation of Kafka event message type."""
@@ -22,30 +21,30 @@ class KafkaEvent(AbstractKafkaEvent):
         self.__partition = partition
         self.__topic = topic
         self.__timestamp = timestamp
-    
+
     def get_body(self) -> bytes:
         return self.__body
-    
+
     @property
     def key(self) -> typing.Optional[str]:
         return self.__key
-    
+
     @property
     def offset(self) -> typing.Optional[int]:
         return self.__offset
-    
+
     @property
     def partition(self) -> typing.Optional[int]:
         return self.__partition
-    
+
     @property
     def topic(self) -> typing.Optional[str]:
         return self.__topic
-    
+
     @property
     def timestamp(self) -> typing.Optional[str]:
         return self.__timestamp
-    
+
     def __repr__(self) -> str:
         return (
             f'<azure.KafkaEvent '
@@ -57,16 +56,14 @@ class KafkaEvent(AbstractKafkaEvent):
             f'at 0x{id(self):0x}>'
         )
 
-class KafkaConverter(meta.InConverter, meta.OutConverter,
-                        binding='kafka'):
 
+class KafkaConverter(meta.InConverter, meta.OutConverter, binding='kafka'):
     @classmethod
-    def check_input_type_annotation(
-           cls, pytype: type, datatype: protos.BindingInfo.DataType) -> bool:
-        if datatype is protos.BindingInfo.undefined:
-            return issubclass(pytype, KafkaEvent)
-        else:
+    def check_input_type_annotation(cls, pytype) -> bool:
+        if pytype is None:
             return False
+
+        return issubclass(pytype, KafkaEvent)
 
     @classmethod
     def check_output_type_annotation(cls, pytype) -> bool:
@@ -77,19 +74,17 @@ class KafkaConverter(meta.InConverter, meta.OutConverter,
         )
 
     @classmethod
-    def from_proto(cls, data: protos.TypedData, *,
-                   pytype: typing.Optional[type],
-                   trigger_metadata) -> KafkaEvent:
-        data_type = data.WhichOneof('data')
+    def decode(cls, data: meta.Datum, *, trigger_metadata) -> KafkaEvent:
+        data_type = data.type
 
         if data_type == 'string':
-            body = data.string.encode('utf-8')
+            body = data.value.encode('utf-8')
 
         elif data_type == 'bytes':
-            body = data.bytes
+            body = data.value
 
         elif data_type == 'json':
-            body = data.json.encode('utf-8')
+            body = data.value.encode('utf-8')
 
         else:
             raise NotImplementedError(
@@ -98,29 +93,29 @@ class KafkaConverter(meta.InConverter, meta.OutConverter,
         return KafkaEvent(body=body)
 
     @classmethod
-    def to_proto(cls, obj: typing.Any, *,
-                 pytype: typing.Optional[type]) -> protos.TypedData:
-        raise NotImplementedError(
-                f'Output bindings are not supported for Kafka')
+    def encode(cls, obj: typing.Any, *,
+               expected_type: typing.Optional[type]) -> meta.Datum:
+        raise NotImplementedError('Output bindings are not '
+                                  'supported for Kafka')
 
 
 class KafkaTriggerConverter(KafkaConverter,
-                               binding='kafkaTrigger', trigger=True):
+                            binding='kafkaTrigger', trigger=True):
 
     @classmethod
-    def from_proto(cls, data: protos.TypedData, *,
-                   pytype: typing.Optional[type],
-                   trigger_metadata) -> KafkaEvent:
-        data_type = data.WhichOneof('data')
+    def decode(
+        cls, data: meta.Datum, *, trigger_metadata
+    ) -> KafkaEvent:
+        data_type = data.type
 
         if data_type == 'string':
-            body = data.string.encode('utf-8')
+            body = data.value.encode('utf-8')
 
         elif data_type == 'bytes':
-            body = data.bytes
+            body = data.value
 
         elif data_type == 'json':
-            body = data.json.encode('utf-8')
+            body = data.value.encode('utf-8')
 
         else:
             raise NotImplementedError(
@@ -139,3 +134,9 @@ class KafkaTriggerConverter(KafkaConverter,
             topic=cls._decode_trigger_metadata_field(
                 trigger_metadata, 'Topic', python_type=str)
         )
+
+    @classmethod
+    def encode(cls, obj: typing.Any, *,
+               expected_type: typing.Optional[type]) -> meta.Datum:
+        raise NotImplementedError('Output bindings are not '
+                                  'supported for Kafka')
