@@ -2,41 +2,40 @@
 
 Explain how to compile the Java bindings and run the sample. 
 
-## Prerequiste 
+## Prerequiste
 
-Refer to the [Readme](https://github.com/Azure/azure-functions-kafka-extension/tree/master/binding-library/java)
+If you want to run the sample on Windows, OSX, or Linux, you need to fefer to the [Readme](https://github.com/Azure/azure-functions-kafka-extension/tree/master/binding-library/java). If you want to update [Kafka binding library for java](https://github.com/Azure/azure-functions-kafka-extension/tree/master/binding-library/java), the prerequisite is required.
 
-## Build the binding-libray/java
+However, If you can use [DevContainer](https://code.visualstudio.com/docs/remote/containers), you don't need to prepare the development environment. For the prerequisite for the devcontainer is: 
 
-Clone this repo then go to binding-library. 
+* [Docker for Windows](https://docs.docker.com/docker-for-windows/) or [Docker for Mac](https://docs.docker.com/docker-for-mac/install/)
+* [Visual Studio Code](https://code.visualstudio.com/)
+* [Visual Studio Code - Remote Development extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack)
 
-```
-$ git clone https://github.com/Azure/azure-functions-kafka-extension.git
-$ cd binding-library/java
-```
+DevContainer will set up all of the prerequisite includs [AzureCLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest) with local Kafka Cluster.
 
-### Build a package 
+## Update Binding Library (Optional)
 
-```
-$ mvn clean 
-$ mvn package
-```
+If you want to update the binding library, Follow the instruction of [Kafka binding library for java](https://github.com/Azure/azure-functions-kafka-extension/tree/master/binding-library/java).
 
-### Install package 
+## Start the DevContainer
 
-Install the binding library to the sample app. Please modify the version.
+Go to the `samples/java` directory then open the Visual Studio Code. 
 
 ```
-$ mvn install:install-file -Dfile=target/azure-functions-java-library-kafka-1.0.0.jar -DgroupId=com.microsoft.azure.functions -DartifactId=azure-functions-java-library-kafka -Dversion=1.0.0 -Dpackaging=jar -DlocalRepositoryPath=../../samples/java/src/repo/
+$ cd samples/java
+$ code . 
 ```
 
-## Build the sample 
+Visual Studio might automatically ask you to start container, if not, you can click the right bottom green icon (><) then you will see the following dropd down.
 
-### Go to sample directory
+![Remote Container](../../docs/images/RemoteContainer.png)
 
-```
-$ cd ../../sample
-```
+Select `Remote-Containers: Reopen in Container`. It start the DevContainer, wait a couple of minutes, you will find a java development enviornment and a local kafka cluster is already up with Visual Studio Code.
+
+### Modify the sample
+
+The sample is already created and configured. However, you might want to change the configurateion. For example, the Function App name. It might  conflict with our function app. Let's change the config to fit your enviornment.
 
 ### Modify pom.xml (optional)
 
@@ -51,9 +50,9 @@ _pom.xml_
         <functionResourceGroup>java-functions-group</functionResourceGroup>
 ```
 
-### Modify install_extension shell
+### Modify install_extension shell (Optional)
 
-Modify the functionAppName of `install_extension.ps1` (windows) or `install_extension.sh` (mac/bash) if you change the functionAppName. 
+Modify the functionAppName of `install_extension.ps1` (windows) or `install_extension.sh` (mac/bash) if you change the functionAppName.
 
 _isntall_extension.ps1_
 
@@ -67,23 +66,42 @@ _install_extension.sh_
 FUNCTION_APP_NAME=kafka-function-20190419163130420
 ```
 
-### Modify TriggerFunction.java (Mac/Linux user only)
+### Modify devcontainer.json (Optional)
 
-Remove following line. This line is windows only. 
+Modify the following part if you modify the functionAppName.
 
-```java                 
-sslCaLocation = "confluent_cloud_cacert.pem", // Remove this attribute for Linux/Mac users.
+```json
+"remoteEnv": {"LD_LIBRARY_PATH": "/workspace/target/azure-functions/kafka-function-20190419163130420/bin/runtimes/linux-x64/native"},
+"containerEnv": {"LD_LIBRARY_PATH": "/workspace/target/azure-functions/kafka-function-20190419163130420/bin/runtimes/linux-x64/native"},
+```
+
+### Three Smaples
+
+This sample contains three functions. `Kafka Cluster` local means, it uses a kafka cluster that is started with DevContainer.
+
+| Name | Description | Kafka Cluster| Comment out |
+| ----- | --------------- | -------| ---|
+| KafaInput-Java | Output binding for sending messsages to a kafka cluster. | local | No |
+| KafkaTrigger-Java | Simple Kafka trigger sample | local | No |
+| KafkaTrigger-Java-Many | Kafka batch processing sample with Confluent Cloud | Confluent Cloud | yes |
+
+### Modify TriggerFunction.java (Windows user only)
+
+If you want to run sample on your Windows with Confluent Cloud and you are not using DevContainer, uncomment the following line. It is the settings of CA certificate. .NET Core, that is azure functions host language, can not access windows registry, that means can not access the CA certificate of the Confluent Cloud.
+
+```java
+sslCaLocation = "confluent_cloud_cacert.pem",
 ```
 
 ### Build and package the app
 
-```
+```bash
 $ mvn clean package
 ```
 
-## Install the KafkaTriggerExtension 
+## Install the KafkaTriggerExtension
 
-Run install extension script for installing kafka extension. For windows, It also install `confluent_cloud_cacert.pem`. 
+Run install extension script for installing kafka extension. For windows, It also install `confluent_cloud_cacert.pem`.
 
 _windows_
 
@@ -118,8 +136,10 @@ _local.settings.json_
 
 ## Run 
 
-This sample includes two samples. Go to `TriggerFunction.java`. You will find `KafkaTrigger-Java` and `KafkaTrigger-Java-Many`. `KafkaTrigger-Java` is a sample for local kafka cluster. `KafkaTrigger-Java-Many` is a sample for confluent cloud with batch execution. If you execute this sample as-is, one of the function will cause an error since these 
-are the different configuration. Remove or comment one of them and enjoy. 
+This sample includes two samples. Go to `TriggerFunction.java`. You will find `KafkaTrigger-Java` and `KafkaTrigger-Java-Many`. `KafkaTrigger-Java` is a sample for local kafka cluster. `KafkaTrigger-Java-Many` is a sample for [Confluent Cloud in Azure](https://github.com/Azure/azure-functions-kafka-extension#connecting-to-confluent-cloud-in-azure) with batch execution. If you execute this sample as-is, one of the function will cause an error since these 
+are the different configuration. Remove or comment one of them and enjoy.
+
+Before running the kafka extension, you need to configure `LD_LIBRARY_PATH` to the `target/azure-functions/kafka-function-20190419163130420`. For the DevContainer, the configuration is reside in the `devontainer.json`. You don't need to configure it. 
 
 ```
 $ mvn azure-functions:run
@@ -174,17 +194,24 @@ Go to Azure Portal, select the FunctionAPp, then go to Configuration > Applicati
 | ConfluentCloudPassword | Password of Confluent Cloud | - |
 | LD_LIBRARY_PATH | /home/site/wwwroot/bin/runtimes/linux-x64/native | Linux only |
 
-#### Send kakfka event.
+#### Send kakfka event
 
-Send kafka events from producer. You can call `KafkaInput-Java` for a local cluster, or you can use `ccloud` command 
-for confluent cloud. 
+Send kafka events from producer. You can call `KafkaInput-Java` for a local cluster, or you can use [ccloud](https://docs.confluent.io/current/cloud/cli/index.html) command for confluent cloud.
 
-```
-$ ccloud login 
+```bash
+$ ccloud login
 $ ccloud kafka topic produce message
 ```
 
-For more details, Go to [ccloud](https://docs.confluent.io/current/cloud/cli/command-reference/ccloud.html). 
+For more details, Go to [ccloud](https://docs.confluent.io/current/cloud/cli/command-reference/ccloud.html).
+
+If you want to send event to the local kafka cluster, you can use
+[kafakacat](https://docs.confluent.io/current/app-development/kafkacat-usage.html) instead.
+
+```bash
+$ apt-get update && apt-get install kafkacat
+$ kafkacat -b broker:29092 -t users -P
+```
 
 # Resource
 

@@ -4,10 +4,36 @@ This repo contains Kafka extension library for building Azure Java Functions. Vi
 
 # Prerequisites
 * Java 8
-* [Azure Function Core Tools](https://github.com/Azure/azure-functions-core-tools) (v2 or above)
+* [Azure Function Core Tools](https://github.com/Azure/azure-functions-core-tools) (v3 or above)
 * Maven 3.0 or above
-* [Azure Function Maven Plugin](https://github.com/Microsoft/azure-maven-plugins/) (1.3.0-SNAPSHOT or above)
+* [Azure Function Maven Plugin](https://github.com/Microsoft/azure-maven-plugins/) (1.5.0-SNAPSHOT or above)
 * [librdkafka](https://github.com/edenhill/librdkafka#installing-prebuilt-packages)
+
+# Build and install
+
+## Build the binding-libray/java
+
+Clone this repo then go to binding-library.
+
+```
+$ git clone https://github.com/Azure/azure-functions-kafka-extension.git
+$ cd binding-library/java
+```
+
+### Build a package
+
+```
+$ mvn clean
+$ mvn package
+```
+
+### Install package
+
+Install the binding library to the sample app. Please modify the `-Dversion` and `-DlocalRepositoryPath`. This sample install the java kafka library to the `samples/java/src/repo directory`.
+
+```
+$ mvn install:install-file -Dfile=target/azure-functions-java-library-kafka-1.0.0.jar -DgroupId=com.microsoft.azure.functions -DartifactId=azure-functions-java-library-kafka -Dversion=1.0.0 -Dpackaging=jar -DlocalRepositoryPath=../../samples/java/src/repo/
+```
 
 # Sample
 
