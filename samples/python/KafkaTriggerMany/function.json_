@@ -4,12 +4,13 @@
         {
             "type" : "kafkaTrigger",
             "direction": "in",
-            "name" : "kevent",
+            "name" : "kevents",
             "protocol" : "SASLSSL",
             "password" : "%ConfluentCloudPassword%",
             "topic" : "message",
             "authenticationMode" : "PLAIN",
-            "cardinality" : "ONE",
+            "cardinality" : "MANY",
+            "dataType": "string",
             "consumerGroup" : "$Default",
             "username" : "%ConfluentCloudUserName%",
             "brokerList" : "%BrokerList%"    

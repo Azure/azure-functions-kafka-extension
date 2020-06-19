@@ -1,5 +1,7 @@
 import logging
-from azure_functions.kafka import KafkaEvent
+import typing
+from azure.functions_extensions.kafka import KafkaEvent
 
-def main(kevent : KafkaEvent):
-    logging.info(kevent.get_body().decode('utf-8'))
+def main(kevents : KafkaEvent):
+    for event in kevents:
+        logging.info(event.get_body())

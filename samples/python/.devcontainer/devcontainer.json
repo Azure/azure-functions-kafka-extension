@@ -1,24 +1,29 @@
-
-{ "name": "Azure Functions & Python 3",
-	"dockerFile": "Dockerfile",
-	"forwardPorts": [ 7071 ],
-	"mounts": [ "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind" ],
+// For format details, see https://aka.ms/vscode-remote/devcontainer.json or this file's README at:
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.106.0/containers/azure-functions-node-10
+{
+	"name": "Azure Functions & Python 3 & Confluent Kafka",
+	"dockerComposeFile": "docker-compose.yml",
+	"service": "myfunction",
+	"workspaceFolder": "/workspace",
+	"remoteEnv": {"LD_LIBRARY_PATH": "/workspace/bin/runtimes/linux-x64/native"},
+	"containerEnv": {"LD_LIBRARY_PATH": "/workspace/bin/runtimes/linux-x64/native"},
+	"forwardPorts": [ 7071, 9021 ],
 
 	// Set *default* container specific settings.json values on container create.
-	"settings":  {
+	"settings": { 
 		"terminal.integrated.shell.linux": "/bin/bash"
 	},
 
 	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
 		"ms-azuretools.vscode-azurefunctions",
-		"ms-azuretools.vscode-docker",
-		"ms-python.python"
-	],
-	
+		"ms-python.python",
+		"dbaeumer.vscode-eslint"
+	]
+
 	// Use 'postCreateCommand' to run commands after the container is created.
 	// "postCreateCommand": "npm install",
 
 	// Uncomment to connect as a non-root user. See https://aka.ms/vscode-remote/containers/non-root.
-	// "remoteUser": "vscode"
+	// "remoteUser": "node"
 }
