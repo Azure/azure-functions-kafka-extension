@@ -118,10 +118,7 @@ class KafkaConverter(meta.InConverter, meta.OutConverter, binding='kafka'):
         elif data.type == 'collection_string':
             parsed_data = data.value.string
 
-        events = []
-        for i in range(len(parsed_data)):
-          event = KafkaEvent(body=parsed_data[i])
-          events.append(event)
+        events = [KafkaEvent(body=pd) for pd in parsed_data]
         
         return events
 
