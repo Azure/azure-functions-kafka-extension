@@ -29,27 +29,23 @@ interface EventData {
     gender: string;
 }
 
-const kafkaTrigger: AzureFunction = async function (context: Context, event_str: string[]): Promise<void> {
+const kafkaTrigger: AzureFunction = async function (context: Context, event_str: string): Promise<void> {
 
-    for(var event of event_str) {
-        context.log(event);
-    }
-    // context.log(event_str);
-    // let event_obj = new KafkaEvent(eval(event_str));
+    let event_obj = new KafkaEvent(eval(event_str));
 
-    // context.log("Event Offset: " + event_obj.Offset);
-    // context.log("Event Partition: " + event_obj.Partition);
-    // context.log("Event Topic: " + event_obj.Topic);
-    // context.log("Event Timestamp: " + event_obj.Timestamp);
-    // context.log("Event Value (as string): " + event_obj.Value);
+    context.log("Event Offset: " + event_obj.Offset);
+    context.log("Event Partition: " + event_obj.Partition);
+    context.log("Event Topic: " + event_obj.Topic);
+    context.log("Event Timestamp: " + event_obj.Timestamp);
+    context.log("Event Value (as string): " + event_obj.Value);
 
-    // let event_value : EventData = event_obj.getValue<EventData>();
+    let event_value : EventData = event_obj.getValue<EventData>();
     
-    // context.log("Event Value Object: ");
-    // context.log("   Value.registertime: ", event_value.registertime.toString());
-    // context.log("   Value.userid: ", event_value.userid);
-    // context.log("   Value.regionid: ", event_value.regionid);
-    // context.log("   Value.gender: ", event_value.gender);
+    context.log("Event Value Object: ");
+    context.log("   Value.registertime: ", event_value.registertime.toString());
+    context.log("   Value.userid: ", event_value.userid);
+    context.log("   Value.regionid: ", event_value.regionid);
+    context.log("   Value.gender: ", event_value.gender);
 };
 
 export default kafkaTrigger;

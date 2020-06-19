@@ -1,15 +1,14 @@
 {
-  "bindings": [
-    {
-      "type": "kafkaTrigger",
-      "direction": "in",
-      "name": "event",
-      "topic": "users",
-      "consumerGroup": "functions",
-      "brokerList": "broker:29092",
-      "cardinality": "MANY",
-      "dataType": "string"
-    }
-  ],
-  "scriptFile": "../dist/UsersTrigger/index.js"
-}
+    "bindings": [
+      {
+        "type": "kafkaTrigger",
+        "direction": "in",
+        "name": "event",
+        "topic": "users",
+        "consumerGroup": "functions",
+        "brokerList": "BrokerList",
+        "dataType": "string"
+      }
+    ],
+    "scriptFile": "../dist/UsersTrigger/index.js"
+  }
