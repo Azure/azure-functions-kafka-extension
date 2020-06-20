@@ -4,7 +4,7 @@ Explain how to compile the Java bindings and run the sample.
 
 ## Prerequiste
 
-If you want to run the sample on Windows, OSX, or Linux, you need to fefer to the [Readme](https://github.com/Azure/azure-functions-kafka-extension/tree/master/binding-library/java). If you want to update [Kafka binding library for java](https://github.com/Azure/azure-functions-kafka-extension/tree/master/binding-library/java), the prerequisite is required.
+If you want to run the sample on Windows, OSX, or Linux, you need to refer to the [Readme](https://github.com/Azure/azure-functions-kafka-extension/tree/master/binding-library/java). If you want to update [Kafka binding library for java](https://github.com/Azure/azure-functions-kafka-extension/tree/master/binding-library/java), the prerequisite is required.
 
 However, If you can use [DevContainer](https://code.visualstudio.com/docs/remote/containers), you don't need to prepare the development environment. For the prerequisite for the devcontainer is: 
 
