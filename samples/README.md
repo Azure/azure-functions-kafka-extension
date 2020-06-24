@@ -2,12 +2,12 @@
 
 This repository contains a few samples to help you get started quickly with the Kafka extension.
 
-## Getting started with Kafka locally
+## Getting started with Kafka
 
-In order to test the sample applications you need to have access to a Kafka instance. We have a several way to enable it.
+In order to test the sample applications you need to have access to a Kafka instance. Here are some ways you can get access to one.
 
 ### Visual Studio Core Remote - Containers
-Several samples provides [DevContainer](https://github.com/microsoft/vscode-dev-containers) configuration. If you start the [Visual Studio Code](https://code.visualstudio.com/) on the target sample directory, it will automatically start a development environment on a Docker container with a local kafka cluster. It is the easiest option for starting a kafka cluster. [Developing inside a Container](https://code.visualstudio.com/docs/remote/containers)
+There are several DevContainer samples [here](https://github.com/microsoft/vscode-dev-containers). If you start the [Visual Studio Code](https://code.visualstudio.com/) on the target sample directory, it will automatically start a development environment on a Docker container with a local kafka cluster. It is the easiest option for starting a kafka cluster. [Developing inside a Container](https://code.visualstudio.com/docs/remote/containers)
 
 ### Confluent Docker Compose
 
@@ -41,9 +41,9 @@ Custom container enable us to deploy custom container to the Function App. We ca
 | -------- | ----------- | ---- | ------------ |
 | Java | Custom container sample | [Readme](container/README.md)| No |
 
-## Tips
+## Notes
 
-Kafka extension supports several lanugages, however, it uses the same Azure Functions host. For this reason, there is a common configuration for each lanugages. I'd like to provide configuration tips in common.
+Kafka extension supports several lanugages, however, it uses the same Azure Functions host. For this reason, there is a common configuration for each lanugages. Please find below some common notes with apply to all the languages.
 
 ### function.json
 
