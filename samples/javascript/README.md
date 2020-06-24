@@ -7,7 +7,7 @@ Explain how to configure and run the sample.
 If you want to run the sample on Windows, OSX, or Linux, you need to following tools.
 
 * [Azure Function Core Tools](https://github.com/Azure/azure-functions-core-tools) (v3 or above)
-* [Node.js](https://nodejs.org/en/) (10 or 12)
+* [Node.js](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node#node-version) (10 or 12)
 * [AzureCLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
 
 However, If you can use [DevContainer](https://code.visualstudio.com/docs/remote/containers), you don't need to prepare the development environment. For the prerequisite for the devcontainer is:
@@ -33,9 +33,9 @@ Visual Studio might automatically ask you to start container, if not, you can cl
 
 Select `Remote-Containers: Reopen in Container`. It start the DevContainer, wait a couple of minutes, you will find a java development enviornment and a local kafka cluster is already up with Visual Studio Code.
 
-### Two Smaples
+### Two Samples
 
-This sample contains three functions. `Kafka Cluster` local means, it uses a kafka cluster that is started with DevContainer.
+In the table below, `Kafka Cluster` local means that the sample users a kafka cluster that is started with the DevContainer.
 
 | Name | Description | Kafka Cluster| Enabled |
 | ----- | --------------- | -------| ---|
@@ -45,9 +45,9 @@ This sample contains three functions. `Kafka Cluster` local means, it uses a kaf
 
 ### Modify function.json_ and local.settings.json
 
-If you want to use `UsersTriggerMany` sample, rename `UsersTriggerMany/function.json_` to `UsersTriggerMany/function.json` then Azure Functions Runtime will detect the function.
+If you want to use the `UsersTriggerMany` sample, rename `UsersTriggerMany/function.json_` to `UsersTriggerMany/function.json`. This allows the Azure Functions Runtime to detect the function.
 
-Then copy `local.settings.json.example` to `local.settings.json` and configure your ccloud environment.
+Then copy `local.settings.json.example` to `local.settings.json` and configure your [ccloud](https://docs.confluent.io/current/cloud/cli/index.html) environment.
 
 ### Modify UsersTriggerMany/function.json (Windows user only)
 
@@ -81,18 +81,19 @@ Before running the kafka extension, you need to configure `LD_LIBRARY_PATH` to t
 $ func start
 ```
 
-### deploy to Azure
+### Deploy to Azure
 
-#### deploy the app
+#### Deploy the app
 
 Deploy the app to a Premium Function You can choose.
 
 * [Quickstart: Create a function in Azure using Visual Studio Code](https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-first-function-vs-code?pivots=programming-language-javascript)
 * [Quickstart: Create a function in Azure that responds to HTTP requests](https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-first-azure-function-azure-cli?tabs=bash%2Cbrowser&pivots=programming-language-javascript)
+* [Azure Functions Premium plan](https://docs.microsoft.com/en-us/azure/azure-functions/functions-premium-plan)
 
 #### Configure AppSettings
 
-Go to Azure Portal, select the FunctionApp, then go to Configuration > Application settings. You need to configure these application settings. `BrokerList`, `ConfluentCloudUsername` and `ConfluentCloudPassowrd` are required for the sample. 
+Go to Azure Portal, select the FunctionApp, then go to Configuration > Application settings. You need to configure these application settings. `BrokerList`, `ConfluentCloudUsername` and `ConfluentCloudPassowrd` are required for the sample.
 `LD_LIBRARY_PATH` is required for Linux based Function App. That is references so library that is included on the Kafka extensions. 
 
 | Name | Description | NOTE |
@@ -103,7 +104,7 @@ Go to Azure Portal, select the FunctionApp, then go to Configuration > Applicati
 
 #### Send kakfka event
 
-Send kafka events from producer, you can use [ccloud](https://docs.confluent.io/current/cloud/cli/index.html) command for confluent cloud.
+Send kafka events from producer, you can use [ccloud](https://docs.confluent.io/current/cloud/cli/index.html) CLI for confluent cloud.
 
 ```bash
 $ ccloud login

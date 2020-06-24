@@ -4,7 +4,7 @@ This repo contains Kafka extension library for building Azure Java Functions. Vi
 
 # Prerequisites
 * Java 8
-* [Azure Function Core Tools](https://github.com/Azure/azure-functions-core-tools) (v3 or above)
+* [Azure Function Core Tools](https://github.com/Azure/azure-functions-core-tools) (v2 or above)
 * Maven 3.0 or above
 * [Azure Function Maven Plugin](https://github.com/Microsoft/azure-maven-plugins/) (1.5.0-SNAPSHOT or above)
 * [librdkafka](https://github.com/edenhill/librdkafka#installing-prebuilt-packages)

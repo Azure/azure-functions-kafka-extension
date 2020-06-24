@@ -6,7 +6,7 @@
             "direction": "in",
             "protocol" : "SASLSSL",
             "password" : "%ConfluentCloudPassword%",
-            "dataType" : "binary",
+            "dataType" : "string",
             "topic" : "message",
             "authenticationMode" : "PLAIN",
             "cardinality" : "MANY",

@@ -13,10 +13,10 @@ We provide two samples.
 
 ## Difference between Javascript and TypeScript
 
-You need to compile your app before start Azure Functions Core Tools.
+You need to compile your app before start Azure Functions Core Tools. Refer to the [Functions Documentation: TypeScript](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node#typescript) documentation for more details.
 
 ```bash
-$ npm install -g typescript
+$ npm install
 $ npm run build
 ```
 
@@ -24,3 +24,4 @@ $ npm run build
 
 * [Quickstart: Create a function in Azure using Visual Studio Code](https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-first-function-vs-code?pivots=programming-language-typescript)
 * [Quickstart: Create a function in Azure that responds to HTTP requests](https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-first-azure-function-azure-cli?tabs=bash%2Cbrowser&pivots=programming-language-typescript)
+* [Functions Documentation: TypeScript](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node#typescript)
