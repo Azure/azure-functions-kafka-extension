@@ -31,7 +31,7 @@ Azure Functions Kafka Extension support several languages with follwing samples.
 | JavaScript | Node 12 sample | [Readme](javascript/README.md)| Yes |
 | PowerShell | PowerShell 6 Sample | [Readme](powershell/README.md)| No |
 | Python | Python 3.8 sample | [Readme](python/README.md)| Yes |
-| TypeScript | TypeScript sample (Node 12) | [Readme](typescript/README.md)| Yes |
+| TypeScript | TypeScript sample (Node 12) | [Readme](typescript/kafka-trigger/README.md)| Yes |
 
 ## Custom Container
 
@@ -39,7 +39,7 @@ Custom container enable us to deploy custom container to the Function App. We ca
 
 | Language | Description | Link | DevContainer |
 | -------- | ----------- | ---- | ------------ |
-| Java | Custom container sample | [Readme](container/README.md)| No |
+| Java | Custom container sample | [Readme](container/kafka-function/README.md)| No |
 
 ## Notes
 
