@@ -93,7 +93,7 @@ For more details, refer to [Local settings file](https://docs.microsoft.com/en-u
 
 ### Extension Bundle and install kafka extension
 
-For the latest Azure Function, we use [Extension Bundle](https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-register#extension-bundles). However, for the Kafka extension, we are currently doesn't use it. In the near feature, Kafka extension will support it. The extnsion bundle will install extension automatically. So that we need to install Kafka extension manually.
+Currently in Azure Functions - most triggers and bindings are ordinarily obtained using the extension bundle. However, currently the Kafka extension is not part of the extension bundle (will be added in the future). Meanwhile, you will have to install the Kafka extension manually.
 
 For installing Kafka extension manually:
 
