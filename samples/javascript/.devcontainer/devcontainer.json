@@ -1,8 +1,10 @@
 {
-	"name": "Azure Functions & Node.js 10 & Confluent Kafka",
+	"name": "Azure Functions & Node.js 12 & Confluent Kafka",
 	"dockerComposeFile": "docker-compose.yml",
 	"service": "myfunction",
 	"workspaceFolder": "/workspace",
+	"remoteEnv": {"LD_LIBRARY_PATH": "/workspace/bin/runtimes/linux-x64/native"},
+	"containerEnv": {"LD_LIBRARY_PATH": "/workspace/bin/runtimes/linux-x64/native"},
 	"workspaceMount": "src=${localWorkspaceFolder},dst=/workspace,type=bind",
 	"forwardPorts": [
 		7071,

@@ -1,7 +1,7 @@
 // For format details, see https://aka.ms/vscode-remote/devcontainer.json or this file's README at:
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.106.0/containers/azure-functions-node-10
 {
-	"name": "Azure Functions & Node.js 10 & Confluent Kafka",
+	"name": "Azure Functions & TypeScript & Node 12 & Confluent Kafka",
 	"dockerComposeFile": "docker-compose.yml",
 	"service": "myfunction",
 	"workspaceFolder": "/workspace",

@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Attach to Python Functions",
+      "type": "python",
+      "request": "attach",
+      "linux": {
+        "env": [{ "name": "LD_LIBRARY_PATH"}, {"value": "/workspace/bin/runtimes/linux-x64/native"}],
+      },
+      "port": 9091,
+      "preLaunchTask": "func: host start"
+    }
+  ]
+}

@@ -19,7 +19,7 @@ public class TriggerFunction {
      */
     @FunctionName("KafkaTrigger-Java")
     public void runOne(
-            @KafkaTrigger(topic = "my-confluent-topic", brokerList="localhost:31090",consumerGroup="$Default") String kafkaEventData,
+            @KafkaTrigger(topic = "users", brokerList="broker:29092",consumerGroup="functions") String kafkaEventData,
             final ExecutionContext context) {
         context.getLogger().info(kafkaEventData);
     }
@@ -32,23 +32,23 @@ public class TriggerFunction {
      * @param kafkaEventData
      * @param context
      */
-    @FunctionName("KafkaTrigger-Java-Many")
-    public void runMany(
-            @KafkaTrigger(
-                topic = "message", 
-                brokerList="%BrokerList%",
-                consumerGroup="$Default", 
-                username = "%ConfluentCloudUsername%", 
-                password = "%ConfluentCloudPassword%",
-                authenticationMode = BrokerAuthenticationMode.PLAIN,
-                protocol = BrokerProtocol.SASLSSL,
-                sslCaLocation = "confluent_cloud_cacert.pem", // Remove this attribute for Linux/Mac users.
-                cardinality = Cardinality.MANY,
-                dataType = "string"
-             ) String[] kafkaEventData,
-            final ExecutionContext context) {
-            for (String message: kafkaEventData) {
-                context.getLogger().info(message);
-            }    
-    }
+    // @FunctionName("KafkaTrigger-Java-Many")
+    // public void runMany(
+    //         @KafkaTrigger(
+    //             topic = "message", 
+    //             brokerList="%BrokerList%",
+    //             consumerGroup="$Default", 
+    //             username = "%ConfluentCloudUsername%", 
+    //             password = "%ConfluentCloudPassword%",
+    //             authenticationMode = BrokerAuthenticationMode.PLAIN,
+    //             protocol = BrokerProtocol.SASLSSL,
+    //             // sslCaLocation = "confluent_cloud_cacert.pem", // Enable this line for windows.
+    //             cardinality = Cardinality.MANY,
+    //             dataType = "string"
+    //          ) String[] kafkaEventData,
+    //         final ExecutionContext context) {
+    //         for (String message: kafkaEventData) {
+    //             context.getLogger().info(message);
+    //         }    
+    // }
 }

@@ -1,0 +1,10 @@
+README.md
+setup.py
+azure/functions_extensions/kafka/__init__.py
+azure/functions_extensions/kafka/_kafka.py
+azure/functions_extensions/kafka/kafka.py
+azure_functions_kafka_binding.egg-info/PKG-INFO
+azure_functions_kafka_binding.egg-info/SOURCES.txt
+azure_functions_kafka_binding.egg-info/dependency_links.txt
+azure_functions_kafka_binding.egg-info/requires.txt
+azure_functions_kafka_binding.egg-info/top_level.txt
