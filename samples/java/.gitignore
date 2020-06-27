@@ -40,3 +40,6 @@ tmp/
 .classpath
 .project
 .settings
+
+# Azure Functions Core Tools Temp dir
+azure-functions-core-tools
