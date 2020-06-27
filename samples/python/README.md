@@ -1,8 +1,8 @@
-# Developers guid for Kafka Functions for Python
+# Developers guide for Kafka Functions for Python
 
 Explain how to configure and run the sample.
 
-## Prerequiste
+## Prerequisite
 
 If you want to run the sample on Windows, OSX, or Linux, you need to following tools.
 
@@ -16,7 +16,7 @@ However, If you can use [DevContainer](https://code.visualstudio.com/docs/remote
 * [Visual Studio Code](https://code.visualstudio.com/)
 * [Visual Studio Code - Remote Development extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack)
 
-DevContainer will set up all of the prerequisite includs [AzureCLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest) with local Kafka Cluster.
+DevContainer will set up all of the prerequisites includes [AzureCLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest) with local Kafka Cluster.
 
 ### Copy the Azure Functions Python Binding for Kafka
 
@@ -37,15 +37,15 @@ $ cd samples/python
 $ code .
 ```
 
-Visual Studio might automatically ask you to start container, if not, you can click the right bottom green icon (><) then you will see the following dropd down.
+Visual Studio might automatically ask you to start a container. If not, you can click the right bottom green icon (><), then you will see the following dropdown.
 
 ![Remote Container](../../docs/images/RemoteContainer.png)
 
-Select `Remote-Containers: Reopen in Container`. It start the DevContainer, wait a couple of minutes, you will find a java development enviornment and a local kafka cluster is already up with Visual Studio Code.
+Select `Remote-Containers: Reopen in Container.` It starts the DevContainer, wait a couple of minutes, you will find a java development environment, and a local Kafka cluster is already up with Visual Studio Code.
 
-### Two Smaples
+### Two Samples
 
-This sample contains three functions. `Kafka Cluster` local means, it uses a kafka cluster that is started with DevContainer.
+This sample contains three functions. `Kafka Cluster` local means, it uses a Kafka cluster that is started with DevContainer.
 
 | Name | Description | Kafka Cluster| Enabled |
 | ----- | --------------- | -------| ---|
@@ -61,7 +61,7 @@ $ source .venv/bin/activate
 
 ### Install Binding
 
-Install the binding from `library` directory. `-e` means editable option.
+Install the binding from the `library` directory. `-e` means editable option.
 
 ```bash
 $ pip install library -e
@@ -75,7 +75,7 @@ Then copy `local.settings.json.example` to `local.settings.json` and configure y
 
 ### Modify UsersTriggerMany/function.json (Windows user only)
 
-If you want to run sample on your Windows with Confluent Cloud and you are not using DevContainer, uncomment the following line. It is the settings of CA certificate. .NET Core, that is azure functions host language, can not access windows registry, that means can not access the CA certificate of the Confluent Cloud.
+If you want to run the sample on your Windows with Confluent Cloud and you are not using DevContainer, uncomment the following line. It is the settings of the CA certificate. .NET Core that is azure functions host language can not access the Windows registry, that it means can not access the CA certificate of the Confluent Cloud.
 
 _UserTriggerMany/function.json_
 
@@ -87,19 +87,19 @@ For downloading `confluent_cloud_cacert.pem`, you can refer to [Connecting to Co
 
 ## Install the KafkaTriggerExtension
 
-This command will install Kafka Extension. The command refer the `extensions.csproj` then find the Kafka Extension NuGet package.
+This command will install Kafka Extension. The command refer to the `extensions.csproj` then find the Kafka Extension NuGet package.
 
 ```bash
 $ func extensions install
 ```
 
-Check if there is dll packages under the `target/azure-functions/kafka-function-(some number)/bin`. If it is sucess, you will find `Microsoft.Azure.WebJobs.Extensions.Kafka.dll` on it. 
+Check if there is dll packages under the `target/azure-functions/kafka-function-(some number)/bin`. If it is success, you will find `Microsoft.Azure.WebJobs.Extensions.Kafka.dll` on it. 
 
 ## Run the Azure Functions
 
 ## Run 
 
-Before running the kafka extension, you need to configure `LD_LIBRARY_PATH` to the `/workspace/bin/runtimes/linux-x64/native"`. For the DevContainer, the configuration is reside in the `devontainer.json`. You don't need to configure it.
+Before running the Kafka extension, you need to configure `LD_LIBRARY_PATH` to the `/workspace/bin/runtimes/linux-x64/native"`. For the DevContainer, the configuration resides in the `devontainer.json.` You don't need to configure it.
 
 ```bash
 $ func start
@@ -127,7 +127,7 @@ Go to Azure Portal, select the FunctionApp, then go to Configuration > Applicati
 
 #### Send kakfka event
 
-Send kafka events from producer, you can use [ccloud](https://docs.confluent.io/current/cloud/cli/index.html) command for confluent cloud.
+Send Kafka events from a producer, and you can use [ccloud](https://docs.confluent.io/current/cloud/cli/index.html) command for confluent cloud.
 
 ```bash
 $ ccloud login
@@ -136,7 +136,7 @@ $ ccloud kafka topic produce message
 
 For more details, Go to [ccloud](https://docs.confluent.io/current/cloud/cli/command-reference/ccloud.html).
 
-If you want to send event to the local kafka cluster, you can use
+If you want to send an event to the local Kafka cluster, you can use
 [kafakacat](https://docs.confluent.io/current/app-development/kafkacat-usage.html) instead.
 
 ```bash
