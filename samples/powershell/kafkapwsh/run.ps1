@@ -1,5 +1,7 @@
 using namespace System.Net
 
-param($kafkaEvent)
+param($kafkaEvent, $TriggerMetadata)
 
 $kafkaEvent 
+
+$TriggerMetadata
