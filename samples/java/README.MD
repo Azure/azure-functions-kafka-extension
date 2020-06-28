@@ -1,10 +1,10 @@
-# Developers guid for Kafka Functions for Java
+# Developers guide for Kafka Functions for Java
 
 Explain how to compile the Java bindings and run the sample. 
 
-## Prerequiste
+## Prerequisite
 
-If you want to run the sample on Windows, OSX, or Linux, you need to refer to the [Readme](https://github.com/Azure/azure-functions-kafka-extension/tree/master/binding-library/java). If you want to update [Kafka binding library for java](https://github.com/Azure/azure-functions-kafka-extension/tree/master/binding-library/java), the prerequisite is required.
+If you want to run the sample on Windows, OSX, or Linux, you need to refer to the [Readme](https://github.com/Azure/azure-functions-kafka-extension/tree/master/binding-library/java). If you're going to update [Kafka binding library for java](https://github.com/Azure/azure-functions-kafka-extension/tree/master/binding-library/java), the prerequisite is required.
 
 However, If you can use [DevContainer](https://code.visualstudio.com/docs/remote/containers), you don't need to prepare the development environment. For the prerequisite for the devcontainer is: 
 
@@ -12,7 +12,7 @@ However, If you can use [DevContainer](https://code.visualstudio.com/docs/remote
 * [Visual Studio Code](https://code.visualstudio.com/)
 * [Visual Studio Code - Remote Development extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack)
 
-DevContainer will set up all of the prerequisite includs [AzureCLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest) with local Kafka Cluster.
+DevContainer will set up all of the prerequisites includes [AzureCLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest) with local Kafka Cluster.
 
 ## Update Binding Library (Optional)
 
@@ -20,26 +20,26 @@ If you want to update the binding library, Follow the instruction of [Kafka bind
 
 ## Start the DevContainer
 
-Go to the `samples/java` directory then open the Visual Studio Code. 
+Go to the `samples/java` directory then open the Visual Studio Code. This repo has two samples. One is for Confluent Cloud, and the other is for the local Kafka cluster that is started automatically. If you want to use Confluent Cloud, you can change `local` to `confluent.`
 
 ```
-$ cd samples/java
+$ cd samples/java/local
 $ code . 
 ```
 
-Visual Studio might automatically ask you to start container, if not, you can click the right bottom green icon (><) then you will see the following dropd down.
+Visual Studio might automatically ask you to start a container. If not, you can click the right bottom green icon (><), then you will see the following dropdown.
 
 ![Remote Container](../../docs/images/RemoteContainer.png)
 
-Select `Remote-Containers: Reopen in Container`. It start the DevContainer, wait a couple of minutes, you will find a java development enviornment and a local kafka cluster is already up with Visual Studio Code.
+Select `Remote-Containers: Reopen in Container.` It starts the DevContainer, wait a couple of minutes, you will find a java development environment, and a local Kafka cluster is already up with Visual Studio Code.
 
 ### Modify the sample
 
-The sample is already created and configured. However, you might want to change the configurateion. For example, the Function App name. It might  conflict with our function app. Let's change the config to fit your enviornment.
+The sample is already created and configured. However, you might want to change the configuration. For example, the Function App name. It might conflict with our function app. Let's change the config to fit your environment.
 
 ### Modify pom.xml (optional)
 
-Go to the sample app directory, buid the sample. If you want to change the function App that you want to deploy this app, change the following section on the `pom.xml` file. The current `pom.xml` file is for windows and deploy windows based function app. If you are using mac, you can rename the `pom_linux.xml` to `pom.xml`. It deploys linux based function app.
+Go to the sample app directory, build the sample. If you want to change the function App that you want to deploy this app, modify the following section on the `pom.xml` file. The current `pom.xml` file is for windows and deploys windows based function app. If you are using a mac, you can rename the `pom_linux.xml` to `pom.xml.` It deploys a Linux based function app.
 
 _pom.xml_  
 
@@ -75,19 +75,19 @@ Modify the following part if you modify the functionAppName.
 "containerEnv": {"LD_LIBRARY_PATH": "/workspace/target/azure-functions/kafka-function-20190419163130420/bin/runtimes/linux-x64/native"},
 ```
 
-### Three Smaples
+### Two Samples
 
-This sample contains three functions. `Kafka Cluster` local means, it uses a kafka cluster that is started with DevContainer.
+This repo has two java samples. One is for Confluent. The other is the local Kafka cluster that is automatically started. You can find three sample functions listed below. 
 
-| Name | Description | Kafka Cluster| Comment out |
-| ----- | --------------- | -------| ---|
-| KafaInput-Java | Output binding for sending messsages to a kafka cluster. | local | No |
-| KafkaTrigger-Java | Simple Kafka trigger sample | local | No |
-| KafkaTrigger-Java-Many | Kafka batch processing sample with Confluent Cloud | Confluent Cloud | yes |
+| Name | Description | Kafka Cluster| 
+| ----- | --------------- | -------|
+| KafaInput-Java | Output binding for sending messages to a Kafka cluster. | local, confluent |
+| KafkaTrigger-Java | Simple Kafka trigger sample | local |
+| KafkaTrigger-Java-Many | Kafka batch processing sample with Confluent Cloud | confluent |
 
 ### Modify TriggerFunction.java (Windows user only)
 
-If you want to run sample on your Windows with Confluent Cloud and you are not using DevContainer, uncomment the following line. It is the settings of CA certificate. .NET Core, that is azure functions host language, can not access windows registry, that means can not access the CA certificate of the Confluent Cloud.
+If you want to run the sample on your Windows with Confluent Cloud and you are not using DevContainer, uncomment the following line. It is the settings of the CA certificate. .NET Core that is azure functions host language can not access the Windows registry, which means it can not access the CA certificate of the Confluent Cloud.
 
 ```java
 sslCaLocation = "confluent_cloud_cacert.pem",
@@ -101,7 +101,7 @@ $ mvn clean package
 
 ## Install the KafkaTriggerExtension
 
-Run install extension script for installing kafka extension. For windows, It also install `confluent_cloud_cacert.pem`.
+Install extension script for installing the Kafka extension. For windows, It also install `confluent_cloud_cacert.pem`.
 
 _windows_
 
@@ -109,18 +109,20 @@ _windows_
 PS > .\isntall_extension.ps1
 ```
 
-_mac or bash_
+_mac, bash, or DevContainer_
 
 ```bash
 $ ./install_extension.sh
 ```
 
-Check if there is dll packages under the `target/azure-functions/kafka-function-(some number)/bin`. If it is sucess, you will find `Microsoft.Azure.WebJobs.Extensions.Kafka.dll` on it. 
+**NOTE**: In case of DevContainer on Windows, the repository is cloned by CRLF, it is mounted on docker container. Please change the CRLF to LF. For the Visual Studio Code, click `install_extension.sh` then find `CRFL` on the right bottom of the Visual Studio Code and change it to `LF`.
+
+Check if there is dll packages under the `target/azure-functions/Kafka-function-(some number)/bin`. If it is success, you will find `Microsoft.Azure.WebJobs.Extensions.Kafka.dll` on it. 
 
 ## Run the Azure Functions
 
-## Configration (Optional)
-Copy the `local.settings.json.example` to `local.settings.json` and configure it. This configuration requires for `KafkaTrigger-Java-Many` sample that works with confluent cloud. 
+## Configuration (Optional)
+Copy the `confluent/local.settings.json.example` to `confluent/local.settings.json` and configure it. This configuration requires for `KafkaTrigger-Java-Many` sample that works with the confluent cloud. 
 
 _local.settings.json_
 ```
@@ -136,24 +138,50 @@ _local.settings.json_
 
 ## Run 
 
-This sample includes two samples. Go to `TriggerFunction.java`. You will find `KafkaTrigger-Java` and `KafkaTrigger-Java-Many`. `KafkaTrigger-Java` is a sample for local kafka cluster. `KafkaTrigger-Java-Many` is a sample for [Confluent Cloud in Azure](https://github.com/Azure/azure-functions-kafka-extension#connecting-to-confluent-cloud-in-azure) with batch execution. If you execute this sample as-is, one of the function will cause an error since these 
-are the different configuration. Remove or comment one of them and enjoy.
+This sample includes two samples. Go to `TriggerFunction.java.` You will find `KafkaTrigger-Java` and `KafkaTrigger-Java-Many.` `KafkaTrigger-Java` is a sample for local Kafka cluster. `KafkaTrigger-Java-Many` is a sample for [Confluent Cloud in Azure](https://github.com/Azure/azure-functions-kafka-extension#connecting-to-confluent-cloud-in-azure) with batch execution. If you execute this sample as-is, one of the functions will cause an error since these are the different configurations. Remove or comment on one of them and enjoy it.
 
-Before running the kafka extension, you need to configure `LD_LIBRARY_PATH` to the `target/azure-functions/kafka-function-20190419163130420`. For the DevContainer, the configuration is reside in the `devontainer.json`. You don't need to configure it. 
+Before running the Kafka extension, you need to configure `LD_LIBRARY_PATH` to the `target/azure-functions/kafka-function-20190419163130420`. For the DevContainer, the configuration resides in the `devontainer.json.` You don't need to configure it. 
 
 ```
 $ mvn azure-functions:run
 ```
 
+If you want to run with Debug mode, try this. 
+
+```
+$ mvn azure-functions:run -DenableDebug
+```
+Then you can attach with Debugger. 
+
+_.vscode/launch.json_
+
+```json
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Attach to Java Functions",
+            "type": "java",
+            "request": "attach",
+            "hostName": "127.0.0.1",
+            "port": 5005,
+        }
+    ]
+}
+```
+
 ## Deploy to Azure
 
-If you want to deploy your functions to Azure, modify your `pom.xml`. Find two pieces to configure it. 
+If you want to deploy your functions to Azure, modify your `pom.xml.` Find two pieces to configure it. 
 
 ### Configuration 
 
 #### FunctionApp name, region, and resource group
 
-Change the these info if you alreay have a function app. 
+Change this info if you already have a function app. 
 
 _pom.xml_
 
@@ -169,15 +197,14 @@ _pom.xml_
 _pom.xml_
 
 ```xml
- 
-                    <runtime><os>windows</os></runtime>
-                    <pricingTier>EP1</pricingTier>
+ <runtime><os>windows</os></runtime>
+ <pricingTier>EP1</pricingTier>
 ```
 
 ### deploy to Azure
 
 #### deploy the app
-The maven target will create a function app if it is not exists then deploy the application. 
+The maven target will create a function app if it does not exist then deploy the application. 
 
 ```
 $ mvn azure-functions:deploy -e
@@ -196,7 +223,7 @@ Go to Azure Portal, select the FunctionAPp, then go to Configuration > Applicati
 
 #### Send kakfka event
 
-Send kafka events from producer. You can call `KafkaInput-Java` for a local cluster, or you can use [ccloud](https://docs.confluent.io/current/cloud/cli/index.html) command for confluent cloud.
+Send Kafka events from a producer. You can call `KafkaInput-Java` for a local cluster, or you can use [ccloud](https://docs.confluent.io/current/cloud/cli/index.html) command for the confluent cloud.
 
 ```bash
 $ ccloud login
@@ -205,7 +232,7 @@ $ ccloud kafka topic produce message
 
 For more details, Go to [ccloud](https://docs.confluent.io/current/cloud/cli/command-reference/ccloud.html).
 
-If you want to send event to the local kafka cluster, you can use
+If you want to send an event to the local Kafka cluster, you can use
 [kafakacat](https://docs.confluent.io/current/app-development/kafkacat-usage.html) instead.
 
 ```bash

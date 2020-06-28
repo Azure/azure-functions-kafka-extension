@@ -29,6 +29,7 @@ public class TriggerFunction {
                 password = "%ConfluentCloudPassword%",
                 authenticationMode = BrokerAuthenticationMode.PLAIN,
                 protocol = BrokerProtocol.SASLSSL,
+                // sslCaLocation = "confluent_cloud_cacert.pem", // Enable this line for windows.
                 cardinality = Cardinality.MANY,
                 dataType = "string"
              ) String[] kafkaEventData,
