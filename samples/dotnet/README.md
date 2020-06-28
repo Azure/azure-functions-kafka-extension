@@ -31,5 +31,15 @@ If you have problems connecting to localhost:9092 try to add `broker    127.0.0.
 
 # Quick Start
 
-You can refer [Quick Start](https://github.com/Azure/azure-functions-kafka-extension#quickstart) ont the top page
+You can refer [Quick Start](https://github.com/Azure/azure-functions-kafka-extension#quickstart) on the top page
 
+# Test
+
+Restore, Build, and Debug `KafkaFunctionSample`.
+
+POST request `http://localhost:7071/api/ProduceStringTopic` 
+with JSON Body and ContentType = `application/json`.
+
+```json
+{"hello":"world"}
+```

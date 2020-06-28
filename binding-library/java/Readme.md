@@ -29,10 +29,10 @@ $ mvn package
 
 ### Install package
 
-Install the binding library to the sample app. Please modify the `-Dversion` and `-DlocalRepositoryPath`. This sample install the java kafka library to the `samples/java/src/repo directory`.
+Install the binding library to the sample app. Please modify the `-Dversion` and `-DlocalRepositoryPath`. This sample install the java kafka library to the `samples/java/local/src/repo directory`. If you want to install to the other sample, change `samples/java/local/src/repo` to `samples/java/confluent/src/repo`.
 
 ```
-$ mvn install:install-file -Dfile=target/azure-functions-java-library-kafka-1.0.0.jar -DgroupId=com.microsoft.azure.functions -DartifactId=azure-functions-java-library-kafka -Dversion=1.0.0 -Dpackaging=jar -DlocalRepositoryPath=../../samples/java/src/repo/
+$ mvn install:install-file -Dfile=target/azure-functions-java-library-kafka-1.0.0.jar -DgroupId=com.microsoft.azure.functions -DartifactId=azure-functions-java-library-kafka -Dversion=1.0.0 -Dpackaging=jar -DlocalRepositoryPath=../../samples/java/local/src/repo/
 ```
 
 # Sample
