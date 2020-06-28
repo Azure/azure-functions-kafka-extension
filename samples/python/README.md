@@ -64,7 +64,7 @@ $ source .venv/bin/activate
 Install the binding from `library` directory. `-e` means editable option.
 
 ```bash
-$ pip install library -e
+$ pip install -e library
 ```
 
 ### Modify function.json_ and local.settings.json
