@@ -30,7 +30,17 @@ namespace ConsoleConsumer
             throw new System.NotImplementedException();
         }
 
+        public string ConstructKeySubjectName(string topic, string recordType = null)
+        {
+            throw new System.NotImplementedException();
+        }
+
         public string ConstructValueSubjectName(string topic)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public string ConstructValueSubjectName(string topic, string recordType = null)
         {
             throw new System.NotImplementedException();
         }

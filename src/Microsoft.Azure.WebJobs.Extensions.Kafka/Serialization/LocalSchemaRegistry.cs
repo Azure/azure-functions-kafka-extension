@@ -32,7 +32,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             throw new System.NotImplementedException();
         }
 
+        public string ConstructKeySubjectName(string topic, string recordType = null)
+        {
+            throw new System.NotImplementedException();
+        }
+
         public string ConstructValueSubjectName(string topic) => topic;
+
+        public string ConstructValueSubjectName(string topic, string recordType = null) => topic;
 
         public void Dispose()
         {
