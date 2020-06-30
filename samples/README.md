@@ -130,6 +130,7 @@ You can use this command. It will refer to the `extensions.csproj` and install t
 $ func extensions install
 ```
 
+
 In the case of Java, they need to specify the extension name.
 
 ```bash
