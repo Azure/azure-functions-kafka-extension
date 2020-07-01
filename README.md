@@ -5,7 +5,7 @@ Azure Functions extensions for Apache Kafka
 |master|[![Build Status](https://azfunc.visualstudio.com/Azure%20Functions/_apis/build/status/azure-functions-kafka-extension-ci?branchName=master)](https://azfunc.visualstudio.com/Azure%20Functions/_build/latest?definitionId=7&branchName=master)
 |dev|[![Build Status](https://azfunc.visualstudio.com/Azure%20Functions/_apis/build/status/azure-functions-kafka-extension-ci?branchName=dev)](https://azfunc.visualstudio.com/Azure%20Functions/_build/latest?definitionId=7&branchName=dev)
 
-This repository contains Kafka binding extensions for the **Azure WebJobs SDK**. The extension status is in beta. The communication with Kafka is based on library **Confluent.Kafka**.
+This repository contains Kafka binding extensions for the **Azure WebJobs SDK**. The communication with Kafka is based on library **Confluent.Kafka**.
 
 Please find samples [here](https://github.com/Azure/azure-functions-kafka-extension/tree/master/samples)
 
