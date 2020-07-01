@@ -1,4 +1,4 @@
-# Developers guid for Kafka Functions for TypeScript
+# Developers guide for Kafka Functions for TypeScript
 
 TypeScript is almost the same as [JavaScript](../../javascript/README.md). Please refer the [JavaScript](../../javascript/README.md). In the TypeScript sample, we don't provide confluent cloud sample. The configuration is the same as JavaScript. 
 

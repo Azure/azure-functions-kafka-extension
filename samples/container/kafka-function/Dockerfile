@@ -7,7 +7,7 @@ RUN cd /src/java-function-app && \
     cd ./target/azure-functions/ && \
     cd $(ls -d */|head -n 1) && \
     cp ../../../extensions.csproj . && \
-    func extensions install --package Microsoft.Azure.WebJobs.Extensions.Kafka --version 2.0.0-beta && \
+    func extensions install --package Microsoft.Azure.WebJobs.Extensions.Kafka --version 3.0.0 && \
     cp -a . /home/site/wwwroot
  
 # This Zulu OpenJDK Dockerfile and corresponding Docker image are
