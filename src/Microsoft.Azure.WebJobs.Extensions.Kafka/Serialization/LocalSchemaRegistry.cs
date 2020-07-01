@@ -27,17 +27,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
         }
 
-        public string ConstructKeySubjectName(string topic)
-        {
-            throw new System.NotImplementedException();
-        }
-
         public string ConstructKeySubjectName(string topic, string recordType = null)
         {
             throw new System.NotImplementedException();
         }
-
-        public string ConstructValueSubjectName(string topic) => topic;
 
         public string ConstructValueSubjectName(string topic, string recordType = null) => topic;
 
@@ -50,14 +43,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             throw new System.NotImplementedException();
         }
 
-        public Task<Schema> GetLatestSchemaAsync(string subject)
+        public Task<RegisteredSchema> GetLatestSchemaAsync(string subject)
         {
             throw new System.NotImplementedException();
         }
 
-        public Task<string> GetSchemaAsync(int id)
+        public Task<RegisteredSchema> GetRegisteredSchemaAsync(string subject, int version)
         {
-            return Task.FromResult(this.schema);
+            throw new System.NotImplementedException();
         }
 
         public Task<string> GetSchemaAsync(string subject, int version)
@@ -65,7 +58,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return Task.FromResult(this.schema);
         }
 
+        public Task<Schema> GetSchemaAsync(int id, string format = null)
+        {
+            var schema = new Schema(this.schema, SchemaType.Avro);
+            return Task.FromResult(schema);
+        }
+
         public Task<int> GetSchemaIdAsync(string subject, string schema)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public Task<int> GetSchemaIdAsync(string subject, Schema schema)
         {
             throw new System.NotImplementedException();
         }
@@ -80,6 +84,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             throw new System.NotImplementedException();
         }
 
+        public Task<bool> IsCompatibleAsync(string subject, Schema schema)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public Task<RegisteredSchema> LookupSchemaAsync(string subject, Schema schema, bool ignoreDeletedSchemas)
+        {
+            throw new System.NotImplementedException();
+        }
+
         public Task<int> RegisterSchemaAsync(string subject, string schema) => Task.FromResult(1);
+
+        public Task<int> RegisterSchemaAsync(string subject, Schema schema)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }
