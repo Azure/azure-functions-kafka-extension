@@ -13,6 +13,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     public class LocalSchemaRegistry : ISchemaRegistryClient
     {
         private readonly string schema;
+        private List<string> subjects = new List<string>();
 
         public LocalSchemaRegistry(string schema)
         {
@@ -40,7 +41,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public Task<List<string>> GetAllSubjectsAsync()
         {
-            throw new System.NotImplementedException();
+            return Task.FromResult(this.subjects);
         }
 
         public Task<RegisteredSchema> GetLatestSchemaAsync(string subject)
@@ -94,11 +95,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             throw new System.NotImplementedException();
         }
 
-        public Task<int> RegisterSchemaAsync(string subject, string schema) => Task.FromResult(1);
-
+        public Task<int> RegisterSchemaAsync(string subject, string schema)
+        {
+            subjects.Add(subject);
+            return Task.FromResult(1);
+        }
         public Task<int> RegisterSchemaAsync(string subject, Schema schema)
         {
-            throw new System.NotImplementedException();
+            subjects.Add(subject);
+            return Task.FromResult(1);
         }
     }
 }
