@@ -25,6 +25,12 @@ import java.lang.annotation.ElementType;
 @CustomBinding(direction = "in", name = "kafkaEvents", type = "kafkaTrigger")
 public @interface KafkaTrigger {
     /**
+     * The variable name used in function.json.
+     * @return The variable name used in function.json.
+     */
+    String name();
+    
+    /**
      * Gets the Topic.
      */
     String topic();

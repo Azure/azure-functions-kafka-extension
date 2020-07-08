@@ -19,7 +19,7 @@ public class TriggerFunction {
      */
     @FunctionName("KafkaTrigger-Java")
     public void runOne(
-            @KafkaTrigger(topic = "users", brokerList="broker:29092",consumerGroup="functions") String kafkaEventData,
+            @KafkaTrigger(name = "kafkaTrigger", topic = "users", brokerList="broker:29092",consumerGroup="functions") String kafkaEventData,
             final ExecutionContext context) {
         context.getLogger().info(kafkaEventData);
     }
