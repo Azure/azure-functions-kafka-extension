@@ -33,7 +33,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             throw new System.NotImplementedException();
         }
 
-        public string ConstructValueSubjectName(string topic, string recordType = null) => topic;
+        public string ConstructValueSubjectName(string topic, string recordType = null)
+        {
+            throw new System.NotImplementedException();
+        }
 
         public void Dispose()
         {
@@ -97,13 +100,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public Task<int> RegisterSchemaAsync(string subject, string schema)
         {
-            subjects.Add(subject);
-            return Task.FromResult(1);
+            throw new System.NotImplementedException();
         }
         public Task<int> RegisterSchemaAsync(string subject, Schema schema)
         {
-            subjects.Add(subject);
-            return Task.FromResult(1);
+            throw new System.NotImplementedException();
         }
     }
 }
