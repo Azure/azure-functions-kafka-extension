@@ -156,16 +156,6 @@ namespace ConsoleConsumer
                 .SetPartitionsAssignedHandler(LogAssignedPartitions)
                 .SetPartitionsRevokedHandler(LogRekovedPartitions);
 
-            //var avroSchema = PageViews._SCHEMA;
-            //var schemaRegistry = new LocalSchemaRegistry(avroSchema.ToString());
-            //if (avroSchema != null)
-            //{
-            //    // if (typeof(TKey) != typeof(Ignore))
-            //    //     builder.SetKeyDeserializer(new MagicAvroDeserializer<TKey>(new AvroDeserializer<TKey>(schemaRegistry)));
-
-            //    builder.SetValueDeserializer(new MagicAvroDeserializer<PageViews>(new AvroDeserializer<PageViews>(schemaRegistry).AsSyncOverAsync()));
-            //}
-
             var consumer = builder.Build();
             consumer.Subscribe("pageviews");
 
@@ -229,17 +219,6 @@ namespace ConsoleConsumer
                 })
                 .SetPartitionsAssignedHandler(LogAssignedPartitions)
                 .SetPartitionsRevokedHandler(LogRekovedPartitions);
-
-            //var avroSchema = PageViews._SCHEMA;
-            //var schemaRegistry = new LocalSchemaRegistry(avroSchema.ToString());
-            //if (avroSchema != null)
-            //{
-            //    // if (typeof(TKey) != typeof(Ignore))
-            //    //     builder.SetKeyDeserializer(new MagicAvroDeserializer<TKey>(new AvroDeserializer<TKey>(schemaRegistry)));
-
-
-            //    builder.SetValueDeserializer(new MagicAvroDeserializer<GenericRecord>(new AvroDeserializer<GenericRecord>(schemaRegistry).AsSyncOverAsync()));
-            //}
 
             var consumer = builder.Build();
             consumer.Subscribe("pageviews");
