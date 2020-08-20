@@ -22,6 +22,7 @@ public class TriggerFunction {
     @FunctionName("KafkaTrigger-Java-Many")
     public void runMany(
             @KafkaTrigger(
+                name = "kafkaTriggerMany",
                 topic = "message", 
                 brokerList="%BrokerList%",
                 consumerGroup="$Default", 

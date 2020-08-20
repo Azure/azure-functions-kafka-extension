@@ -22,6 +22,7 @@ public class FunctionOutput {
     public HttpResponseMessage input(
             @HttpTrigger(name = "req", methods = {HttpMethod.GET, HttpMethod.POST}, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
             @KafkaOutput(
+                name = "kafkaOutput",
                 topic = "message", 
                 brokerList="%BrokerList%",
                 username = "%ConfluentCloudUsername%", 
