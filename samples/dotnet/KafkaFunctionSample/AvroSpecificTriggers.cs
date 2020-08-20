@@ -24,7 +24,7 @@ namespace KafkaFunctionSample
             }
         }
 
-        private static AvroDeserializer<UserRecord> myCustomDeserialiser = new AvroDeserializer<UserRecord>(new LocalSchemaRegistry(UserRecord.SchemaText));
+        // private static AvroDeserializer<UserRecord> myCustomDeserialiser = new AvroDeserializer<UserRecord>(new LocalSchemaRegistry(UserRecord.SchemaText));
 
         ///// <summary>
         ///// This function shows how to implement a custom deserialiser in the function method
