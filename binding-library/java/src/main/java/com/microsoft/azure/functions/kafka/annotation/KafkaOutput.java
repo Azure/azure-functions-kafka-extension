@@ -20,7 +20,24 @@ import java.lang.annotation.Target;
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)
 @CustomBinding(direction = "out", name = "kafkaOutput", type = "kafka")
-public @interface KafkaOutput { // TODO Should I name it as KafkaOutput?
+public @interface KafkaOutput { 
+    /**
+     * The variable name used in function.json.
+     * @return The variable name used in function.json.
+     */
+    String name();
+
+    /**
+     * <p>Defines how Functions runtime should treat the parameter value. Possible values are:</p>
+     * <ul>
+     *     <li>"": get the value as a string, and try to deserialize to actual parameter type like POJO</li>
+     *     <li>string: always get the value as a string</li>
+     *     <li>binary: get the value as a binary data, and try to deserialize to actual parameter type byte[]</li>
+     * </ul>
+     * @return The dataType which will be used by the Functions runtime.
+     */
+    String dataType() default "";
+
     /**
      * Gets the Topic.
      * @return
