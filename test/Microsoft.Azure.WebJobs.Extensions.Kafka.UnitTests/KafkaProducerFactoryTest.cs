@@ -1,10 +1,17 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
+using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
+
 using Avro.Generic;
 using Confluent.Kafka;
 using Confluent.SchemaRegistry.Serdes;
+
+using Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.Helpers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -12,13 +19,36 @@ using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 {
-    public class KafkaProducerFactoryTest
+    public class KafkaProducerFactoryTest : IDisposable
     {
+        private List<FileInfo> createdFiles = new List<FileInfo>();
         private readonly IConfigurationRoot emptyConfiguration;
 
         public KafkaProducerFactoryTest()
         {
             this.emptyConfiguration = new ConfigurationBuilder().Build();
+        }
+
+        public void Dispose()
+        {
+            foreach (var fi in this.createdFiles)
+            {
+                if (fi.Exists)
+                {
+                    fi.Delete();
+                }
+            }
+
+            this.createdFiles.Clear();
+        }
+
+        private FileInfo CreateFile(string fileName)
+        {
+            File.WriteAllText(fileName, "dummy contents");
+            var file = new FileInfo(fileName);
+            this.createdFiles.Add(file);
+
+            return file;
         }
 
         [Fact]
@@ -211,6 +241,68 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal("password1", config.SslKeyPassword);
             Assert.Equal("path/to/cert", config.SslCertificateLocation);
             Assert.Equal("path/to/cacert", config.SslCaLocation);
+        }
+
+        [Fact]
+        public void GetProducerConfig_When_Ssl_Locations_Resolve_Should_Contain_Full_Path()
+        {
+            var sslCertificate = this.CreateFile("sslCertificate.pfx");
+            var sslCa = this.CreateFile("sslCa.pem");
+            var sslKeyLocation = this.CreateFile("sslKey.key");
+
+            var attribute = new KafkaAttribute("brokers:9092", "myTopic")
+            {
+                SslCertificateLocation = sslCertificate.FullName,
+                SslCaLocation = sslCa.FullName,
+                SslKeyLocation = sslKeyLocation.FullName
+            };
+
+            var entity = new KafkaProducerEntity
+            {
+                Attribute = attribute,
+                ValueType = typeof(ProtoUser)
+            };
+
+            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerProvider.Instance);
+            var config = factory.GetProducerConfig(entity);
+            Assert.Equal(sslCertificate.FullName, config.SslCertificateLocation);
+            Assert.Equal(sslCa.FullName, config.SslCaLocation);
+            Assert.Equal(sslKeyLocation.FullName, config.SslKeyLocation);
+        }
+
+        [Fact]
+        public void GetProducerConfig_When_Ssl_Locations_Resolve_InAzure_Should_Contain_Full_Path()
+        {
+            AzureEnvironment.SetRunningInAzureEnvVars();
+
+            var currentFolder = Directory.GetCurrentDirectory();
+            var folder1 = Directory.CreateDirectory(Path.Combine(currentFolder, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1));
+            Directory.CreateDirectory(Path.Combine(folder1.FullName, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2));
+
+            AzureEnvironment.SetEnvironmentVariable(AzureFunctionsFileHelper.AzureHomeEnvVarName, currentFolder);
+
+            var sslCertificate = this.CreateFile(Path.Combine(currentFolder, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2, "sslCertificate.pfx"));
+            var sslCa = this.CreateFile(Path.Combine(currentFolder, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2, "sslCa.pem")); 
+            var sslKeyLocation = this.CreateFile(Path.Combine(currentFolder, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2, "sslKey.key"));
+
+            var attribute = new KafkaAttribute("brokers:9092", "myTopic")
+            {
+                SslCertificateLocation = "sslCertificate.pfx",
+                SslCaLocation = "sslCa.pem",
+                SslKeyLocation = "sslKey.key"
+            };
+
+            var entity = new KafkaProducerEntity
+            {
+                Attribute = attribute,
+                ValueType = typeof(ProtoUser)
+            };
+
+            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerProvider.Instance);
+            var config = factory.GetProducerConfig(entity);
+            Assert.Equal(sslCertificate.FullName, config.SslCertificateLocation);
+            Assert.Equal(sslCa.FullName, config.SslCaLocation);
+            Assert.Equal(sslKeyLocation.FullName, config.SslKeyLocation);
         }
     }
 }

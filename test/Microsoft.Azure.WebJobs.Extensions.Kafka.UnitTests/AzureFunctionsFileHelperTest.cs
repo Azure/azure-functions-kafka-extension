@@ -2,6 +2,8 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using Confluent.Kafka;
+
+using Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.Helpers;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -19,31 +21,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 {
     public class AzureFunctionsFileHelperTest : IDisposable
     {
-        Dictionary<string, string> envVarsToRestore = new Dictionary<string, string>();
-
-        private void SetEnvironmentVariable(string variable, string value)
-        {
-            if (!this.envVarsToRestore.ContainsKey(variable))
-            {
-                this.envVarsToRestore[variable] = Environment.GetEnvironmentVariable(variable);
-            }
-
-            Environment.SetEnvironmentVariable(variable, value, EnvironmentVariableTarget.Process);
-        }
-
-        void SetRunningInAzureEnvVars()
-        {
-            SetEnvironmentVariable(AzureFunctionsFileHelper.AzureFunctionWorkerRuntimeEnvVarName, "dotnet");            
-        }
-
         public void Dispose()
         {
-            foreach (var kv in envVarsToRestore)
-            {
-                Environment.SetEnvironmentVariable(kv.Key, kv.Value, EnvironmentVariableTarget.Process);
-            }
-
-            this.envVarsToRestore.Clear();
+            AzureEnvironment.ClearEnvironmentVariables();
         }
 
         [Fact]
@@ -55,7 +35,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         [Fact]
         public void IsFunctionRunningInAzure_When_Does_Have_Azure_EnvVars_Should_Returns_True()
         {
-            SetRunningInAzureEnvVars();
+            AzureEnvironment.SetRunningInAzureEnvVars();
             Assert.True(AzureFunctionsFileHelper.IsRunningAsFunctionInAzureOrContainer());
         }
 
@@ -68,16 +48,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         [Fact]
         public void GetAzureFunctionBaseFolder_When_Does_Not_Have_Home_EnvVar_Return_Null()
         {
-            SetRunningInAzureEnvVars();
-            SetEnvironmentVariable(AzureFunctionsFileHelper.AzureHomeEnvVarName, null);
+            AzureEnvironment.SetRunningInAzureEnvVars();
+            AzureEnvironment.SetEnvironmentVariable(AzureFunctionsFileHelper.AzureHomeEnvVarName, null);
             Assert.Null(AzureFunctionsFileHelper.GetFunctionBaseFolder());
         }
 
         [Fact]
         public void GetAzureFunctionBaseFolder_When_Running_In_Azure_Should_Return_Not_Null()
         {
-            SetRunningInAzureEnvVars();
-            SetEnvironmentVariable(AzureFunctionsFileHelper.AzureHomeEnvVarName, @"d:\Home");
+            AzureEnvironment.SetRunningInAzureEnvVars();
+            AzureEnvironment.SetEnvironmentVariable(AzureFunctionsFileHelper.AzureHomeEnvVarName, @"d:\Home");
 
             var actual = AzureFunctionsFileHelper.GetFunctionBaseFolder();
             Assert.NotEmpty(actual);
@@ -91,8 +71,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         {
             const string pathInContainer = @"home/site/wwwroot";
 
-            SetRunningInAzureEnvVars();
-            SetEnvironmentVariable(AzureFunctionsFileHelper.AzureWebJobsScriptRootEnvVarName, pathInContainer);
+            AzureEnvironment.SetRunningInAzureEnvVars();
+            AzureEnvironment.SetEnvironmentVariable(AzureFunctionsFileHelper.AzureWebJobsScriptRootEnvVarName, pathInContainer);
 
             var actual = AzureFunctionsFileHelper.GetFunctionBaseFolder();
             Assert.NotEmpty(actual);
