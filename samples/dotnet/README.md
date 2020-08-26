@@ -65,6 +65,8 @@ A sample function is provided in samples/dotnet/KafkaFunctionSample/SimpleKafkaT
 }
 ```
 
+For more configuration details for EventHubs, refer to the [Use Azure Event Hubs from Apache Kafka applications: Shared Access Signature (SAS)](https://docs.microsoft.com/en-us/azure/event-hubs/event-hubs-for-kafka-ecosystem-overview#shared-access-signature-sas)
+
 ## Test
 
 Restore, Build, and Debug `KafkaFunctionSample`.
