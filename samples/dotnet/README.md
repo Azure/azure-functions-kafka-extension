@@ -31,7 +31,7 @@ If you have problems connecting to localhost:9092 try to add `broker    127.0.0.
 
 # Quick Start
 
-You can refer [Quick Start](https://github.com/Azure/azure-functions-kafka-extension#quickstart) on the top page
+You can refer [Quick Start](https://github.com/Azure/azure-functions-kafka-extension#net-quickstart) on the top page
 
 # Test
 
@@ -42,4 +42,36 @@ with JSON Body and ContentType = `application/json`.
 
 ```json
 {"hello":"world"}
+```
+
+# EventHubs Sample
+Event Hubs provides a Kafka endpoint that can be used by the Kafka extension. For more details, refer to 
+
+* [Use Azure Event Hubs from Apache Kafka applications](https://docs.microsoft.com/en-us/azure/event-hubs/event-hubs-for-kafka-ecosystem-overview)
+
+## Configuration
+
+A sample function is provided in samples/dotnet/KafkaFunctionSample/SimpleKafkaTriggers.cs. Follow the direction of [Quickstart: Create an event hub using Azure portal](https://docs.microsoft.com/en-us/azure/event-hubs/event-hubs-create) Add a local.settings.json files that looks like this:
+
+```json
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "None",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet",
+    "LocalBroker": "YOUR_EVENTHUBS_NAMESPACE.servicebus.windows.net:9093",
+    "EventHubConnectionString": "YOUR_EVENTHUBS_CONNECTION_STRING"
+  }
+}
+```
+
+## Test
+
+Restore, Build, and Debug `KafkaFunctionSample`.
+
+POST request `http://localhost:7071/api/SampleProducer` 
+with raw Body like following.
+
+```
+hello
 ```

@@ -374,8 +374,7 @@ public static class ConfluentCloudTrigger
             Protocol = BrokerProtocol.SaslSsl,
             AuthenticationMode = BrokerAuthenticationMode.Plain,
             Username = "ConfluentCloudUsername",
-            Password = "ConfluentCloudPassword",
-            SslCaLocation = "confluent_cloud_cacert.pem")]
+            Password = "ConfluentCloudPassword")]
         KafkaEventData<string> kafkaEvent,
         ILogger logger)
     {
@@ -390,7 +389,10 @@ public static class ConfluentCloudTrigger
 site.
 **ConfluentCloudPassword**: is you API secret, obtained from the Confluent Cloud web site.
 
-3. Download and set the CA certification location. As described in [Confluent documentation](https://github.com/confluentinc/examples/tree/5.4.0-post/clients/cloud/csharp#produce-records), the .NET library does not have the capability to access root CA certificates.<br>
+
+**NOTE:** Microsoft.Azure.WebJobs.Extensions.Kafka (3.1.0)+ doesn't require CA certification location.
+
+3. (Deprecated) Download and set the CA certification location. As described in [Confluent documentation](https://github.com/confluentinc/examples/tree/5.4.0-post/clients/cloud/csharp#produce-records), the .NET library does not have the capability to access root CA certificates.<br>
 Missing this step will cause your function to raise the error "sasl_ssl://xyz-xyzxzy.westeurope.azure.confluent.cloud:9092/bootstrap: Failed to verify broker certificate: unable to get local issuer certificate (after 135ms in state CONNECT)"<br>
 To overcome this, we need to:
     - Download CA certificate (i.e. from https://curl.haxx.se/ca/cacert.pem).
