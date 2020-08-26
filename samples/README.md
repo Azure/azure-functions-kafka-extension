@@ -157,8 +157,6 @@ You can find the configuration for the Confluent Cloud for C# in
 [Connecting to Confluent Cloud in Azure](https://github.com/Azure/azure-functions-kafka-extension#connecting-to-confluent-cloud-in-azure).
 
 
-On Windows, you need to include `confluent_cloud_cacert.pem` to reference the CA certificate for accessing Confluent Cloud. You can use `sslCaLocation` to set the path to the certificate.  
-
 ### Install binding library (Java/Python)
 Java and Python have a binding library. Currently, it resides in this repository. In the near feature, it will move to the official repo. So you don't need to install manually. 
 
