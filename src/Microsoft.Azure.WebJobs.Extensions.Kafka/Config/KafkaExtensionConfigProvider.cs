@@ -60,7 +60,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 .BindToTrigger(triggerBindingProvider);
 
             // register output binding
-            context.AddBindingRule<KafkaAttribute>().Bind(new KafkaAttributeBindingProvider(this.kafkaProducerFactory));
+            context.AddBindingRule<KafkaAttribute>().Bind(new KafkaAttributeBindingProvider(config, nameResolver, this.kafkaProducerFactory));
         }
     }
 }
