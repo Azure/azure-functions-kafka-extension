@@ -3,6 +3,7 @@
 
 using Confluent.Kafka;
 using Microsoft.Azure.WebJobs.Host.Bindings;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -20,10 +21,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             );
 
         private readonly IKafkaProducerFactory kafkaProducerFactory;
+        private readonly IConfiguration config;
+        private readonly INameResolver nameResolver;
 
-        public KafkaAttributeBindingProvider(IKafkaProducerFactory kafkaProducerFactory)
+        public KafkaAttributeBindingProvider(IConfiguration config, INameResolver nameResolver, IKafkaProducerFactory kafkaProducerFactory)
         {
             this.kafkaProducerFactory = kafkaProducerFactory;
+            this.config = config;
+            this.nameResolver = nameResolver;
         }
 
         public Task<IBinding> TryCreateAsync(BindingProviderContext context)
@@ -51,7 +56,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 argumentBinding,
                 keyAndValueTypes.KeyType,
                 keyAndValueTypes.ValueType,
-                keyAndValueTypes.AvroSchema);
+                keyAndValueTypes.AvroSchema,
+                this.config,
+                this.nameResolver);
             return Task.FromResult<IBinding>(binding);
         }
     }

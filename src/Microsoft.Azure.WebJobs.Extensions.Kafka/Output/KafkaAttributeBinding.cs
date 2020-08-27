@@ -4,6 +4,7 @@
 using Confluent.Kafka;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Protocols;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Threading.Tasks;
 
@@ -19,6 +20,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly Type keyType;
         private readonly Type valueType;
         private readonly string avroSchema;
+        private readonly IConfiguration config;
+        private readonly INameResolver nameResolver;
 
         public KafkaAttributeBinding(
             string parameterName, 
@@ -27,7 +30,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             IArgumentBinding<KafkaProducerEntity> argumentBinding,
             Type keyType,
             Type valueType,
-            string avroSchema)
+            string avroSchema,
+            IConfiguration config,
+            INameResolver nameResolver)
         {
             this.parameterName = parameterName;
             this.attribute = attribute ?? throw new ArgumentNullException(nameof(attribute));
@@ -36,6 +41,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.keyType = keyType;
             this.valueType = valueType ?? throw new ArgumentNullException(nameof(valueType));
             this.avroSchema = avroSchema;
+            this.config = config;
+            this.nameResolver = nameResolver;
         }
 
         public bool FromAttribute => true;
@@ -49,7 +56,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 KafkaProducerFactory = this.kafkaProducerFactory,
                 KeyType = this.keyType ?? typeof(Null),
                 ValueType = this.valueType,
-                Topic = this.attribute.Topic,
+                Topic = this.config.ResolveSecureSetting(this.nameResolver, this.attribute.Topic),
                 Attribute = this.attribute,
                 AvroSchema = this.avroSchema,
             };
@@ -66,7 +73,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 KafkaProducerFactory = this.kafkaProducerFactory,
                 KeyType = this.keyType ?? typeof(Null),
                 ValueType = this.valueType,
-                Topic = this.attribute.Topic,
+                Topic = this.config.ResolveSecureSetting(this.nameResolver, this.attribute.Topic),
                 Attribute = this.attribute,
                 AvroSchema = this.avroSchema,
             };

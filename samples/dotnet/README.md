@@ -60,6 +60,7 @@ A sample function is provided in samples/dotnet/KafkaFunctionSample/SimpleKafkaT
     "AzureWebJobsStorage": "None",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet",
     "LocalBroker": "YOUR_EVENTHUBS_NAMESPACE.servicebus.windows.net:9093",
+    "EHTOPIC": "YOUR_EVENT_HUB_NAME",
     "EventHubConnectionString": "YOUR_EVENTHUBS_CONNECTION_STRING"
   }
 }
