@@ -93,6 +93,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public ProducerConfig GetProducerConfig(KafkaProducerEntity entity)
         {
+            if (!AzureFunctionsFileHelper.TryGetValidFilePath(entity.Attribute.SslCertificateLocation, out var resolvedSslCertificationLocation))
+            {
+                resolvedSslCertificationLocation = entity.Attribute.SslCertificateLocation;
+            }
+
+            if (!AzureFunctionsFileHelper.TryGetValidFilePath(entity.Attribute.SslCaLocation, out var resolvedSslCaLocation))
+            {
+                resolvedSslCaLocation = entity.Attribute.SslCaLocation;
+            }
+
+            if (!AzureFunctionsFileHelper.TryGetValidFilePath(entity.Attribute.SslKeyLocation, out var resolvedSslKeyLocation))
+            {
+                resolvedSslKeyLocation = entity.Attribute.SslKeyLocation;
+            }
+
             var conf = new ProducerConfig()
             {
                 BootstrapServers = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.BrokerList),
@@ -103,10 +118,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 RequestTimeoutMs = entity.Attribute.RequestTimeoutMs,
                 SaslPassword = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.Password),
                 SaslUsername = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.Username),
-                SslKeyLocation = entity.Attribute.SslKeyLocation,
+                SslKeyLocation = resolvedSslKeyLocation,
                 SslKeyPassword = entity.Attribute.SslKeyPassword,
-                SslCertificateLocation = entity.Attribute.SslCertificateLocation,
-                SslCaLocation = entity.Attribute.SslCaLocation
+                SslCertificateLocation = resolvedSslCertificationLocation,
+                SslCaLocation = resolvedSslCaLocation
             };
 
             if (entity.Attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet)
