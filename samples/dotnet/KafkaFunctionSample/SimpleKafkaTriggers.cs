@@ -15,8 +15,8 @@ namespace KafkaFunctionSample
         [FunctionName(nameof(SampleConsumer))]
         public void SampleConsumer(
     [KafkaTrigger(
-            "LocalBroker", 
-            "myeventhub", 
+            "LocalBroker",
+            "%EHTOPIC%",
             ConsumerGroup = "$Default",
             Username = "$ConnectionString",
             Password = "%EventHubConnectionString%",
@@ -32,7 +32,7 @@ namespace KafkaFunctionSample
         [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
         [Kafka(
             "LocalBroker",
-            "myeventhub",
+            "%EHTOPIC%",
             Username = "$ConnectionString",
             Password = "%EventHubConnectionString%",
             Protocol = BrokerProtocol.SaslSsl,
