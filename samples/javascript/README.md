@@ -49,18 +49,6 @@ If you want to use the `UsersTriggerMany` sample, rename `UsersTriggerMany/funct
 
 Then copy `local.settings.json.example` to `local.settings.json` and configure your [ccloud](https://docs.confluent.io/current/cloud/cli/index.html) environment.
 
-### Modify UsersTriggerMany/function.json (Windows user only)
-
-If you want to run the sample on your Windows with Confluent Cloud and you are not using DevContainer, uncomment the following line. It is the settings of the CA certificate. .NET Core that is azure functions host language can not access the Windows registry, which means it can not access the CA certificate of the Confluent Cloud.
-
-_UserTriggerMany/function.json_
-
-```json
-"sslCaLocation":"confluent_cloud_cacert.pem",
-```
-
-For downloading `confluent_cloud_cacert.pem`, you can refer to [Connecting to Confluent Cloud in Azure](https://github.com/Azure/azure-functions-kafka-extension#connecting-to-confluent-cloud-in-azure).
-
 ## Install the KafkaTriggerExtension
 
 This command will install Kafka Extension. The command refer to the `extensions.csproj` then find the Kafka Extension NuGet package.

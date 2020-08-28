@@ -2,10 +2,7 @@
 # TODO remove installing Kafka Extension after the extension bundile for kafka is implemented.
 
 $FunctionAppName = "kafka-function-20190419163130420"
-$ExtensionVersion = "3.0.0"
-
-# For windows uncomment this for using confluent cloud.
-cp confluent_cloud_cacert.pem target\azure-functions\${FunctionAppName}
+$ExtensionVersion = "3.1.0"
 
 pushd . 
 cd target\azure-functions\${FunctionAppName}

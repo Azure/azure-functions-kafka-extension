@@ -85,14 +85,6 @@ This repo has two java samples. One is for Confluent. The other is the local Kaf
 | KafkaTrigger-Java | Simple Kafka trigger sample | local |
 | KafkaTrigger-Java-Many | Kafka batch processing sample with Confluent Cloud | confluent |
 
-### Modify TriggerFunction.java (Windows user only)
-
-If you want to run the sample on your Windows with Confluent Cloud and you are not using DevContainer, uncomment the following line. It is the settings of the CA certificate. .NET Core that is azure functions host language can not access the Windows registry, which means it can not access the CA certificate of the Confluent Cloud.
-
-```java
-sslCaLocation = "confluent_cloud_cacert.pem",
-```
-
 ### Build and package the app
 
 ```bash
@@ -101,7 +93,7 @@ $ mvn clean package
 
 ## Install the KafkaTriggerExtension
 
-Install extension script for installing the Kafka extension. For windows, It also install `confluent_cloud_cacert.pem`.
+Install extension script for installing the Kafka extension.
 
 _windows_
 
