@@ -214,34 +214,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 conf.SaslMechanism = SaslMechanism.Plain;
                 conf.SaslUsername = EventHubsSaslUsername;
                 conf.SaslPassword = this.listenerConfiguration.EventHubConnectionString;
-                conf.SslCaLocation= this.EnsureValidEventHubsCertificateLocation(this.listenerConfiguration.SslCaLocation);
+                conf.SslCaLocation= this.listenerConfiguration.SslCaLocation;
                 conf.GroupId = consumerGroupToUse;
                 conf.BrokerVersionFallback = EventHubsBrokerVersionFallback;
             }
 
             return conf;
-        }
-
-        string EnsureValidEventHubsCertificateLocation(string userProvidedLocation)
-        {
-            const string defaultEventhubsCertificateFilePath = "./cacert.pem";
-
-            if (!string.IsNullOrWhiteSpace(userProvidedLocation))
-            {
-                if (!AzureFunctionsFileHelper.TryGetValidFilePath(userProvidedLocation, out var validatedUserProvidedLocation))
-                {
-                    throw new InvalidOperationException($"Could not find user provided event hubs certificate file '{userProvidedLocation}");
-                }
-
-                return validatedUserProvidedLocation;
-            }
-
-            if (!AzureFunctionsFileHelper.TryGetValidFilePath(defaultEventhubsCertificateFilePath, out var validatedCertificateFilePath))
-            {
-                throw new InvalidOperationException($"Could not find event hubs certificate file '{defaultEventhubsCertificateFilePath}'");
-            }
-
-            return validatedCertificateFilePath;
         }
 
         private void ProcessSubscription(object parameter)
