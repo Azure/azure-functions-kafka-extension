@@ -6,30 +6,19 @@ This sample is for java. However, you can pick any languages. You can follow the
 
 ## Kafka extension additional steps
 
-1. Install the Kafka library (Java and Python only)
-2. Install the Kafka extension
-3. Set the LD_LIBRARY_PATH
+1. Install the Kafka extension
+2. Set the LD_LIBRARY_PATH
 
-For the 2. and 3., the step is included on the `Dockerfile.`
+For the 1. and 2., the step is included on the `Dockerfile.`
 
 # Quick Start
-
-## Install the Kafka library
-
-Before building your Dockerfile, please install the Kafka library for Java and Python. This step will be removed shortly.
-If you want to try other languages, you can refer to the different language samples to know how to write a function and install the Kafka extension and library.
-
-Follow the step of the [Build and Install](../../../binding-library/java/README.md#build-and-install). 
-
-You need to change the install step. This command installs the java kafala library to the `src/repo` as a local repository. The `pom.xml` file configure the local repository on the directory.
-
-```bash
-$ mvn install:install-file -Dfile=target/azure-functions-java-library-kafka-1.0.0.jar -DgroupId=com.microsoft.azure.functions -DartifactId=azure-functions-java-library-kafka -Dversion=1.0.0 -Dpackaging=jar -DlocalRepositoryPath=../../samples/container/kafka-function/src/repo/
-```
 
 ## Build, Test, Publish the Docker container
 
 Refer to the [Dockerfile](./Dockerfile). The `Dockerfile` execute these steps. 
+
+**NOTE:** You need to use `azure-functions-java-library` 1.4.0+ and `azure-functions-maven-plugin` 1.6.0+.
+
 
 * mvn clean package
 * Install Kafka Extension
@@ -50,7 +39,7 @@ If you want to run locally, you need to pass the credentials for the Confluent C
 You can see the log with sending the Kafka event. For the Confluence Cloud, you can use [ccloud](https://docs.confluent.io/current/cloud/cli/index.html) utility. Otherwise, you can use [kafkacat](https://docs.confluent.io/current/app-development/kafkacat-usage.html) to send the event.
 
 ```bash
-$ docker run -p 8080:80 -it -e "BrokerList={YOUR_CONFLUENT_CLOUD_NAME}.eastus.azure.confluent.cloud:9092" -e ConfluentCloudUsername={YOUR_CONFLUENT_CLOUD_USERNAME} -e ConfluentCloudPassword={YOUR_CONFLUENT_CLOUD_PASSWORD} -e AzureWebJobsStorage="{YOUR_STORAGE_ACCOUNT_CONNECTION_STRING}" tsuyoshiushio/azurefunctionsimage:v1.0.0
+$ docker run -p 8080:80 -it -e "BrokerList={YOUR_CONFLUENT_CLOUD_NAME}.eastus.azure.confluent.cloud:9092" -e ConfluentCloudUsername={YOUR_CONFLUENT_CLOUD_USERNAME} -e ConfluentCloudPassword={YOUR_CONFLUENT_CLOUD_PASSWORD} -e AzureWebJobsStorage="{YOUR_STORAGE_ACCOUNT_CONNECTION_STRING}" -e FUNCTIONS_WORKER_RUNTIME=java tsuyoshiushio/azurefunctionsimage:v1.0.0
 ```
 
 ### Push the container

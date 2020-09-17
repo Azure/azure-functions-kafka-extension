@@ -4,9 +4,6 @@ import java.util.*;
 import com.microsoft.azure.functions.annotation.*;
 import com.microsoft.azure.functions.*;
 
-import com.microsoft.azure.functions.kafka.annotation.*;
-import com.microsoft.azure.functions.kafka.*;
-
 /**
  * Azure Functions with HTTP Trigger.
  */
@@ -22,6 +19,7 @@ public class TriggerFunction {
     @FunctionName("KafkaTrigger-Java-Many")
     public void runMany(
             @KafkaTrigger(
+                name = "kafkaTrigger",
                 topic = "message", 
                 brokerList="%BrokerList%",
                 consumerGroup="$Default", 
