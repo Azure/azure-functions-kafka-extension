@@ -13,8 +13,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     /// </summary>
     [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.ReturnValue)]
     [Binding]
-    public sealed class KafkaAttribute : Attribute
+    public sealed class KafkaAttribute : Attribute, IAttributeWithConfigurationString
     {
+        private readonly string configurationString;
+
         /// <summary>
         /// Initialize a new instance of the <see cref="KafkaAttribute"/>
         /// </summary>
@@ -24,6 +26,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             BrokerList = brokerList;
             Topic = topic;
+        }
+
+        public KafkaAttribute(string brokerList, string topic, string configurationString) : this(brokerList, topic)
+        {
+            this.configurationString = configurationString;
         }
 
         /// <summary>
@@ -139,5 +146,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// ssl.key.password in librdkafka
         /// </summary>
         public string SslKeyPassword { get; set; }
+
+        string IAttributeWithConfigurationString.ConfigurationString => configurationString;
     }
 }
