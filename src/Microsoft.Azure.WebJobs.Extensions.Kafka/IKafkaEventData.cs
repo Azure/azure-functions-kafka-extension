@@ -12,6 +12,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         long Offset { get;  }
         int Partition { get;  }
         string Topic { get; }
-        DateTime Timestamp { get; }
+        DateTimeOffset Timestamp { get; }
     }
 }

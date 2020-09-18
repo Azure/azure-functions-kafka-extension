@@ -46,7 +46,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             AddBindingContractMember(contract, nameof(KafkaEventData<TKey, TValue>.Key), typeof(object), isSingleDispatch);
             AddBindingContractMember(contract, nameof(KafkaEventData<TKey, TValue>.Partition), typeof(int), isSingleDispatch);
             AddBindingContractMember(contract, nameof(KafkaEventData<TKey, TValue>.Topic), typeof(string), isSingleDispatch);
-            AddBindingContractMember(contract, nameof(KafkaEventData<TKey, TValue>.Timestamp), typeof(DateTime), isSingleDispatch);
+            AddBindingContractMember(contract, nameof(KafkaEventData<TKey, TValue>.Timestamp), typeof(DateTimeOffset), isSingleDispatch);
             AddBindingContractMember(contract, nameof(KafkaEventData<TKey, TValue>.Offset), typeof(long), isSingleDispatch);
 
             return contract;
@@ -86,7 +86,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             int length = events.Length;
             var partitions = new int[length];
             var offsets = new long[length];
-            var timestamps = new DateTime[length];
+            var timestamps = new DateTimeOffset[length];
             var topics = new string[length];
             var keys = new object[length];
 

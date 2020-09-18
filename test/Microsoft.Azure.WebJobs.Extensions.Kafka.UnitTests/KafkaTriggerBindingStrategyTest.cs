@@ -19,7 +19,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(typeof(object), contract["Key"]);
             Assert.Equal(typeof(int), contract["Partition"]);
             Assert.Equal(typeof(string), contract["Topic"]);
-            Assert.Equal(typeof(DateTime), contract["Timestamp"]);
+            Assert.Equal(typeof(DateTimeOffset), contract["Timestamp"]);
             Assert.Equal(typeof(long), contract["Offset"]);
         }
 
@@ -33,7 +33,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(typeof(object), contract["Key"]);
             Assert.Equal(typeof(int), contract["Partition"]);
             Assert.Equal(typeof(string), contract["Topic"]);
-            Assert.Equal(typeof(DateTime), contract["Timestamp"]);
+            Assert.Equal(typeof(DateTimeOffset), contract["Timestamp"]);
             Assert.Equal(typeof(long), contract["Offset"]);
         }
 
@@ -45,7 +45,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 Key = "1",
                 Offset = 100,
                 Partition = 2,
-                Timestamp = new DateTime(2019, 1, 10, 9, 21, 0, DateTimeKind.Utc),
+                Timestamp = new DateTimeOffset(2019, 1, 10, 9, 21, 0, TimeSpan.Zero),
                 Topic = "myTopic",
                 Value = "Nothing",
             };
@@ -55,14 +55,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal("1", binding["Key"]);
             Assert.Equal(100L, binding["Offset"]);
             Assert.Equal(2, binding["Partition"]);
-            Assert.Equal(new DateTime(2019, 1, 10, 9, 21, 0, DateTimeKind.Utc), binding["Timestamp"]);
+            Assert.Equal(new DateTimeOffset(2019, 1, 10, 9, 21, 0, TimeSpan.Zero), binding["Timestamp"]);
             Assert.Equal("myTopic", binding["Topic"]);
 
             // lower case too
             Assert.Equal("1", binding["key"]);
             Assert.Equal(100L, binding["offset"]);
             Assert.Equal(2, binding["partition"]);
-            Assert.Equal(new DateTime(2019, 1, 10, 9, 21, 0, DateTimeKind.Utc), binding["timestamp"]);
+            Assert.Equal(new DateTimeOffset(2019, 1, 10, 9, 21, 0, TimeSpan.Zero), binding["timestamp"]);
             Assert.Equal("myTopic", binding["topic"]);
         }
 
@@ -76,7 +76,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                     Key = "1",
                     Offset = 100,
                     Partition = 2,
-                    Timestamp = new DateTime(2019, 1, 10, 9, 21, 0, DateTimeKind.Utc),
+                    Timestamp = new DateTimeOffset(2019, 1, 10, 9, 21, 0, TimeSpan.Zero),
                     Topic = "myTopic",
                     Value = "Nothing1",
                 },
@@ -85,7 +85,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                     Key = "2",
                     Offset = 101,
                     Partition = 2,
-                    Timestamp = new DateTime(2019, 1, 10, 9, 21, 1, DateTimeKind.Utc),
+                    Timestamp = new DateTimeOffset(2019, 1, 10, 9, 21, 1, TimeSpan.Zero),
                     Topic = "myTopic",
                     Value = "Nothing2",
                 },
@@ -96,14 +96,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(new[] { "1", "2" }, binding["KeyArray"]);
             Assert.Equal(new[] { 100L, 101L }, binding["OffsetArray"]);
             Assert.Equal(new[] { 2, 2 }, binding["PartitionArray"]);
-            Assert.Equal(new[] { new DateTime(2019, 1, 10, 9, 21, 0, DateTimeKind.Utc), new DateTime(2019, 1, 10, 9, 21, 1, DateTimeKind.Utc) }, binding["TimestampArray"]);
+            Assert.Equal(new[] { new DateTimeOffset(2019, 1, 10, 9, 21, 0, TimeSpan.Zero), new DateTimeOffset(2019, 1, 10, 9, 21, 1, TimeSpan.Zero) }, binding["TimestampArray"]);
             Assert.Equal(new[] { "myTopic", "myTopic" }, binding["TopicArray"]);
 
             // lower case too
             Assert.Equal(new[] { "1", "2" }, binding["keyArray"]);
             Assert.Equal(new[] { 100L, 101L }, binding["offsetArray"]);
             Assert.Equal(new[] { 2, 2 }, binding["partitionArray"]);
-            Assert.Equal(new[] { new DateTime(2019, 1, 10, 9, 21, 0, DateTimeKind.Utc), new DateTime(2019, 1, 10, 9, 21, 1, DateTimeKind.Utc) }, binding["timestampArray"]);
+            Assert.Equal(new[] { new DateTimeOffset(2019, 1, 10, 9, 21, 0, TimeSpan.Zero), new DateTimeOffset(2019, 1, 10, 9, 21, 1, TimeSpan.Zero) }, binding["timestampArray"]);
             Assert.Equal(new[] { "myTopic", "myTopic" }, binding["topicArray"]);
         }
     }
