@@ -45,19 +45,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="cacert.pem">
-      <Pack>true</Pack>
-      <PackagePath>build</PackagePath>
-    </None>
     <None Include="Microsoft.Azure.WebJobs.Extensions.Kafka.targets">
       <Pack>true</Pack>
       <PackagePath>build</PackagePath>
-    </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="cacert.pem">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 </Project>

@@ -12,8 +12,7 @@
             "cardinality" : "MANY",
             "consumerGroup" : "$Default",
             "username" : "%ConfluentCloudUserName%",
-            "brokerList" : "%BrokerList%",
-            "sslCaLocation": "confluent_cloud_cacert.pem"
+            "brokerList" : "%BrokerList%"
         }
     ]
 }

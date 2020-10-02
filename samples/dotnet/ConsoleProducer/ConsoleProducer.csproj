@@ -10,9 +10,4 @@
     <PackageReference Include="Confluent.SchemaRegistry" Version="1.4.3" />
     <PackageReference Include="Confluent.SchemaRegistry.Serdes.Protobuf" Version="1.4.3" />
   </ItemGroup>
-   <ItemGroup>
-    <None Update="cacert.pem">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
 </Project>
