@@ -14,9 +14,7 @@ However, If you can use [DevContainer](https://code.visualstudio.com/docs/remote
 
 DevContainer will set up all of the prerequisites includes [AzureCLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest) with local Kafka Cluster.
 
-## Update Binding Library (Optional)
-
-If you want to update the binding library, Follow the instruction of [Kafka binding library for java](https://github.com/Azure/azure-functions-kafka-extension/tree/master/binding-library/java).
+**NOTE:** You need to use `azure-functions-java-library` 1.4.0+ and `azure-functions-maven-plugin` 1.6.0+.
 
 ## Start the DevContainer
 
@@ -50,21 +48,16 @@ _pom.xml_
         <functionResourceGroup>java-functions-group</functionResourceGroup>
 ```
 
-### Modify install_extension shell (Optional)
+### Modify install_cacert PowerShell (Optional)
 
-Modify the functionAppName of `install_extension.ps1` (windows) or `install_extension.sh` (mac/bash) if you change the functionAppName.
+Modify the functionAppName of `install_extension.ps1` (windows) if you change the functionAppName.
 
-_isntall_extension.ps1_
+_isntall_cacert.ps1_
 
 ```powershell
 $FunctionAppName = "kafka-function-20190419163130420"
 ```
 
-_install_extension.sh_
-
-```bash
-FUNCTION_APP_NAME=kafka-function-20190419163130420
-```
 
 ### Modify devcontainer.json (Optional)
 
@@ -99,20 +92,14 @@ sslCaLocation = "confluent_cloud_cacert.pem",
 $ mvn clean package
 ```
 
-## Install the KafkaTriggerExtension
+## Install the cacert
 
-Install extension script for installing the Kafka extension. For windows, It also install `confluent_cloud_cacert.pem`.
+For windows, It requres to install `confluent_cloud_cacert.pem`.
 
 _windows_
 
 ```powershell
-PS > .\isntall_extension.ps1
-```
-
-_mac, bash, or DevContainer_
-
-```bash
-$ ./install_extension.sh
+PS > .\isntall_cacert.ps1
 ```
 
 **NOTE**: In case of DevContainer on Windows, the repository is cloned by CRLF, it is mounted on docker container. Please change the CRLF to LF. For the Visual Studio Code, click `install_extension.sh` then find `CRFL` on the right bottom of the Visual Studio Code and change it to `LF`.

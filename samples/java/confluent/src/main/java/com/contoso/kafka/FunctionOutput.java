@@ -4,10 +4,6 @@ import java.util.*;
 import com.microsoft.azure.functions.annotation.*;
 import com.microsoft.azure.functions.*;
 
-import com.microsoft.azure.functions.kafka.annotation.*;
-import com.microsoft.azure.functions.kafka.*;
-
-
 import java.util.Optional;
 
 public class FunctionOutput {
