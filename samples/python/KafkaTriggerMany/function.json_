@@ -7,13 +7,13 @@
             "name" : "kevents",
             "protocol" : "SASLSSL",
             "password" : "%ConfluentCloudPassword%",
-            "topic" : "message",
+            "topic" : "message_python",
             "authenticationMode" : "PLAIN",
             "cardinality" : "MANY",
             "dataType": "string",
             "consumerGroup" : "$Default",
             "username" : "%ConfluentCloudUserName%",
-            "brokerList" : "%BrokerList%"    
+            "BrokerList" : "%ConfluentBrokerList%"    
         }
     ]
 }
