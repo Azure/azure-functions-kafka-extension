@@ -18,15 +18,6 @@ However, If you can use [DevContainer](https://code.visualstudio.com/docs/remote
 
 DevContainer will set up all of the prerequisites includes [AzureCLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest) with local Kafka Cluster.
 
-### Copy the Azure Functions Python Binding for Kafka
-
-If you want to use the latest Azure Functions Python Binding, Copy it from the `/binding-library/python` to `library` dir.
-
-```bash
-$ cd samples/python
-$ rm -rf ./library
-$ cp -R ../../binding-library/python library
-```
 
 ## Start the DevContainer
 
@@ -59,12 +50,10 @@ $ python -m venv .venv
 $ source .venv/bin/activate
 ```
 
-### Install Binding
-
-Install the binding from the `library` directory. `-e` means editable option.
+### Install Azure Functions Library
 
 ```bash
-$ pip install -e library
+$ pip install -r requirements.txt
 ```
 
 ### Modify function.json_ and local.settings.json
