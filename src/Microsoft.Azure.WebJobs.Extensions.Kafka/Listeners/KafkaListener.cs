@@ -104,6 +104,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 builder.SetValueDeserializer(ValueDeserializer);
             }
 
+            builder.SetLogHandler((_, m) =>
+            {
+                logger.LogInformation($"Libkafka: {m?.Message}");
+            });
+
             return builder.Build();
         }
 

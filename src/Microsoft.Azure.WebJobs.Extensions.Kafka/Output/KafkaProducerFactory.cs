@@ -74,6 +74,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private IProducer<byte[], byte[]> CreateBaseProducer(ProducerConfig producerConfig)
         {
             var builder = new ProducerBuilder<byte[], byte[]>(producerConfig);
+            ILogger logger = this.loggerProvider.CreateLogger("Kafka");
+            builder.SetLogHandler((_, m) =>
+            {
+                logger.LogInformation($"Libkafka: {m?.Message}");
+            });
+
             return builder.Build();
         }
 
