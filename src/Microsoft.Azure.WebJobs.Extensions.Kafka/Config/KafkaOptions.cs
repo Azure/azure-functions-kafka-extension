@@ -136,6 +136,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// <value>The auto commit interval ms.</value>
         public int AutoCommitIntervalMs { get; set; } = 200;
 
+        /// <summary>
+        /// Gets or sets the debug option for librdkafka library.
+        /// Default = "" (disable)
+        /// 
+        /// Librdkafka: debug
+        /// </summary>
+        public string LibkafkaDebug { get; set; } = null; 
+
         int subscriberIntervalInSeconds = 1;
         /// <summary>
         /// Defines the minimum frequency in which messages will be executed by function. Only if the message volume is less than <see cref="MaxBatchSize"/> / <see cref="SubscriberIntervalInSeconds"/>

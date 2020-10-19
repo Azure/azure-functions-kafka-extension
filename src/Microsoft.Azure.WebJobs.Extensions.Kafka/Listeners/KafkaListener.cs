@@ -155,6 +155,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 // Interval in which commits stored in memory will be saved
                 AutoCommitIntervalMs = this.options.AutoCommitIntervalMs,
 
+                // Librdkafka debug options               
+                Debug = this.options.LibkafkaDebug,
+
                 // start from earliest if no checkpoint has been committed
                 AutoOffsetReset = AutoOffsetReset.Earliest,
 

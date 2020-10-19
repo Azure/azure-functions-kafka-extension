@@ -319,6 +319,7 @@ The settings exposed here are targeted to more advanced users that want to custo
 |MaxPartitionFetchBytes|max.partition.fetch.bytes|Trigger
 |FetchMaxBytes|fetch.max.bytes|Trigger
 |AutoCommitIntervalMs|auto.commit.interval.ms|Trigger
+|LibkafkaDebug|debug|Trigger
 
 If you are missing an configuration setting please create an issue and describe why you need it.
 
