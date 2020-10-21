@@ -40,7 +40,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                             TriggerValue = triggerInput,
                         };
 
-                         var functionResult = await this.ExecuteFunctionAsync(triggerData, cancellationToken);
+                        var functionResult = await this.ExecuteFunctionAsync(triggerData, cancellationToken);
 
                         var offsetsToCommit = new Dictionary<int, TopicPartitionOffset>();
                         for (var i=itemsToExecute.Length - 1; i >= 0; i--)
