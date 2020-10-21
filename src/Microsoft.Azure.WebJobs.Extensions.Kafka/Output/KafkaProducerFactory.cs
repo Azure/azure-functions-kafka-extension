@@ -77,7 +77,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             ILogger logger = this.loggerProvider.CreateLogger("Kafka");
             builder.SetLogHandler((_, m) =>
             {
-                logger.LogInformation($"Libkafka: {m?.Message}");
+                logger.Log((LogLevel)m.LevelAs(LogLevelType.MicrosoftExtensionsLogging), $"Libkafka: {m?.Message}");
             });
 
             return builder.Build();

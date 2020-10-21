@@ -139,7 +139,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// <summary>
         /// Gets or sets the debug option for librdkafka library.
         /// Default = "" (disable)
-        /// 
+        /// A comma-separated list of debug contexts to enable: all,generic,broker,topic,metadata,producer,queue,msg,protocol,cgrp,security,fetch
         /// Librdkafka: debug
         /// </summary>
         public string LibkafkaDebug { get; set; } = null;
@@ -149,7 +149,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         // initial interval, exponentially increasing until the topic metadata has been
         // refreshed. This is used to recover quickly from transitioning leader brokers.
         // Use this coinfiguration for EventHubs usage. https://github.com/edenhill/librdkafka/issues/3109
-        // default: 250 importance: low
+        // default: 250
         // </summary>
         public int? TopicMetadataRefreshFastIntervalMs { get; set; }
 
