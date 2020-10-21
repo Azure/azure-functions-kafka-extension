@@ -2,9 +2,9 @@
   "version": "2.0",
   "logging": {
     "logLevel": {
-      "default": "Trace",
-      "Host.Triggers.Kafka": "Trace",
-      "Kafka": "Trace",
+      "default": "Information",
+      "Host.Triggers.Kafka": "Information",
+      "Kafka": "Information",
       "Host.Results": "Error",
       "Function": "Trace",
       "Function.FunctionA": "Warning",
