@@ -186,6 +186,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 QueuedMaxMessagesKbytes = this.options.QueuedMaxMessagesKbytes,
                 MaxPartitionFetchBytes = this.options.MaxPartitionFetchBytes,
                 FetchMaxBytes = this.options.FetchMaxBytes,
+                TopicMetadataRefreshFastIntervalMs = this.options.TopicMetadataRefreshFastIntervalMs
             };
 
             if (string.IsNullOrEmpty(this.listenerConfiguration.EventHubConnectionString))

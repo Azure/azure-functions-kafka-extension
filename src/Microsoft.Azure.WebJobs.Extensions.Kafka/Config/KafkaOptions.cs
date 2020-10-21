@@ -142,7 +142,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// 
         /// Librdkafka: debug
         /// </summary>
-        public string LibkafkaDebug { get; set; } = null; 
+        public string LibkafkaDebug { get; set; } = null;
+
+        // <summary>
+        // When a topic loses its leader a new metadata request will be enqueued with this
+        // initial interval, exponentially increasing until the topic metadata has been
+        // refreshed. This is used to recover quickly from transitioning leader brokers.
+        // Use this coinfiguration for EventHubs usage. https://github.com/edenhill/librdkafka/issues/3109
+        // default: 250 importance: low
+        // </summary>
+        public int? TopicMetadataRefreshFastIntervalMs { get; set; }
 
         int subscriberIntervalInSeconds = 1;
         /// <summary>

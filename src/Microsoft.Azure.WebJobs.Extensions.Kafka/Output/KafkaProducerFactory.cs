@@ -128,7 +128,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 SslKeyPassword = entity.Attribute.SslKeyPassword,
                 SslCertificateLocation = resolvedSslCertificationLocation,
                 SslCaLocation = resolvedSslCaLocation,
-                Debug = this.config.Get<KafkaOptions>()?.LibkafkaDebug
+                Debug = this.config.Get<KafkaOptions>()?.LibkafkaDebug,
+                TopicMetadataRefreshFastIntervalMs = this.config.Get<KafkaOptions>()?.TopicMetadataRefreshFastIntervalMs
             };
 
             if (entity.Attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet)
