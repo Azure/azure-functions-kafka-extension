@@ -145,13 +145,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public string LibkafkaDebug { get; set; } = null;
 
         // <summary>
-        // When a topic loses its leader a new metadata request will be enqueued with this
-        // initial interval, exponentially increasing until the topic metadata has been
-        // refreshed. This is used to recover quickly from transitioning leader brokers.
-        // Use this coinfiguration for EventHubs usage. https://github.com/edenhill/librdkafka/issues/3109
-        // default: 250
+        // Metadata cache max age. 
+        // https://github.com/Azure/azure-functions-kafka-extension/issues/187
+        // default: 180000 
         // </summary>
-        public int? TopicMetadataRefreshFastIntervalMs { get; set; }
+        public int? MetadataMaxAgeMs { get; set; } = 180000;
+
+        // <summary>
+        // Enable TCP keep-alives (SO_KEEPALIVE) on broker sockets 
+        // https://github.com/Azure/azure-functions-kafka-extension/issues/187
+        // default: true
+        // </summary>
+        public bool? SocketKeepaliveEnable { get; set; } = true;
 
         int subscriberIntervalInSeconds = 1;
         /// <summary>

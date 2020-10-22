@@ -342,7 +342,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             await target.StartAsync(default);
 
-            Assert.Equal(10, target.ConsumerConfig.Count());
+            Assert.Equal(12, target.ConsumerConfig.Count());
             Assert.Equal("testBroker", target.ConsumerConfig.BootstrapServers);
             Assert.Equal("group1", target.ConsumerConfig.GroupId);
             Assert.Equal("password1", target.ConsumerConfig.SslKeyPassword);
@@ -352,6 +352,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(kafkaOptions.AutoCommitIntervalMs, target.ConsumerConfig.AutoCommitIntervalMs);
             Assert.Equal(true, target.ConsumerConfig.EnableAutoCommit);
             Assert.Equal(false, target.ConsumerConfig.EnableAutoOffsetStore);
+            Assert.Equal(180000, target.ConsumerConfig.MetadataMaxAgeMs);
+            Assert.Equal(true, target.ConsumerConfig.SocketKeepaliveEnable);
             Assert.Equal(AutoOffsetReset.Earliest, target.ConsumerConfig.AutoOffsetReset);
 
             await target.StopAsync(default);
@@ -390,7 +392,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             await target.StartAsync(default);
 
-            Assert.Equal(10, target.ConsumerConfig.Count());
+            Assert.Equal(12, target.ConsumerConfig.Count());
             Assert.Equal("testBroker", target.ConsumerConfig.BootstrapServers);
             Assert.Equal("group1", target.ConsumerConfig.GroupId);
             Assert.Equal(kafkaOptions.AutoCommitIntervalMs, target.ConsumerConfig.AutoCommitIntervalMs);

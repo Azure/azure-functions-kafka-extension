@@ -113,7 +113,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 resolvedSslKeyLocation = entity.Attribute.SslKeyLocation;
             }
-
+            var kafkaOptions = this.config.Get<KafkaOptions>();
             var conf = new ProducerConfig()
             {
                 BootstrapServers = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.BrokerList),
@@ -128,8 +128,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 SslKeyPassword = entity.Attribute.SslKeyPassword,
                 SslCertificateLocation = resolvedSslCertificationLocation,
                 SslCaLocation = resolvedSslCaLocation,
-                Debug = this.config.Get<KafkaOptions>()?.LibkafkaDebug,
-                TopicMetadataRefreshFastIntervalMs = this.config.Get<KafkaOptions>()?.TopicMetadataRefreshFastIntervalMs
+                Debug = kafkaOptions?.LibkafkaDebug,
+                MetadataMaxAgeMs = kafkaOptions?.MetadataMaxAgeMs,
+                SocketKeepaliveEnable = kafkaOptions?.SocketKeepaliveEnable
             };
 
             if (entity.Attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet)

@@ -45,7 +45,6 @@ namespace KafkaFunctionSample
             return new OkResult();
         }
 
-
         // EventHubs Configuration sample
         //
         //[FunctionName(nameof(SampleConsumer))]

@@ -12,9 +12,6 @@
     }
   },
   "extensions": {
-    "kafka": {
-      "maxBatchSize": 100,
-      "LibkafkaDebug": "all"
-    }
+
   }
 }
