@@ -8,9 +8,9 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.WebJobs.Logging" Version="3.0.5" />
-    <PackageReference Include="Confluent.Kafka" Version="1.4.3" />
-    <PackageReference Include="Confluent.SchemaRegistry" Version="1.4.3" />
-    <PackageReference Include="Confluent.SchemaRegistry.Serdes.Protobuf" Version="1.4.3" />
+    <PackageReference Include="Confluent.Kafka" Version="1.5.2" />
+    <PackageReference Include="Confluent.SchemaRegistry" Version="1.5.2" />
+    <PackageReference Include="Confluent.SchemaRegistry.Serdes.Protobuf" Version="1.5.2" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="3.0.4" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="2.2.0" />
   </ItemGroup>

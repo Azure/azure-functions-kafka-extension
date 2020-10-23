@@ -284,3 +284,5 @@ local.appsettings.tests.json
 # Mac
 .DS_Store
 
+local.settings.json.org
+samples/dotnet/KafkaFunctionSample/Properties/
