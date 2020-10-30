@@ -111,7 +111,7 @@ _extensions.csproj_
   <DefaultItemExcludes>**</DefaultItemExcludes>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Kafka" Version="3.0.0" />
+    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Kafka" Version="3.2.1" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Script.ExtensionsMetadataGenerator" Version="1.1.7" />
   </ItemGroup>
   <ItemGroup>
