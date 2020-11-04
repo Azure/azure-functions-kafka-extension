@@ -92,6 +92,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 ConsumerGroup = this.config.ResolveSecureSetting(nameResolver, attribute.ConsumerGroup),
                 Topic = this.config.ResolveSecureSetting(nameResolver, attribute.Topic),
                 EventHubConnectionString = this.config.ResolveSecureSetting(nameResolver, attribute.EventHubConnectionString),
+                ClientId = this.config.ResolveSecureSetting(nameResolver, attribute.ClientId)
             };
 
             if (attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet || 

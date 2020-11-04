@@ -94,6 +94,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// </summary>
         public string SslKeyPassword { get; set; }
 
+        /// <summary>
+        /// Client identifier.
+        /// Default: the hostname of the client machine
+        /// client.id in librdkafka
+        /// </summary>
+        public string ClientId { get; set; }
+
         internal void ApplyToConfig(ClientConfig conf)
         {
             if (this.SaslMechanism.HasValue)
