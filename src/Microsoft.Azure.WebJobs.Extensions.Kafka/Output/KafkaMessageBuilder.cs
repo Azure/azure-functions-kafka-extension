@@ -30,10 +30,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 msg.Key = keyValue;
             }
 
-            if (eventData is IKafkaEventDataWithHeaders withHeaders && withHeaders.Headers?.Count > 0)
+            if (eventData.Headers?.Count > 0)
             {
                 msg.Headers = new Headers();
-                foreach (var header in withHeaders.Headers)
+                foreach (var header in eventData.Headers)
                 {
                     msg.Headers.Add(header.Key, header.Value);
                 }

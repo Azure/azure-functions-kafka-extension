@@ -9,7 +9,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public KafkaEventDataHeader(string key, byte[] value)
         {
-            Key = key;
+            Key = key ?? throw new System.ArgumentNullException(nameof(key));
             Value = value;
         }
 
