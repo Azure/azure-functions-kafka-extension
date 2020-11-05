@@ -13,6 +13,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         int Partition { get; }
         string Topic { get; }
         DateTime Timestamp { get; }
-        IKafkaEventDataHeaders Headers { get;}
+        IKafkaEventDataHeaders Headers { get; }
     }
 }

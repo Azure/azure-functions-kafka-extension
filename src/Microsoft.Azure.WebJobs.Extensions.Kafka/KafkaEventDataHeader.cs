@@ -1,6 +1,8 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
+using System;
+
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
     internal class KafkaEventDataHeader : IKafkaEventDataHeader
@@ -9,7 +11,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public KafkaEventDataHeader(string key, byte[] value)
         {
-            Key = key ?? throw new System.ArgumentNullException(nameof(key));
+            Key = key ?? throw new ArgumentNullException(nameof(key));
             Value = value;
         }
 
