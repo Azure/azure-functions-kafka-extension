@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Confluent.Kafka;
@@ -165,6 +166,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
                 // start from earliest if no checkpoint has been committed
                 AutoOffsetReset = AutoOffsetReset.Earliest,
+
+                ClientId = this.listenerConfiguration.ClientId ?? Dns.GetHostName(),
 
                 // Secure communication/authentication
                 SaslMechanism = this.listenerConfiguration.SaslMechanism,

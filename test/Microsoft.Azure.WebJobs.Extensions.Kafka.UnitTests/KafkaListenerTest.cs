@@ -10,6 +10,7 @@ using System;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -342,7 +343,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             await target.StartAsync(default);
 
-            Assert.Equal(12, target.ConsumerConfig.Count());
+            Assert.Equal(13, target.ConsumerConfig.Count());
             Assert.Equal("testBroker", target.ConsumerConfig.BootstrapServers);
             Assert.Equal("group1", target.ConsumerConfig.GroupId);
             Assert.Equal("password1", target.ConsumerConfig.SslKeyPassword);
@@ -355,7 +356,42 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(180000, target.ConsumerConfig.MetadataMaxAgeMs);
             Assert.Equal(true, target.ConsumerConfig.SocketKeepaliveEnable);
             Assert.Equal(AutoOffsetReset.Earliest, target.ConsumerConfig.AutoOffsetReset);
+            Assert.Equal(Dns.GetHostName(), target.ConsumerConfig.ClientId);
 
+            await target.StopAsync(default);
+        }
+
+        [Fact]
+        public async Task When_ClientId_Is_Set_Should_Be_Set_In_Consumer_Config()
+        {
+            var executor = new Mock<ITriggeredFunctionExecutor>();
+            var consumer = new Mock<IConsumer<Ignore, string>>();
+
+            var listenerConfig = new KafkaListenerConfiguration()
+            {
+                BrokerList = "testBroker",
+                Topic = "topic",
+                ClientId = "testclientid"
+            };
+
+            var kafkaOptions = new KafkaOptions();
+            var target = new KafkaListenerForTest<Ignore, string>(
+                executor.Object,
+                true,
+                kafkaOptions,
+                listenerConfig,
+                requiresKey: true,
+                valueDeserializer: null,
+                NullLogger.Instance,
+                functionId: "testId"
+                );
+
+            target.SetConsumer(consumer.Object);
+
+            await target.StartAsync(default);
+
+            Assert.Equal("testclientid", target.ConsumerConfig.ClientId);
+            
             await target.StopAsync(default);
         }
 
@@ -392,7 +428,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             await target.StartAsync(default);
 
-            Assert.Equal(12, target.ConsumerConfig.Count());
+            Assert.Equal(13, target.ConsumerConfig.Count());
             Assert.Equal("testBroker", target.ConsumerConfig.BootstrapServers);
             Assert.Equal("group1", target.ConsumerConfig.GroupId);
             Assert.Equal(kafkaOptions.AutoCommitIntervalMs, target.ConsumerConfig.AutoCommitIntervalMs);
