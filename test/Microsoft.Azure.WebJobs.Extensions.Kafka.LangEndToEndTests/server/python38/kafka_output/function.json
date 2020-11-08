@@ -1,0 +1,23 @@
+{
+      "scriptFile": "main.py",
+      "bindings": [
+        {
+            "type": "httpTrigger",
+            "direction": "in",
+            "name": "req"
+
+        },
+        {
+          "type": "kafka",
+          "direction": "out",
+          "name": "out",
+          "topic": "python38topic",
+          "brokerList": "broker:29092"
+        },
+        {
+          "direction": "out",
+          "name": "$return",
+          "type": "http"
+        }
+    ]
+}
