@@ -669,16 +669,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             
         }
 
-        private async Task<List<T>> ProduceAndConsumeAsync<T>(IEnumerable<T> events) where T : IKafkaEventData
+        private async Task<List<KafkaEventData<string>>> ProduceAndConsumeAsync(IEnumerable<KafkaEventData<string>> events) 
         {
             var eventList = events.ToList();
             foreach (var kafkaEvent in eventList)
             {
-                kafkaEvent.GetType().GetProperty("Topic").SetValue(kafkaEvent, Constants.StringTopicWithTenPartitionsName);
+                kafkaEvent.Topic = Constants.StringTopicWithTenPartitionsName;
             }
             var eventCount = eventList.Count;
-            var output = new ConcurrentBag<T>();
-            using (var host = await StartHostAsync(new[] { typeof(KafkaOutputFunctionsForProduceAndConsume<T>), typeof(KafkaTriggerForProduceAndConsume<T>) },
+            var output = new ConcurrentBag<KafkaEventData<string>>();
+            using (var host = await StartHostAsync(new[] { typeof(KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>), typeof(KafkaTriggerForProduceAndConsume<KafkaEventData<string>>) },
                 serviceRegistrationCallback: s =>
                 {
                     s.AddSingleton(eventList);
@@ -688,7 +688,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             {
                 var jobHost = host.GetJobHost();
                 await jobHost.CallAsync(
-                    typeof(KafkaOutputFunctionsForProduceAndConsume<T>).GetMethod("Produce")
+                    typeof(KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>).GetMethod(nameof(KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>.Produce))
                     );
 
                 await TestHelpers.Await(() =>

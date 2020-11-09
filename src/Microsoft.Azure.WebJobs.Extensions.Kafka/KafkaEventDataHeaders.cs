@@ -11,30 +11,33 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     public class KafkaEventDataHeaders : IKafkaEventDataHeaders
     {
         List<IKafkaEventDataHeader> headers = new List<IKafkaEventDataHeader>();
-        internal readonly bool IsReadOnly;
+        private readonly bool isReadOnly;
 
         internal static KafkaEventDataHeaders EmptyReadOnly { get; } = new KafkaEventDataHeaders(true);
 
         internal KafkaEventDataHeaders(bool isReadOnly = false)
         {
-            this.IsReadOnly = isReadOnly;
+            this.isReadOnly = isReadOnly;
         }
 
-        internal KafkaEventDataHeaders(Confluent.Kafka.Headers headers, bool isReadOnly)
+        internal KafkaEventDataHeaders(Confluent.Kafka.Headers headers)
         {
             if (headers != null)
             {
                 this.headers.AddRange(headers.Select(x => new KafkaEventDataHeader(x.Key, x.GetValueBytes())));
             }
 
-            this.IsReadOnly = isReadOnly;
+            this.isReadOnly = true;
         }
 
         internal KafkaEventDataHeaders(IEnumerable<IKafkaEventDataHeader> headers, bool isReadOnly)
         {
             this.headers.AddRange(headers);
-            this.IsReadOnly = isReadOnly;
+            this.isReadOnly = isReadOnly;
         }
+
+        internal bool IsReadOnly => isReadOnly;
+
         public void Add(string key, byte[] value)
         {
             if (key is null)

@@ -42,7 +42,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.Topic = consumeResult.Topic;
             if (consumeResult.Headers?.Count > 0)
             {
-                this.Headers = new KafkaEventDataHeaders(consumeResult.Message.Headers, true);
+                this.Headers = new KafkaEventDataHeaders(consumeResult.Message.Headers);
             }
             else
             {
@@ -85,7 +85,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             KafkaEventDataHeaders headers;
             if (consumeResult.Headers?.Count > 0)
             {
-                headers = new KafkaEventDataHeaders(consumeResult.Message.Headers, true);
+                headers = new KafkaEventDataHeaders(consumeResult.Message.Headers);
             }
             else
             {
