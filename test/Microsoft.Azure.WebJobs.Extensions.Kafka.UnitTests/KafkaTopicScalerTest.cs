@@ -347,5 +347,26 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.NotNull(result);
             Assert.Equal(ScaleVote.ScaleIn, result.Vote);
         }
+
+        [Fact]
+        public void When_Lag_Consistently_Below_Threshold_Should_Vote_Scale_In()
+        {
+            var context = new ScaleStatusContext<KafkaTriggerMetrics>()
+            {
+                Metrics = new KafkaTriggerMetrics[]
+                {
+                    new KafkaTriggerMetrics(2, partitions.Count),
+                    new KafkaTriggerMetrics(2, partitions.Count),
+                    new KafkaTriggerMetrics(1, partitions.Count),
+                    new KafkaTriggerMetrics(2, partitions.Count),
+                    new KafkaTriggerMetrics(1, partitions.Count),
+                },
+                WorkerCount = 2,
+            };
+
+            var result = topicScaler.GetScaleStatus(context);
+            Assert.NotNull(result);
+            Assert.Equal(ScaleVote.ScaleIn, result.Vote);
+        }
     }
 }
