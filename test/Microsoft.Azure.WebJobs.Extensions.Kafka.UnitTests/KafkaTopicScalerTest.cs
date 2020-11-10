@@ -202,6 +202,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         }
 
         [Fact]
+        public void When_LagIncreasing_But_Under_Threshold_Should_Vote_None()
+        {
+            var context = new ScaleStatusContext<KafkaTriggerMetrics>()
+            {
+                Metrics = new KafkaTriggerMetrics[]
+                {
+                    new KafkaTriggerMetrics(10, partitions.Count),
+                    new KafkaTriggerMetrics(100, partitions.Count),
+                    new KafkaTriggerMetrics(200, partitions.Count),
+                    new KafkaTriggerMetrics(300, partitions.Count),
+                    new KafkaTriggerMetrics(400, partitions.Count),
+                },
+                WorkerCount = 1,
+            };
+
+            var result = topicScaler.GetScaleStatus(context);
+            Assert.NotNull(result);
+            Assert.Equal(ScaleVote.None, result.Vote);
+        }
+
+        [Fact]
         public void When_LagDecreasing_Slowly_Should_Vote_None()
         {
             var context = new ScaleStatusContext<KafkaTriggerMetrics>()

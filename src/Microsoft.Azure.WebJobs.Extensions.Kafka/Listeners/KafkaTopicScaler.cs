@@ -212,7 +212,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     bool queueLengthIncreasing = IsTrueForLast(
                         metrics,
                         NumberOfSamplesToConsider,
-                        (prev, next) => prev.TotalLag < next.TotalLag) && metrics[0].TotalLag > 0;
+                        (prev, next) => prev.TotalLag < next.TotalLag) && metrics[0].TotalLag > (workerCount * lagThreshold);
 
                     if (queueLengthIncreasing)
                     {
