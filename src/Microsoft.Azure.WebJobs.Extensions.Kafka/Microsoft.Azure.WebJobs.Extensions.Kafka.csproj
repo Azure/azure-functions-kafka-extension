@@ -6,7 +6,7 @@
     <AssemblyName>Microsoft.Azure.WebJobs.Extensions.Kafka</AssemblyName>
     <RootNamespace>Microsoft.Azure.WebJobs.Extensions.Kafka</RootNamespace>
     <PackageId>Microsoft.Azure.WebJobs.Extensions.Kafka</PackageId>
-    <Description>Microsoft Azure WebJobs SDK Kafka Extension</Description>
+    <Description>Microsoft Azure WebJobs SDK Kafka Extension - GA for Premium Plan</Description>
     <DebugType>embedded</DebugType>
     <CommitHash Condition="$(CommitHash) == ''">N/A</CommitHash>
     <InformationalVersion>$(Version) Commit hash: $(CommitHash)</InformationalVersion>

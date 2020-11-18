@@ -1,3 +1,5 @@
+![banner](docs/images/banner.png)
+
 Azure Functions extensions for Apache Kafka
 ===
 |Branch|Status|
