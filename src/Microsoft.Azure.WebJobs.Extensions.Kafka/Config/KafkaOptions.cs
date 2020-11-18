@@ -136,6 +136,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// <value>The auto commit interval ms.</value>
         public int AutoCommitIntervalMs { get; set; } = 200;
 
+        /// <summary>
+        /// Gets or sets the debug option for librdkafka library.
+        /// Default = "" (disable)
+        /// A comma-separated list of debug contexts to enable: all,generic,broker,topic,metadata,producer,queue,msg,protocol,cgrp,security,fetch
+        /// Librdkafka: debug
+        /// </summary>
+        public string LibkafkaDebug { get; set; } = null;
+
+        // <summary>
+        // Metadata cache max age. 
+        // https://github.com/Azure/azure-functions-kafka-extension/issues/187
+        // default: 180000 
+        // </summary>
+        public int? MetadataMaxAgeMs { get; set; } = 180000;
+
+        // <summary>
+        // Enable TCP keep-alives (SO_KEEPALIVE) on broker sockets 
+        // https://github.com/Azure/azure-functions-kafka-extension/issues/187
+        // default: true
+        // </summary>
+        public bool? SocketKeepaliveEnable { get; set; } = true;
+
         int subscriberIntervalInSeconds = 1;
         /// <summary>
         /// Defines the minimum frequency in which messages will be executed by function. Only if the message volume is less than <see cref="MaxBatchSize"/> / <see cref="SubscriberIntervalInSeconds"/>

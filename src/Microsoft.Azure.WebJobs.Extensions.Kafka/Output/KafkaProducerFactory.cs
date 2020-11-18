@@ -74,6 +74,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private IProducer<byte[], byte[]> CreateBaseProducer(ProducerConfig producerConfig)
         {
             var builder = new ProducerBuilder<byte[], byte[]>(producerConfig);
+            ILogger logger = this.loggerProvider.CreateLogger("Kafka");
+            builder.SetLogHandler((_, m) =>
+            {
+                logger.Log((LogLevel)m.LevelAs(LogLevelType.MicrosoftExtensionsLogging), $"Libkafka: {m?.Message}");
+            });
+
             return builder.Build();
         }
 
@@ -107,7 +113,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 resolvedSslKeyLocation = entity.Attribute.SslKeyLocation;
             }
-
+            var kafkaOptions = this.config.Get<KafkaOptions>();
             var conf = new ProducerConfig()
             {
                 BootstrapServers = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.BrokerList),
@@ -121,7 +127,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 SslKeyLocation = resolvedSslKeyLocation,
                 SslKeyPassword = entity.Attribute.SslKeyPassword,
                 SslCertificateLocation = resolvedSslCertificationLocation,
-                SslCaLocation = resolvedSslCaLocation
+                SslCaLocation = resolvedSslCaLocation,
+                Debug = kafkaOptions?.LibkafkaDebug,
+                MetadataMaxAgeMs = kafkaOptions?.MetadataMaxAgeMs,
+                SocketKeepaliveEnable = kafkaOptions?.SocketKeepaliveEnable
             };
 
             if (entity.Attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet)

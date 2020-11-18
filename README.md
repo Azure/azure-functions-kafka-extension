@@ -9,7 +9,7 @@ This repository contains Kafka binding extensions for the **Azure WebJobs SDK**.
 
 Please find samples [here](https://github.com/Azure/azure-functions-kafka-extension/tree/master/samples)
 
-**DISCLAIMER**: This library is supported in the Premium Plan along with support for scaling. It is fully supported when using Azure Functions on Kubernetes where scaling will be handed by KEDA - scaling based on Kafka queue length. It is currently not supported on the Consumption plan (there will be no scale from zero).
+**DISCLAIMER**: This library is supported in the Premium Plan along with support for scaling as Go-Live - supported in Production with a SLA. It is also fully supported when using Azure Functions on Kubernetes where scaling will be handed by KEDA - scaling based on Kafka queue length. It is currently not supported on the Consumption plan (there will be no scale from zero) - this is something the Azure Functions team is still working on.
 
 ## Quick Start
 
@@ -319,6 +319,11 @@ The settings exposed here are targeted to more advanced users that want to custo
 |MaxPartitionFetchBytes|max.partition.fetch.bytes|Trigger
 |FetchMaxBytes|fetch.max.bytes|Trigger
 |AutoCommitIntervalMs|auto.commit.interval.ms|Trigger
+|LibkafkaDebug|debug|Both
+|MetadataMaxAgeMs|metadata.max.age.ms|Both
+|SocketKeepaliveEnable|socket.keepalive.enable|Both
+
+**NOTE:** `MetadataMaxAgeMs` default is `180000` `SocketKeepaliveEnable` default is `true` otherwise, the default value is the same as the [Configuration properties](https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md). The reason of the default settings, refer to this [issue](https://github.com/Azure/azure-functions-kafka-extension/issues/187).
 
 If you are missing an configuration setting please create an issue and describe why you need it.
 

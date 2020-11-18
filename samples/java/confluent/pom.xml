@@ -14,8 +14,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <azure.functions.maven.plugin.version>1.5.0</azure.functions.maven.plugin.version>
-        <azure.functions.java.library.version>1.3.0</azure.functions.java.library.version>
+        <azure.functions.maven.plugin.version>1.8.0</azure.functions.maven.plugin.version>
+        <azure.functions.java.library.version>1.4.0</azure.functions.java.library.version>
         <functionAppName>kafka-function-20190419163130420</functionAppName>
         <functionAppRegion>westus</functionAppRegion>
         <stagingDirectory>${project.build.directory}/azure-functions/${functionAppName}</stagingDirectory>
@@ -33,10 +33,6 @@
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
-        </repository>
-        <repository>
-            <id>local</id>
-            <url>file://${project.basedir}/src/repo</url>
         </repository>
     </repositories>
 
@@ -59,7 +55,7 @@
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
-                <version>4.12</version>
+                <version>4.13.1</version>
             </dependency>
             <dependency>
                 <groupId>org.mockito</groupId>
@@ -71,11 +67,6 @@
                 <artifactId>azure-functions-java-library</artifactId>
                 <version>${azure.functions.java.library.version}</version>
             </dependency>
-            <dependency>
-                <groupId>com.microsoft.azure.functions</groupId>
-                <artifactId>azure-functions-java-library-kafka</artifactId>
-                <version>1.0.0</version>
-            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -83,10 +74,6 @@
         <dependency>
             <groupId>com.microsoft.azure.functions</groupId>
             <artifactId>azure-functions-java-library</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.microsoft.azure.functions</groupId>
-            <artifactId>azure-functions-java-library-kafka</artifactId>
         </dependency>
 
         <!-- Test -->

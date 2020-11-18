@@ -104,6 +104,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 builder.SetValueDeserializer(ValueDeserializer);
             }
 
+            builder.SetLogHandler((_, m) =>
+            {
+                logger.Log((LogLevel)m.LevelAs(LogLevelType.MicrosoftExtensionsLogging), $"Libkafka: {m?.Message}");
+            });
+
             return builder.Build();
         }
 
@@ -155,6 +160,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 // Interval in which commits stored in memory will be saved
                 AutoCommitIntervalMs = this.options.AutoCommitIntervalMs,
 
+                // Librdkafka debug options               
+                Debug = this.options.LibkafkaDebug,
+
                 // start from earliest if no checkpoint has been committed
                 AutoOffsetReset = AutoOffsetReset.Earliest,
 
@@ -178,6 +186,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 QueuedMaxMessagesKbytes = this.options.QueuedMaxMessagesKbytes,
                 MaxPartitionFetchBytes = this.options.MaxPartitionFetchBytes,
                 FetchMaxBytes = this.options.FetchMaxBytes,
+                MetadataMaxAgeMs = this.options.MetadataMaxAgeMs,
+                SocketKeepaliveEnable = this.options.SocketKeepaliveEnable
             };
 
             if (string.IsNullOrEmpty(this.listenerConfiguration.EventHubConnectionString))

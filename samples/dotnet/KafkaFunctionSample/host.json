@@ -1,8 +1,17 @@
 {
   "version": "2.0",
+  "logging": {
+    "logLevel": {
+      "default": "Information",
+      "Host.Triggers.Kafka": "Information",
+      "Kafka": "Information",
+      "Host.Results": "Error",
+      "Function": "Trace",
+      "Function.FunctionA": "Warning",
+      "Host.Aggregator": "Trace"
+    }
+  },
   "extensions": {
-    "kafka": {
-      "maxBatchSize": 100
-    }    
+
   }
 }
