@@ -6,7 +6,7 @@
     <AssemblyName>Microsoft.Azure.WebJobs.Extensions.Kafka</AssemblyName>
     <RootNamespace>Microsoft.Azure.WebJobs.Extensions.Kafka</RootNamespace>
     <PackageId>Microsoft.Azure.WebJobs.Extensions.Kafka</PackageId>
-    <Description>Microsoft Azure WebJobs SDK Kafka Extension - GA for Premium Plan</Description>
+    <Description>Microsoft Azure WebJobs SDK Kafka Extension - This library is supported in the Premium Plan along with support for scaling as Go-Live - supported in Production with a SLA. It is also fully supported when using Azure Functions on Kubernetes where scaling will be handed by KEDA - scaling based on Kafka queue length. It is currently not supported on the Consumption plan (there will be no scale from zero) - this is something the Azure Functions team is still working on.</Description>
     <DebugType>embedded</DebugType>
     <CommitHash Condition="$(CommitHash) == ''">N/A</CommitHash>
     <InformationalVersion>$(Version) Commit hash: $(CommitHash)</InformationalVersion>
