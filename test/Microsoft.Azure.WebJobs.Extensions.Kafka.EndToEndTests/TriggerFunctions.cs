@@ -45,6 +45,26 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
         }
     }
 
+    internal static class MultiTopic_SingleItem_Raw_String_Without_Key_Trigger
+    {
+        public static void Trigger(
+            [KafkaTrigger("LocalBroker", new[] { Constants.StringTopicWithTenPartitionsName, Constants.StringTopicWithOnePartitionName}, ConsumerGroup = Constants.ConsumerGroupID)] string kafkaEvent,
+            ILogger log)
+        {
+            log.LogInformation(kafkaEvent);
+        }
+    }
+
+    internal static class RegexTopic_SingleItem_Raw_String_Without_Key_Trigger
+    {
+        public static void Trigger(
+            [KafkaTrigger("LocalBroker", "^(" + Constants.StringTopicWithTenPartitionsName + "|" + Constants.StringTopicWithOnePartitionName + ")", ConsumerGroup = Constants.ConsumerGroupID)] string kafkaEvent,
+            ILogger log)
+        {
+            log.LogInformation(kafkaEvent);
+        }
+    }
+
     internal static class MultiItem_Raw_StringArray_Without_Key_Trigger
     {
         public static void Trigger(

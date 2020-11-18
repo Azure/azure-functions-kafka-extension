@@ -70,7 +70,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var listenerConfig = new KafkaListenerConfiguration()
             {
                 BrokerList = "testBroker",
-                Topic = "topic",
+                Topics = { "topic" },
                 ConsumerGroup = "group1",
             };
 
@@ -133,7 +133,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var listenerConfig = new KafkaListenerConfiguration()
             {
                 BrokerList = "testBroker",
-                Topic = "topic",
+                Topics = { "topic" },
                 ConsumerGroup = "group1",
             };
 
@@ -255,7 +255,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var listenerConfig = new KafkaListenerConfiguration()
             {
                 BrokerList = "testBroker",
-                Topic = "topic",
+                Topics = { "topic" },
                 ConsumerGroup = "group1",
             };
 
@@ -318,7 +318,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var listenerConfig = new KafkaListenerConfiguration()
             {
                 BrokerList = "testBroker",
-                Topic = "topic",
+                Topics = { "topic" },
                 ConsumerGroup = "group1",
                 SslKeyPassword = "password1",
                 SslCertificateLocation = "path/to/cert",
@@ -368,7 +368,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var listenerConfig = new KafkaListenerConfiguration()
             {
                 BrokerList = "testBroker",
-                Topic = "topic",
+                Topics = { "topic" },
                 ConsumerGroup = "group1",
                 SaslMechanism = SaslMechanism.Plain,
                 SaslPassword = "mypassword",
@@ -416,7 +416,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var listenerConfig = new KafkaListenerConfiguration()
             {
                 BrokerList = "testBroker",
-                Topic = "topic",
+                Topics = { "topic" },
                 EventHubConnectionString = "Endpoint=sb://fake.servicebus.windows.net/;SharedAccessKeyName=reader;SharedAccessKey=fake",
                 ConsumerGroup = "group1",
                 SslCaLocation = "does-not-exists.pem",
@@ -450,7 +450,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var listenerConfig = new KafkaListenerConfiguration()
             {
                 BrokerList = broker,
-                Topic = "topic",
+                Topics = { "topic" },
                 EventHubConnectionString = eventhubsConnectionString,
                 ConsumerGroup = "group1",
             };
@@ -556,7 +556,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var listenerConfig = new KafkaListenerConfiguration()
             {
                 BrokerList = "testBroker",
-                Topic = "topic",
+                Topics = { "topic" },
                 ConsumerGroup = "group1",
             };
 

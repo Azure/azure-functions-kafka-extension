@@ -44,7 +44,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private CancellationTokenSource cancellationTokenSource;
         private SemaphoreSlim subscriberFinished;
         private readonly string consumerGroup;
-        private readonly string topicName;
+        private readonly IList<string> topicList;
         private readonly string functionId;
         //protected for the unit test
         protected Lazy<KafkaTopicScaler<TKey, TValue>> topicScaler;
@@ -74,7 +74,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.logger = logger;
             this.cancellationTokenSource = new CancellationTokenSource();
             this.consumerGroup = string.IsNullOrEmpty(this.listenerConfiguration.ConsumerGroup) ? "$Default" : this.listenerConfiguration.ConsumerGroup;
-            this.topicName = this.listenerConfiguration.Topic;
+            this.topicList = this.listenerConfiguration.Topics;
             this.functionId = functionId;
             this.consumer = new Lazy<IConsumer<TKey, TValue>>(() => CreateConsumer());
             this.topicScaler = new Lazy<KafkaTopicScaler<TKey, TValue>>(() => CreateTopicScaler());
@@ -114,7 +114,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         private KafkaTopicScaler<TKey, TValue> CreateTopicScaler()
         {
-            return new KafkaTopicScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.consumerGroup, this.functionId, this.consumer.Value, new AdminClientConfig(GetConsumerConfiguration()), this.logger);
+            return new KafkaTopicScaler<TKey, TValue>(topicList.ToList(), this.consumerGroup, this.functionId, this.consumer.Value, new AdminClientBuilder(new AdminClientConfig(GetConsumerConfiguration())), this.logger);
         }
 
         public void Cancel()
@@ -131,7 +131,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 (FunctionExecutorBase<TKey, TValue>)new SingleItemFunctionExecutor<TKey, TValue>(executor, localConsumer, this.options.ExecutorChannelCapacity, this.options.ChannelFullRetryIntervalInMs, commitStrategy, logger) :
                 new MultipleItemFunctionExecutor<TKey, TValue>(executor, localConsumer, this.options.ExecutorChannelCapacity, this.options.ChannelFullRetryIntervalInMs, commitStrategy, logger);
 
-            localConsumer.Subscribe(this.listenerConfiguration.Topic);
+            localConsumer.Subscribe(this.listenerConfiguration.Topics);
+
             // Using a thread as opposed to a task since this will be long running
             var thread = new Thread(ProcessSubscription)
             {
@@ -325,7 +326,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
             finally
             {
-                this.logger.LogInformation("Exiting {processName} for {topic}", nameof(ProcessSubscription), this.listenerConfiguration.Topic);
+                this.logger.LogInformation("Exiting {processName} for {topic}", nameof(ProcessSubscription), this.listenerConfiguration.Topics);
                 this.subscriberFinished.Release();
             }
         }
@@ -382,7 +383,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             if (!disposed)
             {
-                this.logger.LogInformation("Disposing Kafka Listener for {topic}", this.listenerConfiguration.Topic);
+                this.logger.LogInformation("Disposing Kafka Listener for {topic}", this.listenerConfiguration.Topics);
 
                 if (disposing)
                 {

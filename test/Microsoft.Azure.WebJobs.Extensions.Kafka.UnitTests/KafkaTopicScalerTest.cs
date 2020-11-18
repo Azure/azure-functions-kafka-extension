@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -15,7 +16,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
     public class KafkaTopicScalerTest
     {
-        const string TopicName = "topicTest";
+        private readonly string[] actualTopicNames = new[] { "topicTest", "topicTest2" };
+        private readonly string[] configuredTopicNames = new[] { "topicTest", "^.+Test2" };
 
         private readonly TopicPartition partition0;
         private readonly TopicPartition partition1;
@@ -23,7 +25,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         private readonly TopicPartition partition3;
         private readonly List<TopicPartition> partitions;
         private readonly KafkaTopicScalerForTest<string, byte[]> topicScaler;
+        private readonly Mock<IAdminClient> adminClient;
         private readonly Mock<IConsumer<string, byte[]>> consumer;
+        private readonly Mock<AdminClientBuilder> adminClientBuilder;
 
         private Offset ZeroOffset => new Offset(0L);
         private TimeSpan AnyTimeSpan => It.IsAny<TimeSpan>();
@@ -32,11 +36,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         public KafkaTopicScalerTest()
         {
             consumer = new Mock<IConsumer<string, byte[]>>();
+            adminClientBuilder = new Mock<AdminClientBuilder>(new AdminClientConfig());
 
-            partition0 = new TopicPartition(TopicName, new Partition(0));
-            partition1 = new TopicPartition(TopicName, new Partition(1));
-            partition2 = new TopicPartition(TopicName, new Partition(2));
-            partition3 = new TopicPartition(TopicName, new Partition(3));
+            partition0 = new TopicPartition(actualTopicNames[0], new Partition(0));
+            partition1 = new TopicPartition(actualTopicNames[0], new Partition(1));
+            partition2 = new TopicPartition(actualTopicNames[1], new Partition(2));
+            partition3 = new TopicPartition(actualTopicNames[1], new Partition(3));
 
             partitions = new List<TopicPartition>
             { 
@@ -47,25 +52,49 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             };
 
             topicScaler = new KafkaTopicScalerForTest<string, byte[]>(
-                TopicName,
+                configuredTopicNames,
                 "consumer-group-test",
                 "testfunction",
-                consumer.Object, new AdminClientConfig(),
+                consumer.Object, adminClientBuilder.Object,
                 NullLogger.Instance);
 
-            topicScaler.WithPartitions(partitions);    
+            adminClient = new Mock<IAdminClient>();
+
+            adminClientBuilder.Setup(x => x.Build()).Returns(adminClient.Object);
+
+            adminClient.Setup(x => x.GetMetadata(It.IsAny<TimeSpan>())).Returns(new Metadata(null, partitions.GroupBy(p=>p.Topic).Select(x=>
+                new TopicMetadata(
+                    x.Key, 
+                    new List<PartitionMetadata>(x.Select(t=>new PartitionMetadata(t.Partition.Value, 0, null, null, null))),
+                    null
+                )
+            ).ToList(), 0, ""));
+
+            adminClient.Setup(x => x.GetMetadata(It.IsAny<string>(), It.IsAny<TimeSpan>())).Returns((string topic, TimeSpan timeOut)=> new Metadata(null, partitions.Where(p => p.Topic == topic).GroupBy(p => p.Topic).Select(x =>
+                new TopicMetadata(
+                    x.Key,
+                    new List<PartitionMetadata>(x.Select(t => new PartitionMetadata(t.Partition.Value, 0, null, null, null))),
+                    null
+                )
+            ).ToList(), 0, ""));
         }
 
         
         [Fact]
         public void ScaleMonitor_Id_ReturnsExpectedValue()
         {
-            Assert.Equal("testfunction-kafkatrigger-topictest-consumer-group-test", topicScaler.Descriptor.Id);
+            Assert.Equal("testfunction-kafkatrigger-topictest-^.+test2-consumer-group-test", topicScaler.Descriptor.Id);
         }
 
-        [Fact]
-        public async Task When_Offset_Is_Zero_Should_Return_No_Lag()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task When_Offset_Is_Zero_Should_Return_No_Lag(bool mockAdminClient)
         {
+            if (!mockAdminClient)
+            {
+                topicScaler.WithPartitions(partitions);
+            }
             consumer.Setup(x => x.Committed(It.IsNotNull<IEnumerable<TopicPartition>>(), AnyTimeSpan))
                 .Returns(new List<TopicPartitionOffset>
                 {
@@ -85,9 +114,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         }
 
 
-        [Fact]
-        public async Task When_Committed_Is_Behind_Offset_Should_Return_Combined_Lag()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task When_Committed_Is_Behind_Offset_Should_Return_Combined_Lag(bool mockAdminClient)
         {
+            if (!mockAdminClient)
+            {
+                topicScaler.WithPartitions(partitions);
+            }
             const long currentOffset = 100;
             const long largestLagOffset = currentOffset - 50;
             const long minimalLagOffset = currentOffset - 1;

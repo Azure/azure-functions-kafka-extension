@@ -16,16 +16,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     public class KafkaTriggerAttribute : Attribute
     {
 
-        public KafkaTriggerAttribute(string brokerList, string topic)
+        public KafkaTriggerAttribute(string brokerList, params string[] topic)
         {
             this.BrokerList = brokerList;
-            this.Topic = topic;
+            this.Topics = topic;
         }
 
         /// <summary>
         /// Gets or sets the topic
         /// </summary>
-        public string Topic { get; private set; }
+        public string[] Topics { get; private set; }
 
         /// <summary>
         /// Gets or sets the broker list
