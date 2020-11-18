@@ -38,8 +38,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// </summary>
         internal static bool IsRunningAsFunctionInAzureOrContainer()
         {
-            Console.WriteLine($"Debug: AzureFucntionsEnvironmentEnvVar : {Environment.GetEnvironmentVariable(AzureFunctionEnvironmentEnvVarName)}");
-            Console.WriteLine($"Debug: AzureFunctionWorkerRuntimeEnvVarName : {Environment.GetEnvironmentVariable(AzureFunctionWorkerRuntimeEnvVarName)}");
             // Not running in development and has a worker runtime
             return !string.Equals(DevelopmentEnvironmentName, Environment.GetEnvironmentVariable(AzureFunctionEnvironmentEnvVarName), StringComparison.OrdinalIgnoreCase) &&
                 !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(AzureFunctionWorkerRuntimeEnvVarName));
