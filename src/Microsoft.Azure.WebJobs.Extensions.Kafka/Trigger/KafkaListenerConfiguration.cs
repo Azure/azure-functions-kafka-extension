@@ -94,6 +94,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// </summary>
         public string SslKeyPassword { get; set; }
 
+        /// <summary>
+        /// Lag threshold
+        /// Default: 1000
+        /// </summary>
+        public long LagThreshold { get; set; }
+
         internal void ApplyToConfig(ClientConfig conf)
         {
             if (this.SaslMechanism.HasValue)

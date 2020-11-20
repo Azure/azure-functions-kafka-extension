@@ -15,6 +15,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     [Binding]
     public class KafkaTriggerAttribute : Attribute
     {
+        private long? lagThreshold;
 
         public KafkaTriggerAttribute(string brokerList, string topic)
         {
@@ -107,6 +108,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// </summary>
         public string SslKeyPassword { get; set; }
 
+        /// <summary>
+        /// Lag threshold
+        /// Default: 1000
+        /// </summary>
+        public long LagThreshold { get => lagThreshold.GetValueOrDefault(1000L); set => lagThreshold = value; }
 
         bool IsValidValueType(Type value)
         {
