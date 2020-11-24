@@ -7,7 +7,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
 {
     internal static class LanguageEndToEndTestExtensions
     {
-        public static KafkaEventData<string> KafkaEventData(this string s)
+        public static KafkaEventData<string> ToKafkaEventData(this string s)
         {
             return JsonConvert.DeserializeObject<KafkaEventData<string>>(s);
         }

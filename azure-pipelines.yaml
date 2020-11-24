@@ -67,13 +67,13 @@ jobs:
       workingDirectory: test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
   - task: Bash@3
-    displayName: 'Package current source as NugetPacage and Pack it in Docker'
+    displayName: 'Package current source as Nuget Pacage and Pack it in Docker'
     inputs:
       targetType: filePath
       filePath: './script/create_package.sh'
   
   - task: Bash@3
-    displayName: 'Start kakfa in single node with Java and Python'
+    displayName: 'Start Kakfa in single node with Java and Python'
     inputs:
       targetType: filePath
       filePath: './test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/server/start-kafka-test-environment.sh'
