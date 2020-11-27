@@ -12,7 +12,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public long Offset { get; set; }
         public int Partition { get; set; }
         public string Topic { get; set; }
-        public DateTime Timestamp { get; set; }
+        public DateTimeOffset Timestamp { get; set; }
         public TValue Value { get; set; }
 
         object IKafkaEventData.Value => this.Value;
@@ -35,7 +35,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.Value = consumeResult.Value;
             this.Offset = consumeResult.Offset;
             this.Partition = consumeResult.Partition;
-            this.Timestamp = consumeResult.Timestamp.UtcDateTime;
+            this.Timestamp = DateTimeOffset.FromUnixTimeMilliseconds(consumeResult.Message.Timestamp.UnixTimestampMs);
             this.Topic = consumeResult.Topic;
         }
     }
@@ -46,7 +46,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public long Offset { get; set; }
         public int Partition { get; set; }
         public string Topic { get; set; }
-        public DateTime Timestamp { get; set; }
+        public DateTimeOffset Timestamp { get; set; }
         public TValue Value { get; set; }
 
         object IKafkaEventData.Value => this.Value;
@@ -69,7 +69,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 Value = consumeResult.Value,
                 Offset = consumeResult.Offset,
                 Partition = consumeResult.Partition,
-                Timestamp = consumeResult.Timestamp.UtcDateTime,
+                Timestamp = DateTimeOffset.FromUnixTimeMilliseconds(consumeResult.Message.Timestamp.UnixTimestampMs),
                 Topic = consumeResult.Topic,
             };
 
