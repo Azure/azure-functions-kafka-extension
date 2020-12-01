@@ -54,5 +54,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// <param name="output"></param>
         /// <returns></returns>
         bool TryGetLast(string key, out byte[] output);
+
+        bool IsReadOnly { get; }
     }
 }

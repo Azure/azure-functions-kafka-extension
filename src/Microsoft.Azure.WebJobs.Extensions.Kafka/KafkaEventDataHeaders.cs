@@ -36,7 +36,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.isReadOnly = isReadOnly;
         }
 
-        internal bool IsReadOnly => isReadOnly;
+        public bool IsReadOnly => isReadOnly;
 
         public void Add(string key, byte[] value)
         {
