@@ -2,10 +2,8 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 using Confluent.Kafka;
-using Confluent.SchemaRegistry.Serdes;
 using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
@@ -18,6 +16,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         internal object ValueSerializer { get; }
 
         private readonly ILogger logger;
+
+        internal KafkaMessageBuilder<TKey, TValue> MessageBuilder { get; }
+
         private IProducer<TKey, TValue> producer;
 
         /// <summary>
@@ -30,6 +31,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             this.ValueSerializer = valueSerializer;
             this.logger = logger;
+            this.MessageBuilder = new KafkaMessageBuilder<TKey, TValue>();
             var builder = new DependentProducerBuilder<TKey, TValue>(producerHandle);
 
             if (valueSerializer != null)
@@ -68,21 +70,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 throw new ArgumentException("Message value was not defined");
             }
-            
-            var msg = new Message<TKey, TValue>()
-            {
-                Value = (TValue)actualItem.Value,
-            };
 
-            if (actualItem.Key != null)
-            {
-                if (!(actualItem.Key is TKey keyValue))
-                {
-                    throw new ArgumentException($"Key value is not of the expected type. Expected: {typeof(TKey).Name}. Actual: {actualItem.Key.GetType().Name}");
-                }
-
-                msg.Key = keyValue;
-            }
+            var msg = MessageBuilder.BuildFrom(actualItem);
 
             var topicUsed = topic;
             if (string.IsNullOrEmpty(topic))

@@ -2,9 +2,11 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Tests;
@@ -386,12 +388,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             var host2HasPartitionsSemaphore = new SemaphoreSlim(0);
 
             // Split the call in 4, waiting 1sec between calls
-            var producerTask = Task.Run(async () => 
+            var producerTask = Task.Run(async () =>
             {
                 var allMessages = Enumerable.Range(1, producedMessagesCount).Select(x => EndToEndTestExtensions.CreateMessageValue(messagePrefix, x));
                 const int loopCount = 4;
                 var itemsPerLoop = producedMessagesCount / loopCount;
-                for (var i=0; i < loopCount; ++i)
+                for (var i = 0; i < loopCount; ++i)
                 {
                     var messages = allMessages.Skip(i * itemsPerLoop).Take(itemsPerLoop);
                     await producerJobHost.CallOutputTriggerStringAsync(
@@ -505,7 +507,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             await producerTask;
             await producerHost?.StopAsync();
 
-        }       
+        }
 
 
         [Theory]
@@ -524,7 +526,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
         [InlineData(
             nameof(KafkaOutputFunctions.Produce_AsyncColletor_Raw_ByteArray_Without_Key),
             typeof(SingleItem_RawByteArray_Trigger),
-            Constants.StringTopicWithTenPartitionsName)]        
+            Constants.StringTopicWithTenPartitionsName)]
         [InlineData(
             nameof(KafkaOutputFunctions.Produce_AsyncCollector_Raw_SpecificAvro),
             typeof(MultiItem_Raw_SpecificAvro_Without_Key_Trigger),
@@ -612,10 +614,95 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             }
         }
 
+        [Fact]
+        public async Task Produce_And_Consume_With_Headers()
+        {
+            var input = Enumerable.Range(1, 10)
+                .Select(x => {
+                    var eventData = new KafkaEventData<string>
+                    {
+                        Value = x.ToString()
+                    };
+
+                    for (var i = 0; i < x; i++)
+                    {
+                        eventData.Headers.Add("testHeader", Encoding.UTF8.GetBytes("testValue" + i));
+                    }
+                    return eventData;
+                });
+
+            var output = await ProduceAndConsumeAsync(input);
+
+            foreach (var inputEvent in input)
+            {
+                var outputEvent = output.SingleOrDefault(x => x.Value == inputEvent.Value);
+
+                Assert.NotNull(outputEvent);
+                Assert.Equal(inputEvent.Headers.Count, outputEvent.Headers.Count);
+                Assert.Equal("testValue0", Encoding.UTF8.GetString(outputEvent.Headers.GetFirst("testHeader")));
+                Assert.Throws<NotSupportedException>(() => outputEvent.Headers.Remove("testHeader"));
+            }
+        }
+
+        [Fact]
+        public async Task Produce_And_Consume_Without_Headers()
+        {
+            var input = Enumerable.Range(0, 10)
+                .Select(x => new KafkaEventData<string>
+                {
+                    Value = x.ToString()
+                });
+
+            var output = await ProduceAndConsumeAsync(input.ToArray());
+
+            foreach (var inputEvent in input)
+            {
+                var outputEvent = output.SingleOrDefault(x => x.Value == inputEvent.Value);
+
+                Assert.NotNull(outputEvent);
+                Assert.Equal(0, outputEvent.Headers.Count);
+
+                //All events should have the same headers instance
+                Assert.Same(outputEvent.Headers, output.First().Headers);
+                Assert.Throws<NotSupportedException>(() => outputEvent.Headers.Remove("testHeader"));
+            }
+            
+        }
+
+        private async Task<List<KafkaEventData<string>>> ProduceAndConsumeAsync(IEnumerable<KafkaEventData<string>> events) 
+        {
+            var eventList = events.ToList();
+            foreach (var kafkaEvent in eventList)
+            {
+                kafkaEvent.Topic = Constants.StringTopicWithTenPartitionsName;
+            }
+            var eventCount = eventList.Count;
+            var output = new ConcurrentBag<KafkaEventData<string>>();
+            using (var host = await StartHostAsync(new[] { typeof(KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>), typeof(KafkaTriggerForProduceAndConsume<KafkaEventData<string>>) },
+                serviceRegistrationCallback: s =>
+                {
+                    s.AddSingleton(eventList);
+                    s.AddSingleton(output);
+                }
+             ))
+            {
+                var jobHost = host.GetJobHost();
+                await jobHost.CallAsync(
+                    typeof(KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>).GetMethod(nameof(KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>.Produce))
+                    );
+
+                await TestHelpers.Await(() =>
+                {
+                    var foundCount = output.Count;
+                    return foundCount == eventCount;
+                });
+                return output.ToList();
+            }
+        }
 
         private Task<IHost> StartHostAsync(Type testType, ILoggerProvider customLoggerProvider = null) => StartHostAsync(new[] { testType }, customLoggerProvider);
 
-        private async Task<IHost> StartHostAsync(Type[] testTypes, ILoggerProvider customLoggerProvider = null)
+        private async Task<IHost> StartHostAsync(Type[] testTypes, ILoggerProvider customLoggerProvider = null, Action<IServiceCollection> serviceRegistrationCallback = null)
         {
             IHost host = new HostBuilder()
                 .ConfigureWebJobs(builder =>
@@ -633,6 +720,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                 .ConfigureServices(services =>
                 {
                     services.AddSingleton<ITypeLocator>(new ExplicitTypeLocator(testTypes));
+                    serviceRegistrationCallback?.Invoke(services);
                 })
                 .ConfigureLogging(logging =>
                 {
