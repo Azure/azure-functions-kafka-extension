@@ -115,7 +115,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 config,
                 Options.Create(new KafkaOptions()),
                 new KafkaEventDataConvertManager(NullLogger.Instance),
-                new DefaultNameResolver(config),                
+                new DefaultNameResolver(config),
+                new DefaultKafkaTopicScalerFactory(),
                 NullLoggerFactory.Instance);
             
             var parameterInfo = new TriggerBindingProviderContext(this.GetParameterInfo(functionName), default);
@@ -152,6 +153,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 Options.Create(new KafkaOptions()),
                 new KafkaEventDataConvertManager(NullLogger.Instance),
                 new DefaultNameResolver(config),
+                new DefaultKafkaTopicScalerFactory(),
                 NullLoggerFactory.Instance);
 
             var parameterInfo = new TriggerBindingProviderContext(this.GetParameterInfo(functionName), default);
@@ -189,6 +191,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 Options.Create(new KafkaOptions()),
                 new KafkaEventDataConvertManager(NullLogger.Instance),
                 new DefaultNameResolver(config),
+                new DefaultKafkaTopicScalerFactory(),
                 NullLoggerFactory.Instance);
 
             var parameterInfo = new TriggerBindingProviderContext(this.GetParameterInfo(functionName), default);
@@ -226,6 +229,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 Options.Create(new KafkaOptions()),
                 new KafkaEventDataConvertManager(NullLogger.Instance),
                 new DefaultNameResolver(config),
+                new DefaultKafkaTopicScalerFactory(),
                 NullLoggerFactory.Instance);
 
             var parameterInfo = new TriggerBindingProviderContext(this.GetParameterInfo(functionName), default);
@@ -263,6 +267,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 Options.Create(new KafkaOptions()),
                 new KafkaEventDataConvertManager(NullLogger.Instance),
                 new DefaultNameResolver(config),
+                new DefaultKafkaTopicScalerFactory(),
                 NullLoggerFactory.Instance);
 
             var parameterInfo = new TriggerBindingProviderContext(this.GetParameterInfo(functionName), default);
@@ -312,6 +317,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 Options.Create(new KafkaOptions()),
                 new KafkaEventDataConvertManager(NullLogger.Instance),
                 new DefaultNameResolver(config),
+                new DefaultKafkaTopicScalerFactory(),
                 NullLoggerFactory.Instance);
 
             var parameterInfo = new TriggerBindingProviderContext(this.GetParameterInfo(functionName), default);

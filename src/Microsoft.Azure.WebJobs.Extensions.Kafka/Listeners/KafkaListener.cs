@@ -37,6 +37,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly KafkaListenerConfiguration listenerConfiguration;
         // Indicates if the consumer requires the Kafka element key
         private readonly bool requiresKey;
+        private readonly IKafkaTopicScalerFactory kafkaTopicScalerFactory;
         private readonly ILogger logger;
         private FunctionExecutorBase<TKey, TValue> functionExecutor;
         private Lazy<IConsumer<TKey, TValue>> consumer;
@@ -62,10 +63,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             KafkaListenerConfiguration kafkaListenerConfiguration,
             bool requiresKey,
             IDeserializer<TValue> valueDeserializer,
+            IKafkaTopicScalerFactory kafkaTopicScalerFactory,
             ILogger logger,
             string functionId)
         {
             this.ValueDeserializer = valueDeserializer;
+            this.kafkaTopicScalerFactory = kafkaTopicScalerFactory;
             this.executor = executor;
             this.singleDispatch = singleDispatch;
             this.options = options;
@@ -114,7 +117,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         private KafkaTopicScaler<TKey, TValue> CreateTopicScaler()
         {
-            return new KafkaTopicScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.consumerGroup, this.functionId, this.consumer.Value, new AdminClientConfig(GetConsumerConfiguration()), this.logger);
+            return kafkaTopicScalerFactory.CreateKafkaTopicScaler(this.listenerConfiguration.Topic, this.consumerGroup, this.functionId, this.consumer.Value, new AdminClientConfig(GetConsumerConfiguration()), this.logger);
         }
 
         public void Cancel()

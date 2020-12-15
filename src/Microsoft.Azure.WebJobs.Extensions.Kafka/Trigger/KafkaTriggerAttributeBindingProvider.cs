@@ -21,6 +21,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly IConfiguration config;
         private readonly IConverterManager converterManager;
         private readonly INameResolver nameResolver;
+        private readonly IKafkaTopicScalerFactory kafkaTopicScalerFactory;
         private readonly IOptions<KafkaOptions> options;
         private readonly ILogger logger;
 
@@ -29,11 +30,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             IOptions<KafkaOptions> options,
             IConverterManager converterManager,
             INameResolver nameResolver,
+            IKafkaTopicScalerFactory kafkaTopicScalerFactory,
             ILoggerFactory loggerFactory)
         {
             this.config = config;
             this.converterManager = converterManager;
             this.nameResolver = nameResolver;
+            this.kafkaTopicScalerFactory = kafkaTopicScalerFactory;
             this.options = options;
             this.logger = loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("Kafka"));
         }   
@@ -75,6 +78,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     listenerConfiguration,
                     requiresKey,
                     valueDeserializer,
+                    kafkaTopicScalerFactory,
                     this.logger,
                     factoryContext.Descriptor.Id);
                 
