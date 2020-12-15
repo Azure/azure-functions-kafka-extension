@@ -34,6 +34,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 kafkaListenerConfiguration,
                 requiresKey,
                 valueDeserializer,
+                new DefaultKafkaTopicScalerFactory(),
                 logger,
                 functionId)
         {

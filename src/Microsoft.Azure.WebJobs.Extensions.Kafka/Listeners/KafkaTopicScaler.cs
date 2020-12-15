@@ -134,7 +134,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return GetScaleStatusCore(context.WorkerCount, context.Metrics?.OfType<KafkaTriggerMetrics>().ToArray());
         }
 
-        public ScaleStatus GetScaleStatus(ScaleStatusContext<KafkaTriggerMetrics> context)
+        public virtual ScaleStatus GetScaleStatus(ScaleStatusContext<KafkaTriggerMetrics> context)
         {
             return GetScaleStatusCore(context.WorkerCount, context.Metrics?.ToArray());
         }
