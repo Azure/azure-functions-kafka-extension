@@ -139,5 +139,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// ssl.key.password in librdkafka
         /// </summary>
         public string SslKeyPassword { get; set; }
+
+        /// <summary>
+        /// Client identifier.
+        /// Default: the hostname of the client machine
+        /// client.id in librdkafka
+        /// </summary>
+        public string ClientId { get; set; }
     }
 }

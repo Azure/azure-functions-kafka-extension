@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 
 using Avro.Generic;
@@ -303,6 +304,55 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(sslCertificate.FullName, config.SslCertificateLocation);
             Assert.Equal(sslCa.FullName, config.SslCaLocation);
             Assert.Equal(sslKeyLocation.FullName, config.SslKeyLocation);
+        }
+
+        [Fact]
+        public void GetProducerConfig_When_Client_Defined_Should_SetFromConfig()
+        {
+            var attribute = new KafkaAttribute("brokers:9092", "myTopic")
+            {
+                AuthenticationMode = BrokerAuthenticationMode.Plain,
+                Protocol = BrokerProtocol.SaslSsl,
+                Username = "myuser",
+                Password = "secret",
+                ClientId = "%clientid%"
+            };
+
+            var entity = new KafkaProducerEntity()
+            {
+                Attribute = attribute,
+                ValueType = typeof(ProtoUser),
+            };
+
+            var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string> { 
+                ["clientid"] = "SpecifiedClientId"
+            }).Build();
+
+            var factory = new KafkaProducerFactory(configuration, new DefaultNameResolver(configuration), NullLoggerProvider.Instance);
+            var config = factory.GetProducerConfig(entity);
+            Assert.Equal("SpecifiedClientId", config.ClientId);
+        }
+
+        [Fact]
+        public void GetProducerConfig_When_Client_Not_Defined_Should_SetHostName()
+        {
+            var attribute = new KafkaAttribute("brokers:9092", "myTopic")
+            {
+                AuthenticationMode = BrokerAuthenticationMode.Plain,
+                Protocol = BrokerProtocol.SaslSsl,
+                Username = "myuser",
+                Password = "secret"
+            };
+
+            var entity = new KafkaProducerEntity()
+            {
+                Attribute = attribute,
+                ValueType = typeof(ProtoUser),
+            };
+
+            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerProvider.Instance);
+            var config = factory.GetProducerConfig(entity);
+            Assert.Equal(Dns.GetHostName(), config.ClientId);
         }
     }
 }

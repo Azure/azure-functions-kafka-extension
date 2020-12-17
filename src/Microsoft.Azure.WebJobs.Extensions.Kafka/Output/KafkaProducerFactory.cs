@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Net;
 using System.Reflection;
 using System.Text;
 using Avro.Generic;
@@ -130,7 +131,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 SslCaLocation = resolvedSslCaLocation,
                 Debug = kafkaOptions?.LibkafkaDebug,
                 MetadataMaxAgeMs = kafkaOptions?.MetadataMaxAgeMs,
-                SocketKeepaliveEnable = kafkaOptions?.SocketKeepaliveEnable
+                SocketKeepaliveEnable = kafkaOptions?.SocketKeepaliveEnable,
+                ClientId = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.ClientId) ?? Dns.GetHostName()
             };
 
             if (entity.Attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet)
