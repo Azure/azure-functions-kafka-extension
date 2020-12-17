@@ -44,7 +44,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 return Task.FromResult<IBinding>(null);
             }
-            
+
+            new AttributeEnricher().Enrich(attribute, config, nameResolver);
 
             var argumentBinding = InnerProvider.TryCreate(parameter);
             var keyAndValueTypes = SerializationHelper.GetKeyAndValueTypes(attribute.AvroSchema, parameter.ParameterType, typeof(Null));

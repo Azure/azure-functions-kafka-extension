@@ -13,13 +13,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     /// </summary>
     [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.ReturnValue)]
     [Binding]
-    public class KafkaTriggerAttribute : Attribute
+    public class KafkaTriggerAttribute : Attribute, IAttributeWithConfigurationString
     {
+        private string configurationString;
 
         public KafkaTriggerAttribute(string brokerList, string topic)
         {
             this.BrokerList = brokerList;
             this.Topic = topic;
+        }
+
+        public KafkaTriggerAttribute(string brokerList, string topic, string configurationString) : this(brokerList, topic)
+        {
+            this.configurationString = configurationString;
         }
 
         /// <summary>
@@ -41,7 +47,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// Gets or sets the consumer group
         /// </summary>
         public string ConsumerGroup { get; set; }
-        
+
 
         /// <summary>
         /// Gets or sets the Avro schema.
@@ -107,6 +113,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// </summary>
         public string SslKeyPassword { get; set; }
 
+        string IAttributeWithConfigurationString.ConfigurationString => configurationString;
 
         bool IsValidValueType(Type value)
         {
