@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using Confluent.Kafka;
+using System.Collections.Generic;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
@@ -65,10 +66,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public string EventHubConnectionString { get; set; }
 
         /// <summary>
-        /// Gets or sets the topic.
+        /// Gets or sets the topics.
         /// </summary>
-        /// <value>The topic.</value>
-        public string Topic { get; set; }
+        /// <value>The topics.</value>
+        public IList<string> Topics { get; set; } = new List<string>();
 
         /// <summary>
         /// Gets or sets the consumer group.

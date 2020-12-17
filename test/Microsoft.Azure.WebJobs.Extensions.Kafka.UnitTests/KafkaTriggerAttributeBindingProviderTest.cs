@@ -105,7 +105,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var listenerConfig = new KafkaListenerConfiguration()
             {
                 BrokerList = attribute.BrokerList,
-                Topic = attribute.Topic,
+                Topics = attribute.Topics,
                 ConsumerGroup = "group1",
             };
 
@@ -141,7 +141,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var listenerConfig = new KafkaListenerConfiguration()
             {
                 BrokerList = attribute.BrokerList,
-                Topic = attribute.Topic,
+                Topics = attribute.Topics,
                 ConsumerGroup = "group1",
             };
 
@@ -178,7 +178,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var listenerConfig = new KafkaListenerConfiguration()
             {
                 BrokerList = attribute.BrokerList,
-                Topic = attribute.Topic,
+                Topics = attribute.Topics,
                 ConsumerGroup = "group1",
             };
 
@@ -215,7 +215,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var listenerConfig = new KafkaListenerConfiguration()
             {
                 BrokerList = attribute.BrokerList,
-                Topic = attribute.Topic,
+                Topics = attribute.Topics,
                 ConsumerGroup = "group1",
             };
 
@@ -252,7 +252,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var listenerConfig = new KafkaListenerConfiguration()
             {
                 BrokerList = attribute.BrokerList,
-                Topic = attribute.Topic,
+                Topics = attribute.Topics,
                 ConsumerGroup = "group1",
             };
 
@@ -301,7 +301,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var listenerConfig = new KafkaListenerConfiguration()
             {
                 BrokerList = attribute.BrokerList,
-                Topic = attribute.Topic,
+                Topics = attribute.Topics,
                 ConsumerGroup = "group1",
             };
 

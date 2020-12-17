@@ -5,40 +5,37 @@ using Confluent.Kafka;
 using Microsoft.Azure.WebJobs.Host.Scale;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
     public class KafkaTopicScaler<TKey, TValue> : IScaleMonitor<KafkaTriggerMetrics>
     {
-        private readonly string topicName;
         private readonly string consumerGroup;
         private readonly ILogger logger;
-        private readonly AdminClientConfig adminClientConfig;
+        private readonly AdminClientBuilder adminClientBuilder;
         private readonly IConsumer<TKey, TValue> consumer;
+        private readonly IReadOnlyList<string> topicNames;
         private readonly Lazy<List<TopicPartition>> topicPartitions;
 
         public ScaleMonitorDescriptor Descriptor { get; }
 
-        public KafkaTopicScaler(string topic, string consumerGroup, string functionId, IConsumer<TKey, TValue> consumer, AdminClientConfig adminClientConfig, ILogger logger)
+        public KafkaTopicScaler(IReadOnlyList<string> topics, string consumerGroup, string functionId, IConsumer<TKey, TValue> consumer, AdminClientBuilder adminClientBuilder, ILogger logger)
         {
-            if (string.IsNullOrWhiteSpace(topic))
-            {
-                throw new ArgumentException("Invalid topic", nameof(topic));
-            }
-
             if (string.IsNullOrWhiteSpace(consumerGroup))
             {
                 throw new ArgumentException("Invalid consumer group", nameof(consumerGroup));
             }
 
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            this.adminClientConfig = adminClientConfig ?? throw new ArgumentNullException(nameof(adminClientConfig));
+            this.adminClientBuilder = adminClientBuilder ?? throw new ArgumentNullException(nameof(adminClientBuilder));
             this.consumer = consumer ?? throw new ArgumentNullException(nameof(consumer));
-            this.topicName = topic;
-            this.Descriptor = new ScaleMonitorDescriptor($"{functionId}-kafkatrigger-{topicName}-{consumerGroup}".ToLower());
+            this.topicNames = topics ?? throw new ArgumentNullException(nameof(topics));
+            this.Descriptor = new ScaleMonitorDescriptor($"{functionId}-kafkatrigger-{string.Join("-", topics)}-{consumerGroup}".ToLower());
             this.topicPartitions = new Lazy<List<TopicPartition>>(LoadTopicPartitions);
             this.consumerGroup = consumerGroup;
         }
@@ -48,27 +45,50 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             try
             {
                 var timeout = TimeSpan.FromSeconds(5);
-                using var adminClient = new AdminClientBuilder(adminClientConfig).Build();
-                var metadata = adminClient.GetMetadata(this.topicName, timeout);
-                if (metadata.Topics == null || metadata.Topics.Count == 0)
+                using var adminClient = adminClientBuilder.Build();
+                var topicPartitions = new List<TopicPartition>();
+                foreach (var topicName in topicNames)
                 {
-                    logger.LogError("Could not load metadata information about topic '{topic}'", this.topicName);
-                    return new List<TopicPartition>();
-                }
+                    try
+                    {
+                        List<TopicMetadata> topics;
+                        if (topicName.StartsWith("^"))
+                        {
+                            var metadata = adminClient.GetMetadata(timeout);
+                            topics = metadata.Topics?.Where(x => Regex.IsMatch(x.Topic, topicName)).ToList();
+                        }
+                        else
+                        {
+                            topics = adminClient.GetMetadata(topicName, timeout).Topics;
+                        }
 
-                var topicMetadata = metadata.Topics[0];
-                var partitions = topicMetadata.Partitions;
-                if (partitions == null || partitions.Count == 0)
-                {
-                    logger.LogError("Could not load partition information about topic '{topic}'", this.topicName);
-                    return new List<TopicPartition>();
-                }
+                        if (topics == null || topics.Count == 0)
+                        {
+                            logger.LogError("Could not load metadata information about topic '{topic}'", topicName);
+                            continue;
+                        }
 
-                return partitions.Select(x => new TopicPartition(topicMetadata.Topic, new Partition(x.PartitionId))).ToList();
+                        foreach (var topicMetadata in topics)
+                        {
+                            var partitions = topicMetadata.Partitions;
+                            if (partitions == null || partitions.Count == 0)
+                            {
+                                logger.LogError("Could not load partition information about topic '{topic}'", topicName);
+                                continue;
+                            }
+                            topicPartitions.AddRange(partitions.Select(x => new TopicPartition(topicMetadata.Topic, new Partition(x.PartitionId))));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "Failed to load partition information from topic '{topic}'", topicName);
+                    }
+                }
+                return topicPartitions;
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Failed to load partition information from topic '{topic}'", this.topicName);
+                logger.LogError(ex, "Failed to load partition information from topics");
             }
 
             return new List<TopicPartition>();
@@ -123,7 +143,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             if (partitionWithHighestLag != Partition.Any)
             {
-                logger.LogInformation("Total lag in '{topic}' is {totalLag}, highest partition lag found in {partition} with value of {offsetDifference}", this.topicName, totalLag, partitionWithHighestLag.Value, highestPartitionLag);
+                logger.LogInformation("Total lag in '{topic}' is {totalLag}, highest partition lag found in {partition} with value of {offsetDifference}", string.Join(",", topicNames), totalLag, partitionWithHighestLag.Value, highestPartitionLag);
             }
 
             return Task.FromResult(new KafkaTriggerMetrics(totalLag, allPartitions.Count));
@@ -167,8 +187,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
                 if (this.logger.IsEnabled(LogLevel.Information))
                 {
-                    this.logger.LogInformation("WorkerCount ({workerCount}) > PartitionCount ({partitionCount}). For topic {topicName}, for consumer group {consumerGroup}.", workerCount, partitionCount, this.topicName, this.consumerGroup);
-                    this.logger.LogInformation("Number of instances ({workerCount}) is too high relative to number of partitions ({partitionCount}). For topic {topicName}, for consumer group {consumerGroup}.", workerCount, partitionCount, this.topicName, this.consumerGroup);
+                    this.logger.LogInformation("WorkerCount ({workerCount}) > PartitionCount ({partitionCount}). For topic {topicName}, for consumer group {consumerGroup}.", workerCount, partitionCount, string.Join(",", topicNames), this.consumerGroup);
+                    this.logger.LogInformation("Number of instances ({workerCount}) is too high relative to number of partitions ({partitionCount}). For topic {topicName}, for consumer group {consumerGroup}.", workerCount, partitionCount, string.Join(",", topicNames), this.consumerGroup);
                 }
 
                 return status;
@@ -182,7 +202,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 status.Vote = ScaleVote.ScaleIn;
                 if (this.logger.IsEnabled(LogLevel.Information))
                 {
-                    this.logger.LogInformation("Topic '{topicName}', for consumer group {consumerGroup}' is idle.", this.topicName, this.consumerGroup);
+                    this.logger.LogInformation("Topic '{topicName}', for consumer group {consumerGroup}' is idle.", string.Join(",", topicNames), this.consumerGroup);
                 }
 
                 return status;
@@ -192,17 +212,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             if (totalLag > workerCount * lagThreshold)
             {
                 if (workerCount < partitionCount)
-                { 
+                {
                     status.Vote = ScaleVote.ScaleOut;
 
                     if (this.logger.IsEnabled(LogLevel.Information))
                     {
-                        this.logger.LogInformation("Total lag ({totalLag}) is less than the number of instances ({workerCount}). Scale out, for topic {topicName}, for consumer group {consumerGroup}.", totalLag, workerCount, topicName, consumerGroup);
+                        this.logger.LogInformation("Total lag ({totalLag}) is less than the number of instances ({workerCount}). Scale out, for topic {topicName}, for consumer group {consumerGroup}.", totalLag, workerCount, string.Join(",", topicNames), consumerGroup);
                     }
                 }
                 return status;
             }
-            
+
             // Samples are in chronological order. Check for a continuous increase in unprocessed message count.
             // If detected, this results in an automatic scale out for the site container.
             if (metrics[0].TotalLag > 0)
@@ -220,13 +240,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
                         if (this.logger.IsEnabled(LogLevel.Information))
                         {
-                            this.logger.LogInformation("Total lag ({totalLag}) is less than the number of instances ({workerCount}). Scale out, for topic {topicName}, for consumer group {consumerGroup}.", totalLag, workerCount, topicName, consumerGroup);
+                            this.logger.LogInformation("Total lag ({totalLag}) is less than the number of instances ({workerCount}). Scale out, for topic {topicName}, for consumer group {consumerGroup}.", totalLag, workerCount, string.Join(",", topicNames), consumerGroup);
                         }
                         return status;
                     }
                 }
             }
-            
+
             if (workerCount > 1)
             {
                 bool queueLengthDecreasing = IsTrueForLast(
@@ -246,12 +266,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
                         if (this.logger.IsEnabled(LogLevel.Information))
                         {
-                            this.logger.LogInformation("Total lag length is decreasing for topic {topicName}, for consumer group {consumerGroup}.", this.topicName, this.consumerGroup);
-                        }                    
-                    }                
+                            this.logger.LogInformation("Total lag length is decreasing for topic {topicName}, for consumer group {consumerGroup}.", string.Join(",", topicNames), this.consumerGroup);
+                        }
+                    }
                 }
             }
-              
+
             return status;
         }
 

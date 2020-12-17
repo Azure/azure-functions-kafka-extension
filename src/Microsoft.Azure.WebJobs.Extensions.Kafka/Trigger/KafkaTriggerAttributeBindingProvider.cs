@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Confluent.Kafka;
@@ -36,7 +37,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.nameResolver = nameResolver;
             this.options = options;
             this.logger = loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("Kafka"));
-        }   
+        }
 
         public Task<ITriggerBinding> TryCreateAsync(TriggerBindingProviderContext context)
         {
@@ -50,7 +51,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var consumerConfig = CreateConsumerConfiguration(attribute);
 
             var keyAndValueTypes = SerializationHelper.GetKeyAndValueTypes(attribute.AvroSchema, parameter.ParameterType, typeof(Ignore));
-            var valueDeserializer = SerializationHelper.ResolveValueDeserializer(keyAndValueTypes.ValueType, keyAndValueTypes.AvroSchema);            
+            var valueDeserializer = SerializationHelper.ResolveValueDeserializer(keyAndValueTypes.ValueType, keyAndValueTypes.AvroSchema);
 
             var binding = CreateBindingStrategyFor(keyAndValueTypes.KeyType ?? typeof(Ignore), keyAndValueTypes.ValueType, keyAndValueTypes.RequiresKey, valueDeserializer, parameter, consumerConfig);
 
@@ -77,7 +78,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     valueDeserializer,
                     this.logger,
                     factoryContext.Descriptor.Id);
-                
+
                 return Task.FromResult<IListener>(listener);
             }
 
@@ -90,11 +91,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 BrokerList = this.config.ResolveSecureSetting(nameResolver, attribute.BrokerList),
                 ConsumerGroup = this.config.ResolveSecureSetting(nameResolver, attribute.ConsumerGroup),
-                Topic = this.config.ResolveSecureSetting(nameResolver, attribute.Topic),
+                Topics = attribute.Topics.Select(x => this.config.ResolveSecureSetting(nameResolver, x)).ToList(),
                 EventHubConnectionString = this.config.ResolveSecureSetting(nameResolver, attribute.EventHubConnectionString),
             };
 
-            if (attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet || 
+            if (attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet ||
                 attribute.Protocol != BrokerProtocol.NotSet)
             {
                 consumerConfig.SaslPassword = this.config.ResolveSecureSetting(nameResolver, attribute.Password);

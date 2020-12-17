@@ -535,7 +535,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             nameof(KafkaOutputFunctions.Produce_Return_Parameter_Raw_Protobuf_Without_Key),
             typeof(MultiItem_Raw_Protobuf_Trigger),
             Constants.MyProtobufTopicName)]
-        public async Task Produce_And_Consume_Without_Key(string producerFunctionName, Type triggerFunctionType, string topicName)
+        [InlineData(
+            nameof(KafkaOutputFunctions.Produce_Out_Parameter_KafkaEventData_Array_String_Without_Key),
+            typeof(MultiTopic_SingleItem_Raw_String_Without_Key_Trigger),
+            Constants.StringTopicWithTenPartitionsName + "," + Constants.StringTopicWithOnePartitionName)]
+        [InlineData(
+            nameof(KafkaOutputFunctions.Produce_Out_Parameter_KafkaEventData_Array_String_Without_Key),
+            typeof(RegexTopic_SingleItem_Raw_String_Without_Key_Trigger),
+            Constants.StringTopicWithTenPartitionsName + "," + Constants.StringTopicWithOnePartitionName)]
+        public async Task Produce_And_Consume_Without_Key(string producerFunctionName, Type triggerFunctionType, string topicNames)
         {
             const int producedMessagesCount = 20;
             var messagePrefix = Guid.NewGuid().ToString() + ":";
@@ -544,18 +552,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             {
                 var jobHost = host.GetJobHost();
 
-                await jobHost.CallOutputTriggerStringAsync(
-                    GetStaticMethod(typeof(KafkaOutputFunctions), producerFunctionName),
-                    topicName,
-                    Enumerable.Range(1, producedMessagesCount).Select(x => messagePrefix + x)
-                    );
-
-                await TestHelpers.Await(() =>
+                foreach (var topicName in topicNames.Split(','))
                 {
-                    var foundCount = loggerProvider.GetAllUserLogMessages().Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains(messagePrefix));
-                    return foundCount == producedMessagesCount;
-                });
+                    await jobHost.CallOutputTriggerStringAsync(
+                        GetStaticMethod(typeof(KafkaOutputFunctions), producerFunctionName),
+                        topicName,
+                        Enumerable.Range(1, producedMessagesCount).Select(x => messagePrefix + x)
+                        );
 
+                    await TestHelpers.Await(() =>
+                    {
+                        var foundCount = loggerProvider.GetAllUserLogMessages().Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains(messagePrefix));
+                        return foundCount == producedMessagesCount;
+                    });
+
+                }
                 // Give time for the commit to be saved
                 await Task.Delay(1000);
             }
