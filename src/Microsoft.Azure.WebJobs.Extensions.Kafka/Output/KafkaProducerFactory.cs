@@ -114,6 +114,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 resolvedSslKeyLocation = entity.Attribute.SslKeyLocation;
             }
             var kafkaOptions = this.config.Get<KafkaOptions>();
+            CompressionType compressionType;
+            if (!Enum.TryParse<CompressionType>(kafkaOptions?.CompressionType, out compressionType)) {
+                compressionType = CompressionType.None;
+            }
+
             var conf = new ProducerConfig()
             {
                 BootstrapServers = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.BrokerList),
@@ -131,9 +136,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 Debug = kafkaOptions?.LibkafkaDebug,
                 MetadataMaxAgeMs = kafkaOptions?.MetadataMaxAgeMs,
                 SocketKeepaliveEnable = kafkaOptions?.SocketKeepaliveEnable,
-                CompressionType = entity.Attribute.CompressionType,
-                CompressionLevel = entity.Attribute.CompressionLevel,
-                LingerMs = entity.Attribute.LingerMs
+                CompressionType = compressionType,
+                CompressionLevel = kafkaOptions?.CompressionLevel,
+                LingerMs = kafkaOptions?.LingerMs
             };
 
             if (entity.Attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet)

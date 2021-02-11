@@ -158,6 +158,45 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         // </summary>
         public bool? SocketKeepaliveEnable { get; set; } = true;
 
+        private string compressionType = "None";
+        /// <summary>
+        /// CompressionType for sending message 
+        /// Default is None
+        /// Producer Only
+        /// </summary>
+        public string CompressionType { 
+            get => this.compressionType ;
+            set
+            {
+                if (Enum.TryParse<CompressionType>(value, out CompressionType type))
+                {
+                    this.compressionType = value;
+                } else
+                {
+                    throw new InvalidOperationException("CompressionType should be None, Gzip, Snappy, Lz4, Zstd");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Delay in milliseconds to wait for messages in the producer queue to accumulate before construction message batches to transmit to broker.
+        /// default: 5
+        /// linger.ms in librdkafka
+        /// Producer Only
+        /// </summary>
+        public double? LingerMs { get; set; } = 5;
+
+        /// <summary>
+        /// Compression level parameter for algorithm selected by configuration property
+        /// compression.codec`. Higher values will result in better compression at the cost
+        /// of more CPU usage. Usable range is algorithm-dependent: [0-9] for gzip; [0-12]
+        /// for lz4; only 0 for snappy; -1 = codec-dependent default compression level. 
+        /// default: -1
+        /// Producer Only
+        /// </summary>
+        public int? CompressionLevel { get; set; } = -1;
+
+
         int subscriberIntervalInSeconds = 1;
         /// <summary>
         /// Defines the minimum frequency in which messages will be executed by function. Only if the message volume is less than <see cref="MaxBatchSize"/> / <see cref="SubscriberIntervalInSeconds"/>

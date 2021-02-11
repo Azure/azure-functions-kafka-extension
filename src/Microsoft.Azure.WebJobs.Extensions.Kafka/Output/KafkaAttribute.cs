@@ -5,7 +5,6 @@ using System;
 using Avro.Specific;
 using Confluent.Kafka;
 using Microsoft.Azure.WebJobs.Description;
-using Microsoft.Azure.WebJobs.Extensions.Kafka.Config;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
@@ -140,28 +139,5 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// ssl.key.password in librdkafka
         /// </summary>
         public string SslKeyPassword { get; set; }
-
-        /// <summary>
-        /// CompressionType for sending message
-        /// Default is None
-        /// 
-        /// </summary>
-        public CompressionType CompressionType { get; set; } = CompressionType.None;
-
-        /// <summary>
-        /// Delay in milliseconds to wait for messages in the producer queue to accumulate before construction message batches to transmit to broker.
-        /// default: 5
-        /// linger.ms in librdkafka
-        /// </summary>
-        public double? LingerMs { get; set; } = 5;
-
-        /// <summary>
-        /// Compression level parameter for algorithm selected by configuration property
-        /// compression.codec`. Higher values will result in better compression at the cost
-        /// of more CPU usage. Usable range is algorithm-dependent: [0-9] for gzip; [0-12]
-        ///  for lz4; only 0 for snappy; -1 = codec-dependent default compression level. 
-        ///  default: -1
-        /// </summary>
-        public int? CompressionLevel { get; set; } = -1;
     }
 }
