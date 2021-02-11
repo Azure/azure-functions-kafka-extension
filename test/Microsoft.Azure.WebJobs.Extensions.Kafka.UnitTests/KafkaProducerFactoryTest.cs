@@ -183,7 +183,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerProvider.Instance);
             var config = factory.GetProducerConfig(entity);
-            Assert.Single(config);
+            Assert.Equal(2, config.Count());
             Assert.Equal("brokers:9092", config.BootstrapServers);
         }
 
@@ -206,7 +206,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerProvider.Instance);
             var config = factory.GetProducerConfig(entity);
-            Assert.Equal(5, config.Count());
+            Assert.Equal(6, config.Count());
             Assert.Equal("brokers:9092", config.BootstrapServers);
             Assert.Equal(SecurityProtocol.SaslSsl, config.SecurityProtocol);
             Assert.Equal(SaslMechanism.Plain, config.SaslMechanism);
@@ -234,7 +234,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerProvider.Instance);
             var config = factory.GetProducerConfig(entity);
-            Assert.Equal(6, config.Count());
+            Assert.Equal(7, config.Count());
             Assert.Equal("brokers:9092", config.BootstrapServers);
             Assert.Equal(SecurityProtocol.Ssl, config.SecurityProtocol);
             Assert.Equal("path/to/key", config.SslKeyLocation);
