@@ -130,7 +130,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 SslCaLocation = resolvedSslCaLocation,
                 Debug = kafkaOptions?.LibkafkaDebug,
                 MetadataMaxAgeMs = kafkaOptions?.MetadataMaxAgeMs,
-                SocketKeepaliveEnable = kafkaOptions?.SocketKeepaliveEnable
+                SocketKeepaliveEnable = kafkaOptions?.SocketKeepaliveEnable,
+                CompressionType = entity.Attribute.CompressionType,
+                CompressionLevel = entity.Attribute.CompressionLevel,
+                LingerMs = entity.Attribute.LingerMs
             };
 
             if (entity.Attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet)
