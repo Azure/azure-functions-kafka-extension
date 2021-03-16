@@ -4,7 +4,7 @@
 
 * [Visual Studio 2019](https://azure.microsoft.com/downloads/) and the [lateset Azure Functions tools](https://docs.microsoft.com/en-us/azure/azure-functions/functions-develop-vs#check-your-tools-version)
 
-For more details refer to [uickstart: Create your first function in Azure using Visual Studio](https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-your-first-function-visual-studio#prerequisites)
+For more details refer to [quickstart: Create your first function in Azure using Visual Studio](https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-your-first-function-visual-studio#prerequisites)
 
 This sample will work not only the Windows and Visual Studio. It works on Mac and Linux as well. However, this sample is tested on that enviornment. You can find several way to create a .NET function.
 

@@ -8,10 +8,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     public interface IKafkaEventData
     {
         object Value { get; }
-        object Key { get; }        
-        long Offset { get;  }
-        int Partition { get;  }
+        object Key { get; }
+        long Offset { get; }
+        int Partition { get; }
         string Topic { get; }
         DateTime Timestamp { get; }
+        IKafkaEventDataHeaders Headers { get; }
     }
 }
