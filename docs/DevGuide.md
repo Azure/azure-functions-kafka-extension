@@ -131,3 +131,45 @@ Partition 2: 12345
 1. Sends E, 4 (in parallel)
 1. Sends 5
 1. Commits E and 5
+
+## End To End Testing with Languages
+
+Starting the End To End testing will following Steps. You can debug on Windows. 
+In this document, I'll explain the case on Windows. However, If you want to run on Linux. 
+It is avaiable. For more details, you can refer the Azure DevOps pipeline. 
+
+Language End To End testing works with Docker Compose. It start Kafka Cluster and Java and 
+Python Functions with different port. It is 7071 and 7072 respectively.
+
+The End To End testing run agenst the latest source code of Kafka Extension, the E2E test is 
+written by C# and calling each languages trigger/ouput bindings.
+
+### Create NuGetPackage 
+
+If you want to test the latest Kafka Extension with Java/Python or other language, 
+You need to create a NuGet package and put it on the LocalNuget.
+
+Run the command from the top directory of this repo. It will create a new NuGet package from the latest source and build java and python function images.
+
+```powershell
+PS1 > script\create_package.ps1
+```
+
+### Start Kafka Cluster 
+
+```powershell
+PS1 > cd test\Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests\server
+PS1 > docker-compose up
+```
+
+### Run Language End To End Test
+
+Run/Debug the `test\Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests` from your Visual Studio or `dotnet test` command.
+
+### Stop Kafka Cluster
+
+```powershell
+PS1 > cd test\Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests\server
+PS1 > docker-compose down
+```
+

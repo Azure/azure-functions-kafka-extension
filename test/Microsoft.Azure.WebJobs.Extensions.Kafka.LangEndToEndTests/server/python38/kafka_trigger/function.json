@@ -1,0 +1,21 @@
+{
+      "scriptFile": "main.py",
+      "bindings": [
+        {
+          "type": "kafkaTrigger",
+          "direction": "in",
+          "name": "kevent",
+          "topic": "python38topic",
+          "brokerList": "broker:29092",
+          "consumerGroup" : "functions"
+        },        
+        {
+          "type": "kafka",
+          "direction": "out",
+          "name": "out",
+          "topic": "python38result",
+          "brokerList": "broker:29092"
+        }         
+
+    ]
+}

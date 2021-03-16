@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+	<WarningsAsErrors></WarningsAsErrors>
+	<DefaultItemExcludes>**</DefaultItemExcludes>
+  </PropertyGroup>
+    <ItemGroup>
+    <ProjectReference Include="Microsoft.Azure.WebJobs.Extensions.Kafka" Version="100.100.100-pre" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Azure.WebJobs.Script.ExtensionsMetadataGenerator" Version="1.1.7" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="confluent_cloud_cacert.pem">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>

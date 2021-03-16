@@ -1,0 +1,12 @@
+#!/bin/bash
+
+export COMPOSE_INTERACTIVE_NO_CLI=1
+
+# start docker compose
+docker-compose up -d
+
+# wait until kafka is ready to create topic
+# need to improve, adding a retry instead of a static sleep
+sleep 30
+
+docker ps

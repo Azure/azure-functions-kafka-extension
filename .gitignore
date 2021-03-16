@@ -286,3 +286,6 @@ local.appsettings.tests.json
 
 local.settings.json.org
 samples/dotnet/KafkaFunctionSample/Properties/
+
+temp
+packages-microsoft-prod.deb
