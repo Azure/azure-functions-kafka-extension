@@ -1,0 +1,32 @@
+name: Release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version'
+        required: true
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: dev
+        fetch-depth: 0
+    - id: createBranch
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git fetch --all
+        git checkout -b master origin/master
+        git merge dev
+        git tag ${{ github.event.inputs.version }}
+        git push
+        git push origin ${{ github.event.inputs.version }}
+    - name: Release Drafter
+      uses: release-drafter/release-drafter@v5.15.0
+      with:
+        tag: ${{ github.event.inputs.version }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
