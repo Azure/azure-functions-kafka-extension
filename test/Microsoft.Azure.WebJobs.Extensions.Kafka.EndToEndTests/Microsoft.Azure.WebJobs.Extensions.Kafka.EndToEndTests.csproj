@@ -27,10 +27,10 @@
     <PackageReference Include="xunit" Version="2.4.0" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.0" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Logging" Version="3.0.5" />
-    <PackageReference Include="Confluent.Kafka" Version="1.6.0-PRE4" />
-    <PackageReference Include="Confluent.SchemaRegistry" Version="1.6.0-PRE4" />
-    <PackageReference Include="Confluent.SchemaRegistry.Serdes.Avro" Version="1.6.0-PRE4" />
-    <PackageReference Include="Confluent.SchemaRegistry.Serdes.Protobuf" Version="1.6.0-PRE4" />
+    <PackageReference Include="Confluent.Kafka" Version="1.6.3" />
+    <PackageReference Include="Confluent.SchemaRegistry" Version="1.6.3" />
+    <PackageReference Include="Confluent.SchemaRegistry.Serdes.Avro" Version="1.6.3" />
+    <PackageReference Include="Confluent.SchemaRegistry.Serdes.Protobuf" Version="1.6.3" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="1.5.0" />
   </ItemGroup>
 

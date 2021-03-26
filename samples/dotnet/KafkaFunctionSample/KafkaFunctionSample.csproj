@@ -1,13 +1,13 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <LangVersion>latest</LangVersion>
     <AzureFunctionsVersion>v3</AzureFunctionsVersion>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Confluent.Kafka" Version="1.6.0-PRE4" />
+    <PackageReference Include="Confluent.Kafka" Version="1.6.3" />
     <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="3.0.7" />
-    <PackageReference Include="Confluent.SchemaRegistry.Serdes.Protobuf" Version="1.6.0-PRE4" />
+    <PackageReference Include="Confluent.SchemaRegistry.Serdes.Protobuf" Version="1.6.3" />
   </ItemGroup>
   <ItemGroup>
     <None Update="host.json">
