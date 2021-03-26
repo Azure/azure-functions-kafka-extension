@@ -20,6 +20,9 @@ jobs:
   Update:
     runs-on: windows-latest
     steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: dev
     - name: UpdateVersion
       run: |
         git config --local user.email "action@github.com"
