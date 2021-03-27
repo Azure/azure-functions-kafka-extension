@@ -24,6 +24,8 @@ jobs:
         git tag ${{ github.event.inputs.version }}
         git push
         git push origin ${{ github.event.inputs.version }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.PIPELINE_ADMIN }}
     - name: Release Drafter
       uses: release-drafter/release-drafter@v5.15.0
       with:
