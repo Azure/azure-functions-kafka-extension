@@ -14,6 +14,7 @@ jobs:
       with:
         ref: dev
         fetch-depth: 0
+        token: ${{ secrets.PIPELINE_ADMIN }}
     - id: createBranch
       run: |
         git config --local user.email "azfuncgh@github.com"
