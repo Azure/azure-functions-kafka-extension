@@ -66,6 +66,8 @@ function Update-ExtensionVersion{
     Set-Content -Path $path -Value $newContent
 }
 
+$PSDefaultParameterValues['*:Encoding'] = 'utf8'
+
 Update-HostVersion -oldVersion $oldVersion -newVersion $newVersion -Directory .
 Update-ExtensionVersion -oldExtensionVersion $oldExtensionVersion -newExtensionVersion $newExtensionVersion
     
