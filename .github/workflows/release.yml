@@ -24,6 +24,10 @@ jobs:
         git merge dev
         git tag ${{ github.event.inputs.version }}
         git push
+        if ($lastexitcode -ne 0)
+        {
+          throw "git push failed"
+        }
         git push origin ${{ github.event.inputs.version }}
       env:
         GITHUB_TOKEN: ${{ secrets.PIPELINE_ADMIN }}
