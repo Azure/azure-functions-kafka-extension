@@ -12,6 +12,8 @@ categories:
     label: 'bug'
   - title: '☕Java'
     label: 'java'
+  - title: '⚡Automation'
+    label: 'automation'
   - title: '📔Documentation'
     label: 'documentation'
   - title: '🔗Dependency Updates'
