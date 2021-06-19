@@ -154,7 +154,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                         }
                     }
 
-                    logger.LogError("Librdkafka initialization: did not attempt to load librdkafka because the desired file(s) does not exist: '{searchedPaths}'", string.Join(",", possibleLibrdKafkaLibraryPaths));
+                    logger.LogInformation("Librdkafka initialization: did not attempt to load librdkafka because the desired file(s) does not exist: '{searchedPaths}'", string.Join(",", possibleLibrdKafkaLibraryPaths));
                 }
                 else
                 {
