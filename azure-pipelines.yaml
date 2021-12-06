@@ -7,10 +7,8 @@ variables:
 pr:
   branches:
     include:
-    - master
-    - dev
-    - sbom-manifest-generator
-
+    - '*'
+    
 # Enable CI on branches master and dev
 # Batch builds
 trigger:
