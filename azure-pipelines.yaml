@@ -88,6 +88,12 @@ jobs:
   - script: dotnet pack -o '$(Build.ArtifactStagingDirectory)' --include-symbols src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
     displayName: 'Pack nuget pacakge'
 
+  - task: ManifestGeneratorTask@0
+    displayName: 'SBOM Generation Task'
+    inputs:
+      BuildDropPath: '$(Build.ArtifactStagingDirectory)'
+      Verbosity: 'Information'
+
   - task: PublishBuildArtifacts@1
     inputs:
       pathToPublish: '$(Build.ArtifactStagingDirectory)'
