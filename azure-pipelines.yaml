@@ -25,7 +25,7 @@ jobs:
   displayName: 'Build and Test'
   continueOnError: false
   pool:
-    vmImage: 'Ubuntu 20.04'
+    vmImage: 'Ubuntu-latest'
   
   steps:
   - task: DotNetCoreCLI@2
