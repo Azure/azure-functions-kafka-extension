@@ -92,6 +92,7 @@ jobs:
     displayName: 'SBOM Generation Task'
     inputs:
       BuildDropPath: '$(Build.ArtifactStagingDirectory)'
+      PackageName: 'Microsoft.Azure.WebJobs.Extensions.Kafka'
       Verbosity: 'Information'
 
   - task: PublishBuildArtifacts@1
