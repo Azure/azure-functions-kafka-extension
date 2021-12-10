@@ -25,7 +25,7 @@ jobs:
   displayName: 'Build and Test'
   continueOnError: false
   pool:
-    vmImage: 'Ubuntu 16.04'
+    vmImage: 'Ubuntu-latest'
   
   steps:
   - task: DotNetCoreCLI@2
@@ -87,6 +87,13 @@ jobs:
 
   - script: dotnet pack -o '$(Build.ArtifactStagingDirectory)' --include-symbols src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
     displayName: 'Pack nuget pacakge'
+
+  - task: ManifestGeneratorTask@0
+    displayName: 'SBOM Generation Task'
+    inputs:
+      BuildDropPath: '$(Build.ArtifactStagingDirectory)'
+      PackageName: 'Microsoft.Azure.WebJobs.Extensions.Kafka'
+      Verbosity: 'Information'
 
   - task: PublishBuildArtifacts@1
     inputs:
