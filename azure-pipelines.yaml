@@ -26,7 +26,8 @@ jobs:
   continueOnError: false
   pool:
     name: '1ES-Hosted-Azfunc'
-    vmImage: 'MMSUbuntu20.04TLS'
+    demands:
+    - ImageOverride -equals MMSUbuntu20.04TLS
   
   steps:
   - task: DotNetCoreCLI@2
