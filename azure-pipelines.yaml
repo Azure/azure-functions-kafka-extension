@@ -1,14 +1,14 @@
 name: $(Build.SourceBranchName)_$(Build.Reason)_$(majorVersion).$(Build.BuildId)$(Rev:.r)
 variables:
-  buildConfiguration: 'Release'
+  buildConfiguration: Release
   majorVersion: 0.0.0
 
 # Enable PR validation on branches master and dev
 pr:
   branches:
     include:
-    - master
-    - dev
+      - master
+      - dev
 
 # Enable CI on branches master and dev
 # Batch builds
@@ -16,20 +16,18 @@ trigger:
   batch: true
   branches:
     include:
-    - dev
-    - master
+      - dev
+      - master
 
-jobs:
+continueOnError: false
+pool:
+  name: 1ES-Hosted-Azfunc
+  demands:
+    - ImageOverride -equals MMSUbuntu20.04TLS
 
-- job: build_and_test
-  displayName: 'Build and Test'
-  continueOnError: false
-  pool:
-    vmImage: 'Ubuntu-latest'
-  
-  steps:
+steps:
   - task: DotNetCoreCLI@2
-    displayName: 'Build project'
+    displayName: Build project
     inputs:
       projects: |
         src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
@@ -38,65 +36,65 @@ jobs:
         test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.csproj
 
   - task: DotNetCoreCLI@2
-    displayName: 'Run unit tests'
+    displayName: Run unit tests
     inputs:
       command: test
       projects: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
   - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
-    displayName: 'Component Detection'
+    displayName: Component Detection
 
   - task: Bash@3
-    displayName: 'Start kafka in single node'
+    displayName: Start Kafka in single node
     inputs:
       targetType: filePath
-      filePath: './test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/start-kafka-test-environment.sh'
+      filePath: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/start-kafka-test-environment.sh
       workingDirectory: test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
   - task: DotNetCoreCLI@2
-    displayName: 'Run e2e tests'
+    displayName: Run e2e tests
     inputs:
       command: test
       projects: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
   - task: Bash@3
-    displayName: 'Stop kafka in single node'
+    displayName: Stop Kafka in single node
     inputs:
       targetType: filePath
-      filePath: './test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/stop-kafka-test-environment.sh'
+      filePath: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/stop-kafka-test-environment.sh
       workingDirectory: test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
   - task: Bash@3
-    displayName: 'Package current source as Nuget Pacage and Pack it in Docker'
+    displayName: Package current source as NuGet package and pack it in Docker
     inputs:
       targetType: filePath
-      filePath: './script/create_package.sh'
-  
+      filePath: ./script/create_package.sh
+
   - task: Bash@3
-    displayName: 'Start Kakfa in single node with Java and Python'
+    displayName: Start Kakfa in single node with Java and Python
     inputs:
       targetType: filePath
-      filePath: './test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/server/start-kafka-test-environment.sh'
-      workingDirectory: test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/server  
+      filePath: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/server/start-kafka-test-environment.sh
+      workingDirectory: test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/server
 
   - task: DotNetCoreCLI@2
-    displayName: 'Run language e2e tests'
+    displayName: Run language e2e tests
     inputs:
       command: test
       projects: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
 
   - script: dotnet pack -o '$(Build.ArtifactStagingDirectory)' --include-symbols src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
-    displayName: 'Pack nuget pacakge'
+    displayName: Pack NuGet package
 
   - task: ManifestGeneratorTask@0
-    displayName: 'SBOM Generation Task'
+    displayName: SBOM Generation Task
     inputs:
-      BuildDropPath: '$(Build.ArtifactStagingDirectory)'
-      PackageName: 'Microsoft.Azure.WebJobs.Extensions.Kafka'
-      Verbosity: 'Information'
+      BuildDropPath: $(Build.ArtifactStagingDirectory)
+      PackageName: Microsoft.Azure.WebJobs.Extensions.Kafka
+      Verbosity: Information
 
   - task: PublishBuildArtifacts@1
     inputs:
-      pathToPublish: '$(Build.ArtifactStagingDirectory)'
-      artifactName: 'drop'
-      publishLocation: 'Container'
+      pathToPublish: $(Build.ArtifactStagingDirectory)
+      artifactName: drop
+      publishLocation: Container
