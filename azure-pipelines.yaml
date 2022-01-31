@@ -23,7 +23,7 @@ continueOnError: false
 pool:
   name: 1ES-Hosted-Azfunc
   demands:
-    - ImageOverride -equals MMSUbuntu20.04TLS
+    - ImageOverride -equals MMS2022TLS
 
 steps:
   - task: DotNetCoreCLI@2
