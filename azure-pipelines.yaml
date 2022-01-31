@@ -51,11 +51,11 @@ steps:
       filePath: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/start-kafka-test-environment.sh
       workingDirectory: test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
-  - task: DotNetCoreCLI@2
-    displayName: Run e2e tests
-    inputs:
-      command: test
-      projects: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
+  # - task: DotNetCoreCLI@2
+  #   displayName: Run e2e tests
+  #   inputs:
+  #     command: test
+  #     projects: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
   - task: Bash@3
     displayName: Stop Kafka in single node
