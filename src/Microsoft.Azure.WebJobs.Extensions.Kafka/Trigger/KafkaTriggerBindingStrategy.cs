@@ -48,6 +48,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             AddBindingContractMember(contract, nameof(KafkaEventData<TKey, TValue>.Topic), typeof(string), isSingleDispatch);
             AddBindingContractMember(contract, nameof(KafkaEventData<TKey, TValue>.Timestamp), typeof(DateTime), isSingleDispatch);
             AddBindingContractMember(contract, nameof(KafkaEventData<TKey, TValue>.Offset), typeof(long), isSingleDispatch);
+            AddBindingContractMember(contract, nameof(KafkaEventData<TKey, TValue>.Headers), typeof(Array), !isSingleDispatch);
 
             return contract;
         }
@@ -113,6 +114,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             bindingData.Add(nameof(IKafkaEventData.Topic), eventData.Topic);
             bindingData.Add(nameof(IKafkaEventData.Timestamp), eventData.Timestamp);
             bindingData.Add(nameof(IKafkaEventData.Offset), eventData.Offset);
+            bindingData.Add(nameof(IKafkaEventData.Headers), eventData.Headers);
         }
     }
 }
