@@ -22,7 +22,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(typeof(string), contract["Topic"]);
             Assert.Equal(typeof(DateTime), contract["Timestamp"]);
             Assert.Equal(typeof(long), contract["Offset"]);
-            Assert.Equal(typeof(Array[]), contract["HeadersArray"]);
+            Assert.Equal(typeof(Array[]), contract["Headers"]);
         }
 
         [Fact]
@@ -37,7 +37,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(typeof(string), contract["Topic"]);
             Assert.Equal(typeof(DateTime), contract["Timestamp"]);
             Assert.Equal(typeof(long), contract["Offset"]);
-            Assert.Equal(typeof(Array[]), contract["HeadersArray"]);
+            Assert.Equal(typeof(Array[]), contract["Headers"]);
         }
 
         [Fact]
