@@ -5,7 +5,11 @@
             "name": "event",
             "direction": "in",
             "topic": "users",
-            "brokerList": "broker:29092",
+            "brokerList": "%BrokerList%",
+            "username": "%ConfluentCloudUserName%",
+            "password": "%ConfluentCloudPassword%",
+            "protocol": "saslSsl",
+            "authenticationMode": "plain",
             "consumerGroup" : "functions",
             "dataType": "binary"
         }
