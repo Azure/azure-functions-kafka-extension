@@ -82,9 +82,9 @@ For more details, refer to [Local settings file](https://docs.microsoft.com/en-u
 {
     "IsEncrypted": false,
     "Values": {
-        "BrokerList": "pkc-epwny.eastus.azure.confluent.cloud:9092",
-        "ConfluentCloudUsername": "WHYYKOT6JMPYGJJV",
-        "ConfluentCloudPassword": "KUtytGe72JzhCKeA7cZ6dJj6oRE4I5NyOjMxj157tQaiJoVy67UD0sAqJM9e4QAZ",
+        "BrokerList": "{YOUR_CONFLUENT_CLOUD_BROKER}.eastus.azure.confluent.cloud:9092",
+        "ConfluentCloudUserName": "{YOUR_CONFLUENT_CLOUD_USERNAME}",
+        "ConfluentCloudPassword": "{YOUR_CONFLUENT_CLOUD_PASSWORD}",
         "FUNCTIONS_WORKER_RUNTIME": "python",
         "AzureWebJobsStorage": ""
     }
