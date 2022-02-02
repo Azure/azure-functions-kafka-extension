@@ -82,7 +82,7 @@ For more details, refer to [Local settings file](https://docs.microsoft.com/en-u
 {
     "IsEncrypted": false,
     "Values": {
-        "BrokerList": "{YOUR_CONFLUENT_CLOUD_BROKER}.eastus.azure.confluent.cloud:9092",
+        "BrokerList": "{YOUR_CONFLUENT_CLOUD_BROKER}",
         "ConfluentCloudUserName": "{YOUR_CONFLUENT_CLOUD_USERNAME}",
         "ConfluentCloudPassword": "{YOUR_CONFLUENT_CLOUD_PASSWORD}",
         "FUNCTIONS_WORKER_RUNTIME": "python",
