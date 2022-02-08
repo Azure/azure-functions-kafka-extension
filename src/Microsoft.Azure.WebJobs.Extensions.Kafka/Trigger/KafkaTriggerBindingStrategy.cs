@@ -90,12 +90,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var timestamps = new DateTime[length];
             var topics = new string[length];
             var keys = new object[length];
+            var headers = new object[length];
 
             bindingData.Add("PartitionArray", partitions);
             bindingData.Add("OffsetArray", offsets);
             bindingData.Add("TimestampArray", timestamps);
             bindingData.Add("TopicArray", topics);
             bindingData.Add("KeyArray", keys);
+            bindingData.Add("HeadersArray", headers);
 
             for (int i = 0; i < events.Length; i++)
             {
@@ -104,6 +106,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 timestamps[i] = events[i].Timestamp;
                 keys[i] = events[i].Key;
                 topics[i] = events[i].Topic;
+                headers[i] = events[i].Headers;
             }
         }
 
