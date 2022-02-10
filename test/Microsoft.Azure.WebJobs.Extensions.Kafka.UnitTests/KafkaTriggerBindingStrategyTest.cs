@@ -103,6 +103,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 },
             });
 
+            triggerInput.Events[0].Headers.Add("test", Encoding.UTF8.GetBytes("test"));
+            triggerInput.Events[1].Headers.Add("testNew", Encoding.UTF8.GetBytes("testNew"));
+
             var strategy = new KafkaTriggerBindingStrategy<string, string>();
             var binding = strategy.GetBindingData(triggerInput);
             Assert.Equal(new[] { "1", "2" }, binding["KeyArray"]);
@@ -110,6 +113,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(new[] { 2, 2 }, binding["PartitionArray"]);
             Assert.Equal(new[] { new DateTime(2019, 1, 10, 9, 21, 0, DateTimeKind.Utc), new DateTime(2019, 1, 10, 9, 21, 1, DateTimeKind.Utc) }, binding["TimestampArray"]);
             Assert.Equal(new[] { "myTopic", "myTopic" }, binding["TopicArray"]);
+            Assert.NotNull(binding["HeadersArray"]);
+            Assert.Equal(2, ((object[])binding["HeadersArray"]).Length);
+            Assert.NotNull(((KafkaEventDataHeaders)(((object[])binding["HeadersArray"])[0])).GetFirst("test"));
+            Assert.NotNull(((KafkaEventDataHeaders)(((object[])binding["HeadersArray"])[1])).GetFirst("testNew"));
 
             // lower case too
             Assert.Equal(new[] { "1", "2" }, binding["keyArray"]);
@@ -117,6 +124,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(new[] { 2, 2 }, binding["partitionArray"]);
             Assert.Equal(new[] { new DateTime(2019, 1, 10, 9, 21, 0, DateTimeKind.Utc), new DateTime(2019, 1, 10, 9, 21, 1, DateTimeKind.Utc) }, binding["timestampArray"]);
             Assert.Equal(new[] { "myTopic", "myTopic" }, binding["topicArray"]);
+            Assert.Equal(2, ((object[])binding["headersArray"]).Length);
+            Assert.NotNull(((KafkaEventDataHeaders)(((object[])binding["headersArray"])[0])).GetFirst("test"));
+            Assert.NotNull(((KafkaEventDataHeaders)(((object[])binding["headersArray"])[1])).GetFirst("testNew"));
         }
     }
 }
