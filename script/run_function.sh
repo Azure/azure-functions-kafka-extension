@@ -11,7 +11,5 @@ func --version
 
 cd $FUNCTION_DIR
 
-func --version
-
-# mvn clean package
-# mvn azure-functions:run -e
+mvn clean package
+mvn azure-functions:run -e
