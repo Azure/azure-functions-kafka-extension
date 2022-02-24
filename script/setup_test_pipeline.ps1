@@ -24,6 +24,7 @@ else
 }
 
 $FUNC_CLI_DIRECTORY = Join-Path $PSScriptRoot 'Azure.Functions.Cli'
+Write-Host $FUNC_CLI_DIRECTORY
 
 Write-Host 'Deleting the Core Tools if exists...'
 Remove-Item -Force "$FUNC_CLI_DIRECTORY.zip" -ErrorAction Ignore
