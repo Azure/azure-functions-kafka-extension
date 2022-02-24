@@ -33,7 +33,7 @@ steps:
     displayName: 'Install the .Net version used by the Core Tools for Linux'
   
   - pwsh: |
-      .\script\setup-tests-pipeline.ps1
+      .\script\setup-test-pipeline.ps1
     displayName: 'Setup test environment -- Install the Core Tools'
 
   - task: JavaToolInstaller@0
