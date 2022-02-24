@@ -5,9 +5,11 @@ FUNCTION_DIR="./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/
 export PATH=$PATH:./Azure.Functions.Cli
 echo $PATH
 
-# func --version
+chmod +x ./Azure.Functions.Cli/func.exe
+
+func --version
 
 cd $FUNCTION_DIR
 
-mvn clean package
-mvn azure-functions:run
+# mvn clean package
+# mvn azure-functions:run
