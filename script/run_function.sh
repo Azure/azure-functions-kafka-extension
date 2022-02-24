@@ -2,9 +2,9 @@
 
 FUNCTION_DIR="./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/server/java8"
 
-pwd
+Current_Dir = pwd
 
-export PATH=$PATH:$HOME/Azure.Functions.Cli
+export PATH=$PATH:$Current_Dir/Azure.Functions.Cli
 echo $PATH
 
 chmod +x func
