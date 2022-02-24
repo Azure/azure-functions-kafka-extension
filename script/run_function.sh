@@ -5,7 +5,7 @@ FUNCTION_DIR="./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/
 export PATH=$PATH:$PWD/Azure.Functions.Cli
 echo $PATH
 
-chmod +x func
+chmod +x ./Azure.Functions.Cli/func
 
 func --version
 
