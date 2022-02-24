@@ -38,4 +38,4 @@ Write-Host "Downloading the Core Tools from url: $env:CORE_TOOLS_URL"
 Invoke-RestMethod -Uri $env:CORE_TOOLS_URL -OutFile $output
 
 Write-Host 'Extracting Core Tools...'
-Expand-Archive $output -DestinationPath $FUNC_CLI_DIRECTORY
+Expand-Archive $output -DestinationPath "./Azure.Functions.Cli"
