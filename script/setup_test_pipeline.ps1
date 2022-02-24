@@ -4,7 +4,7 @@ param
     $UseCoreToolsBuildFromIntegrationTests
 )
 
-$FUNC_RUNTIME_VERSION = '4'
+$FUNC_RUNTIME_VERSION = '3'
 $arch = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString().ToLowerInvariant()
 $os = if ($IsWindows) { "win" } else { if ($IsMacOS) { "osx" } else { "linux" } }
 

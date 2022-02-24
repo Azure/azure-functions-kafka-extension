@@ -12,4 +12,4 @@ chmod +x ./Azure.Functions.Cli/func
 cd $FUNCTION_DIR
 
 mvn clean package
-mvn azure-functions:run
+mvn azure-functions:run -e
