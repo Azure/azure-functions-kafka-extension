@@ -7,9 +7,9 @@ echo $PATH
 
 chmod +x ./Azure.Functions.Cli/func
 
-func --version
+# func --version
 
 cd $FUNCTION_DIR
 
-# mvn clean package
-# mvn azure-functions:run
+mvn clean package
+mvn azure-functions:run
