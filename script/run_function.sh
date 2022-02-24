@@ -1,6 +1,6 @@
 #!/bin/bash
 
-FUNCTION_DIR=`./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/server/java8`
+FUNCTION_DIR="./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/server/java8"
 
 cd $FUNCTION_DIR
 
