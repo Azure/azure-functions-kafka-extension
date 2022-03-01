@@ -2,6 +2,9 @@
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.FunctionsEndToEndTests.Tests
 {
+    /// <summary>
+    /// Base E2E test class sharing common test code across different language E2E tests
+    /// </summary>
     public abstract class BaseE2ETest
     {
         public BaseFixture TestFixture;

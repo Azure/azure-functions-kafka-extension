@@ -3,6 +3,9 @@ using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.FunctionsEndToEndTests.Tests
 {
+    /// <summary>
+    /// Implementation of <see cref="BaseE2ETest"/> for .NET language E2E tests.
+    /// </summary>
     public class DotnetE2ETest : BaseE2ETest, IClassFixture<DotnetFixture>
     {
         public override string LanguageType { get => "dotnet"; }

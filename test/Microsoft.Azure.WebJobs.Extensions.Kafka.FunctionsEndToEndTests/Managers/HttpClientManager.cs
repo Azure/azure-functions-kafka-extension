@@ -3,6 +3,9 @@ using Microsoft.Azure.WebJobs.Extensions.Kafka.FunctionsEndToEndTests.Interfaces
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.FunctionsEndToEndTests.Managers
 {
+    /// <summary>
+    /// Implementation of <see cref="IManager"/> for managing REST API calls used in E2E tests
+    /// </summary>
     public class HttpClientManager : IManager
     {
         // TODO: sample code, implement actual code
