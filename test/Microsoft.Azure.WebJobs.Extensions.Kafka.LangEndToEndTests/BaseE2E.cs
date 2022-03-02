@@ -30,9 +30,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
             this.kafkaE2EFixture.OrchestrateInitialization();
         }
 
-        // assembly m access hoga
-        // access modifier nhi dete
-        // doosre project m access na krr pata
         public void Test(AppType appType, InvokeType invokeType, HttpRequestEntity httpRequestEntity,
             KafkaEntity queueEntity)
         {
