@@ -4,9 +4,6 @@ using System.Text;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue
 {
-    /*
-     * @author shrohilla
-     */
     public interface IQueueManager<Request, Response>
     {
         public Response read(int batchSize);
