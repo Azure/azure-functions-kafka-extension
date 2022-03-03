@@ -14,7 +14,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests
     public class PythonAppTest : BaseE2E, IClassFixture<KafkaE2EFixture>
     {
         private KafkaE2EFixture kafkaE2EFixture;
-        private static readonly int port = 7071;
         private static readonly string appName = "pythonapp";
         public PythonAppTest(KafkaE2EFixture kafkaE2EFixture): base(kafkaE2EFixture, Language.PYTHON)
         {
@@ -22,8 +21,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests
         }
 
         [Fact]
-        public async Task Python_App_Test_Single_Event()
+        public async Task Python_App_Test_Single_Event_Confluent()
         {
+            int port = 7071;
             string reqMsg = "har har mahadev";
             string url = "http://localhost:"+port+"/"+appName;
             Dictionary<String, String> reqParm = new Dictionary<string, string>();
@@ -31,6 +31,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests
             HttpRequestEntity httpRequestEntity = new HttpRequestEntity(url, HttpMethods.Get,
                null, reqParm, null);
             Test(AppType.SINGLE_EVENT, InvokeType.HTTP, httpRequestEntity, null);
+            Console.WriteLine("Python test called");
+        }
+
+        [Fact]
+        public async Task Python_App_Test_Multi_Event_Confluent()
+        {
+            int port = 7071;
+            string reqMsg = "har har mahadev";
+            string url = "http://localhost:" + port + "/" + appName;
+            Dictionary<String, String> reqParm = new Dictionary<string, string>();
+            reqParm.TryAdd("message", reqMsg);
+            HttpRequestEntity httpRequestEntity = new HttpRequestEntity(url, HttpMethods.Get,
+               null, reqParm, null);
+            Test(AppType.BATCH_EVENT, InvokeType.HTTP, httpRequestEntity, null);
             Console.WriteLine("Python test called");
         }
 

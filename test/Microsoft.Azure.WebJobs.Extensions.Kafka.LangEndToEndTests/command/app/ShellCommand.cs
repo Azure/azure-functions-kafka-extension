@@ -17,7 +17,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
         private bool isNightlyBuild = false;
         private IExecutor<string, Process> processExecutor = null;
 
-        public ShellCommand(ShellCommandBuilder shellCommandBuilder)
+        private ShellCommand(ShellCommandBuilder shellCommandBuilder)
         {
             this.language = shellCommandBuilder.GetLanguage();
             this.processExecutor = new ProcessExecutor();

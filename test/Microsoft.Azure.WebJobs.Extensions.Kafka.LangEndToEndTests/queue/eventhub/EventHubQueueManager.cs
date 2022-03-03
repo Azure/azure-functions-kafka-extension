@@ -41,6 +41,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
                     //  1.1 clear the eventhub or delete that
                     // 2. create the new eventhub
                     // 2.1 if creation failed retry three times
+                    // return if success
                 } catch(Exception ex) {
                     if (count >= MAX_RETRY_COUNT)
                         throw ex;

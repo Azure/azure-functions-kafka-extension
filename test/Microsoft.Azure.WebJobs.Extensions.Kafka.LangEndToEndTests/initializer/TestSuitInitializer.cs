@@ -77,6 +77,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.initializer
 
         private void buildEventHub(string eventhubNameSingleEvent, string eventhubNameMultiEvent)
         {
+            // TODO move this into Command from here
             IQueueManager<string, string> queueManager = EventHubQueueManager.GetInstance();
             var singleEventEventHubTask = Task.Factory.StartNew(() => queueManager.create(eventhubNameSingleEvent));
             var multiEventEventHubTask = Task.Factory.StartNew(() => queueManager.create(eventhubNameMultiEvent));

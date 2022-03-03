@@ -20,6 +20,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
         private KafkaE2EFixture kafkaE2EFixture;
         private Language language;
         private E2ETestInvoker invoker;
+        private static readonly int BATCH_MESSAGE_COUNT = 5;
 
         protected BaseE2E(KafkaE2EFixture kafkaE2EFixture, Language language)
         {
@@ -34,7 +35,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
             KafkaEntity queueEntity)
         {
             invokeE2ETest(appType, invokeType, httpRequestEntity, queueEntity);
-
+            // wait
+            // invokation for read from stoage
             Console.WriteLine("A");
         }
 
@@ -43,8 +45,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
         {
             if (httpRequestEntity != null && InvokeType.HTTP == invokeType)
             {
-                InvokeRequestStrategy<HttpResponse> invokerHttpReqStrategy = new InvokeHttpRequestStrategy(httpRequestEntity);
-                this.invoker.Invoke(invokerHttpReqStrategy);
+                int executionCount = 1;
+                if(AppType.BATCH_EVENT == appType)
+                {
+                    executionCount = BATCH_MESSAGE_COUNT;
+                }
+
+                for (var i = 0; i < executionCount; i++)
+                {
+                    InvokeRequestStrategy<HttpResponse> invokerHttpReqStrategy = new InvokeHttpRequestStrategy(httpRequestEntity);
+                    this.invoker.Invoke(invokerHttpReqStrategy);
+                }
 
             }
             else
