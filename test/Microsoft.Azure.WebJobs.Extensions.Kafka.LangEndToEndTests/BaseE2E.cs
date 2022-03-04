@@ -35,8 +35,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
             KafkaEntity queueEntity)
         {
             invokeE2ETest(appType, invokeType, httpRequestEntity, queueEntity);
-            // wait
-            // invokation for read from stoage
+            // wait for the function completion
+            // invokation for read from storage
             Console.WriteLine("A");
         }
 
@@ -45,7 +45,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
         {
             if (httpRequestEntity != null && InvokeType.HTTP == invokeType)
             {
+                
                 int executionCount = 1;
+                
+                
+                //if AppType == Single
+                //executionCount = 1 and execute loop once
+                //So that single msgs are produced into kafka topic
+                
+                //else AppType == Batch_Event
+                //executionCount = Batch_Message_Count
+                //and loop execution times
+                //So that multiple msgs are produced into kafka topic
+                
+                //Function App 1 
+                //Http Trigger + Kafka Output(topic: 1234)
+
+                //Function App 2 
+                //Kafka Trigger(Single/Multiple)(topic: 1234) + Queue Output
+
                 if(AppType.BATCH_EVENT == appType)
                 {
                     executionCount = BATCH_MESSAGE_COUNT;
@@ -53,7 +71,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
 
                 for (var i = 0; i < executionCount; i++)
                 {
-                    InvokeRequestStrategy<HttpResponse> invokerHttpReqStrategy = new InvokeHttpRequestStrategy(httpRequestEntity);
+                    InvokeRequestStrategy<HttpResponseMessage> invokerHttpReqStrategy = new InvokeHttpRequestStrategy(httpRequestEntity);
                     this.invoker.Invoke(invokerHttpReqStrategy);
                 }
 

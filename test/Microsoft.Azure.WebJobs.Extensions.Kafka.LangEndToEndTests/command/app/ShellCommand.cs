@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
 {
@@ -29,7 +30,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
             process.Kill();
         }
 
-        public Process ExecuteCommand()
+        public async Task<Process> ExecuteCommandAsync()
         {
             String cmd = funcAppCmd;
             if(!isNightlyBuild)
@@ -37,7 +38,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
                 cmd = dockerCmd;
             }
             // TODO fix the command building issues
-            return processExecutor.Execute(cmd);
+            return await processExecutor.ExecuteAsync(cmd);
         }
 
         public sealed class ShellCommandBuilder

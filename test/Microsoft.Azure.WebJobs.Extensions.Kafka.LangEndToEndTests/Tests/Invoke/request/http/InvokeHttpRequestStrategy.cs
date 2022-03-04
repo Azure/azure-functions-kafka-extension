@@ -8,12 +8,15 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests.Invoke.request.http
 {
-    public class InvokeHttpRequestStrategy : InvokeRequestStrategy<HttpResponse>
+    public class InvokeHttpRequestStrategy : InvokeRequestStrategy<HttpResponseMessage>
     {
-        private IExecutor<Command<HttpResponse>, HttpResponse> httpCommandExecutor;
+        //Request:Command<HttpResponse> Response:HttpResponse
+        //Execute Request Return Reponse
+        private IExecutor<Command<HttpResponseMessage>, HttpResponseMessage> httpCommandExecutor;
         private HttpRequestEntity httpRequestEntity;
 
         public InvokeHttpRequestStrategy(HttpRequestEntity httpRequestEntity)
@@ -22,11 +25,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests.Invok
             this.httpCommandExecutor = new HttpCommandExecutor();
         }
 
-        public HttpResponse InvokeRequest()
+        //Why do we need executor and command abs? Why two and not one?
+        //Single Http client for language vs test?
+        public Task<HttpResponseMessage> InvokeRequestAsync()
         {
-            Command<HttpResponse> httpCmd = (new HttpCommand.HttpCommandBuilder()).
+            Command<HttpResponseMessage> httpCmd = (new HttpCommand.HttpCommandBuilder()).
                 SetHttpRequestEntity(httpRequestEntity).Build();
-            return httpCommandExecutor.Execute(httpCmd);
+            return httpCommandExecutor.ExecuteAsync(httpCmd);
         }
     }
 }

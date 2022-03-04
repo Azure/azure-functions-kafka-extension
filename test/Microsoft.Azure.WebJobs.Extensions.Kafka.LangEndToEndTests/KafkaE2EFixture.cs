@@ -24,6 +24,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
             if(!isInitialized)
             {
                 TestSuitInitializer testSuitInitializer = new TestSuitInitializer();
+                //Infra setup + Func Apps Startup Start
                 testSuitInitializer.InitializeTestSuit(language);
                 isInitialized = true;
             }

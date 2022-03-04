@@ -6,16 +6,20 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.http
 {
-    public class HttpCommand : Command<HttpResponse>
+    public class HttpCommand : Command<HttpResponseMessage>
     {
         private HttpRequestEntity httpRequestEntity;
+        private HttpClient httpClient;
 
+        //Overkill - Why this structure?
         private HttpCommand(HttpCommandBuilder httpCommandBuilder)
         {
             this.httpRequestEntity = httpCommandBuilder.GetHttpRequestEntity();
+            httpClient = new HttpClient();
         }
 
         public void Dispose()
@@ -23,14 +27,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.htt
             throw new NotImplementedException();
         }
 
-        public HttpResponse ExecuteCommand()
+
+        //TODO Async Await
+        public async Task<HttpResponseMessage> ExecuteCommandAsync()
         {
             // TODO execute HTTP request
             string httpMethod = httpRequestEntity.GetHttpMethod();
 
             if(httpMethod.Equals(HttpMethods.Post))
             {
-                //return await PostAsync(client, url, data);
+                return await httpClient.PostAsync(httpRequestEntity.GetUrl(), null);
+                //return await httpClient.PostAsync(client, url, data);
                 // TODO execute post request
             }
             else if(httpMethod.Equals(HttpMethods.Put))

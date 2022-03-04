@@ -2,15 +2,19 @@
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command;
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.executor.CommandExecutor
 {
-    public class HttpCommandExecutor : IExecutor<Command<HttpResponse>, HttpResponse>
+    public class HttpCommandExecutor : IExecutor<Command<HttpResponseMessage>, HttpResponseMessage>
     {
-        public HttpResponse Execute(command.Command<HttpResponse> request)
+        public Task<HttpResponseMessage> ExecuteAsync(command.Command<HttpResponseMessage> request)
         {
-            return request.ExecuteCommand();
+            //If we wanted extract the content string from HttpResponse we can add the code here
+            return request.ExecuteCommandAsync();
         }
     }
+
 }

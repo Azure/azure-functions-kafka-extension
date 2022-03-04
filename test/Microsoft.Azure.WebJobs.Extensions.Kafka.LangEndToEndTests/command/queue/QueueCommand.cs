@@ -4,6 +4,7 @@ using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.operation
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.queue
 {
@@ -12,8 +13,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.que
         private QueueType queueType;
         private QueueOperation queueOperation;
         private IQueueManager<string, string> queueManager;
-        private IQueueManager<List<string>, List<string>> azureStorageQueueManager;
-
+        //private IQueueManager<List<string>, List<string>> azureStorageQueueManager;
+        
         public QueueCommand(QueueType queueType, QueueOperation queueOperation)
         {
             this.queueType = queueType;
@@ -31,7 +32,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.que
             //throw new NotImplementedException();
         }
 
-        public String ExecuteCommand()
+        public async Task<String> ExecuteCommandAsync()
         {
             if(QueueOperation.CREATE == this.queueOperation && QueueType.EventHub == queueType)
             {

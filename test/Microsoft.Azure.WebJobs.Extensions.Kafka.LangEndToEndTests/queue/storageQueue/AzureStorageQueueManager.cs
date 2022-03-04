@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.storageQueue
 {
@@ -25,24 +26,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.stora
             // add the required params in constructor
         }
 
-        public void clear(string queueName)
+        public async Task clearAsync(string queueName)
         {
             // TODO clear the Azure Storage Queue
             Console.WriteLine("clearing the queue");
             //throw new NotImplementedException();
         }
 
-        public void create(string queueName)
+        public async Task createAsync(string queueName)
         {
             throw new NotImplementedException();
         }
 
-        public void delete(string queueName)
+        public async Task deleteAsync(string queueName)
         {
             throw new NotImplementedException();
         }
 
-        public List<string> read(int batchSize)
+        public async Task<List<string>> readAsync(int batchSize)
         {
             // TODO
             // 1. add the code to read as per the batch size and return the mesages in List of string
@@ -52,7 +53,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.stora
             return list;
         }
 
-        public List<string> write(List<string> messageEntity)
+        public async Task<List<string>> writeAsync(List<string> messageEntity)
         {
             throw new NotImplementedException();
         }

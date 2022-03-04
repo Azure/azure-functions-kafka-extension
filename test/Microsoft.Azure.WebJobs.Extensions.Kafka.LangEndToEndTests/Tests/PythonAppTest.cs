@@ -15,6 +15,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests
     {
         private KafkaE2EFixture kafkaE2EFixture;
         private static readonly string appName = "pythonapp";
+        private static readonly string port = "7071";
+        
         public PythonAppTest(KafkaE2EFixture kafkaE2EFixture): base(kafkaE2EFixture, Language.PYTHON)
         {
             this.kafkaE2EFixture = kafkaE2EFixture;
