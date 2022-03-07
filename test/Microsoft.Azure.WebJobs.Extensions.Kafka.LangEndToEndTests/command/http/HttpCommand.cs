@@ -54,6 +54,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.htt
             {
                 //return await GetAsync(client, url, parameters);
                 // TODO execute get request
+                var requestUri = new Uri(httpRequestEntity.GetUrl());
+                HttpResponseMessage response = null;
+                try
+                {
+                    response = await httpClient.SendAsync(new HttpRequestMessage
+                    {
+                        RequestUri = requestUri,
+                        Method = HttpMethod.Get
+                    });
+                  //  Task.WaitAll(httpresponse);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex);
+                }
+                return response;
             }
 
             return null;

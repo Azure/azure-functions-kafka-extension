@@ -44,6 +44,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
                     // 2. create the new eventhub
                     // 2.1 if creation failed retry three times
                     // return if success
+                    return Task.CompletedTask;
                 }
                 catch (Exception ex)
                 {
