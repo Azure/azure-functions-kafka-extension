@@ -2,10 +2,11 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Kafka;
 using Microsoft.Azure.WebJobs.Extensions.Storage;
 using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
 
 namespace EventHub
 {
-    public class SingleKafkaTriggerQueueOutput
+    public class MultiKafkaTriggerQueueOutput
     {
         // KafkaTrigger sample 
         // Consume the message from "topic" on the LocalBroker.
@@ -13,19 +14,22 @@ namespace EventHub
         // For EventHubs
         // "BrokerList": "{EVENT_HUBS_NAMESPACE}.servicebus.windows.net:9093"
         // "KafkaPassword":"{EVENT_HUBS_CONNECTION_STRING}
-        [FunctionName("SingleKafkaTriggerQueueOutput")]
-        [return: Queue("e2e-dotnet-single-eventhub")]
-        public static string Run(
+        [FunctionName("MultiKafkaTriggerQueueOutput")]
+        public static void Run(
             [KafkaTrigger("%BrokerList%",
-                          "e2e-kafka-dotnet-single-eventhub",
+                          "e2e-kafka-dotnet-multi-eventhub",
                           Username = "$ConnectionString",
                           Password = "%KafkaPassword%",
                           Protocol = BrokerProtocol.SaslSsl,
                           AuthenticationMode = BrokerAuthenticationMode.Plain,
-                          ConsumerGroup = "$Default")] KafkaEventData<string> kevent, ILogger log)
+                          ConsumerGroup = "$Default")] KafkaEventData<string>[] events, ILogger log, 
+                          [Queue("e2e-dotnet-multi-eventhub")] ICollector<string> outputArray)
         {
-            log.LogInformation($"C# Kafka trigger function processed a message: {kevent.Value}");
-            return kevent.Value;
+            foreach (KafkaEventData<string> eventData in events)
+            {
+                log.LogInformation($"C# Kafka trigger function processed a message: {eventData.Value}");
+                outputArray.Add(eventData.Value);
+            }
         }
     }
 }

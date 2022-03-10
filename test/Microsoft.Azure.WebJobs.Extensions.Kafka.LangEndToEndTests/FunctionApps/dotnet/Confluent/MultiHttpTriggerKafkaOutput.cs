@@ -5,20 +5,20 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.Kafka;
 using Microsoft.Extensions.Logging;
 
-namespace EventHub
+namespace Confluent
 {
-    public class SingleHttpTriggerKafkaOutput
+    public class MultiHttpTriggerKafkaOutput
     {
         // KafkaOutputBinding sample
         // This KafkaOutput binding will create a topic "topic" on the LocalBroker if it doesn't exists.
         // Call this function then the KafkaTrigger will be trigged.
-        [FunctionName("SingleHttpTriggerKafkaOutput")]
+        [FunctionName("MultiHttpTriggerKafkaOutput")]
         public static IActionResult Output(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
             [Kafka("BrokerList",
-                    "e2e-kafka-dotnet-single-eventhub",
-                    Username = "$ConnectionString",
-                    Password = "%KafkaPassword%",
+                    "e2e-kafka-dotnet-multi-confluent",
+                    Username = "ConfluentCloudUserName",
+                    Password = "ConfluentCloudPassword",
                     Protocol = BrokerProtocol.SaslSsl,
                    AuthenticationMode = BrokerAuthenticationMode.Plain
             )] out string eventData,

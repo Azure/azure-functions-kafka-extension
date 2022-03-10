@@ -5,7 +5,7 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.Kafka;
 using Microsoft.Extensions.Logging;
 
-namespace KafkaFunctionApp
+namespace Confluent
 {
     public class SingleHttpTriggerKafkaOutput
     {
