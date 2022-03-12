@@ -31,7 +31,7 @@ namespace EventHub
             string responseMessage = string.IsNullOrEmpty(message)
                 ? "This HTTP triggered function executed successfully. Pass a message in the query string"
                 : $"Message {message} sent to the broker. This HTTP triggered function executed successfully.";
-            eventData = $"Received message: {message}";
+            eventData = message;
 
             return new OkObjectResult(responseMessage);
         }
