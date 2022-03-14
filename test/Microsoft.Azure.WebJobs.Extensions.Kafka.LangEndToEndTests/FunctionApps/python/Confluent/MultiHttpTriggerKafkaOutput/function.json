@@ -1,0 +1,32 @@
+{
+  "scriptFile": "__init__.py",
+  "bindings": [
+    {
+      "authLevel": "function",
+      "type": "httpTrigger",
+      "direction": "in",
+      "name": "req",
+      "methods": [
+        "get"
+      ]
+    },
+    {
+      "type": "kafka",
+      "direction": "out",
+      "name": "out",
+      "brokerList": "BrokerList",
+      "topic": "e2e-kafka-python-multi-confluent",
+      "username": "ConfluentCloudUserName",
+      "password": "ConfluentCloudPassword",
+      "protocol": "SASLSSL",
+      "authenticationMode": "PLAIN",
+      "cardinality" : "MANY",
+      "dataType": "string"
+    },
+    {
+      "type": "http",
+      "direction": "out",
+      "name": "$return"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "scriptFile": "__init__.py",
+  "bindings": [
+    {
+      "type": "kafkaTrigger",
+      "name": "kevent",
+      "direction": "in",
+      "brokerList": "BrokerList",
+      "topic": "e2e-kafka-python-single-eventhub",
+      "username": "$ConnectionString",
+      "password": "%KafkaPassword%",
+      "protocol": "saslSsl",
+      "authenticationMode": "plain",
+      "consumerGroup": "$Default"
+    },
+    {
+      "type": "queue",
+      "direction": "out",
+      "name": "queueMsg",
+      "queueName": "e2e-python-single-eventhub",
+      "connection": "AzureWebJobsStorage"
+    }
+  ]
+}
