@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.eventhub
 {
-    public class EventHubQueueManager : IQueueManager<string, string>
+    public class EventHubQueueManager : IQueueManager<QueueRequest, QueueResponse>
     {
         private readonly static int MAX_RETRY_COUNT = 3;
         private readonly string servicePrinciple;
@@ -87,12 +87,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
             throw new NotImplementedException();
         }
 
-        public Task<string> readAsync(int batchSize)
+        public Task<QueueResponse> readAsync(int batchSize)
         {
             throw new NotImplementedException();
         }
 
-        public Task<string> writeAsync(string messageEntity)
+        public Task<QueueResponse> writeAsync(QueueRequest writeRequest)
         {
             throw new NotImplementedException();
         }

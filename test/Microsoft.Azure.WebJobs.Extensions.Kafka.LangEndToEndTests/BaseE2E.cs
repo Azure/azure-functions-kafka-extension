@@ -1,12 +1,17 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.languages;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.type;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.queue;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.entity;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.operation;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests.Invoke;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests.Invoke.request;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests.Invoke.request.http;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests.Invoke.request.queue;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests.Invoke.Type;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -22,7 +27,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
         private KafkaE2EFixture kafkaE2EFixture;
         private Language language;
         private E2ETestInvoker invoker;
-        private static readonly int BATCH_MESSAGE_COUNT = 5;
         ITestOutputHelper output;
         protected BaseE2E(KafkaE2EFixture kafkaE2EFixture, Language language, ITestOutputHelper output)
         {
@@ -35,11 +39,34 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
         }
 
         public async Task Test(AppType appType, InvokeType invokeType, HttpRequestEntity httpRequestEntity,
-            KafkaEntity queueEntity)
+            KafkaEntity queueEntity, List<string> expectedOutput)
         {
             await invokeE2ETest(appType, invokeType, httpRequestEntity, queueEntity);
             // wait for the function completion
             // invokation for read from storage
+            await verifyQueueMsgsAsync(expectedOutput, appType);
+            
+        }
+
+        private async Task verifyQueueMsgsAsync(List<string> expectedOutput, AppType appType)
+        {
+            var storageQueueName = Utils.BuildStorageQueueName(QueueType.AzureStorageQueue,
+                        AppType.SINGLE_EVENT, language);
+
+            Command<QueueResponse> readQueue = null;
+            if (AppType.BATCH_EVENT == appType)
+            {
+                readQueue = new QueueCommand(QueueType.AzureStorageQueue,
+                        QueueOperation.READMANY, storageQueueName);
+            }
+            else
+            {
+                readQueue = new QueueCommand(QueueType.AzureStorageQueue,
+                        QueueOperation.READ, storageQueueName);
+            }
+            
+            QueueResponse queueMsgs = await readQueue.ExecuteCommandAsync();
+            //Add verification Code
         }
 
         private async Task invokeE2ETest(AppType appType, InvokeType invokeType, HttpRequestEntity httpRequestEntity,
@@ -50,25 +77,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
 
                 int executionCount = 1;
 
-
-                //if AppType == Single
-                //executionCount = 1 and execute loop once
-                //So that single msgs are produced into kafka topic
-
-                //else AppType == Batch_Event
-                //executionCount = Batch_Message_Count
-                //and loop execution times
-                //So that multiple msgs are produced into kafka topic
-
-                //Function App 1 
-                //Http Trigger + Kafka Output(topic: 1234)
-
-                //Function App 2 
-                //Kafka Trigger(Single/Multiple)(topic: 1234) + Queue Output
-
                 if (AppType.BATCH_EVENT == appType)
                 {
-                    executionCount = BATCH_MESSAGE_COUNT;
+                    executionCount = Constants.BATCH_MESSAGE_COUNT;
                 }
                 try { 
                     for (var i = 0; i < executionCount; i++)

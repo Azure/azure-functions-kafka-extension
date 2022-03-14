@@ -6,12 +6,11 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.storageQueue
 {
-    public class AzureStorageQueueManager : IQueueManager<List<string>, List<string>>
+    public class AzureStorageQueueManager : IQueueManager<QueueRequest, QueueResponse>
     {
         private readonly static int MAX_RETRY_COUNT = 3;
         private readonly string servicePrinciple;
         private readonly string connectionString;
-        private Dictionary<string, QueueClient> kkClient;
         private static AzureStorageQueueManager instance = new AzureStorageQueueManager();
 
         public static AzureStorageQueueManager GetInstance()
@@ -46,24 +45,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.stora
             throw new NotImplementedException();
         }
 
-        public async Task<List<string>> readAsync(int batchSize)
+        public async Task<QueueResponse> readAsync(int batchSize)
         {
             // TODO
             // 1. add the code to read as per the batch size and return the mesages in List of string
-            Console.WriteLine("reading from the queue");
-            List<string> list = new List<string>();
-            list.Add("message");
-            return list;
-        }
-
-        public async Task<List<string>> writeAsync(List<string> messageEntity)
-        {
             throw new NotImplementedException();
         }
 
-        private async Task<QueueClient> createQueueClient()
-        { 
-        
+        public async Task<QueueResponse> writeAsync(QueueRequest messageEntity)
+        {
+            throw new NotImplementedException();
         }
     }
 }

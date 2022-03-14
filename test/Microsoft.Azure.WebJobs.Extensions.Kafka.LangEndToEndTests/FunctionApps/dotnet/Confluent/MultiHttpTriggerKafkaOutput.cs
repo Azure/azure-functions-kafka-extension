@@ -15,7 +15,7 @@ namespace Confluent
         [FunctionName("MultiHttpTriggerKafkaOutput")]
         public static IActionResult Output(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
-            [Kafka("BrokerList",
+            [Kafka("ConfluentBrokerList",
                     "e2e-kafka-dotnet-multi-confluent",
                     Username = "ConfluentCloudUserName",
                     Password = "ConfluentCloudPassword",

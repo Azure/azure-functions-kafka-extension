@@ -16,7 +16,7 @@ namespace Confluent
         [FunctionName("SingleKafkaTriggerQueueOutput")]
         [return: Queue("e2e-dotnet-single-confluent")]
         public static string Run(
-            [KafkaTrigger("%BrokerList%",
+            [KafkaTrigger("%ConfluentBrokerList%",
                           "e2e-kafka-dotnet-single-confluent",
                           Username = "ConfluentCloudUserName",
                           Password = "ConfluentCloudPassword",

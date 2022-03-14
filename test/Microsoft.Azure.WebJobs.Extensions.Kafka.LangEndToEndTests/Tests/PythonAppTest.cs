@@ -9,19 +9,15 @@ using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests
 {
     public class PythonAppTest : BaseE2E, IClassFixture<KafkaE2EFixture>
     {
         private KafkaE2EFixture kafkaE2EFixture;
-        private static readonly string singleTestAppName = "HttpTriggerFunc";
-        private static readonly string singleTestPort = "7072";
-        private static readonly string manyTestAppName = "";
-        private static readonly string manyTestAppPort = "";
-
         ITestOutputHelper output;
-        // public PythonAppTest(KafkaE2EFixture kafkaE2EFixture, ITestOutputHelper output) : base(kafkaE2EFixture, Language.PYTHON, output)
+
         public PythonAppTest(KafkaE2EFixture kafkaE2EFixture, ITestOutputHelper output) : base(kafkaE2EFixture, Language.PYTHON, output)
         {
             this.kafkaE2EFixture = kafkaE2EFixture;
@@ -32,16 +28,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests
         public async Task Python_App_Test_Single_Event_Confluent()
         {
             string reqMsg = "Single-Event";
-            string url = "http://localhost:" + singleTestPort + "/api/" + singleTestAppName;
+            string url = "http://localhost:" + Constants.PYTHONAPP_CONFLUENT_PORT + "/api/" + Constants.PYTHON_SINGLE_APP_NAME;
             
             Dictionary<String, String> reqParm = new Dictionary<string, string>();
             reqParm.TryAdd("message", reqMsg);
             
             HttpRequestEntity httpRequestEntity = new HttpRequestEntity(url, HttpMethods.Get,
                null, reqParm, null);
+
+            List<string> expectedOutput = new List<string> { reqMsg };
             
-            await Test(AppType.SINGLE_EVENT, InvokeType.HTTP, httpRequestEntity, null);
-            Console.WriteLine("Python test called");
+            await Test(AppType.SINGLE_EVENT, InvokeType.HTTP, httpRequestEntity, null, expectedOutput);
+
+            //Console.WriteLine("Python test called");
         }
 
         //[Fact]

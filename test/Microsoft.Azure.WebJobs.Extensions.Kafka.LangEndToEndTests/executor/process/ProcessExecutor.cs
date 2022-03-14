@@ -11,7 +11,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.executor.pr
     {
         public ProcessExecutor() { }
 
-        //Assume that it gets the complete request like docker run imageName -p 7072:7071
         public async Task<Process> ExecuteAsync(string request)
         {
             Process process = new Process();
@@ -27,12 +26,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.executor.pr
             // build process command
             process.StartInfo.FileName = shell;
             process.StartInfo.ArgumentList.Add("/C");
+            
             // process.StartInfo.Arguments = "/C docker run -p 7072:7071 python";
             process.StartInfo.ArgumentList.Add(request);
 
             await Task.Run(() => process.Start());
             return process;
-
         }
     }
 }

@@ -16,7 +16,7 @@ namespace Confluent
         // "KafkaPassword":"{EVENT_HUBS_CONNECTION_STRING}
         [FunctionName("MultiKafkaTriggerQueueOutput")]
         public static void Run(
-            [KafkaTrigger("%BrokerList%",
+            [KafkaTrigger("%ConfluentBrokerList%",
                           "e2e-kafka-dotnet-multi-confluent",
                           Username = "ConfluentCloudUserName",
                           Password = "ConfluentCloudPassword",

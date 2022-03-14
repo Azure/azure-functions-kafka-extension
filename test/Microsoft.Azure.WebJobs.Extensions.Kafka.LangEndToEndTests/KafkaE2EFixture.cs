@@ -1,4 +1,6 @@
-﻿using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.languages;
+﻿using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.brokers;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.languages;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.type;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.helper;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.initializer;
 using System;
@@ -12,6 +14,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
     public class KafkaE2EFixture : IAsyncLifetime
     {
         private Language language;
+        private AppType appType;
+        private BrokerType brokerType;
         protected bool isInitialized = false;
 
         public KafkaE2EFixture()
@@ -25,7 +29,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
             {
                 TestSuitInitializer testSuitInitializer = new TestSuitInitializer();
                 //Infra setup + Func Apps Startup Start
-                testSuitInitializer.InitializeTestSuit(language);
+                testSuitInitializer.InitializeTestSuit(language, appType, brokerType);
                 isInitialized = true;
             }
         }
@@ -46,6 +50,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
         public void SetLanguage(Language language)
         {
             this.language = language;
+        }
+        public void SetAppType(AppType appType)
+        {
+            this.appType = appType;
+        }
+        public void SetBrokerType(BrokerType brokerType)
+        {
+            this.brokerType = brokerType;
         }
     }
 }
