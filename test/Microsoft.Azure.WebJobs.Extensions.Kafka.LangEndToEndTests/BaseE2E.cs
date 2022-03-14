@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Xunit;
 using Xunit.Abstractions;
 using Xunit.Sdk;
 
@@ -70,7 +71,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
             }
             
             QueueResponse queueMsgs = await readQueue.ExecuteCommandAsync();
-            //Add verification Code
+
+            Assert.Equal<List<string>>(expectedOutput, queueMsgs.responseList);
         }
 
         private async Task invokeE2ETest(AppType appType, InvokeType invokeType, HttpRequestEntity httpRequestEntity,

@@ -40,7 +40,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests
             List<string> expectedOutput = new List<string> { reqMsg };
             
             await Test(AppType.SINGLE_EVENT, InvokeType.HTTP, httpRequestEntity, null, expectedOutput);
-
+            
             //Console.WriteLine("Python test called");
         }
 
