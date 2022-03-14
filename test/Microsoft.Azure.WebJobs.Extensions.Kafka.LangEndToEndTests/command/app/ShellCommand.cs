@@ -58,7 +58,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
             if (BrokerType.CONFLUENT == brokerType)
             {
                 cmdList.Add(Constants.CONFLUENT_USERNAME_VAR);
+                cmdList.Add(Constants.DOCKER_ENVVAR_FLAG);
                 cmdList.Add(Constants.CONFLUENT_PASSWORD_VAR);
+                cmdList.Add(Constants.DOCKER_ENVVAR_FLAG);
                 cmdList.Add(Constants.CONFLUENT_BROKERLIST_VAR);
             }
             else if (BrokerType.EVENTHUB == brokerType)

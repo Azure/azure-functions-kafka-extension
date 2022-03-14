@@ -26,7 +26,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 		public const string HIPHEN = "-";
 		public const string PYTHONAPP_CONFLUENT_PORT = "";
 		public const string PYTHONAPP_CONFLUENT_IMAGE = "";
-
+		public const int SINGLE_MESSAGE_COUNT = 1;
 		public static Dictionary<Language, string> LanguagePortMapping = new Dictionary<Language, string>()
 		{
 			{Language.PYTHON, PYTHONAPP_CONFLUENT_PORT}
