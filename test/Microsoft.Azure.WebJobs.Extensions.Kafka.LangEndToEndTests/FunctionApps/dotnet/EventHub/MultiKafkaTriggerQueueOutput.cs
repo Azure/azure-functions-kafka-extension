@@ -16,7 +16,7 @@ namespace EventHub
         // "KafkaPassword":"{EVENT_HUBS_CONNECTION_STRING}
         [FunctionName("MultiKafkaTriggerQueueOutput")]
         public static void Run(
-            [KafkaTrigger("%BrokerList%",
+            [KafkaTrigger("%EventhubBrokerList%",
                           "e2e-kafka-dotnet-multi-eventhub",
                           Username = "$ConnectionString",
                           Password = "%KafkaPassword%",

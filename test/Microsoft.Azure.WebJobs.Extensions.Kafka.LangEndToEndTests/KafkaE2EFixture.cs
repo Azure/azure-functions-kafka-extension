@@ -29,7 +29,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
             {
                 TestSuitInitializer testSuitInitializer = new TestSuitInitializer();
                 //Infra setup + Func Apps Startup Start
-                testSuitInitializer.InitializeTestSuit(language, appType, brokerType);
+                testSuitInitializer.InitializeTestSuit(language, brokerType);
                 isInitialized = true;
             }
         }

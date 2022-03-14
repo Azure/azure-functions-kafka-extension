@@ -17,7 +17,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
         private Process process;
         
         private readonly Language language;
-        private readonly AppType appType;
         private readonly BrokerType brokerType;
         
         private bool isNightlyBuild = false;
@@ -62,6 +61,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
                 cmdList.Add(Constants.CONFLUENT_PASSWORD_VAR);
                 cmdList.Add(Constants.DOCKER_ENVVAR_FLAG);
                 cmdList.Add(Constants.CONFLUENT_BROKERLIST_VAR);
+                cmdList.Add(Constants.DOCKER_ENVVAR_FLAG);
+                cmdList.Add(Constants.AZURE_WEBJOBS_STORAGE);
+                cmdList.Add(Constants.LanguageRuntimeMapping[language]);
             }
             else if (BrokerType.EVENTHUB == brokerType)
             {
@@ -77,7 +79,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
         public sealed class ShellCommandBuilder
         {
             private Language language;
-            private AppType appType;
             private BrokerType brokerType;
             // TODO
             // 1. create entity for Credentials for eventhub & confluent both
@@ -90,11 +91,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
             public ShellCommandBuilder SetLanguage(Language language)
             {
                 this.language = language;
-                return this;
-            }
-            public ShellCommandBuilder SetAppType(AppType appType)
-            {
-                this.appType = appType;
                 return this;
             }
             public ShellCommandBuilder SetBrokerType(BrokerType brokerType)

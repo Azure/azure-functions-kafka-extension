@@ -16,7 +16,7 @@ namespace EventHub
         [FunctionName("SingleKafkaTriggerQueueOutput")]
         [return: Queue("e2e-dotnet-single-eventhub")]
         public static string Run(
-            [KafkaTrigger("%BrokerList%",
+            [KafkaTrigger("%EventhubBrokerList%",
                           "e2e-kafka-dotnet-single-eventhub",
                           Username = "$ConnectionString",
                           Password = "%KafkaPassword%",

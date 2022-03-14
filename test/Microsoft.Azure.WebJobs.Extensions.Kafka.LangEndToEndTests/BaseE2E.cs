@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.brokers;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.languages;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.type;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command;
@@ -26,13 +27,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
     {
         private KafkaE2EFixture kafkaE2EFixture;
         private Language language;
+        private BrokerType brokerType;
         private E2ETestInvoker invoker;
         ITestOutputHelper output;
-        protected BaseE2E(KafkaE2EFixture kafkaE2EFixture, Language language, ITestOutputHelper output)
+        protected BaseE2E(KafkaE2EFixture kafkaE2EFixture, Language language, BrokerType brokerType, ITestOutputHelper output)
         {
             this.kafkaE2EFixture = kafkaE2EFixture;
             this.language = language;
             this.kafkaE2EFixture.SetLanguage(language);
+            this.brokerType = brokerType;
+            this.kafkaE2EFixture.SetBrokerType(brokerType);
             this.invoker = new E2ETestInvoker();
             this.kafkaE2EFixture.OrchestrateInitialization();
             this.output = output;

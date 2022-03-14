@@ -15,7 +15,7 @@ namespace EventHub
         [FunctionName("SingleHttpTriggerKafkaOutput")]
         public static IActionResult Output(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
-            [Kafka("BrokerList",
+            [Kafka("EventhubBrokerList",
                     "e2e-kafka-dotnet-single-eventhub",
                     Username = "$ConnectionString",
                     Password = "%KafkaPassword%",

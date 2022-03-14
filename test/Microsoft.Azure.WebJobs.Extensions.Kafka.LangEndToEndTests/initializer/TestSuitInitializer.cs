@@ -36,20 +36,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.initializer
 
         //Async
         //Why does this return ICommand?
-        public void InitializeTestSuit(Language language, AppType appType, BrokerType brokerType)
+        public void InitializeTestSuit(Language language, BrokerType brokerType)
         {
             /*var clearStorageQueueTask = ClearStorageQueueAsync(language);
             var createEventHubTask = CreateEventHubAsync(language);
             
             Task.WaitAll(clearStorageQueueTask, createEventHubTask);*/
-            Task.WaitAll(StartupApplicationAsync(language, appType, brokerType));
+            Task.WaitAll(StartupApplicationAsync(language, brokerType));
         }
 
-        private async Task StartupApplicationAsync(Language language, AppType appType, BrokerType brokerType)
+        private async Task StartupApplicationAsync(Language language, BrokerType brokerType)
         {
             Command<Process> command = new ShellCommand.ShellCommandBuilder()
                                             .SetLanguage(language)
-                                            .SetAppType(appType)
                                             .SetBrokerType(brokerType)
                                             .Build();
             IExecutor<Command<Process>, Process> executor = new ShellCommandExecutor();
