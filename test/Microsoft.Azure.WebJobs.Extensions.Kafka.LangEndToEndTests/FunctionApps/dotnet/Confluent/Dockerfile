@@ -6,7 +6,7 @@ COPY --from=mcr.microsoft.com/dotnet/core/sdk:3.1 /usr/share/dotnet /usr/share/d
 FROM mcr.microsoft.com/azure-functions/dotnet:4-dotnet6-core-tools
 RUN mkdir /workspace
 COPY . /workspace
-WORKDIR /workspace/test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/dotnet/EventHub
+WORKDIR /workspace/test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/dotnet/Confluent
 # dotnet 
 
 ENV LD_LIBRARY_PATH=/workspace/test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/dotnet/EventHub/bin/runtimes/linux-x64/native
