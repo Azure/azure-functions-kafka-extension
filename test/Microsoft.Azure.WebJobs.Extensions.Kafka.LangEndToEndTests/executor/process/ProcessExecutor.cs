@@ -9,30 +9,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.executor.pr
 {
     public class ProcessExecutor : IExecutor<string, Process>
     {
-        public ProcessExecutor()
-        {
-        }
+        public ProcessExecutor() { }
+
+        //Assume that it gets the complete request like docker run imageName -p 7072:7071
         public async Task<Process> ExecuteAsync(string request)
         {
             Process process = new Process();
             string shell = null;
-            /*if(RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if(RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 shell = "cmd.exe";
             } else
             {
                 shell = "/bin/bash";
-            }*/
-
-            //Process(./path_to_script) -- Try
-            //How do we run scripts here? - Implementation Detail
-            //What will we do with this shell?
-
+            }
 
             // build process command
-            //process.Start();
+            process.StartInfo.FileName = shell;
+            process.StartInfo.ArgumentList.Add("/C");
+            // process.StartInfo.Arguments = "/C docker run -p 7072:7071 python";
+            process.StartInfo.ArgumentList.Add(request);
+
+            await Task.Run(() => process.Start());
             return process;
-            // TODO execute Process Object
+
         }
     }
 }

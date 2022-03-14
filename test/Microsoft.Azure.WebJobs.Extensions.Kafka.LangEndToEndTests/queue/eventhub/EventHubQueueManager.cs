@@ -24,6 +24,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
             // 1. retrieve service principle from environment variables
             // 2. retrieve the namespace name & connection string from env vars
             // add the required params in constructor
+
+            //Create a dictionary -- Not required since Namespace scope
         }
 
         public Task clearAsync(string queueName)

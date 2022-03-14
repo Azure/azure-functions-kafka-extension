@@ -13,11 +13,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
     {
         private Process process;
         private Language language;
+        private string port = "7072";
         private string dockerCmd = "docker run ";
         private string funcAppCmd = "func start";
         private bool isNightlyBuild = false;
         private IExecutor<string, Process> processExecutor = null;
-
+        
         private ShellCommand(ShellCommandBuilder shellCommandBuilder)
         {
             this.language = shellCommandBuilder.GetLanguage();
@@ -36,9 +37,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
             if(!isNightlyBuild)
             {
                 cmd = dockerCmd;
+                cmd += " -p " + port + ":7071";
+                //cmd += language;
+                cmd += " python";
             }
-            // TODO fix the command building issues
-            return await processExecutor.ExecuteAsync(cmd);
+            // TODO fix the command building issues -- What issue?
+            this.process = await processExecutor.ExecuteAsync(cmd);
+            return process;
         }
 
         public sealed class ShellCommandBuilder

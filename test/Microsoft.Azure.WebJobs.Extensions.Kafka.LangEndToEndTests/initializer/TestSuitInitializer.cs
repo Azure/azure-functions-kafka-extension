@@ -36,10 +36,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.initializer
             /*CreateEventHub(language);
             ClearStorageQueue(language);
             StartupApplication(language);*/
-            //var clearStorageQueueTask = ClearStorageQueueAsync(language);
-            //Creating EventhubAsync
-            var createEventHubTask = CreateEventHubAsync(language);
-            Task.WaitAll(createEventHubTask);
+            var startupApplication = StartupApplicationAsync(language);
+            // var clearStorageQueueTask = ClearStorageQueueAsync(language);
+            // var createEventHubTask = CreateEventHubAsync(language);
+            //Task.WaitAll(startupApplication, clearStorageQueueTask, createEventHubTask);
+            Task.WaitAll(startupApplication);
         }
 
         private void StartupApplication(Language language)
@@ -47,6 +48,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.initializer
             Command<Process> command = new ShellCommand.ShellCommandBuilder().SetLanguage(language).Build();
             IExecutor<Command<Process>, Process> executor = new ShellCommandExecutor();
             var process = executor.ExecuteAsync(command);
+            /*
+             * commenting for now for some issues TODO to fix the app issue
+             * if(process != null && !process.HasExited)
+            {
+                return;
+            }*/
+            // TODO throw excpetion app startup failed
+        }
+
+        private async Task StartupApplicationAsync(Language language)
+        {
+            Command<Process> command = new ShellCommand.ShellCommandBuilder().SetLanguage(language).Build();
+            IExecutor<Command<Process>, Process> executor = new ShellCommandExecutor();
+            var process = await executor.ExecuteAsync(command);
             /*
              * commenting for now for some issues TODO to fix the app issue
              * if(process != null && !process.HasExited)

@@ -11,6 +11,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.stora
         private readonly static int MAX_RETRY_COUNT = 3;
         private readonly string servicePrinciple;
         private readonly string connectionString;
+        private Dictionary<string, QueueClient> kkClient;
         private static AzureStorageQueueManager instance = new AzureStorageQueueManager();
 
         public static AzureStorageQueueManager GetInstance()
@@ -24,6 +25,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.stora
             // 1. retrieve service principle from environment variables
             // 2. retrieve the namespace name & connection string from env vars
             // add the required params in constructor
+
+            //Populate the dictionary with 2*2*language queues Key: QueueName Value: QueueClient
         }
 
         public async Task clearAsync(string queueName)
@@ -56,6 +59,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.stora
         public async Task<List<string>> writeAsync(List<string> messageEntity)
         {
             throw new NotImplementedException();
+        }
+
+        private async Task<QueueClient> createQueueClient()
+        { 
+        
         }
     }
 }
