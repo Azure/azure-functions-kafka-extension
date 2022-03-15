@@ -63,14 +63,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
                 cmdList.Add(Constants.CONFLUENT_BROKERLIST_VAR);
                 cmdList.Add(Constants.DOCKER_ENVVAR_FLAG);
                 cmdList.Add(Constants.AZURE_WEBJOBS_STORAGE);
+                cmdList.Add(Constants.DOCKER_ENVVAR_FLAG);
                 cmdList.Add(Constants.LanguageRuntimeMapping[language]);
             }
             else if (BrokerType.EVENTHUB == brokerType)
             {
                 cmdList.Add(Constants.EVENTHUB_CONSTRING_VAR);
+                cmdList.Add(Constants.DOCKER_ENVVAR_FLAG);
                 cmdList.Add(Constants.EVENTHUB_BROKERLIST_VAR);
+                cmdList.Add(Constants.DOCKER_ENVVAR_FLAG);
+                cmdList.Add(Constants.AZURE_WEBJOBS_STORAGE);
+                cmdList.Add(Constants.DOCKER_ENVVAR_FLAG);
+                cmdList.Add(Constants.LanguageRuntimeMapping[language]);
             }
-            
+
             cmdList.Add(Constants.LanguageImageMapping[language]);
             return string.Join(Constants.SPACE_CHAR, cmdList);
 
