@@ -17,7 +17,7 @@ namespace Confluent
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
             [Kafka("ConfluentBrokerList",
                     "e2e-kafka-dotnet-single-confluent",
-                    Username = "ConfluentCloudUserName",
+                    Username = "ConfluentCloudUsername",
                     Password = "ConfluentCloudPassword",
                     Protocol = BrokerProtocol.SaslSsl,
                    AuthenticationMode = BrokerAuthenticationMode.Plain
@@ -31,7 +31,7 @@ namespace Confluent
             string responseMessage = string.IsNullOrEmpty(message)
                 ? "This HTTP triggered function executed successfully. Pass a message in the query string"
                 : $"Message {message} sent to the broker. This HTTP triggered function executed successfully.";
-            eventData = $"Received message: {message}";
+            eventData = message;
 
             return new OkObjectResult(responseMessage);
         }

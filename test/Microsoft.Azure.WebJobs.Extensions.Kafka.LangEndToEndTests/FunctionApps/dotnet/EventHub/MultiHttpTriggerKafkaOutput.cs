@@ -15,10 +15,10 @@ namespace EventHub
         [FunctionName("MultiHttpTriggerKafkaOutput")]
         public static IActionResult Output(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
-            [Kafka("EventhubBrokerList",
+            [Kafka("EventHubBrokerList",
                     "e2e-kafka-dotnet-multi-eventhub",
                     Username = "$ConnectionString",
-                    Password = "%KafkaPassword%",
+                    Password = "%EventHubConnectionString%",
                     Protocol = BrokerProtocol.SaslSsl,
                     AuthenticationMode = BrokerAuthenticationMode.Plain)] out KafkaEventData<string>[] eventData,
                     ILogger log)

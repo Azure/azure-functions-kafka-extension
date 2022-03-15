@@ -10,8 +10,7 @@
     },
     "extensions": {
         "kafka": {
-            "maxBatchSize": 3,
-            "SubscriberIntervalInSeconds": 100
+            "maxBatchSize": 3
         }
     }
 }

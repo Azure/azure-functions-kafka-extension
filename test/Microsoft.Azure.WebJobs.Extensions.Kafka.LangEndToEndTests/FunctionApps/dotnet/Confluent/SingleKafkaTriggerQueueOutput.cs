@@ -9,16 +9,16 @@ namespace Confluent
     {
         // KafkaTrigger sample 
         // Consume the message from "topic" on the LocalBroker.
-        // Add `BrokerList` and `KafkaPassword` to the local.settings.json
+        // Add `ConfluentBrokerList` and `ConfluentCloudPassword` to the local.settings.json
         // For EventHubs
-        // "BrokerList": "{EVENT_HUBS_NAMESPACE}.servicebus.windows.net:9093"
-        // "KafkaPassword":"{EVENT_HUBS_CONNECTION_STRING}
+        // "ConfluentBrokerList": "{EVENT_HUBS_NAMESPACE}.servicebus.windows.net:9093"
+        // "ConfluentCloudPassword":"{EVENT_HUBS_CONNECTION_STRING}
         [FunctionName("SingleKafkaTriggerQueueOutput")]
         [return: Queue("e2e-dotnet-single-confluent")]
         public static string Run(
-            [KafkaTrigger("%ConfluentBrokerList%",
+            [KafkaTrigger("ConfluentBrokerList",
                           "e2e-kafka-dotnet-single-confluent",
-                          Username = "ConfluentCloudUserName",
+                          Username = "ConfluentCloudUsername",
                           Password = "ConfluentCloudPassword",
                           Protocol = BrokerProtocol.SaslSsl,
                           AuthenticationMode = BrokerAuthenticationMode.Plain,

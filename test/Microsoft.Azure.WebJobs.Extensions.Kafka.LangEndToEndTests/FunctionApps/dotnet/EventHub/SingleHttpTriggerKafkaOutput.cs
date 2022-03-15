@@ -15,10 +15,10 @@ namespace EventHub
         [FunctionName("SingleHttpTriggerKafkaOutput")]
         public static IActionResult Output(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
-            [Kafka("EventhubBrokerList",
+            [Kafka("EventHubBrokerList",
                     "e2e-kafka-dotnet-single-eventhub",
                     Username = "$ConnectionString",
-                    Password = "%KafkaPassword%",
+                    Password = "EventHubConnectionString",
                     Protocol = BrokerProtocol.SaslSsl,
                    AuthenticationMode = BrokerAuthenticationMode.Plain
             )] out string eventData,
@@ -31,7 +31,7 @@ namespace EventHub
             string responseMessage = string.IsNullOrEmpty(message)
                 ? "This HTTP triggered function executed successfully. Pass a message in the query string"
                 : $"Message {message} sent to the broker. This HTTP triggered function executed successfully.";
-            eventData = $"Received message: {message}";
+            eventData = message;
 
             return new OkObjectResult(responseMessage);
         }

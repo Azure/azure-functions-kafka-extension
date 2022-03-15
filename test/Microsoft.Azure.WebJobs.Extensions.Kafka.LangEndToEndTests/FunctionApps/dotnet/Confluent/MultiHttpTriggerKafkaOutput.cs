@@ -17,7 +17,7 @@ namespace Confluent
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
             [Kafka("ConfluentBrokerList",
                     "e2e-kafka-dotnet-multi-confluent",
-                    Username = "ConfluentCloudUserName",
+                    Username = "ConfluentCloudUsername",
                     Password = "ConfluentCloudPassword",
                     Protocol = BrokerProtocol.SaslSsl,
                     AuthenticationMode = BrokerAuthenticationMode.Plain)] out KafkaEventData<string>[] eventData,

@@ -10,16 +10,16 @@ namespace EventHub
     {
         // KafkaTrigger sample 
         // Consume the message from "topic" on the LocalBroker.
-        // Add `BrokerList` and `KafkaPassword` to the local.settings.json
+        // Add `EventHubBrokerList` and `EventHubConnectionString` to the local.settings.json
         // For EventHubs
-        // "BrokerList": "{EVENT_HUBS_NAMESPACE}.servicebus.windows.net:9093"
-        // "KafkaPassword":"{EVENT_HUBS_CONNECTION_STRING}
+        // "EventHubBrokerList": "{EVENT_HUBS_NAMESPACE}.servicebus.windows.net:9093"
+        // "EventHubConnectionString":"{EVENT_HUBS_CONNECTION_STRING}
         [FunctionName("MultiKafkaTriggerQueueOutput")]
         public static void Run(
-            [KafkaTrigger("%EventhubBrokerList%",
+            [KafkaTrigger("EventHubBrokerList",
                           "e2e-kafka-dotnet-multi-eventhub",
                           Username = "$ConnectionString",
-                          Password = "%KafkaPassword%",
+                          Password = "%EventHubConnectionString%",
                           Protocol = BrokerProtocol.SaslSsl,
                           AuthenticationMode = BrokerAuthenticationMode.Plain,
                           ConsumerGroup = "$Default")] KafkaEventData<string>[] events, ILogger log, 
