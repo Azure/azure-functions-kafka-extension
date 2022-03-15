@@ -15,7 +15,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 		public const string COLON_7071 = ":7071";
 		public const string DOCKER_ENVVAR_FLAG = "-e";
 
-		public const string CONFLUENT_USERNAME_VAR = "ConfluentCloudUserName";
+		public const string CONFLUENT_USERNAME_VAR = "ConfluentCloudUsername";
 		public const string CONFLUENT_PASSWORD_VAR = "ConfluentCloudPassword";
 		public const string CONFLUENT_BROKERLIST_VAR = "ConfluentBrokerList";
 		public const string EVENTHUB_CONSTRING_VAR = "EventhubConnectionString";
@@ -28,12 +28,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 		public const string FUNC_START = "func start";
 		public const string HIPHEN = "-";
 		
-		public const string PYTHONAPP_CONFLUENT_PORT = "";
+		public const string PYTHONAPP_CONFLUENT_PORT = "7072";
 		public const string PYTHONAPP_EVENTHUB_PORT = "";
-		public const string PYTHONAPP_CONFLUENT_IMAGE = "";
+		public const string PYTHONAPP_CONFLUENT_IMAGE = "azure-functions-kafka-confluent-python";
 		public const string PYTHONAPP_EVENTHUB_IMAGE = "";
-		public const string PYTHON_SINGLE_APP_NAME = "";
-		public const string PYTHON_MULTI_APP_NAME = "";
+		public const string PYTHON_SINGLE_APP_NAME = "SingleHttpTriggerKafkaOutput";
+		public const string PYTHON_MULTI_APP_NAME = "MultiHttpTriggerKafkaOutput";
 		public const string PYTHONAPP_WORKER_RUNTIME = "python";
 
 		public const string DOTNETAPP_CONFLUENT_PORT = "";

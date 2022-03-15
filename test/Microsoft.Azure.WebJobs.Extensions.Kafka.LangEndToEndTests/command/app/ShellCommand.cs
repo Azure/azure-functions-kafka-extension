@@ -64,7 +64,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
                 cmdList.Add(Constants.DOCKER_ENVVAR_FLAG);
                 cmdList.Add(Constants.AZURE_WEBJOBS_STORAGE);
                 cmdList.Add(Constants.DOCKER_ENVVAR_FLAG);
-                cmdList.Add(Constants.LanguageRuntimeMapping[language]);
+                cmdList.Add($"FUNCTIONS_WORKER_RUNTIME={Constants.LanguageRuntimeMapping[language]}");
             }
             else if (BrokerType.EVENTHUB == brokerType)
             {
