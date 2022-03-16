@@ -7,6 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="FunctionApps\**" />
+    <EmbeddedResource Remove="FunctionApps\**" />
+    <None Remove="FunctionApps\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Confluent.Kafka" Version="1.6.3">
       <NoWarn>NU1605</NoWarn>
     </PackageReference>

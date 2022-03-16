@@ -18,9 +18,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 		public const string CONFLUENT_USERNAME_VAR = "ConfluentCloudUsername";
 		public const string CONFLUENT_PASSWORD_VAR = "ConfluentCloudPassword";
 		public const string CONFLUENT_BROKERLIST_VAR = "ConfluentBrokerList";
-		public const string EVENTHUB_CONSTRING_VAR = "EventhubConnectionString";
-		public const string EVENTHUB_BROKERLIST_VAR = "EventhubBrokerList";
+		public const string EVENTHUB_CONSTRING_VAR = "EventHubConnectionString";
+		public const string EVENTHUB_BROKERLIST_VAR = "EventHubBrokerList";
 		public const string AZURE_WEBJOBS_STORAGE = "AzureWebJobsStorage";
+		public const string AZURE_CLIENT_ID = "AZURE_CLIENT_ID";
+		public const string AZURE_CLIENT_SECRET = "AZURE_CLIENT_SECRET";
+		public const string AZURE_TENANT_ID = "AZURE_TENANT_ID";
+		public const string AZURE_SUBSCRIPTION_ID = "AZURE_SUBSCRIPTION_ID";
 
 		public const string SPACE_CHAR = " ";
 		public const string E2E = "e2e";
@@ -29,9 +33,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 		public const string HIPHEN = "-";
 		
 		public const string PYTHONAPP_CONFLUENT_PORT = "7072";
-		public const string PYTHONAPP_EVENTHUB_PORT = "";
-		public const string PYTHONAPP_CONFLUENT_IMAGE = "azure-functions-kafka-confluent-python";
-		public const string PYTHONAPP_EVENTHUB_IMAGE = "";
+		public const string PYTHONAPP_EVENTHUB_PORT = "7074";
+		public const string PYTHONAPP_CONFLUENT_IMAGE = "azure-functions-kafka-python-confluent";
+		public const string PYTHONAPP_EVENTHUB_IMAGE = "azure-functions-kafka-python-eventhub";
 		public const string PYTHON_SINGLE_APP_NAME = "SingleHttpTriggerKafkaOutput";
 		public const string PYTHON_MULTI_APP_NAME = "MultiHttpTriggerKafkaOutput";
 		public const string PYTHONAPP_WORKER_RUNTIME = "python";

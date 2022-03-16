@@ -27,10 +27,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.executor.pr
             process.StartInfo.FileName = shell;
             process.StartInfo.ArgumentList.Add("/C");
             
-            // process.StartInfo.Arguments = "/C docker run -p 7072:7071 python";
+            //process.StartInfo.Arguments = "/C docker run -p 7072:7071 -e ConfluentCloudUsername -e ConfluentCloudPassword -e ConfluentBrokerList -e AzureWebJobsStorage -e FUNCTIONS_WORKER_RUNTIME='python' azure-functions-kafka-python-confluent";
+            //process.StartInfo.Arguments = "/C docker run -p 7072:7071 -e ConfluentCloudUsername -e ConfluentCloudPassword -e ConfluentBrokerList -e AzureWebJobsStorage azure-functions-kafka-python-confluent";
             process.StartInfo.ArgumentList.Add(request);
 
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.RedirectStandardError = true;
+            process.StartInfo.RedirectStandardOutput = true;
+            process.StartInfo.CreateNoWindow = false;
+
             await Task.Run(() => process.Start());
+
             return process;
         }
     }

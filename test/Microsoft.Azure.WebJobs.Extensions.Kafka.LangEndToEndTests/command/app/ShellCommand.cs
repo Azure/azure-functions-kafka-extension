@@ -52,8 +52,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
 
         private string buildDockerCmd() 
         {
-            List<string> cmdList = new List<string>() { Constants.DOCKER_RUN, Constants.DOCKER_PORT_FLAG, Constants.LanguagePortMapping[language], Constants.COLON_7071, Constants.DOCKER_ENVVAR_FLAG };
+            List<string> cmdList = new List<string>() { Constants.DOCKER_RUN, Constants.DOCKER_PORT_FLAG, $"{Constants.LanguagePortMapping[language] }{ Constants.COLON_7071 }", Constants.DOCKER_ENVVAR_FLAG };
             
+            //Adding Env variables 
             if (BrokerType.CONFLUENT == brokerType)
             {
                 cmdList.Add(Constants.CONFLUENT_USERNAME_VAR);
@@ -63,8 +64,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
                 cmdList.Add(Constants.CONFLUENT_BROKERLIST_VAR);
                 cmdList.Add(Constants.DOCKER_ENVVAR_FLAG);
                 cmdList.Add(Constants.AZURE_WEBJOBS_STORAGE);
-                cmdList.Add(Constants.DOCKER_ENVVAR_FLAG);
-                cmdList.Add($"FUNCTIONS_WORKER_RUNTIME={Constants.LanguageRuntimeMapping[language]}");
+                //cmdList.Add(Constants.DOCKER_ENVVAR_FLAG);
+                //cmdList.Add($"FUNCTIONS_WORKER_RUNTIME='{Constants.LanguageRuntimeMapping[language]}'");
             }
             else if (BrokerType.EVENTHUB == brokerType)
             {
@@ -73,8 +74,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
                 cmdList.Add(Constants.EVENTHUB_BROKERLIST_VAR);
                 cmdList.Add(Constants.DOCKER_ENVVAR_FLAG);
                 cmdList.Add(Constants.AZURE_WEBJOBS_STORAGE);
-                cmdList.Add(Constants.DOCKER_ENVVAR_FLAG);
-                cmdList.Add(Constants.LanguageRuntimeMapping[language]);
+                //cmdList.Add(Constants.DOCKER_ENVVAR_FLAG);
+                //cmdList.Add(Constants.LanguageRuntimeMapping[language]);
             }
 
             cmdList.Add(Constants.LanguageImageMapping[language]);
