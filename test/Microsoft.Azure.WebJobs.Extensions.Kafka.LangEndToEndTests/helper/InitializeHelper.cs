@@ -21,6 +21,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.helper
 
         public string BuildCloudBrokerName(QueueType queueType, AppType appType, Language language)
         {
+            //return Constants.
             return E2E + HIPHEN + KAFKA + HIPHEN + language.ToString() + HIPHEN + appType.ToString() + HIPHEN + queueType.ToString();
         }
 

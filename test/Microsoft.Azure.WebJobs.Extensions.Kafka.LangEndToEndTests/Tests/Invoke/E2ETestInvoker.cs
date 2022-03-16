@@ -3,20 +3,22 @@ using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.entity;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests.Invoke.request;
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests.Invoke
 {
     public class E2ETestInvoker
     {
-        public void Invoke(InvokeRequestStrategy<HttpResponse> invokeStrategy)
+        public async Task Invoke(InvokeRequestStrategy<HttpResponseMessage> invokeStrategy)
         {
-            invokeStrategy.InvokeRequest();
+            await invokeStrategy.InvokeRequestAsync();
         }
 
-        public void Invoke(InvokeRequestStrategy<string> invokeStrategy)
+        public async Task Invoke(InvokeRequestStrategy<string> invokeStrategy)
         {
-            invokeStrategy.InvokeRequest();
+            await invokeStrategy.InvokeRequestAsync();
         }
     }
 }

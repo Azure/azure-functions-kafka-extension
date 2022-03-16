@@ -6,6 +6,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.opera
 {
     public enum QueueOperation
     {
-        READ, WRITE, CREATE, DELETE
+        READ, READMANY, WRITE, CREATE, DELETE
     }
 }

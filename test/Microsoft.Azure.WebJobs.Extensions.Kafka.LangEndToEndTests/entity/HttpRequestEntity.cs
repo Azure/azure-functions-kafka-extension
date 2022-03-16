@@ -25,5 +25,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.entity
         }
 
         public string GetHttpMethod() { return this.httpMethod; }
+        public string GetUrl() { return this.url; }
     }
 }

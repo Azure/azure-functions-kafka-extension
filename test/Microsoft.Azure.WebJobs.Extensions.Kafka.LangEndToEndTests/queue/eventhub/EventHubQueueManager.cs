@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.eventhub
 {
-    public class EventHubQueueManager : IQueueManager<string, string>
+    public class EventHubQueueManager : IQueueManager<QueueRequest, QueueResponse>
     {
         private readonly static int MAX_RETRY_COUNT = 3;
         private readonly string servicePrinciple;
         private readonly string connectionString;
+        //Does this even work?
         private static EventHubQueueManager instance = new EventHubQueueManager();
 
         public static EventHubQueueManager GetInstance()
@@ -22,14 +24,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
             // 1. retrieve service principle from environment variables
             // 2. retrieve the namespace name & connection string from env vars
             // add the required params in constructor
+
+            //Create a dictionary -- Not required since Namespace scope
         }
 
-        public void clear(string queueName)
+        public Task clearAsync(string queueName)
         {
             throw new NotImplementedException();
         }
 
-        public void create(string queueName)
+        public Task createAsync(string queueName)
         {
             int count = 0;
             while (count < MAX_RETRY_COUNT)
@@ -42,20 +46,26 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
                     // 2. create the new eventhub
                     // 2.1 if creation failed retry three times
                     // return if success
-                } catch(Exception ex) {
+                    return Task.CompletedTask;
+                }
+                catch (Exception ex)
+                {
                     if (count >= MAX_RETRY_COUNT)
                         throw ex;
-                } finally {
+                }
+                finally
+                {
                     count++;
                 }
             }
-            
+            throw new NotImplementedException();
+
         }
 
-        public void delete(string queueName)
+        public Task deleteAsync(string queueName)
         {
             int count = 0;
-            while(count < MAX_RETRY_COUNT)
+            while (count < MAX_RETRY_COUNT)
             {
                 try
                 {
@@ -64,23 +74,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
                     // 1.1. if doesn't exists throw the error
                     // 2. delete the eventhub
                 }
-                catch (Exception ex) {
+                catch (Exception ex)
+                {
                     if (count >= MAX_RETRY_COUNT)
                         throw ex;
-                } finally
+                }
+                finally
                 {
                     count++;
                 }
             }
-            
+            throw new NotImplementedException();
         }
 
-        public string read(int batchSize)
+        public Task<QueueResponse> readAsync(int batchSize, string queueName)
         {
             throw new NotImplementedException();
         }
 
-        public string write(string messageEntity)
+        public Task<QueueResponse> writeAsync(QueueRequest writeRequest, string queueName)
         {
             throw new NotImplementedException();
         }

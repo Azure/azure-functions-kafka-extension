@@ -11,6 +11,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.langua
         JAVA,
         TYPESCRIPT,
         DOTNET_WORKER,
-        POWERSHELL
-    }
+        POWERSHELL,
+		DOTNET
+	}
 }

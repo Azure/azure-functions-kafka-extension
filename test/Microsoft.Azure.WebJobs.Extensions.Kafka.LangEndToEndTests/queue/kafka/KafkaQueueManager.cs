@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.kafka
 {
@@ -17,27 +18,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.kafka
             return instance;
         }
 
-        public void clear(string queueName)
+        public async Task clearAsync(string queueName)
         {
             throw new NotImplementedException();
         }
 
-        public void create(string queueName)
+        public async Task createAsync(string queueName)
         {
             throw new NotImplementedException();
         }
 
-        public void delete(string queueName)
+        public async Task deleteAsync(string queueName)
         {
             throw new NotImplementedException();
         }
 
-        public string read(int batchSize)
+        public async Task<string> readAsync(int batchSize, string queueName)
         {
             throw new NotImplementedException();
         }
 
-        public string write(string messageEntity)
+        public async Task<string> writeAsync(string messageEntity, string queueName)
         {
             throw new NotImplementedException();
         }

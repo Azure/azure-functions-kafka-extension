@@ -3,6 +3,7 @@ using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.executor;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests.Invoke.request.queue
 {
@@ -16,7 +17,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests.Invok
             
         }
 
-        public string InvokeRequest()
+        public async Task<string> InvokeRequestAsync()
         {
             // Placeholder when we need to write in kafka
             return null;

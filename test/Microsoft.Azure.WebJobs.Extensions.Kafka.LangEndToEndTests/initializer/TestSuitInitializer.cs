@@ -1,13 +1,17 @@
-﻿using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.languages;
+﻿using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.brokers;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.languages;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.type;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.queue;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.executor;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.executor.CommandExecutor;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.helper;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.eventhub;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.operation;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.storageQueue;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -26,21 +30,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.initializer
     // start app
     public class TestSuitInitializer
     {
+        //Intialize Helper vs Constants?
         private InitializeHelper initializeHelper = InitializeHelper.GetInstance();
+        private List<Process> processes = new List<Process>();
 
-        public ICommand InitializeTestSuit(Language language)
+        //Async
+        //Why does this return ICommand?
+        public void InitializeTestSuit(Language language, BrokerType brokerType)
         {
-            createEventHub(language);
-            clearStorageQueue(language);
-            startupApplication(language);
-            return null;
+            /*var clearStorageQueueTask = ClearStorageQueueAsync(language);
+            var createEventHubTask = CreateEventHubAsync(language);
+            
+            Task.WaitAll(clearStorageQueueTask, createEventHubTask);*/
+            Task.WaitAll(StartupApplicationAsync(language, brokerType));
         }
 
-        private void startupApplication(Language language)
+        private async Task StartupApplicationAsync(Language language, BrokerType brokerType)
         {
-            Command<Process> command = new ShellCommand.ShellCommandBuilder().SetLanguage(language).Build();
+            Command<Process> command = new ShellCommand.ShellCommandBuilder()
+                                            .SetLanguage(language)
+                                            .SetBrokerType(brokerType)
+                                            .Build();
             IExecutor<Command<Process>, Process> executor = new ShellCommandExecutor();
-            Process process = executor.Execute(command);
+            var process = await executor.ExecuteAsync(command);
+            processes.Add(process);
             /*
              * commenting for now for some issues TODO to fix the app issue
              * if(process != null && !process.HasExited)
@@ -50,39 +63,45 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.initializer
             // TODO throw excpetion app startup failed
         }
 
-        private void clearStorageQueue(Language language)
+        private async Task ClearStorageQueueAsync(Language language)
         {
-            string singleEventStorageQueueName = initializeHelper.BuildStorageQueueName(QueueType.AzureStorageQueue, AppType.SINGLE_EVENT, language);
-            string multiEventStorageQueueName = initializeHelper.BuildStorageQueueName(QueueType.AzureStorageQueue, AppType.BATCH_EVENT, language);
-            clearStorageQueue(singleEventStorageQueueName, multiEventStorageQueueName);
+            string singleEventStorageQueueName = Utils.BuildStorageQueueName(QueueType.AzureStorageQueue, 
+                        AppType.SINGLE_EVENT, language);
+            string multiEventStorageQueueName = Utils.BuildStorageQueueName(QueueType.AzureStorageQueue, 
+                        AppType.BATCH_EVENT, language);
+            
+            await ClearStorageQueueAsync(singleEventStorageQueueName, multiEventStorageQueueName);
         }
 
-        private void clearStorageQueue(string singleEventStorageQueueName, string multiEventStorageQueueName)
+        private async Task ClearStorageQueueAsync(string singleEventStorageQueueName, string multiEventStorageQueueName)
         {
-            IQueueManager<List<string>, List<string>> queueManager = AzureStorageQueueManager.GetInstance();
-            var singleEventAzureStorageQueueClearTask = Task.Factory.StartNew(() => queueManager.clear(singleEventStorageQueueName));
-            var multiEventAzureStorageQueueClearTask = Task.Factory.StartNew(() => queueManager.clear(multiEventStorageQueueName));
-            Task.WaitAll(singleEventAzureStorageQueueClearTask, multiEventAzureStorageQueueClearTask);
+            Command<QueueResponse> singleCommand = new QueueCommand(QueueType.EventHub,
+                        QueueOperation.CREATE, singleEventStorageQueueName);
+            Command<QueueResponse> multiCommand = new QueueCommand(QueueType.EventHub,
+                        QueueOperation.CREATE, multiEventStorageQueueName);
+            
+            await Task.WhenAll(singleCommand.ExecuteCommandAsync(), multiCommand.ExecuteCommandAsync());
         }
 
-        private void createEventHub(Language language)
+        private async Task CreateEventHubAsync(Language language)
         {
-            string eventHubSingleName = initializeHelper.BuildCloudBrokerName(queue.QueueType.EventHub,
-                    apps.type.AppType.SINGLE_EVENT, language);
-            string eventHubMultiName = initializeHelper.BuildCloudBrokerName(queue.QueueType.EventHub,
-                apps.type.AppType.BATCH_EVENT, language);
-
-            buildEventHub(eventHubSingleName, eventHubMultiName);
+            string eventHubSingleName = Utils.BuildCloudBrokerName(QueueType.EventHub,
+                        AppType.SINGLE_EVENT, language);
+            string eventHubMultiName = Utils.BuildCloudBrokerName(QueueType.EventHub,
+                        AppType.BATCH_EVENT, language);
+            
+            await BuildEventHubAsync(eventHubSingleName, eventHubMultiName);
         }
 
-        private void buildEventHub(string eventhubNameSingleEvent, string eventhubNameMultiEvent)
+        private async Task BuildEventHubAsync(string eventhubNameSingleEvent, string eventhubNameMultiEvent) 
         {
-            // TODO move this into Command from here
-            IQueueManager<string, string> queueManager = EventHubQueueManager.GetInstance();
-            var singleEventEventHubTask = Task.Factory.StartNew(() => queueManager.create(eventhubNameSingleEvent));
-            var multiEventEventHubTask = Task.Factory.StartNew(() => queueManager.create(eventhubNameMultiEvent));
-            Task.WaitAll(singleEventEventHubTask, multiEventEventHubTask);
-        }
+            Command<QueueResponse> singleCommand = new QueueCommand(QueueType.EventHub, 
+                        QueueOperation.CREATE, eventhubNameSingleEvent);
+            Command<QueueResponse> multiCommand = new QueueCommand(QueueType.EventHub, 
+                        QueueOperation.CREATE, eventhubNameMultiEvent);
+            
+            await Task.WhenAll(singleCommand.ExecuteCommandAsync(), multiCommand.ExecuteCommandAsync());
 
+        }
     }
 }
