@@ -28,4 +28,7 @@
     <ProjectReference Include="..\..\src\Microsoft.Azure.WebJobs.Extensions.Kafka\Microsoft.Azure.WebJobs.Extensions.Kafka.csproj" />
     <ProjectReference Include="..\Microsoft.Azure.WebJobs.Extensions.Tests.Common\Microsoft.WebJobs.Extensions.Tests.Common.csproj" />
   </ItemGroup>
+  <ItemGroup>
+	<Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>
