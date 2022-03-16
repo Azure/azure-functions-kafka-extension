@@ -87,12 +87,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
             throw new NotImplementedException();
         }
 
-        public Task<QueueResponse> readAsync(int batchSize)
+        public Task<QueueResponse> readAsync(int batchSize, string queueName)
         {
             throw new NotImplementedException();
         }
 
-        public Task<QueueResponse> writeAsync(QueueRequest writeRequest)
+        public Task<QueueResponse> writeAsync(QueueRequest writeRequest, string queueName)
         {
             throw new NotImplementedException();
         }

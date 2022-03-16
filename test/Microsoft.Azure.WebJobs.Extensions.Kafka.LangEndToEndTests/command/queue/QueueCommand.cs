@@ -44,11 +44,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.que
             }
             else if (QueueOperation.READ == this.queueOperation && QueueType.AzureStorageQueue == queueType)
             {
-                await queueManager.readAsync(Constants.SINGLE_MESSAGE_COUNT);
+                await queueManager.readAsync(Constants.SINGLE_MESSAGE_COUNT, queueName);
             }
             else if (QueueOperation.READMANY == this.queueOperation && QueueType.AzureStorageQueue == queueType)
             {
-                await queueManager.readAsync(Constants.BATCH_MESSAGE_COUNT);
+                await queueManager.readAsync(Constants.BATCH_MESSAGE_COUNT, queueName);
             }
             throw new NotImplementedException();
         }
