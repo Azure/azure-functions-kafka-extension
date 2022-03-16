@@ -13,12 +13,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 		public static string BuildCloudBrokerName(QueueType queueType, AppType appType, Language language)
 		{
 			//return Constants.
-			return Constants.E2E + Constants.HIPHEN + Constants.KAFKA + Constants.HIPHEN + language.ToString() + Constants.HIPHEN + appType.ToString() + Constants.HIPHEN + queueType.ToString();
+			return Constants.E2E + Constants.HIPHEN + Constants.KAFKA + Constants.HIPHEN + language.ToString() + Constants.HIPHEN + GiveAppTypeInString(appType) + Constants.HIPHEN + queueType.ToString();
 		}
 
 		public static string BuildStorageQueueName(QueueType queueType, AppType appType, Language language)
 		{
-			return Constants.E2E + Constants.HIPHEN + language.ToString() + Constants.HIPHEN + appType.ToString() + Constants.HIPHEN + queueType.ToString();
+			return Constants.E2E + Constants.HIPHEN + language.ToString() + Constants.HIPHEN + GiveAppTypeInString(appType) + Constants.HIPHEN + queueType.ToString();
+		}
+
+		public static string GiveAppTypeInString(AppType appType)
+		{
+			return appType == AppType.SINGLE_EVENT ? "single" : "multi";
 		}
 
 	}

@@ -2,6 +2,10 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using Azure.Identity;
+using Azure.ResourceManager.EventHubs;
+using Azure.ResourceManager.EventHubs.Models;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.eventhub
 {
@@ -43,9 +47,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
                     // TODO
                     // 1. check if already exists
                     //  1.1 clear the eventhub or delete that
+
+                    // DONE
                     // 2. create the new eventhub
                     // 2.1 if creation failed retry three times
                     // return if success
+
+                    string subscriptionId = Environment.GetEnvironmentVariable(Constants.AZURE_SUBSCRIPTION_ID);
+                    var credential = new DefaultAzureCredential();
+                    var eventHubManagementClient = new EventHubsManagementClient(subscriptionId, credential);
+                    var eventhublist = eventHubManagementClient.EventHubs.ListByNamespaceAsync(Constants.RESOURCE_GROUP, Constants.EVENTHUB_NAMESPACE);
+                    var newEventHubresponse = eventHubManagementClient.EventHubs.CreateOrUpdate(Constants.RESOURCE_GROUP, Constants.EVENTHUB_NAMESPACE, queueName,
+                        new Eventhub()
+                        {
+                            MessageRetentionInDays = 1,
+                            PartitionCount = 4
+                        });
+
                     return Task.CompletedTask;
                 }
                 catch (Exception ex)

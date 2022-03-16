@@ -28,10 +28,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 
 		public const string SPACE_CHAR = " ";
 		public const string E2E = "e2e";
-		public const string KAFKA = "";
+		public const string KAFKA = "kafka";
 		public const string FUNC_START = "func start";
 		public const string HIPHEN = "-";
-		
+		public const string RESOURCE_GROUP = "";
+		public const string EVENTHUB_NAMESPACE = "";
+
 		public const string PYTHONAPP_CONFLUENT_PORT = "7072";
 		public const string PYTHONAPP_EVENTHUB_PORT = "7074";
 		public const string PYTHONAPP_CONFLUENT_IMAGE = "azure-functions-kafka-python-confluent";

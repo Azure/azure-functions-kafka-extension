@@ -38,8 +38,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.initializer
         //Why does this return ICommand?
         public void InitializeTestSuit(Language language, BrokerType brokerType)
         {
-            /*var clearStorageQueueTask = ClearStorageQueueAsync(language);
             var createEventHubTask = CreateEventHubAsync(language);
+
+            /*var clearStorageQueueTask = ClearStorageQueueAsync(language);
             
             Task.WaitAll(clearStorageQueueTask, createEventHubTask);*/
             Task.WaitAll(StartupApplicationAsync(language, brokerType));
