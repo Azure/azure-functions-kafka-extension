@@ -68,15 +68,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.stora
 
             if (queueClient.Exists())
             {
-                List<string> messages = new List<string>();
-                // Get the next message
                 QueueMessage[] retrievedMessage = await queueClient.ReceiveMessagesAsync(batchSize);
                 foreach (QueueMessage message in retrievedMessage)
                 {
                     Console.WriteLine($"Dequeued message: '{message.Body}'");
-                    messages.Add(message.Body.ToString());
+                    response.AddString(Utils.Base64Decode(message.Body.ToString()));
                 }
-                response.responseList = messages;
             }
             return response;
         }

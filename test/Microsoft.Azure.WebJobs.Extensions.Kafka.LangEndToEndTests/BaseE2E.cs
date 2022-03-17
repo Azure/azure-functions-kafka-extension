@@ -72,7 +72,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
             
             QueueResponse queueMsgs = await readQueue.ExecuteCommandAsync();
 
-            Assert.Equal<List<string>>(expectedOutput, queueMsgs.responseList);
+            Assert.Equal<List<string>>(expectedOutput, queueMsgs.GetResponseList());
         }
 
         private async Task invokeE2ETest(AppType appType, InvokeType invokeType, HttpRequestEntity httpRequestEntity,
@@ -81,7 +81,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
             if (httpRequestEntity != null && InvokeType.HTTP == invokeType)
             {
 
-                int executionCount = 1;
+                int executionCount = Constants.SINGLE_MESSAGE_COUNT;
 
                 if (AppType.BATCH_EVENT == appType)
                 {

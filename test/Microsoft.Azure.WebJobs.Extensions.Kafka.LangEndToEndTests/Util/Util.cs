@@ -27,5 +27,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 			return appType == AppType.SINGLE_EVENT ? Constants.SINGLE : Constants.MULTI;
 		}
 
+		public static string Base64Decode(string base64EncodedData)
+		{
+			var base64EncodedBytes = Convert.FromBase64String(base64EncodedData);
+			return Encoding.UTF8.GetString(base64EncodedBytes);
+		}
 	}
 }
