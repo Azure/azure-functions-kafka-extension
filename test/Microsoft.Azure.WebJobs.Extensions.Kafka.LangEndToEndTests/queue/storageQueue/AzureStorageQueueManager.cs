@@ -1,9 +1,12 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Text;
+using System.Configuration;
 using System.Threading.Tasks;
+using Azure.Identity;
+using Azure.Storage.Queues;
+using Azure.Storage.Queues.Models;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.storageQueue
 {
@@ -13,7 +16,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.stora
         private readonly string servicePrinciple;
         private readonly string connectionString;
         private static AzureStorageQueueManager instance = new AzureStorageQueueManager();
-
+        private ConcurrentDictionary<string, QueueClient> queueClientFactory;
         public static AzureStorageQueueManager GetInstance()
         {
             return instance;
@@ -21,30 +24,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.stora
 
         private AzureStorageQueueManager()
         {
-            // TODO
-            // 1. retrieve service principle from environment variables
-            // 2. retrieve the namespace name & connection string from env vars
-            // add the required params in constructor
-
+            connectionString = Environment.GetEnvironmentVariable(Constants.AZURE_WEBJOBS_STORAGE);
             //Populate the dictionary with 12 clients: QueueName Value: AzureStorageClient(conn string, queueName)
             //Use the ConcurrentDictionary Class
             // Key: QueueName Value: QueueClient
-            //ConcurrentDictionary<string, QueueClient> cd = new ConcurrentDictionary<string, QueueClient>();
+            queueClientFactory = new ConcurrentDictionary<string, QueueClient>();
         }
 
         public async Task clearAsync(string queueName)
         {
             // TODO clear the Azure Storage Queue
+            QueueClient queueClient = new QueueClient(connectionString, queueName);
+            await queueClient.CreateIfNotExistsAsync();
+            await queueClient.ClearMessagesAsync();
+            queueClientFactory.GetOrAdd(queueName, queueClient);
             Console.WriteLine("clearing the queue");
             //throw new NotImplementedException();
         }
 
-        public async Task createAsync(string queueName)
+        public Task createAsync(string queueName)
         {
             throw new NotImplementedException();
         }
 
-        public async Task deleteAsync(string queueName)
+        public Task deleteAsync(string queueName)
         {
             throw new NotImplementedException();
         }
@@ -53,10 +56,32 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.stora
         {
             // TODO
             // 1. add the code to read as per the batch size and return the mesages in List of string
-            throw new NotImplementedException();
+            QueueClient queueClient = queueClientFactory.GetOrAdd(queueName, (queueName) =>
+                { 
+                    var client = new QueueClient(connectionString, queueName);
+                    client.CreateIfNotExists();
+                    return client;
+                }
+            );
+
+            QueueResponse response = new QueueResponse();
+
+            if (queueClient.Exists())
+            {
+                List<string> messages = new List<string>();
+                // Get the next message
+                QueueMessage[] retrievedMessage = await queueClient.ReceiveMessagesAsync(batchSize);
+                foreach (QueueMessage message in retrievedMessage)
+                {
+                    Console.WriteLine($"Dequeued message: '{message.Body}'");
+                    messages.Add(message.Body.ToString());
+                }
+                response.responseList = messages;
+            }
+            return response;
         }
 
-        public async Task<QueueResponse> writeAsync(QueueRequest messageEntity, string queueName)
+        public Task<QueueResponse> writeAsync(QueueRequest messageEntity, string queueName)
         {
             throw new NotImplementedException();
         }

@@ -16,7 +16,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
         private readonly string connectionString;
         //Does this even work?
         private static EventHubQueueManager instance = new EventHubQueueManager();
-
+        private EventHubsManagementClient eventHubsManagementClient;
         public static EventHubQueueManager GetInstance()
         {
             return instance;
@@ -28,6 +28,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
             // 1. retrieve service principle from environment variables
             // 2. retrieve the namespace name & connection string from env vars
             // add the required params in constructor
+            string subscriptionId = Environment.GetEnvironmentVariable(Constants.AZURE_SUBSCRIPTION_ID);
+            var credential = new DefaultAzureCredential();
+            eventHubsManagementClient = new EventHubsManagementClient(subscriptionId, credential);
 
             //Create a dictionary -- Not required since Namespace scope
         }
@@ -37,10 +40,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
             throw new NotImplementedException();
         }
 
-        public Task createAsync(string queueName)
+        public async Task createAsync(string queueName)
         {
             int count = 0;
-            while (count < MAX_RETRY_COUNT)
+            while (count <= MAX_RETRY_COUNT)
             {
                 try
                 {
@@ -53,18 +56,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
                     // 2.1 if creation failed retry three times
                     // return if success
 
-                    string subscriptionId = Environment.GetEnvironmentVariable(Constants.AZURE_SUBSCRIPTION_ID);
-                    var credential = new DefaultAzureCredential();
-                    var eventHubManagementClient = new EventHubsManagementClient(subscriptionId, credential);
-                    var eventhublist = eventHubManagementClient.EventHubs.ListByNamespaceAsync(Constants.RESOURCE_GROUP, Constants.EVENTHUB_NAMESPACE);
-                    var newEventHubresponse = eventHubManagementClient.EventHubs.CreateOrUpdate(Constants.RESOURCE_GROUP, Constants.EVENTHUB_NAMESPACE, queueName,
+                    //var eventhublist = eventHubManagementClient.EventHubs.ListByNamespaceAsync(Constants.RESOURCE_GROUP, Constants.EVENTHUB_NAMESPACE);
+                    var newEventHubresponse = await eventHubsManagementClient.EventHubs.CreateOrUpdateAsync(Constants.RESOURCE_GROUP, Constants.EVENTHUB_NAMESPACE, queueName,
                         new Eventhub()
                         {
                             MessageRetentionInDays = 1,
                             PartitionCount = 4
                         });
-
-                    return Task.CompletedTask;
+                    return;
                 }
                 catch (Exception ex)
                 {
@@ -76,21 +75,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
                     count++;
                 }
             }
-            throw new NotImplementedException();
-
+            // what to do here?
         }
 
-        public Task deleteAsync(string queueName)
+        public async Task deleteAsync(string queueName)
         {
             int count = 0;
-            while (count < MAX_RETRY_COUNT)
+            while (count <= MAX_RETRY_COUNT)
             {
                 try
                 {
-                    // TODO
-                    // 1. check if exists
-                    // 1.1. if doesn't exists throw the error
-                    // 2. delete the eventhub
+                    await eventHubsManagementClient.EventHubs.DeleteAsync(Constants.RESOURCE_GROUP, Constants.EVENTHUB_NAMESPACE, queueName);
+                    return;
                 }
                 catch (Exception ex)
                 {
@@ -102,7 +98,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
                     count++;
                 }
             }
-            throw new NotImplementedException();
         }
 
         public Task<QueueResponse> readAsync(int batchSize, string queueName)

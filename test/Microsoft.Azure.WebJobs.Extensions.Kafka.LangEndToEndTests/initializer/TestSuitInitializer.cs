@@ -40,9 +40,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.initializer
         {
             var createEventHubTask = CreateEventHubAsync(language);
 
-            /*var clearStorageQueueTask = ClearStorageQueueAsync(language);
+            var clearStorageQueueTask = ClearStorageQueueAsync(language, brokerType);
             
-            Task.WaitAll(clearStorageQueueTask, createEventHubTask);*/
+            Task.WaitAll(clearStorageQueueTask, createEventHubTask);
             Task.WaitAll(StartupApplicationAsync(language, brokerType));
         }
 
@@ -64,11 +64,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.initializer
             // TODO throw excpetion app startup failed
         }
 
-        private async Task ClearStorageQueueAsync(Language language)
+        private async Task ClearStorageQueueAsync(Language language, BrokerType brokerType)
         {
-            string singleEventStorageQueueName = Utils.BuildStorageQueueName(QueueType.AzureStorageQueue, 
+            string singleEventStorageQueueName = Utils.BuildStorageQueueName( brokerType, 
                         AppType.SINGLE_EVENT, language);
-            string multiEventStorageQueueName = Utils.BuildStorageQueueName(QueueType.AzureStorageQueue, 
+            string multiEventStorageQueueName = Utils.BuildStorageQueueName( brokerType, 
                         AppType.BATCH_EVENT, language);
             
             await ClearStorageQueueAsync(singleEventStorageQueueName, multiEventStorageQueueName);
@@ -76,10 +76,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.initializer
 
         private async Task ClearStorageQueueAsync(string singleEventStorageQueueName, string multiEventStorageQueueName)
         {
-            Command<QueueResponse> singleCommand = new QueueCommand(QueueType.EventHub,
-                        QueueOperation.CREATE, singleEventStorageQueueName);
-            Command<QueueResponse> multiCommand = new QueueCommand(QueueType.EventHub,
-                        QueueOperation.CREATE, multiEventStorageQueueName);
+            Command<QueueResponse> singleCommand = new QueueCommand(QueueType.AzureStorageQueue,
+                        QueueOperation.CLEAR, singleEventStorageQueueName);
+            Command<QueueResponse> multiCommand = new QueueCommand(QueueType.AzureStorageQueue,
+                        QueueOperation.CLEAR, multiEventStorageQueueName);
             
             await Task.WhenAll(singleCommand.ExecuteCommandAsync(), multiCommand.ExecuteCommandAsync());
         }

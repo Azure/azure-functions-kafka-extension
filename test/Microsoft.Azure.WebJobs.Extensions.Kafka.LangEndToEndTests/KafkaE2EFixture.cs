@@ -1,8 +1,15 @@
 ﻿using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.brokers;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.languages;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.type;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.queue;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.helper;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.initializer;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.eventhub;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.operation;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.storageQueue;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -34,10 +41,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
             }
         }
 
-        Task IAsyncLifetime.DisposeAsync()
+        async Task IAsyncLifetime.DisposeAsync()
         {
+            string eventHubSingleName = Utils.BuildCloudBrokerName(QueueType.EventHub,
+                        AppType.SINGLE_EVENT, language);
+            string eventHubMultiName = Utils.BuildCloudBrokerName(QueueType.EventHub,
+                        AppType.BATCH_EVENT, language);
+
+            Command<QueueResponse> singleCommand = new QueueCommand(QueueType.EventHub,
+                                    QueueOperation.DELETE, eventHubSingleName);
+            Command<QueueResponse> multiCommand = new QueueCommand(QueueType.EventHub,
+                        QueueOperation.DELETE, eventHubMultiName);
+
+            await Task.WhenAll(singleCommand.ExecuteCommandAsync(), multiCommand.ExecuteCommandAsync());
+
             Console.WriteLine("DisposeAsync");
-            return Task.CompletedTask;
         }
 
         Task IAsyncLifetime.InitializeAsync()
