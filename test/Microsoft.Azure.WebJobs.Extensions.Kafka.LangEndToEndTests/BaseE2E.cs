@@ -55,7 +55,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
 
         private async Task verifyQueueMsgsAsync(List<string> expectedOutput, AppType appType)
         {
-            var storageQueueName = Utils.BuildStorageQueueName(QueueType.AzureStorageQueue,
+            var storageQueueName = Utils.BuildStorageQueueName(brokerType,
                         AppType.SINGLE_EVENT, language);
 
             Command<QueueResponse> readQueue = null;

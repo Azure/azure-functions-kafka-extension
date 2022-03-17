@@ -38,19 +38,29 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.que
 
         public async Task<QueueResponse> ExecuteCommandAsync()
         {
-            if (QueueOperation.CREATE == this.queueOperation && QueueType.EventHub == queueType)
+            QueueResponse response = null;
+
+            if (QueueOperation.CREATE == this.queueOperation)
             {
                 await queueManager.createAsync(queueName);
             }
-            else if (QueueOperation.READ == this.queueOperation && QueueType.AzureStorageQueue == queueType)
+            else if (QueueOperation.CLEAR == this.queueOperation)
             {
-                await queueManager.readAsync(Constants.SINGLE_MESSAGE_COUNT, queueName);
+                await queueManager.clearAsync(queueName);
             }
-            else if (QueueOperation.READMANY == this.queueOperation && QueueType.AzureStorageQueue == queueType)
+            else if (QueueOperation.DELETE == this.queueOperation)
             {
-                await queueManager.readAsync(Constants.BATCH_MESSAGE_COUNT, queueName);
+                await queueManager.deleteAsync(queueName);
             }
-            throw new NotImplementedException();
+            else if (QueueOperation.READ == this.queueOperation)
+            {
+                response = await queueManager.readAsync(Constants.SINGLE_MESSAGE_COUNT, queueName);
+            }
+            else if (QueueOperation.READMANY == this.queueOperation)
+            {
+                response = await queueManager.readAsync(Constants.BATCH_MESSAGE_COUNT, queueName);
+            }
+            return response;
         }
     }
 }
