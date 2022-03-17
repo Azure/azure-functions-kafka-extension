@@ -1,10 +1,12 @@
 ﻿using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.brokers;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.languages;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.type;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.cleanup;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.queue;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.helper;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.initializer;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.process;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.eventhub;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.operation;
@@ -43,18 +45,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
 
         async Task IAsyncLifetime.DisposeAsync()
         {
-            string eventHubSingleName = Utils.BuildCloudBrokerName(QueueType.EventHub,
-                        AppType.SINGLE_EVENT, language);
-            string eventHubMultiName = Utils.BuildCloudBrokerName(QueueType.EventHub,
-                        AppType.BATCH_EVENT, language);
 
-            Command<QueueResponse> singleCommand = new QueueCommand(QueueType.EventHub,
-                                    QueueOperation.DELETE, eventHubSingleName);
-            Command<QueueResponse> multiCommand = new QueueCommand(QueueType.EventHub,
-                        QueueOperation.DELETE, eventHubMultiName);
-
-            await Task.WhenAll(singleCommand.ExecuteCommandAsync(), multiCommand.ExecuteCommandAsync());
-
+            TestSuiteCleaner testSuitCleaner = new TestSuiteCleaner();
+            await testSuitCleaner.CleanupTestSuiteAsync(language, brokerType);
             Console.WriteLine("DisposeAsync");
         }
 
