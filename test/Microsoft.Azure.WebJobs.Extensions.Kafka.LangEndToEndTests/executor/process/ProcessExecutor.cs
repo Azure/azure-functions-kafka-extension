@@ -18,6 +18,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.executor.pr
             if(RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 shell = "cmd.exe";
+                process.StartInfo.ArgumentList.Add("/C");
             } else
             {
                 shell = "/bin/bash";
@@ -25,10 +26,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.executor.pr
 
             // build process command
             process.StartInfo.FileName = shell;
-            process.StartInfo.ArgumentList.Add("/C");
-            
-            //process.StartInfo.Arguments = "/C docker run -p 7072:7071 -e ConfluentCloudUsername -e ConfluentCloudPassword -e ConfluentBrokerList -e AzureWebJobsStorage -e FUNCTIONS_WORKER_RUNTIME='python' azure-functions-kafka-python-confluent";
-            //process.StartInfo.Arguments = "/C docker run -p 7072:7071 -e ConfluentCloudUsername -e ConfluentCloudPassword -e ConfluentBrokerList -e AzureWebJobsStorage azure-functions-kafka-python-confluent";
+
             process.StartInfo.ArgumentList.Add(request);
 
             process.StartInfo.UseShellExecute = false;

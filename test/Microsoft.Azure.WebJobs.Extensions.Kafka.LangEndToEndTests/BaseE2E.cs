@@ -48,6 +48,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
         {
             await invokeE2ETest(appType, invokeType, httpRequestEntity, queueEntity);
             // wait for the function completion
+            await Task.Delay(60000);
             // invokation for read from storage
             await verifyQueueMsgsAsync(expectedOutput, appType);
             
@@ -56,7 +57,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
         private async Task verifyQueueMsgsAsync(List<string> expectedOutput, AppType appType)
         {
             var storageQueueName = Utils.BuildStorageQueueName(brokerType,
-                        AppType.SINGLE_EVENT, language);
+                        appType, language);
 
             Command<QueueResponse> readQueue = null;
             if (AppType.BATCH_EVENT == appType)
@@ -81,19 +82,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
             if (httpRequestEntity != null && InvokeType.HTTP == invokeType)
             {
 
-                int executionCount = Constants.SINGLE_MESSAGE_COUNT;
+                try 
+                { 
+                    
+                    InvokeRequestStrategy<HttpResponseMessage> invokerHttpReqStrategy = new InvokeHttpRequestStrategy(httpRequestEntity);
+                    await this.invoker.Invoke(invokerHttpReqStrategy);
 
-                if (AppType.BATCH_EVENT == appType)
-                {
-                    executionCount = Constants.BATCH_MESSAGE_COUNT;
-                }
-                try { 
-                    for (var i = 0; i < executionCount; i++)
-                    {
-                        InvokeRequestStrategy<HttpResponseMessage> invokerHttpReqStrategy = new InvokeHttpRequestStrategy(httpRequestEntity);
-                        await this.invoker.Invoke(invokerHttpReqStrategy);
-
-                    }
                 }
                 catch(Exception ex)
                 {

@@ -7,6 +7,8 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Polly;
+using Polly.Retry;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.http
 {
@@ -14,7 +16,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.htt
     {
         private HttpRequestEntity httpRequestEntity;
         private HttpClient httpClient;
-
+        //private int MAX_RETRIES = 3;
+        private AsyncRetryPolicy retryPolicy = Policy.Handle<HttpRequestException>()
+            .WaitAndRetryAsync(
+               retryCount: 3,
+               sleepDurationProvider: _ => TimeSpan.FromSeconds(10)
+            );
+               
         //Overkill - Why this structure?
         private HttpCommand(HttpCommandBuilder httpCommandBuilder)
         {
@@ -56,11 +64,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.htt
                 HttpResponseMessage response = null;
                 try
                 {
-                    response = await httpClient.GetAsync(requestUri);
+                    response = await retryPolicy.ExecuteAsync(async () => await httpClient.GetAsync(requestUri));
+                    //response = await httpClient.GetAsync(requestUri);
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine(ex);
+                    throw ex;
                 }
                 return response;
             }

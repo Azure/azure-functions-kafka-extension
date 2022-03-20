@@ -18,7 +18,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
         
         private readonly Language language;
         private readonly BrokerType brokerType;
-        
+        private ShellCommandType shellCommandType = ShellCommandType.DOCKER_RUN;
         private bool isNightlyBuild = false;
         
         private IExecutor<string, Process> processExecutor = null;
@@ -26,6 +26,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
         private ShellCommand(ShellCommandBuilder shellCommandBuilder)
         {
             this.language = shellCommandBuilder.GetLanguage();
+            this.brokerType = shellCommandBuilder.GetBrokerType();
+            this.shellCommandType = shellCommandBuilder.GetShellCommandType();
             this.processExecutor = new ProcessExecutor();
             // TODO check from environment variables if nightly build is set
         }
@@ -37,22 +39,38 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
 
         public async Task<Process> ExecuteCommandAsync()
         {
-            String cmd = Constants.FUNC_START;
-            if(!isNightlyBuild)
+            string cmd = Constants.FUNC_START;
+            if (ShellCommandType.DOCKER_RUN == shellCommandType)
+            {
+                cmd = buildDockerStartCmd();
+            }
+            else if (ShellCommandType.DOCKER_KILL == shellCommandType)
+            {
+                cmd = buildDockerKillCmd();
+            }
+
+            /*if(!isNightlyBuild)
             {
                 //Build Docker Command
-                cmd = buildDockerCmd();
+                cmd = buildDockerStartCmd();
                 
-            }
+            }*/
 
             // TODO fix the command building issues -- What issue?
             this.process = await processExecutor.ExecuteAsync(cmd);
             return process;
         }
 
-        private string buildDockerCmd() 
+        private string buildDockerKillCmd()
         {
-            List<string> cmdList = new List<string>() { Constants.DOCKER_RUN, Constants.DOCKER_PORT_FLAG, $"{Constants.LanguagePortMapping[language] }{ Constants.COLON_7071 }", Constants.DOCKER_ENVVAR_FLAG };
+            List<string> cmdList = new List<string>() { Constants.DOCKER_KILL };
+            cmdList.Add(Constants.BrokerLanguageImageMapping[new Tuple<BrokerType, Language>(brokerType, language)]);
+            return string.Join(Constants.SPACE_CHAR, cmdList);
+        }
+
+        private string buildDockerStartCmd() 
+        {
+            List<string> cmdList = new List<string>() { Constants.DOCKER_RUN, Constants.DOCKER_PORT_FLAG, $"{Constants.BrokerLanguagePortMapping[new Tuple<BrokerType, Language>(brokerType, language)] }{ Constants.COLON_7071 }", Constants.DOCKER_ENVVAR_FLAG };
             
             //Adding Env variables 
             if (BrokerType.CONFLUENT == brokerType)
@@ -78,7 +96,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
                 //cmdList.Add(Constants.LanguageRuntimeMapping[language]);
             }
 
-            cmdList.Add(Constants.LanguageImageMapping[language]);
+            //Creating container with the same name as the image
+            cmdList.Add(Constants.DOCKER_NAME_FLAG);
+            cmdList.Add(Constants.BrokerLanguageImageMapping[new Tuple<BrokerType, Language>(brokerType, language)]);
+            
+            cmdList.Add(Constants.BrokerLanguageImageMapping[new Tuple<BrokerType, Language>(brokerType, language)]);
             return string.Join(Constants.SPACE_CHAR, cmdList);
 
         }
@@ -87,6 +109,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
         {
             private Language language;
             private BrokerType brokerType;
+            private ShellCommandType shellCommandType;
             // TODO
             // 1. create entity for Credentials for eventhub & confluent both
             // needed to be passed in env vars in docker & needed to set in-case
@@ -105,6 +128,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
                 this.brokerType = brokerType;
                 return this;
             }
+
+            public ShellCommandBuilder SetShellCommandType(ShellCommandType shellCommandType) 
+            {
+                this.shellCommandType = shellCommandType;
+                return this;
+            }
             public ShellCommand Build()
             {
                 return new ShellCommand(this);
@@ -112,6 +141,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
             public Language GetLanguage()
             {
                 return this.language;
+            }
+
+            public BrokerType GetBrokerType()
+            {
+                return this.brokerType;
+            }
+
+            public ShellCommandType GetShellCommandType()
+            {
+                return this.shellCommandType;
             }
         }
     }

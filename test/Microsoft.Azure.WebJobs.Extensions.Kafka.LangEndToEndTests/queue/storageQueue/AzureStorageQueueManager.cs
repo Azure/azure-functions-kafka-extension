@@ -72,6 +72,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.stora
                 foreach (QueueMessage message in retrievedMessage)
                 {
                     Console.WriteLine($"Dequeued message: '{message.Body}'");
+                    //Why do we need to Base64Decode the message
                     response.AddString(Utils.Base64Decode(message.Body.ToString()));
                 }
             }

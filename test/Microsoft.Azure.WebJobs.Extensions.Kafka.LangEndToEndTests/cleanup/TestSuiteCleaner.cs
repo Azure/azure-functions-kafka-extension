@@ -2,13 +2,17 @@
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.languages;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.type;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.queue;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.executor;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.executor.CommandExecutor;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.process;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.operation;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -18,8 +22,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.cleanup
 	{
 		public async Task CleanupTestSuiteAsync(Language language, BrokerType brokerType) 
 		{
+			//Kill all docker containers
+			await KillFunctionDockersAsync(language, brokerType);
 			ProcessManager.GetInstance().Dispose();
 			await CleanupAzureResourcesAsync(language, brokerType);
+		}
+
+		private async Task KillFunctionDockersAsync(Language language, BrokerType brokerType)
+		{
+			Command<Process> command = new ShellCommand.ShellCommandBuilder()
+											.SetLanguage(language)
+											.SetBrokerType(brokerType)
+											.SetShellCommandType(ShellCommandType.DOCKER_KILL)
+											.Build();
+			IExecutor<Command<Process>, Process> executor = new ShellCommandExecutor();
+			await executor.ExecuteAsync(command);
 		}
 
 		private async Task CleanupAzureResourcesAsync(Language language, BrokerType brokerType)
