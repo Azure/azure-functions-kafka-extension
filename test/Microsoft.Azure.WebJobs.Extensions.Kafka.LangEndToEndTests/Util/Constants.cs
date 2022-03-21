@@ -39,14 +39,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 		public const string SINGLE = "single";
 		public const string MULTI = "multi";
 
-		public const string PYTHONAPP_CONFLUENT_PORT = "7072";
-		public const string PYTHONAPP_EVENTHUB_PORT = "5000";
+		public const string PYTHONAPP_CONFLUENT_PORT = "50700";
+		public const string PYTHONAPP_EVENTHUB_PORT = "51701";
 		public const string PYTHONAPP_CONFLUENT_IMAGE = "azure-functions-kafka-python-confluent";
 		public const string PYTHONAPP_EVENTHUB_IMAGE = "azure-functions-kafka-python-eventhub";
 		public const string PYTHON_SINGLE_APP_NAME = "SingleHttpTriggerKafkaOutput";
 		public const string PYTHON_MULTI_APP_NAME = "MultiHttpTriggerKafkaOutput";
 		public const string PYTHONAPP_WORKER_RUNTIME = "python";
 
+		
 		public const string DOTNETAPP_CONFLUENT_PORT = "";
 		public const string DOTNETAPP_EVENTHUB_PORT = "";
 		public const string DOTNETAPP_CONFLUENT_IMAGE = "";
@@ -55,58 +56,59 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 		public const string DOTNET_MULTI_APP_NAME = "";
 		public const string DOTNET_WORKER_RUNTIME = "dotnet";
 
-		public const string DOTNETWORKERRAPP_CONFLUENT_PORT = "";
-		public const string DOTNETWORKERRAPP_EVENTHUB_PORT = "";
-		public const string DOTNETWORKERAPP_CONFLUENT_IMAGE = "";
-		public const string DOTNETWORKERAPP_EVENTHUB_IMAGE = "";
-		public const string DOTNETWORKER_SINGLE_APP_NAME = "";
-		public const string DOTNETWORKER_MULTI_APP_NAME = "";
+
+		public const string DOTNETWORKERRAPP_CONFLUENT_PORT = "50200";
+		public const string DOTNETWORKERRAPP_EVENTHUB_PORT = "51200";
+		public const string DOTNETWORKERAPP_CONFLUENT_IMAGE = "azure-functions-kafka-dotnet-isolated-confluent";
+		public const string DOTNETWORKERAPP_EVENTHUB_IMAGE = "azure-functions-kafka-dotnet-isolated-eventhub";
+		public const string DOTNETWORKER_SINGLE_APP_NAME = "SingleHttpTriggerKafkaOutput";
+		public const string DOTNETWORKER_MULTI_APP_NAME = "MultiHttpTriggerKafkaOutput";
 		public const string DOTNETWORKER_WORKER_RUNTIME = "dotnet-isolated";
 
-		public const string PWSHELL_CONFLUENT_PORT = "";
-		public const string PWSHELL_EVENTHUB_PORT = "";
-		public const string PWSHELL_CONFLUENT_IMAGE = "";
-		public const string PWSHELL_EVENTHUB_IMAGE = "";
-		public const string PWSHELL_SINGLE_APP_NAME = "";
-		public const string PWSHELL_MULTI_APP_NAME = "";
+		public const string PWSHELL_CONFLUENT_PORT = "50500";
+		public const string PWSHELL_EVENTHUB_PORT = "51500";
+		public const string PWSHELL_CONFLUENT_IMAGE = "azure-functions-kafka-powershell-confluent";
+		public const string PWSHELL_EVENTHUB_IMAGE = "azure-functions-kafka-powershell-eventhub";
+		public const string PWSHELL_SINGLE_APP_NAME = "SingleHttpTriggerKafkaOutput";
+		public const string PWSHELL_MULTI_APP_NAME = "MultiHttpTriggerKafkaOutput";
 		public const string PWSHELL_WORKER_RUNTIME = "powershell";
 
-		public const string JAVAAPP_CONFLUENT_PORT = "";
-		public const string JAVAAPP_EVENTHUB_PORT = "";
-		public const string JAVAAPP_CONFLUENT_IMAGE = "";
-		public const string JAVAAPP_EVENTHUB_IMAGE = "";
-		public const string JAVA_SINGLE_APP_NAME = "";
-		public const string JAVA_MULTI_APP_NAME = "";
+		public const string JAVAAPP_CONFLUENT_PORT = "50600";
+		public const string JAVAAPP_EVENTHUB_PORT = "51600";
+		public const string JAVAAPP_CONFLUENT_IMAGE = "azure-functions-kafka-java-confluent";
+		public const string JAVAAPP_EVENTHUB_IMAGE = "azure-functions-kafka-java-eventhub";
+		public const string JAVA_SINGLE_APP_NAME = "SingleHttpTriggerKafkaOutput";
+		public const string JAVA_MULTI_APP_NAME = "MultiHttpTriggerKafkaOutput";
 		public const string JAVA_WORKER_RUNTIME = "java";
 
-		public const string JSAPP_CONFLUENT_PORT = "";
-		public const string JSAPP_EVENTHUB_PORT = "";
-		public const string JSAPP_CONFLUENT_IMAGE = "";
-		public const string JSAPP_EVENTHUB_IMAGE = "";
-		public const string JS_SINGLE_APP_NAME = "";
-		public const string JS_MULTI_APP_NAME = "";
+		public const string JSAPP_CONFLUENT_PORT = "50300";
+		public const string JSAPP_EVENTHUB_PORT = "51300";
+		public const string JSAPP_CONFLUENT_IMAGE = "azure-functions-kafka-javascript-confluent";
+		public const string JSAPP_EVENTHUB_IMAGE = "azure-functions-kafka-javascript-eventhub";
+		public const string JS_SINGLE_APP_NAME = "SingleHttpTriggerKafkaOutput";
+		public const string JS_MULTI_APP_NAME = "MultiHttpTriggerKafkaOutput";
 		public const string JS_WORKER_RUNTIME = "node";
 
-		public const string TSAPP_CONFLUENT_PORT = "";
-		public const string TSAPP_EVENTHUB_PORT = "";
-		public const string TSAPP_CONFLUENT_IMAGE = "";
-		public const string TSAPP_EVENTHUB_IMAGE = "";
-		public const string TS_SINGLE_APP_NAME = "";
-		public const string TS_MULTI_APP_NAME = "";
+		public const string TSAPP_CONFLUENT_PORT = "50400";
+		public const string TSAPP_EVENTHUB_PORT = "51400";
+		public const string TSAPP_CONFLUENT_IMAGE = "azure-functions-kafka-javascript-confluent";
+		public const string TSAPP_EVENTHUB_IMAGE = "azure-functions-kafka-javascript-eventhub";
+		public const string TS_SINGLE_APP_NAME = "SingleHttpTriggerKafkaOutput";
+		public const string TS_MULTI_APP_NAME = "MultiHttpTriggerKafkaOutput";
 		public const string TS_WORKER_RUNTIME = "node";
 
 		public static Dictionary<Tuple<BrokerType, Language>, string> BrokerLanguagePortMapping = new Dictionary<Tuple<BrokerType, Language>, string>()
 		{
 			{ new Tuple<BrokerType, Language>(BrokerType.CONFLUENT, Language.PYTHON), PYTHONAPP_CONFLUENT_PORT },
 			{ new Tuple<BrokerType, Language>(BrokerType.CONFLUENT, Language.DOTNET), DOTNETAPP_CONFLUENT_PORT },
-			{ new Tuple<BrokerType, Language>(BrokerType.CONFLUENT, Language.DOTNET_WORKER), DOTNETWORKERRAPP_CONFLUENT_PORT},
+			{ new Tuple<BrokerType, Language>(BrokerType.CONFLUENT, Language.DOTNETISOLATED), DOTNETWORKERRAPP_CONFLUENT_PORT},
 			{ new Tuple<BrokerType, Language>(BrokerType.CONFLUENT, Language.POWERSHELL), PWSHELL_CONFLUENT_PORT},
 			{ new Tuple<BrokerType, Language>(BrokerType.CONFLUENT, Language.JAVA), JAVAAPP_CONFLUENT_PORT},
 			{ new Tuple<BrokerType, Language>(BrokerType.CONFLUENT, Language.JAVASCRIPT), JSAPP_CONFLUENT_PORT},
 			{ new Tuple<BrokerType, Language>(BrokerType.CONFLUENT, Language.TYPESCRIPT), TSAPP_CONFLUENT_PORT},
 			{ new Tuple<BrokerType, Language>(BrokerType.EVENTHUB, Language.PYTHON), PYTHONAPP_EVENTHUB_PORT },
 			{ new Tuple<BrokerType, Language>(BrokerType.EVENTHUB, Language.DOTNET), DOTNETAPP_EVENTHUB_PORT },
-			{ new Tuple<BrokerType, Language>(BrokerType.EVENTHUB, Language.DOTNET_WORKER), DOTNETWORKERRAPP_EVENTHUB_PORT},
+			{ new Tuple<BrokerType, Language>(BrokerType.EVENTHUB, Language.DOTNETISOLATED), DOTNETWORKERRAPP_EVENTHUB_PORT},
 			{ new Tuple<BrokerType, Language>(BrokerType.EVENTHUB, Language.POWERSHELL), PWSHELL_EVENTHUB_PORT},
 			{ new Tuple<BrokerType, Language>(BrokerType.EVENTHUB, Language.JAVA), JAVAAPP_EVENTHUB_PORT},
 			{ new Tuple<BrokerType, Language>(BrokerType.EVENTHUB, Language.JAVASCRIPT), JSAPP_EVENTHUB_PORT},
@@ -158,14 +160,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 		{
 			{ new Tuple<BrokerType, Language>(BrokerType.CONFLUENT, Language.PYTHON), PYTHONAPP_CONFLUENT_IMAGE },
 			{ new Tuple<BrokerType, Language>(BrokerType.CONFLUENT, Language.DOTNET), DOTNETAPP_CONFLUENT_IMAGE },
-			{ new Tuple<BrokerType, Language>(BrokerType.CONFLUENT, Language.DOTNET_WORKER), DOTNETWORKERAPP_CONFLUENT_IMAGE },
+			{ new Tuple<BrokerType, Language>(BrokerType.CONFLUENT, Language.DOTNETISOLATED), DOTNETWORKERAPP_CONFLUENT_IMAGE },
 			{ new Tuple<BrokerType, Language>(BrokerType.CONFLUENT, Language.POWERSHELL), PWSHELL_CONFLUENT_IMAGE },
 			{ new Tuple<BrokerType, Language>(BrokerType.CONFLUENT, Language.JAVA), JAVAAPP_CONFLUENT_IMAGE },
 			{ new Tuple<BrokerType, Language>(BrokerType.CONFLUENT, Language.JAVASCRIPT), JSAPP_CONFLUENT_IMAGE},
 			{ new Tuple<BrokerType, Language>(BrokerType.CONFLUENT, Language.TYPESCRIPT), TSAPP_CONFLUENT_IMAGE },
 			{ new Tuple<BrokerType, Language>(BrokerType.EVENTHUB, Language.PYTHON), PYTHONAPP_EVENTHUB_IMAGE },
 			{ new Tuple<BrokerType, Language>(BrokerType.EVENTHUB, Language.DOTNET), DOTNETAPP_EVENTHUB_IMAGE },
-			{ new Tuple<BrokerType, Language>(BrokerType.EVENTHUB, Language.DOTNET_WORKER), DOTNETWORKERAPP_EVENTHUB_IMAGE },
+			{ new Tuple<BrokerType, Language>(BrokerType.EVENTHUB, Language.DOTNETISOLATED), DOTNETWORKERAPP_EVENTHUB_IMAGE },
 			{ new Tuple<BrokerType, Language>(BrokerType.EVENTHUB, Language.POWERSHELL), PWSHELL_EVENTHUB_IMAGE },
 			{ new Tuple<BrokerType, Language>(BrokerType.EVENTHUB, Language.JAVA), JAVAAPP_EVENTHUB_IMAGE },
 			{ new Tuple<BrokerType, Language>(BrokerType.EVENTHUB, Language.JAVASCRIPT), JSAPP_EVENTHUB_IMAGE },
@@ -176,7 +178,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 		{
 			{ Language.PYTHON, PYTHONAPP_WORKER_RUNTIME },
 			{ Language.DOTNET, DOTNET_WORKER_RUNTIME },
-			{ Language.DOTNET_WORKER, DOTNETWORKER_WORKER_RUNTIME },
+			{ Language.DOTNETISOLATED, DOTNETWORKER_WORKER_RUNTIME },
 			{ Language.POWERSHELL, PWSHELL_WORKER_RUNTIME },
 			{ Language.JAVA, JAVA_WORKER_RUNTIME },
 			{ Language.JAVASCRIPT, JS_WORKER_RUNTIME },

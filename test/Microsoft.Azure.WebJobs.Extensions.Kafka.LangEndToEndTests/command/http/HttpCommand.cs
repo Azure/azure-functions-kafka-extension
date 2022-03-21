@@ -19,8 +19,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.htt
         //private int MAX_RETRIES = 3;
         private AsyncRetryPolicy retryPolicy = Policy.Handle<HttpRequestException>()
             .WaitAndRetryAsync(
-               retryCount: 3,
-               sleepDurationProvider: _ => TimeSpan.FromSeconds(10)
+               retryCount: 5,
+               sleepDurationProvider: _ => TimeSpan.FromSeconds(20)
             );
                
         //Overkill - Why this structure?
