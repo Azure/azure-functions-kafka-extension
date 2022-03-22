@@ -1,0 +1,23 @@
+name-template: '$RESOLVED_VERSION'
+tag-template: '$RESOLVED_VERSION'
+template: |
+  # What's Changed
+  $CHANGES
+categories:
+  - title: '💣Breaking'
+    label: 'breaking'
+  - title: '🚀New'
+    label: 'enhancement'
+  - title: '🐛Bug Fixes'
+    label: 'bug'
+  - title: '☕Java'
+    label: 'java'
+  - title: '⚡Automation'
+    label: 'automation'
+  - title: '📔Documentation'
+    label: 'documentation'
+  - title: '🔗Dependency Updates'
+    label: 'dependencies'
+
+exclude-labels:
+  - 'skip-changelog'

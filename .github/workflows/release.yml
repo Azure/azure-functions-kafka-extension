@@ -1,0 +1,39 @@
+name: Release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version'
+        required: true
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: dev
+        fetch-depth: 0
+        token: ${{ secrets.PIPELINE_ADMIN }}
+    - id: createBranch
+      run: |
+        git config --local user.email "azfuncgh@github.com"
+        git config --local user.name "Azure Functions"
+        git fetch --all
+        git checkout -b master origin/master
+        git merge dev
+        git tag ${{ github.event.inputs.version }}
+        git push
+        if ($lastexitcode -ne 0)
+        {
+          throw "git push failed"
+        }
+        git push origin ${{ github.event.inputs.version }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.PIPELINE_ADMIN }}
+    - name: Release Drafter
+      uses: release-drafter/release-drafter@v5.15.0
+      with:
+        tag: ${{ github.event.inputs.version }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

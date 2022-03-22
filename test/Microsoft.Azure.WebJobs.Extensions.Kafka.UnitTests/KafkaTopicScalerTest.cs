@@ -51,6 +51,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 "consumer-group-test",
                 "testfunction",
                 consumer.Object, new AdminClientConfig(),
+                1000L,
                 NullLogger.Instance);
 
             topicScaler.WithPartitions(partitions);    

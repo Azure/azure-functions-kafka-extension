@@ -1,0 +1,49 @@
+name: UpdateVersion
+on:
+  workflow_dispatch:
+    # Inputs the workflow accepts.
+    inputs:
+      oldConfluentVersion:
+        description: 'Confluent.KafkaSDK Old version'
+        required: true
+      newConfluentVersion:
+        description: 'Confluent.KafkaSDK New version'
+        required: true
+      oldExtensionVersion:
+        description: 'Kafka Extension Old version'
+        required: true
+      newExtensionVersion:
+        description: 'Kafka Extension New version'
+        required: true
+        
+jobs:
+  Update:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: dev
+    - name: UpdateVersion
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        .\update-version.ps1 -oldVersion ${{ github.event.inputs.oldConfluentVersion }} -newVersion ${{ github.event.inputs.newConfluentVersion }} -oldExtensionVersion ${{ github.event.inputs.oldExtensionVersion }} -newExtensionVersion ${{ github.event.inputs.newExtensionVersion }}
+        git add .
+        git commit -m "Update Version from ${{ github.event.inputs.oldExtensionVersion}} to ${{ github.event.inputs.newExtensionVersion }}"
+      shell: powershell
+    - name: Create PullRequest
+      id: createPullRequest
+      uses: peter-evans/create-pull-request@v3
+      with:
+        title: Update to verison ${{ github.event.inputs.newExtensionVersion }}
+        body: |
+          - Update Kafka Extension from ${{ github.event.inputs.oldExtensionVersion}} to ${{ github.event.inputs.newExtensionVersion }}
+          - Update Confluent Kafka from ${{ github.event.inputs.oldConfluentVersion}} to ${{ github.event.inputs.newConfluentVersion }}
+        branch: action/release.${{ github.event.inputs.newExtensionVersion }}
+        labels: |
+          automated pr
+        reviewers: tsuyoshiushio
+    - name: Check outputs
+      run: |
+          echo "Pull Request Number - ${{ steps.createPullRequest.outputs.pull-request-number }}"
+          echo "Pull Request URL - ${{ steps.createPullRequest.outputs.pull-request-url }}"        
