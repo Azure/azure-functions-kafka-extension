@@ -15,21 +15,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.executor.pr
         {
             Process process = new Process();
             string shell = null;
-            if(RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 shell = "cmd.exe";
                 process.StartInfo.ArgumentList.Add("/C");
-            } else
+                process.StartInfo.FileName = shell;
+                process.StartInfo.ArgumentList.Add(request);
+            }
+            else
             {
                 shell = "/bin/bash";
+                process.StartInfo.ArgumentList.Add($"-c \"{request}\"");
+                process.StartInfo.FileName = shell;
+                process.StartInfo.ArgumentList.Add(request);
             }
 
             // build process command
-            process.StartInfo.FileName = shell;
+            //process.StartInfo.FileName = shell;
 
-            process.StartInfo.ArgumentList.Add(request);
+			//var requestString = request + "'";
+			//process.StartInfo.ArgumentList.Add(request);
 
-            process.StartInfo.UseShellExecute = false;
+			process.StartInfo.UseShellExecute = false;
             process.StartInfo.RedirectStandardError = true;
             process.StartInfo.RedirectStandardOutput = true;
             process.StartInfo.CreateNoWindow = false;

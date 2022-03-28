@@ -26,7 +26,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests
         }
 
         [Fact]
-        public async Task Java_App_Test_Single_Event_Confluent()
+        public async Task Powershell_App_Test_Single_Event_Confluent()
         {
             string reqMsg = "Single-Event";
             string url = "http://localhost:" + Constants.PWSHELL_CONFLUENT_PORT + "/api/" + Constants.PWSHELL_SINGLE_APP_NAME;
@@ -45,7 +45,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests
         }
 
         [Fact]
-        public async Task Java_App_Test_Multi_Event_Confluent()
+        public async Task Powershell_App_Test_Multi_Event_Confluent()
         {
             string reqMsg1 = "Multi-Event1";
             string reqMsg2 = "Multi-Event2";
