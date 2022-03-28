@@ -25,9 +25,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.executor.pr
             else
             {
                 shell = "/bin/bash";
-                process.StartInfo.ArgumentList.Add($"-c \"{request}\"");
+                process.StartInfo.Arguments = $"-c \"{request}\"";
                 process.StartInfo.FileName = shell;
-                process.StartInfo.ArgumentList.Add(request);
+                //process.StartInfo.ArgumentList.Add(request);
+                Console.WriteLine($"Process Arguments: {$"-c \"{request}\""}");
             }
 
             // build process command
