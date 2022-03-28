@@ -62,9 +62,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.htt
             {
                 var requestUri = new Uri(httpRequestEntity.GetUrlWithQuery());
                 HttpResponseMessage response = null;
+                Console.WriteLine($"request:{requestUri.AbsoluteUri}");
                 try
                 {
                     response = await retryPolicy.ExecuteAsync(async () => await httpClient.GetAsync(requestUri));
+                    Console.WriteLine(response.StatusCode.ToString());
                     //response = await httpClient.GetAsync(requestUri);
                 }
                 catch (Exception ex)
