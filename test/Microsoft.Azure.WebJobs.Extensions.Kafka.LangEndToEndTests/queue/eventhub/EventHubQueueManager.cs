@@ -63,10 +63,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
                             MessageRetentionInDays = 1,
                             PartitionCount = 4
                         });
+                    Console.WriteLine(newEventHubresponse.ToString());
                     return;
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine(ex);
                     if (count >= MAX_RETRY_COUNT)
                         throw ex;
                 }

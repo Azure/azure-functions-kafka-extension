@@ -42,7 +42,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.initializer
             var taskList = new List<Task>();
 
             if (BrokerType.EVENTHUB == brokerType) 
-            { 
+            {
                 taskList.Add(CreateEventHubAsync(language)); 
             }
 
@@ -94,7 +94,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.initializer
                         AppType.SINGLE_EVENT, language);
             string eventHubMultiName = Utils.BuildCloudBrokerName(QueueType.EventHub,
                         AppType.BATCH_EVENT, language);
-            
+            Console.WriteLine($"Create Eventhub {eventHubSingleName} {eventHubMultiName}");
+
             await BuildEventHubAsync(eventHubSingleName, eventHubMultiName);
         }
 
