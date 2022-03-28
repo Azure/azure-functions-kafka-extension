@@ -1,0 +1,29 @@
+{
+  "bindings": [
+    {
+      "authLevel": "function",
+      "type": "httpTrigger",
+      "direction": "in",
+      "name": "req",
+      "methods": [
+        "get"      
+      ]
+    },
+    {
+      "type": "kafka",
+      "name": "outputKafkaMessages",
+      "brokerList": "BrokerList",
+      "topic": "kafkaOutputMany",
+      "username": "ConfluentCloudUsername",
+      "password": "ConfluentCloudPassword",
+      "protocol": "SASLSSL",
+      "authenticationMode": "PLAIN",
+      "direction": "out"
+    },
+    {
+      "type": "http",
+      "direction": "out",
+      "name": "res"
+    }
+  ]
+}
