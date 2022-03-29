@@ -65,8 +65,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 		public const string DOTNETWORKER_MULTI_APP_NAME = "MultiHttpTriggerKafkaOutput";
 		public const string DOTNETWORKER_WORKER_RUNTIME = "dotnet-isolated";
 
-		public const string PWSHELL_CONFLUENT_PORT = "50500";
-		public const string PWSHELL_EVENTHUB_PORT = "51500";
+		public const string PWSHELL_CONFLUENT_PORT = "50501";
+		public const string PWSHELL_EVENTHUB_PORT = "51501";
 		public const string PWSHELL_CONFLUENT_IMAGE = "azure-functions-kafka-powershell-confluent";
 		public const string PWSHELL_EVENTHUB_IMAGE = "azure-functions-kafka-powershell-eventhub";
 		public const string PWSHELL_SINGLE_APP_NAME = "SingleHttpTriggerKafkaOutput";
@@ -89,10 +89,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 		public const string JS_MULTI_APP_NAME = "MultiHttpTriggerKafkaOutput";
 		public const string JS_WORKER_RUNTIME = "node";
 
-		public const string TSAPP_CONFLUENT_PORT = "50400";
-		public const string TSAPP_EVENTHUB_PORT = "51400";
-		public const string TSAPP_CONFLUENT_IMAGE = "azure-functions-kafka-javascript-confluent";
-		public const string TSAPP_EVENTHUB_IMAGE = "azure-functions-kafka-javascript-eventhub";
+		public const string TSAPP_CONFLUENT_PORT = "55402";
+		public const string TSAPP_EVENTHUB_PORT = "51402";
+		public const string TSAPP_CONFLUENT_IMAGE = "azure-functions-kafka-typescript-confluent";
+		public const string TSAPP_EVENTHUB_IMAGE = "azure-functions-kafka-typescript-eventhub";
 		public const string TS_SINGLE_APP_NAME = "SingleHttpTriggerKafkaOutput";
 		public const string TS_MULTI_APP_NAME = "MultiHttpTriggerKafkaOutput";
 		public const string TS_WORKER_RUNTIME = "node";

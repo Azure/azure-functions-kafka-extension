@@ -13,6 +13,7 @@ using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests.Invoke.re
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests.Invoke.request.queue;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests.Invoke.Type;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -73,7 +74,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
             
             QueueResponse queueMsgs = await readQueue.ExecuteCommandAsync();
 
-            Assert.Equal<List<string>>(expectedOutput, queueMsgs.GetResponseList());
+            //Assert.Equal<List<string>>(expectedOutput, queueMsgs.GetResponseList());
+            CollectionAssert.AreEquivalent(expectedOutput, queueMsgs.GetResponseList());
         }
 
         private async Task invokeE2ETest(AppType appType, InvokeType invokeType, HttpRequestEntity httpRequestEntity,
