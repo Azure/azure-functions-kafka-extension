@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Azure.Identity;
 using Azure.ResourceManager.EventHubs;
@@ -12,6 +13,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
     public class EventHubQueueManager : IQueueManager<QueueRequest, QueueResponse>
     {
         private readonly static int MAX_RETRY_COUNT = 3;
+        private static SemaphoreSlim _semaphore;
         private readonly string servicePrinciple;
         private readonly string connectionString;
         //Does this even work?
@@ -28,6 +30,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
             // 1. retrieve service principle from environment variables
             // 2. retrieve the namespace name & connection string from env vars
             // add the required params in constructor
+            _semaphore = new SemaphoreSlim(1, 1);
             string subscriptionId = Environment.GetEnvironmentVariable(Constants.AZURE_SUBSCRIPTION_ID);
             var credential = new DefaultAzureCredential();
             eventHubsManagementClient = new EventHubsManagementClient(subscriptionId, credential);
@@ -43,6 +46,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
         public async Task createAsync(string queueName)
         {
             int count = 0;
+
+
             while (count <= MAX_RETRY_COUNT)
             {
                 try
@@ -57,6 +62,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
                     // return if success
 
                     //var eventhublist = eventHubManagementClient.EventHubs.ListByNamespaceAsync(Constants.RESOURCE_GROUP, Constants.EVENTHUB_NAMESPACE);
+                    await _semaphore.WaitAsync();
                     var newEventHubresponse = await eventHubsManagementClient.EventHubs.CreateOrUpdateAsync(Constants.RESOURCE_GROUP, Constants.EVENTHUB_NAMESPACE, queueName,
                         new Eventhub()
                         {
@@ -74,6 +80,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
                 }
                 finally
                 {
+                    _semaphore.Release();
                     count++;
                 }
             }
