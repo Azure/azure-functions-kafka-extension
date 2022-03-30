@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Polly;
 using Polly.Retry;
+using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.http
 {
@@ -19,7 +20,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.htt
         //private int MAX_RETRIES = 3;
         private AsyncRetryPolicy retryPolicy = Policy.Handle<HttpRequestException>()
             .WaitAndRetryAsync(
-               retryCount: 5,
+               retryCount: 6,
                sleepDurationProvider: _ => TimeSpan.FromSeconds(20)
             );
                
@@ -66,6 +67,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.htt
                 try
                 {
                     response = await retryPolicy.ExecuteAsync(async () => await httpClient.GetAsync(requestUri));
+                    Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                     Console.WriteLine(response.StatusCode.ToString());
                     //response = await httpClient.GetAsync(requestUri);
                 }

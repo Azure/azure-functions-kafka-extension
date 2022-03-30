@@ -14,12 +14,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 		public static string BuildCloudBrokerName(QueueType queueType, AppType appType, Language language)
 		{
 			//return Constants.
-			return Constants.E2E + Constants.HIPHEN + Constants.KAFKA + Constants.HIPHEN + language.ToString().ToLower() + Constants.HIPHEN + GiveAppTypeInString(appType) + Constants.HIPHEN + queueType.ToString().ToLower();
+			return Constants.E2E + Constants.HIPHEN + Constants.KAFKA + Constants.HIPHEN + LanguageToLower(language) + Constants.HIPHEN + GiveAppTypeInString(appType) + Constants.HIPHEN + queueType.ToString().ToLower();
 		}
 
 		public static string BuildStorageQueueName(BrokerType brokerType, AppType appType, Language language)
 		{
-			return Constants.E2E + Constants.HIPHEN + language.ToString().ToLower() + Constants.HIPHEN + GiveAppTypeInString(appType) + Constants.HIPHEN + brokerType.ToString().ToLower();
+			return Constants.E2E + Constants.HIPHEN + LanguageToLower(language) + Constants.HIPHEN + GiveAppTypeInString(appType) + Constants.HIPHEN + brokerType.ToString().ToLower();
+		}
+
+		public static string LanguageToLower(Language language)
+		{
+			if (language == Language.DOTNETISOLATED)
+				return Constants.DOTNETISOLATED;
+			return language.ToString().ToLower();
 		}
 
 		public static string GiveAppTypeInString(AppType appType)

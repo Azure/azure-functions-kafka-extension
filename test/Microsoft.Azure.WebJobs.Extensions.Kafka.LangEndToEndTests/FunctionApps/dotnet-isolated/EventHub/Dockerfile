@@ -9,9 +9,9 @@ COPY . /workspace
 WORKDIR /workspace/test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/dotnet-isolated/EventHub
 # dotnet 
 
-ENV LD_LIBRARY_PATH=/workspace/test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/dotnet-isolated/EventHub/bin/output/.azurefunctions/runtimes/linux-x64/native
+ENV LD_LIBRARY_PATH=/workspace/test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/dotnet-isolated/EventHub/bin/.azurefunctions/runtimes/linux-x64/native
 
 # RUN dotnet nuget add source /workspace/temp --name local && dotnet nuget list source
-# RUN func extensions install --package Microsoft.Azure.WebJobs.Extensions.Kafka --version 100.100.100-pre
+RUN func extensions install
 
 ENTRYPOINT [ "/bin/bash", "./start.sh" ]

@@ -24,7 +24,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.cleanup
 		{
 			//Kill all docker containers
 			await KillFunctionDockersAsync(language, brokerType);
-			ProcessManager.GetInstance().Dispose();
+			//ProcessManager.GetInstance().Dispose();
 			await CleanupAzureResourcesAsync(language, brokerType);
 		}
 
