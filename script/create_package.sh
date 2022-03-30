@@ -11,8 +11,8 @@ dotnet pack -o temp --include-symbols src/Microsoft.Azure.WebJobs.Extensions.Kaf
 
 cd $CURRENT_DIR
 
-docker build -f ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/server/java8/Dockerfile -t jv8test . 
-docker build -f ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/server/python38/Dockerfile -t py38test .
+#docker build -f ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/server/java8/Dockerfile -t jv8test . 
+#docker build -f ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/server/python38/Dockerfile -t py38test .
 
 
 docker build -f ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/dotnet-isolated/EventHub/Dockerfile -t azure-functions-kafka-dotnet-isolated-eventhub .
