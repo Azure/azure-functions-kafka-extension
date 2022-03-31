@@ -93,7 +93,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
                 }
                 catch(Exception ex)
                 {
-                    Console.WriteLine(ex);
+                    Console.WriteLine($"Unable to invoke functions for language:{language} broker:{brokerType} with exception {ex}");
+                    throw ex;
                 }
             }
             else
