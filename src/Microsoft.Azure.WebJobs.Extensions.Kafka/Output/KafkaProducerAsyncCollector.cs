@@ -36,7 +36,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             if (item.GetType() == typeof(string))
             {
-                messageToSend = convertToKafkaEventData(item);
+                messageToSend = ConvertToKafkaEventData(item);
             }
 
             if (item.GetType() == typeof(byte[]))
@@ -47,11 +47,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return entity.SendAndCreateEntityIfNotExistsAsync(messageToSend, functionInstanceId, cancellationToken);
         }
 
-        private object convertToKafkaEventData(T item)
+        private object ConvertToKafkaEventData(T item)
         {
             try
             {
-                return buildKafkaDataEvent(item);
+                return BuildKafkaDataEvent(item);
             }
             catch (Exception)
             {
@@ -59,7 +59,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
         }
 
-        private object buildKafkaDataEvent(T item)
+        private object BuildKafkaDataEvent(T item)
         {
             JObject dataObj = JObject.Parse(item.ToString());
             if (dataObj == null)
@@ -70,19 +70,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             if (dataObj.ContainsKey("Offset") && dataObj.ContainsKey("Partition") && dataObj.ContainsKey("Topic")
                 && dataObj.ContainsKey("Timestamp") && dataObj.ContainsKey("Value") && dataObj.ContainsKey("Headers"))
             {
-                return buildKafkaEventData(dataObj);
+                return BuildKafkaEventData(dataObj);
             }
             
             return new KafkaEventData<T>(item);
         }
 
-        private KafkaEventData<string> buildKafkaEventData(JObject dataObj)
+        private KafkaEventData<string> BuildKafkaEventData(JObject dataObj)
         {
             KafkaEventData<string> messageToSend = new KafkaEventData<string>((string)dataObj["Value"]);
             messageToSend.Timestamp = (DateTime)dataObj["Timestamp"];
             messageToSend.Partition = (int)dataObj["Partition"];
             JArray headerList = (JArray)dataObj["Headers"];
-            foreach ( JObject header in headerList) {
+            foreach (JObject header in headerList) {
                 messageToSend.Headers.Add((string)header["Key"], Encoding.Unicode.GetBytes((string)header["Value"]));
             }
             return messageToSend;
