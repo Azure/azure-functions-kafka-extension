@@ -2,11 +2,13 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
+[assembly: InternalsVisibleTo("Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests")]
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
     internal class KafkaProducerAsyncCollector<T> : IAsyncCollector<T>
