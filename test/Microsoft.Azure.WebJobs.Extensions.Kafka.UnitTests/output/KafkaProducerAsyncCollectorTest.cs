@@ -30,7 +30,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.output
         [Fact]
         public void AddAsync_Item_Is_Of_Bytes_Types()
         {
-            buildMockData();
+            BuildMockData();
             IAsyncCollector<byte[]> asyncCollector = new KafkaProducerAsyncCollector<byte[]>(
                 kafkaProducerEntity, Guid.NewGuid());
             KafkaEventData<byte[]> kafkaEventData = new KafkaEventData<byte[]>(Encoding.UTF8.GetBytes(testValue));
@@ -38,7 +38,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.output
             asyncCollector.AddAsync(Encoding.UTF8.GetBytes(testValue), default);
         }
 
-        private void buildMockData()
+        private void BuildMockData()
         {
             kafkaProducerEntity.KafkaProducerFactory = kafkaProducerFactory.Object;
             kafkaProducerFactory.Setup(e => e.Create(It.IsAny<KafkaProducerEntity>())).Returns(kafkaProducer.Object);
@@ -48,7 +48,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.output
         [Fact]
         public void AddAsync_Item_Is_Of_String_Value_Types()
         {
-            buildMockData();
+            BuildMockData();
             IAsyncCollector<string> asyncCollector = new KafkaProducerAsyncCollector<string>(
                 kafkaProducerEntity, Guid.NewGuid());
             KafkaEventData<string> kafkaEventData = new KafkaEventData<string>(testValue);
@@ -58,7 +58,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.output
         [Fact]
         public void AddAsync_Item_Is_Of_KafkaEventData_Json_String_Types()
         {
-            buildMockData();
+            BuildMockData();
 
             IAsyncCollector<string> asyncCollector = new KafkaProducerAsyncCollector<string>(
                 kafkaProducerEntity, Guid.NewGuid());
