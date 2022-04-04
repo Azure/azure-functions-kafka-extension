@@ -16,7 +16,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.output
         private Mock<IKafkaProducerFactory> kafkaProducerFactory = new Mock<IKafkaProducerFactory>();
         private KafkaProducerEntity kafkaProducerEntity = new KafkaProducerEntity();
         private Mock<IKafkaProducer> kafkaProducer = new Mock<IKafkaProducer>();
-        private readonly string jsonStringValue = "{\r\n  \"Offset\": 0,\r\n  \"Partition\": 0,\r\n  \"Topic\": \"\",\r\n  \"Timestamp\": \"Wed, 30 Mar 2022 05:56:20 GMT\",\r\n  \"Value\": \"shiv shambhu\",\r\n  \"Headers\": [\r\n    {\r\n      \"Key\": \"test\",\r\n      \"Value\": \"1\"\r\n    },\r\n    {\r\n      \"Key\": \"test1\",\r\n      \"Value\": \"2\"\r\n    }\r\n  ]\r\n}";
+        private readonly string jsonStringValueHeader = "{\r\n  \"Offset\": 0,\r\n  \"Partition\": 0,\r\n  \"Topic\": \"\",\r\n  \"Timestamp\": \"Wed, 30 Mar 2022 05:56:20 GMT\",\r\n  \"Value\": \"shiv shambhu\",\r\n  \"Headers\": [\r\n    {\r\n      \"Key\": \"test\",\r\n      \"Value\": \"1\"\r\n    },\r\n    {\r\n      \"Key\": \"test1\",\r\n      \"Value\": \"2\"\r\n    }\r\n  ]\r\n}";
+        private readonly string jsonStringValue = "{\r\n  \"Offset\": 0,\r\n  \"Partition\": 0,\r\n  \"Topic\": \"\",\r\n  \"Timestamp\": \"Wed, 30 Mar 2022 05:56:20 GMT\",\r\n  \"Value\": \"shiv shambhu\",\r\n  \"Headers\": []\r\n}";
 
         [Fact]
         public async Task AddAsync_Item_Is_NullAsync()
@@ -62,8 +63,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.output
 
             IAsyncCollector<string> asyncCollector = new KafkaProducerAsyncCollector<string>(
                 kafkaProducerEntity, Guid.NewGuid());
-            KafkaEventData<string> kafkaEventData = new KafkaEventData<string>(jsonStringValue);
             asyncCollector.AddAsync(jsonStringValue, default);
+        }
+        [Fact]
+        public void AddAsync_Item_Is_Of_KafkaEventData_Json_String_Header_Types()
+        {
+            BuildMockData();
+
+            IAsyncCollector<string> asyncCollector = new KafkaProducerAsyncCollector<string>(
+                kafkaProducerEntity, Guid.NewGuid());
+            asyncCollector.AddAsync(jsonStringValueHeader, default);
         }
     }
 }
