@@ -44,25 +44,26 @@ steps:
   - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
     displayName: Component Detection
 
-   - task: Bash@3
-     displayName: Start Kafka in single node
-     inputs:
-       targetType: filePath
-       filePath: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/start-kafka-test-environment.sh
-       workingDirectory: test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
+  - task: Bash@3
+    displayName: Start Kafka in single node
+    inputs:
+      targetType: filePath
+      filePath: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/start-kafka-test-environment.sh
+      workingDirectory: test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
-   - task: DotNetCoreCLI@2
-     displayName: Run e2e tests
-     inputs:
-       command: test
-       projects: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
+  - task: DotNetCoreCLI@2
+    displayName: Run e2e tests
+    inputs:
+      command: test
+      projects: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
-   - task: Bash@3
-     displayName: Stop Kafka in single node
-     inputs:
-       targetType: filePath
-       filePath: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/stop-kafka-test-environment.sh
-       workingDirectory: test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
+  - task: Bash@3
+    displayName: Stop Kafka in single node
+    inputs:
+      targetType: filePath
+      filePath: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/stop-kafka-test-environment.sh
+      workingDirectory: test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
+
 
   - task: Bash@3
     displayName: Package current source as NuGet package and pack it in Docker
