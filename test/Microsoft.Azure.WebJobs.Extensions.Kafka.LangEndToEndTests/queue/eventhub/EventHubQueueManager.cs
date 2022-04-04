@@ -16,7 +16,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
         private static SemaphoreSlim _semaphore;
         private readonly string subscriptionId;
         private readonly DefaultAzureCredential credential;
-        //Does this even work?
         private static EventHubQueueManager instance = new EventHubQueueManager();
         private EventHubsManagementClient eventHubsManagementClient;
         public static EventHubQueueManager GetInstance()
@@ -26,16 +25,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
 
         private EventHubQueueManager()
         {
-            // TODO
-            // 1. retrieve service principle from environment variables
-            // 2. retrieve the namespace name & connection string from env vars
-            // add the required params in constructor
             _semaphore = new SemaphoreSlim(1, 1);
             subscriptionId = Environment.GetEnvironmentVariable(Constants.AZURE_SUBSCRIPTION_ID);
             credential = new DefaultAzureCredential();
             eventHubsManagementClient = new EventHubsManagementClient(subscriptionId, credential);
 
-            //Create a dictionary -- Not required since Namespace scope
         }
 
         public Task clearAsync(string queueName)
@@ -52,17 +46,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
             {
                 try
                 {
-                    // TODO
-                    // 1. check if already exists
-                    //  1.1 clear the eventhub or delete that
-
-                    // DONE
-                    // 2. create the new eventhub
-                    // 2.1 if creation failed retry three times
-                    // return if success
-
-                    //var eventhublist = eventHubManagementClient.EventHubs.ListByNamespaceAsync(Constants.RESOURCE_GROUP, Constants.EVENTHUB_NAMESPACE);
-                    await _semaphore.WaitAsync();
+                   await _semaphore.WaitAsync();
 
                     var newEventHubresponse = await eventHubsManagementClient.EventHubs.CreateOrUpdateAsync(Constants.RESOURCE_GROUP, Constants.EVENTHUB_NAMESPACE, queueName,
                         new Eventhub()
@@ -85,7 +69,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
                     count++;
                 }
             }
-            // what to do here?
         }
 
         public async Task deleteAsync(string queueName)

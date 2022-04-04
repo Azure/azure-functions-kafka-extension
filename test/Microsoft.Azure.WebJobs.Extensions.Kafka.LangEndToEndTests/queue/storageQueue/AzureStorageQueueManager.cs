@@ -25,21 +25,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.stora
         private AzureStorageQueueManager()
         {
             connectionString = Environment.GetEnvironmentVariable(Constants.AZURE_WEBJOBS_STORAGE);
-            //Populate the dictionary with 12 clients: QueueName Value: AzureStorageClient(conn string, queueName)
-            //Use the ConcurrentDictionary Class
-            // Key: QueueName Value: QueueClient
             queueClientFactory = new ConcurrentDictionary<string, QueueClient>();
         }
 
         public async Task clearAsync(string queueName)
         {
-            // TODO clear the Azure Storage Queue
             QueueClient queueClient = new QueueClient(connectionString, queueName);
             await queueClient.CreateIfNotExistsAsync();
             await queueClient.ClearMessagesAsync();
             queueClientFactory.GetOrAdd(queueName, queueClient);
-            Console.WriteLine("clearing the queue");
-            //throw new NotImplementedException();
+            Console.WriteLine($"Clearing the queue: {queueName}");
         }
 
         public Task createAsync(string queueName)
@@ -54,8 +49,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.stora
 
         public async Task<QueueResponse> readAsync(int batchSize, string queueName)
         {
-            // TODO
-            // 1. add the code to read as per the batch size and return the mesages in List of string
             QueueClient queueClient = queueClientFactory.GetOrAdd(queueName, (queueName) =>
                 { 
                     var client = new QueueClient(connectionString, queueName);

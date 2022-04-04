@@ -57,16 +57,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.initializer
                                             .SetBrokerType(brokerType)
                                             .Build();
             IExecutor<Command<Process>, Process> executor = new ShellCommandExecutor();
-            //ProcessManager.GetInstance().AddProcess(await executor.ExecuteAsync(command));
-            await executor.ExecuteAsync(command);
-            //processes.Add(process);
-            /*
-             * commenting for now for some issues TODO to fix the app issue
-             * if(process != null && !process.HasExited)
-            {
-                return;
-            }*/
-            // TODO throw excpetion app startup failed
+            ProcessManager.GetInstance().AddProcess(await executor.ExecuteAsync(command));
         }
 
         private async Task ClearStorageQueueAsync(Language language, BrokerType brokerType)

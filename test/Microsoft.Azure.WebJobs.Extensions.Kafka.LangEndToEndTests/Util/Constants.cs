@@ -117,47 +117,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 			{ new Tuple<BrokerType, Language>(BrokerType.EVENTHUB, Language.TYPESCRIPT), TSAPP_EVENTHUB_PORT}
 		};
 
-		/*public static Dictionary<Language, string> LanguageConfluentPortMapping = new Dictionary<Language, string>()
-		{
-			{ Language.PYTHON, PYTHONAPP_CONFLUENT_PORT },
-			{ Language.DOTNET, DOTNETAPP_CONFLUENT_PORT },
-			{ Language.DOTNET_WORKER, DOTNETWORKERRAPP_CONFLUENT_PORT},
-			{ Language.POWERSHELL, PWSHELL_CONFLUENT_PORT},
-			{ Language.JAVA, JAVAAPP_CONFLUENT_PORT},
-			{ Language.JAVASCRIPT, JSAPP_CONFLUENT_PORT},
-			{ Language.TYPESCRIPT, TSAPP_CONFLUENT_PORT}
-		};
-		public static Dictionary<Language, string> LanguageEventhubPortMapping = new Dictionary<Language, string>()
-		{
-			{ Language.PYTHON, PYTHONAPP_EVENTHUB_PORT },
-			{ Language.DOTNET, DOTNETAPP_EVENTHUB_PORT },
-			{ Language.DOTNET_WORKER, DOTNETWORKERRAPP_EVENTHUB_PORT},
-			{ Language.POWERSHELL, PWSHELL_EVENTHUB_PORT},
-			{ Language.JAVA, JAVAAPP_EVENTHUB_PORT},
-			{ Language.JAVASCRIPT, JSAPP_EVENTHUB_PORT},
-			{ Language.TYPESCRIPT, TSAPP_EVENTHUB_PORT}
-		};
-		public static Dictionary<Language, string> LanguageConfluentImageMapping = new Dictionary<Language, string>()
-		{
-			{ Language.PYTHON, PYTHONAPP_CONFLUENT_IMAGE },
-			{ Language.DOTNET, DOTNETAPP_CONFLUENT_IMAGE },
-			{ Language.DOTNET_WORKER, DOTNETWORKERAPP_CONFLUENT_IMAGE },
-			{ Language.POWERSHELL, PWSHELL_CONFLUENT_IMAGE },
-			{ Language.JAVA, JAVAAPP_CONFLUENT_IMAGE },
-			{ Language.JAVASCRIPT, JSAPP_CONFLUENT_IMAGE },
-			{ Language.TYPESCRIPT, TSAPP_CONFLUENT_IMAGE }
-		};
-		public static Dictionary<Language, string> LanguageEventhubImageMapping = new Dictionary<Language, string>()
-		{
-			{ Language.PYTHON, PYTHONAPP_EVENTHUB_IMAGE },
-			{ Language.DOTNET, DOTNETAPP_EVENTHUB_IMAGE },
-			{ Language.DOTNET_WORKER, DOTNETWORKERAPP_EVENTHUB_IMAGE },
-			{ Language.POWERSHELL, PWSHELL_EVENTHUB_IMAGE },
-			{ Language.JAVA, JAVAAPP_EVENTHUB_IMAGE },
-			{ Language.JAVASCRIPT, JSAPP_EVENTHUB_IMAGE },
-			{ Language.TYPESCRIPT, TSAPP_EVENTHUB_IMAGE }
-		};*/
-
 		public static Dictionary<Tuple<BrokerType, Language>, string> BrokerLanguageImageMapping = new Dictionary<Tuple<BrokerType, Language>, string>()
 		{
 			{ new Tuple<BrokerType, Language>(BrokerType.CONFLUENT, Language.PYTHON), PYTHONAPP_CONFLUENT_IMAGE },

@@ -74,7 +74,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
             
             QueueResponse queueMsgs = await readQueue.ExecuteCommandAsync();
 
-            //Assert.Equal<List<string>>(expectedOutput, queueMsgs.GetResponseList());
             CollectionAssert.AreEquivalent(expectedOutput, queueMsgs.GetResponseList());
         }
 

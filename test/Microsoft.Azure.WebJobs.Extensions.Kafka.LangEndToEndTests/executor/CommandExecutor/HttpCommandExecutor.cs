@@ -12,7 +12,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.executor.Co
     {
         public Task<HttpResponseMessage> ExecuteAsync(command.Command<HttpResponseMessage> request)
         {
-            //If we wanted extract the content string from HttpResponse we can add the code here
             return request.ExecuteCommandAsync();
         }
     }

@@ -37,39 +37,32 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.htt
         }
 
 
-        //TODO Async Await
         public async Task<HttpResponseMessage> ExecuteCommandAsync()
         {
-            // TODO execute HTTP request
             string httpMethod = httpRequestEntity.GetHttpMethod();
 
             if(httpMethod.Equals(HttpMethods.Post))
             {
                 return await httpClient.PostAsync(httpRequestEntity.GetUrl(), null);
-                //return await httpClient.PostAsync(client, url, data);
-                // TODO execute post request
             }
             else if(httpMethod.Equals(HttpMethods.Put))
             {
-                //return await PutAsync(client, url, data);
-                // TODO execute put request
+                return await httpClient.PutAsync(httpRequestEntity.GetUrl(), null);
             }
             else if (httpMethod.Equals(HttpMethods.Delete))
             {
-                //return await DeleteAsync(client, url, parameters);
-                // TODO execute delete request
+                return await httpClient.DeleteAsync(httpRequestEntity.GetUrl());
             }
             else
             {
                 var requestUri = new Uri(httpRequestEntity.GetUrlWithQuery());
                 HttpResponseMessage response = null;
-                //Console.WriteLine();
+                
                 try
                 {
                     response = await retryPolicy.ExecuteAsync(async () => await httpClient.GetAsync(requestUri));
                     Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                     Console.WriteLine($"request:{requestUri.AbsoluteUri} response:{response.StatusCode.ToString()}");
-                    //response = await httpClient.GetAsync(requestUri);
                 }
                 catch (Exception ex)
                 {
@@ -78,8 +71,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.htt
                 }
                 return response;
             }
-
-            return null;
         }
 
         public sealed class HttpCommandBuilder

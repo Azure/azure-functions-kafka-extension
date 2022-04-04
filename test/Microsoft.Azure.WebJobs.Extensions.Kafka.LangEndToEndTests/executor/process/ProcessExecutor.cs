@@ -15,6 +15,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.executor.pr
         {
             Process process = new Process();
             string shell = null;
+
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 shell = "cmd.exe";
@@ -30,12 +31,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.executor.pr
                 //process.StartInfo.ArgumentList.Add(request);
                 Console.WriteLine($"Process Arguments: {$"-c \"{request}\""}");
             }
-
-            // build process command
-            //process.StartInfo.FileName = shell;
-
-			//var requestString = request + "'";
-			//process.StartInfo.ArgumentList.Add(request);
 
 			process.StartInfo.UseShellExecute = false;
             process.StartInfo.RedirectStandardError = true;

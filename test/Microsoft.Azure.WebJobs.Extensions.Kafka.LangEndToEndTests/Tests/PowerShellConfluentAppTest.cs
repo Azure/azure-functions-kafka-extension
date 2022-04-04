@@ -41,7 +41,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests
 
             await Test(AppType.SINGLE_EVENT, InvokeType.HTTP, httpRequestEntity, null, expectedOutput);
 
-            //Console.WriteLine("Python test called");
         }
 
         [Fact]
@@ -64,7 +63,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests
             List<string> expectedOutput = new List<string> { reqMsg1, reqMsg2, reqMsg3 };
 
             await Test(AppType.BATCH_EVENT, InvokeType.HTTP, httpRequestEntity, null, expectedOutput);
-            //Console.WriteLine("Python test called");
         }
 
     }

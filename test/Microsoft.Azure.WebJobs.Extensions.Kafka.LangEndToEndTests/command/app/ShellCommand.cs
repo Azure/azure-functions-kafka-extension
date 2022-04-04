@@ -29,12 +29,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
             this.brokerType = shellCommandBuilder.GetBrokerType();
             this.shellCommandType = shellCommandBuilder.GetShellCommandType();
             this.processExecutor = new ProcessExecutor();
-            // TODO check from environment variables if nightly build is set
-        }
-
-        public void Dispose()
-        {
-            //process.Kill();
         }
 
         public async Task<Process> ExecuteCommandAsync()
@@ -49,14 +43,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
                 cmd = buildDockerKillCmd();
             }
 
-            /*if(!isNightlyBuild)
-            {
-                //Build Docker Command
-                cmd = buildDockerStartCmd();
-                
-            }*/
-
-            // TODO fix the command building issues -- What issue?
             this.process = await processExecutor.ExecuteAsync(cmd);
             return process;
         }
@@ -105,17 +91,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
 
         }
 
+        public void Dispose()
+        {
+            //process.Kill();
+        }
+
         public sealed class ShellCommandBuilder
         {
             private Language language;
             private BrokerType brokerType;
             private ShellCommandType shellCommandType;
-            // TODO
-            // 1. create entity for Credentials for eventhub & confluent both
-            // needed to be passed in env vars in docker & needed to set in-case
-            // app needed to run directly on image
-            //
-
+            
             public ShellCommandBuilder() { }
 
             public ShellCommandBuilder SetLanguage(Language language)

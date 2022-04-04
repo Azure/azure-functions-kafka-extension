@@ -54,7 +54,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
         Task IAsyncLifetime.InitializeAsync()
         {
             Console.WriteLine("InitializeAsync");
-            //throw new NotImplementedException();
             return Task.CompletedTask;
         }
 
