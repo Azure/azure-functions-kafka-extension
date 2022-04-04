@@ -1,7 +1,7 @@
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS installer-env
+# FROM mcr.microsoft.com/dotnet/sdk:6.0 AS installer-env
 
-# Build requires 3.1 SDK
-COPY --from=mcr.microsoft.com/dotnet/core/sdk:3.1 /usr/share/dotnet /usr/share/dotnet
+# # Build requires 3.1 SDK
+# COPY --from=mcr.microsoft.com/dotnet/core/sdk:3.1 /usr/share/dotnet /usr/share/dotnet
 
 FROM mcr.microsoft.com/azure-functions/dotnet-isolated:4-dotnet-isolated6.0-core-tools
 RUN mkdir /workspace

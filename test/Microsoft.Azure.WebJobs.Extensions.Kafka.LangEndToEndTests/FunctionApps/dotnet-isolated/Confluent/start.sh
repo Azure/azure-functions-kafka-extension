@@ -1,2 +1,2 @@
 #!/bin/bash
-func start
+func start --csharp
