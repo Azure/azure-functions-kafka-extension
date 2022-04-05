@@ -36,7 +36,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.output
                 kafkaProducerEntity, Guid.NewGuid());
             KafkaEventData<byte[]> kafkaEventData = new KafkaEventData<byte[]>(Encoding.UTF8.GetBytes(testValue));
 
-            asyncCollector.AddAsync(Encoding.UTF8.GetBytes(testValue), default);
+            Task task = asyncCollector.AddAsync(Encoding.UTF8.GetBytes(testValue), default);
+            Assert.True(task.IsCompleted);
         }
 
         private void BuildMockData()
@@ -53,7 +54,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.output
             IAsyncCollector<string> asyncCollector = new KafkaProducerAsyncCollector<string>(
                 kafkaProducerEntity, Guid.NewGuid());
             KafkaEventData<string> kafkaEventData = new KafkaEventData<string>(testValue);
-            asyncCollector.AddAsync(testValue, default);
+            Task task = asyncCollector.AddAsync(testValue, default);
+            Assert.True(task.IsCompleted);
         }
 
         [Fact]
@@ -63,7 +65,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.output
 
             IAsyncCollector<string> asyncCollector = new KafkaProducerAsyncCollector<string>(
                 kafkaProducerEntity, Guid.NewGuid());
-            asyncCollector.AddAsync(jsonStringValue, default);
+            Task task = asyncCollector.AddAsync(jsonStringValue, default);
+            Assert.True(task.IsCompleted);
         }
         [Fact]
         public void AddAsync_Item_Is_Of_KafkaEventData_Json_String_Header_Types()
@@ -72,7 +75,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.output
 
             IAsyncCollector<string> asyncCollector = new KafkaProducerAsyncCollector<string>(
                 kafkaProducerEntity, Guid.NewGuid());
-            asyncCollector.AddAsync(jsonStringValueHeader, default);
+            Task task = asyncCollector.AddAsync(jsonStringValueHeader, default);
+            Assert.True(task.IsCompleted);
         }
     }
 }
