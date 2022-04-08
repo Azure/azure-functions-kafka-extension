@@ -304,5 +304,35 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(sslCa.FullName, config.SslCaLocation);
             Assert.Equal(sslKeyLocation.FullName, config.SslKeyLocation);
         }
+
+        [Fact]
+        public void GetProducerConfig_When_Ssl_Auth_Defined_With_String_Pem_Cert_Should_Contain_Them()
+        {
+            var sslCertPem = "MIIF1TCCA72gAwIBAgIUYkuAAje7tDafB3C1k6Ee+2aTVGUwDQYJKoZIhvcNAQELBQAwejELMAkGA1UEBhMCQVUxDDAKBgNVBAgMA05TVzEPMA0GA1UEBwwGU1lETkVZMRAwDgYDVQQKDAdjb21wYW55MQ0wCwYDVQQLDAR0ZXN0MQ0wCwYDVQQDDAR0ZXN0MRwwGgYJKoZIhvcNAQkBFg10ZXN0QHRlc3QuY29tMB4XDTIyMDQwNjIwNDczNFoXDTIzMDQwNjIwNDczNFowejELMAkGA1UEBhMCQVUxDDAKBgNVBAgMA05TVzEPMA0GA1UEBwwGU1lETkVZMRAwDgYDVQQKDAdjb21wYW55MQ0wCwYDVQQLDAR0ZXN0MQ0wCwYDVQQDDAR0ZXN0MRwwGgYJKoZIhvcNAQkBFg10ZXN0QHRlc3QuY29tMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEArpsYcUxcG0BHn0gQMAHSJYHRScYEczvLLi9t5tPuA7gpAF3oHED0N5Hx/IUa1n5DKSzXvkurpplbooncGBwhHU2hV//muPa+ENzGBsYtyFcEmkAtbwxjVoC9boccIeGhvOawtXfTL2u2se6jrr+eMkDUe/ePKJvt3Ez+86EjZhIBnLOmrpGkzqQPEWnXTaU5Dc0kJ8S/rLYH44eFIgBF8oFUoRPljsiFCWoNgTnfz5T6KPk1CzKpmTEpP1wBWpNfYYd/dyqABVBRso0Vlrjb0u0+1vTf4mS6dKSykkmfj48D8n/Mob6JfJMPY7aggDxY72U2m1gKz02djoDlyctrZC/ri7fNSDPJ/W+rK0ukmmUzKZI1yNMS9iEee16mc/ZpZR5jEDYKBKCWvusdyMcBhHhQiXqw6AxMUrwj6ySIT72NWCOhWhBoq2HkIvm+uh42kkXgRY+mbuj+6OZeANg52wwuoDgcJIhWYOlnD6NiSKDY+DyBlo8fnO+DzAdqekpKOpYiu9I6RJ/8YXlduj3ePwquULtfjFMUgDB9ocQk9yFureP09yhdn6S+HBXspHtI5zThCpxufSadj9T18wfuwbXArnyglJxTYOwMFSrdf3nc7vsK8QYGNCngSSNgYvAN4olMg7tXu4BHCT5SOxeWSmoITyHHTokD4wPL6LRF7fcCAwEAAaNTMFEwHQYDVR0OBBYEFFBJkQfFAZD4fOgmT92H3umlXumKMB8GA1UdIwQYMBaAFFBJkQfFAZD4fOgmT92H3umlXumKMA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggIBAD3KUNgEYBTtwg3YISnRXOTdKhGaGfHugDbgK+bJjwdebM2TQujSAvWCmVjjrH3j84ywQJr6qoyWCDpUU7CfSqSAJhwv8nF36hcfed7maSEwh6i2LydcezhOTDTvUfgK9NUQiCFu52HTy8fIPfTum2aPxFbpaEZ2mN9fLtaN205jyRKZMB/Ja9hYnMfR8T+sMOginu3jpKfu2ZkuLKTZP6lGVFpktk1cgzZAeljA9AZxXjU6V3ZjRagccglXSGvtMUpQImiEs/+NUQdMNoZfUkv/8MK1Mede1vGCN3YuFRgpEXVKqcdCzy4jR8h8/bpaA9ijDP69pxPq6WDbvSU9pzxpRe17/4scTEyDA80fhWrcrEuSKNGBJAEpk0r6Xycmj2LmuRvPECABu4vBflVkJZ93cTCoa0I4Ae5cCli0963o2g6+7de8zMR4KLGCh9ApbJYQ10sTLl2uPkKCgNyW7F0K26Bb+e/gXhoFht2lSAuGWQy0kaw3C6bL2mOx6P9pO5kG9sVV9M2rHEaA/vcv/iQtQlqISTrL+B72Y2pClr3r6NYvu3HOJKruyCR+ofmUZzfXN1WdDeqOrKF3YKM/e5FnP8N42OyupRXjLlAQC6KCpAtxI4TD2Fv1PIruZaVIDQQlWdQ13fSu/fcaw90jOGHdRJjuWGtwpHxTcd0vxbxQ";
+            var sslKeyPem = "MIIJpDBOBgkqhkiG9w0BBQ0wQTApBgkqhkiG9w0BBQwwHAQIoClo9kq6eP4CAggAMAwGCCqGSIb3DQIJBQAwFAYIKoZIhvcNAwcECPhsfpO6Zt7oBIIJULNXpDnJaCSLmBIy9PLc1h/qQtfRisBn0/bNBLV85Hv4pt7we+EgjG7Z3Ix0IzajftmGU1wwlhwwY75nTB+EzobcnMLnhj1F8PhDwQIc4aBJ4bs5mub7Iskfbsvz6Rx1w13uamTXoZ5h4rNIGNFiyaTqQ3BCmCirQxKeX/EP+xAyb6hagKgZd5/vUxUtrCeIBcnzRaJmGD9V";
+
+            var attribute = new KafkaAttribute("brokers:9092", "myTopic")
+            {
+                Protocol = BrokerProtocol.Ssl,                
+                SslCertificatePem = sslCertPem,
+                SslKeyPem = sslKeyPem,
+                SslCaLocation = "path/to/cacert"
+            };
+
+            var entity = new KafkaProducerEntity()
+            {
+                Attribute = attribute,
+                ValueType = typeof(ProtoUser),
+            };
+
+            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerProvider.Instance);
+            var config = factory.GetProducerConfig(entity);
+            Assert.Equal(5, config.Count());
+            Assert.Equal("brokers:9092", config.BootstrapServers);
+            Assert.Equal(SecurityProtocol.Ssl, config.SecurityProtocol);
+            Assert.Equal(sslKeyPem, config.SslKeyPem);            
+            Assert.Equal(sslCertPem, config.SslCertificatePem);
+            Assert.Equal("path/to/cacert", config.SslCaLocation);
+        }
     }
 }

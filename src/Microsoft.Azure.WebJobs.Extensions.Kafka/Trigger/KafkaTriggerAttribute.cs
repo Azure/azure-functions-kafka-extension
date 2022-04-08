@@ -114,6 +114,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// </summary>
         public long LagThreshold { get => lagThreshold.GetValueOrDefault(1000L); set => lagThreshold = value; }
 
+        /// <summary>
+        /// client's certificate pem string.
+        /// ssl.certificate.pem in librdkafka
+        /// </summary>
+        public string SslCertificatePem { get; set; }
+
+        /// <summary>
+        /// client's private key (PEM) used for authentication as string.
+        /// Default: ""
+        /// ssl.key.pem in librdkafka
+        /// </summary>
+        public string SslKeyPem { get; set; }
+
         bool IsValidValueType(Type value)
         {
             return

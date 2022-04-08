@@ -113,6 +113,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 resolvedSslKeyLocation = entity.Attribute.SslKeyLocation;
             }
+
+            if (!AzureFunctionsFileHelper.TryGetValidFilePath(entity.Attribute.SslCertificateLocation, out var resolvedSslCertificatePem))
+            {
+                resolvedSslCertificatePem = entity.Attribute.SslCertificatePem;
+            }
+
+            if (!AzureFunctionsFileHelper.TryGetValidFilePath(entity.Attribute.SslCertificateLocation, out var resolvedSslKeyPem))
+            {
+                resolvedSslKeyPem = entity.Attribute.SslKeyPem;
+            }
+
             var kafkaOptions = this.config.Get<KafkaOptions>();
             var conf = new ProducerConfig()
             {
@@ -130,7 +141,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 SslCaLocation = resolvedSslCaLocation,
                 Debug = kafkaOptions?.LibkafkaDebug,
                 MetadataMaxAgeMs = kafkaOptions?.MetadataMaxAgeMs,
-                SocketKeepaliveEnable = kafkaOptions?.SocketKeepaliveEnable
+                SocketKeepaliveEnable = kafkaOptions?.SocketKeepaliveEnable,
+                SslKeyPem = resolvedSslKeyPem,
+                SslCertificatePem = resolvedSslCertificatePem
             };
 
             if (entity.Attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet)

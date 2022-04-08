@@ -139,5 +139,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// ssl.key.password in librdkafka
         /// </summary>
         public string SslKeyPassword { get; set; }
+
+        /// <summary>
+        /// client's certificate pem string.
+        /// ssl.certificate.location in librdkafka
+        /// </summary>
+        public string SslCertificatePem { get; set; }
+
+        /// <summary>
+        /// client's private key (PEM) string used for authentication.
+        /// Default: ""
+        /// ssl.key.pem in librdkafka
+        /// </summary>
+        public string SslKeyPem { get; set; }
     }
 }
