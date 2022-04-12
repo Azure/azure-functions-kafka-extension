@@ -85,7 +85,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             messageToSend.Partition = (int)dataObj["Partition"];
             JArray headerList = (JArray)dataObj["Headers"];
             foreach (JObject header in headerList) {
-                messageToSend.Headers.Add((string)header["Key"], Encoding.Unicode.GetBytes((string)header["Value"]));
+                messageToSend.Headers.Add((string)header["Key"], Encoding.UTF8.GetBytes((string)header["Value"]));
             }
             return messageToSend;
         }
