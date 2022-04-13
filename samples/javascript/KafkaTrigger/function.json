@@ -10,7 +10,7 @@
             "password": "%ConfluentCloudPassword%",
             "protocol": "saslSsl",
             "authenticationMode": "plain",
-            "consumerGroup" : "functions",
+            "consumerGroup" : "$Default",
             "dataType": "binary"
         }
     ]
