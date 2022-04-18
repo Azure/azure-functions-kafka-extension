@@ -92,7 +92,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 		public const string JS_WORKER_RUNTIME = "node";
 
 		public const string TSAPP_CONFLUENT_PORT = "55402";
-		public const string TSAPP_EVENTHUB_PORT = "51402";
+		public const string TSAPP_EVENTHUB_PORT = "51452";
 		public const string TSAPP_CONFLUENT_IMAGE = "azure-functions-kafka-typescript-confluent";
 		public const string TSAPP_EVENTHUB_IMAGE = "azure-functions-kafka-typescript-eventhub";
 		public const string TS_SINGLE_APP_NAME = "SingleHttpTriggerKafkaOutput";
