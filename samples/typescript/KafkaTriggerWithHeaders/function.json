@@ -1,0 +1,18 @@
+{
+  "bindings": [
+    {
+      "type": "kafkaTrigger",
+      "direction": "in",
+      "name": "event",
+      "brokerList": "BrokerList",
+      "topic": "typescript-single",
+      "username": "$ConnectionString",
+      "password": "EventHubConnectionString",
+      "consumerGroup" : "$Default",
+      "protocol": "saslSsl",
+      "authenticationMode": "plain",
+      "dataType": "string"
+    }
+  ],
+  "scriptFile": "../dist/KafkaTriggerWithHeaders/index.js"
+}
