@@ -12,7 +12,7 @@ public class MultiHttpTriggerKafkaOutput {
     public HttpResponseMessage input(
             @HttpTrigger(name = "req", methods = {HttpMethod.GET}, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
             @KafkaOutput(name = "kafkaOutput",
-                         topic = "e2e-kafka-java-multi-Confluent", 
+                         topic = "e2e-kafka-java-multi-confluent", 
                          brokerList="ConfluentBrokerList",
                          username = "ConfluentCloudUsername",
                          password = "ConfluentCloudPassword",

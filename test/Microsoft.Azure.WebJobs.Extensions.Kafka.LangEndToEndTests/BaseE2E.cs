@@ -13,6 +13,7 @@ using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests.Invoke.re
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests.Invoke.request.queue;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests.Invoke.Type;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -48,6 +49,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
         {
             await invokeE2ETest(appType, invokeType, httpRequestEntity, queueEntity);
             // wait for the function completion
+            await Task.Delay(60000);
             // invokation for read from storage
             await verifyQueueMsgsAsync(expectedOutput, appType);
             
@@ -56,7 +58,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
         private async Task verifyQueueMsgsAsync(List<string> expectedOutput, AppType appType)
         {
             var storageQueueName = Utils.BuildStorageQueueName(brokerType,
-                        AppType.SINGLE_EVENT, language);
+                        appType, language);
 
             Command<QueueResponse> readQueue = null;
             if (AppType.BATCH_EVENT == appType)
@@ -72,7 +74,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
             
             QueueResponse queueMsgs = await readQueue.ExecuteCommandAsync();
 
-            Assert.Equal<List<string>>(expectedOutput, queueMsgs.responseList);
+            CollectionAssert.AreEquivalent(expectedOutput, queueMsgs.GetResponseList());
         }
 
         private async Task invokeE2ETest(AppType appType, InvokeType invokeType, HttpRequestEntity httpRequestEntity,
@@ -81,23 +83,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
             if (httpRequestEntity != null && InvokeType.HTTP == invokeType)
             {
 
-                int executionCount = 1;
+                try 
+                { 
+                    
+                    InvokeRequestStrategy<HttpResponseMessage> invokerHttpReqStrategy = new InvokeHttpRequestStrategy(httpRequestEntity);
+                    await this.invoker.Invoke(invokerHttpReqStrategy);
 
-                if (AppType.BATCH_EVENT == appType)
-                {
-                    executionCount = Constants.BATCH_MESSAGE_COUNT;
-                }
-                try { 
-                    for (var i = 0; i < executionCount; i++)
-                    {
-                        InvokeRequestStrategy<HttpResponseMessage> invokerHttpReqStrategy = new InvokeHttpRequestStrategy(httpRequestEntity);
-                        await this.invoker.Invoke(invokerHttpReqStrategy);
-
-                    }
                 }
                 catch(Exception ex)
                 {
-                    Console.WriteLine(ex);
+                    Console.WriteLine($"Unable to invoke functions for language:{language} broker:{brokerType} with exception {ex}");
+                    throw ex;
                 }
             }
             else

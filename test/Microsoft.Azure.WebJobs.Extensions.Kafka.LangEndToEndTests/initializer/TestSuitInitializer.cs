@@ -7,6 +7,7 @@ using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.queue;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.executor;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.executor.CommandExecutor;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.helper;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.process;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.eventhub;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.operation;
@@ -30,22 +31,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.initializer
     // start app
     public class TestSuitInitializer
     {
-        //Intialize Helper vs Constants?
-        private InitializeHelper initializeHelper = InitializeHelper.GetInstance();
-        private List<Process> processes = new List<Process>();
 
-        //Async
-        //Why does this return ICommand?
         public void InitializeTestSuit(Language language, BrokerType brokerType)
         {
-            var createEventHubTask = CreateEventHubAsync(language);
-
-            var clearStorageQueueTask = ClearStorageQueueAsync(language, brokerType);
-            
-            Task.WaitAll(clearStorageQueueTask, createEventHubTask);
+            CreateAzureResources(language, brokerType);
             Task.WaitAll(StartupApplicationAsync(language, brokerType));
         }
+        private void CreateAzureResources(Language language, BrokerType brokerType) 
+        {
+            var taskList = new List<Task>();
 
+            if (BrokerType.EVENTHUB == brokerType) 
+            {
+                taskList.Add(CreateEventHubAsync(language)); 
+            }
+
+            taskList.Add(ClearStorageQueueAsync(language, brokerType));
+
+            Task.WaitAll(taskList.ToArray());
+        } 
         private async Task StartupApplicationAsync(Language language, BrokerType brokerType)
         {
             Command<Process> command = new ShellCommand.ShellCommandBuilder()
@@ -53,15 +57,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.initializer
                                             .SetBrokerType(brokerType)
                                             .Build();
             IExecutor<Command<Process>, Process> executor = new ShellCommandExecutor();
-            var process = await executor.ExecuteAsync(command);
-            processes.Add(process);
-            /*
-             * commenting for now for some issues TODO to fix the app issue
-             * if(process != null && !process.HasExited)
-            {
-                return;
-            }*/
-            // TODO throw excpetion app startup failed
+            ProcessManager.GetInstance().AddProcess(await executor.ExecuteAsync(command));
         }
 
         private async Task ClearStorageQueueAsync(Language language, BrokerType brokerType)
@@ -90,7 +86,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.initializer
                         AppType.SINGLE_EVENT, language);
             string eventHubMultiName = Utils.BuildCloudBrokerName(QueueType.EventHub,
                         AppType.BATCH_EVENT, language);
-            
+            Console.WriteLine($"Create Eventhub {eventHubSingleName} {eventHubMultiName}");
+
             await BuildEventHubAsync(eventHubSingleName, eventHubMultiName);
         }
 

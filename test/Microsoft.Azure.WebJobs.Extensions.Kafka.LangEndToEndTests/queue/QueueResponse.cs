@@ -6,7 +6,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue
 {
 	public class QueueResponse
 	{
-		public List<string> responseList { get; set; }
+		private List<string> responseList;
 		public QueueResponse()
 		{
 			responseList = new List<string>();
@@ -15,5 +15,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue
 		{
 			return responseList.Count;
 		}
+		public void AddString(string input)
+		{ 
+			responseList.Add(input);
+		}
+
+		public List<string> GetResponseList() { return responseList; }
 	}
 }

@@ -7,7 +7,7 @@ module.exports = async function (context, req) {
     const responseMessage = message
         ? "Message received: " + message + ". The message transfered to the kafka broker."
         : "This HTTP triggered function executed successfully. Pass a message in the query string or in the request body for a personalized response.";
-    context.bindings.outputKafkaMessage = "Message : " + message;
+    context.bindings.outputKafkaMessage = message;
     context.res = {
         // status: 200, /* Defaults to 200 */
         body: responseMessage

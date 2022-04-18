@@ -14,35 +14,35 @@ using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.brokers;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests
 {
-    public class PythonConfluentAppTest : BaseE2E, IClassFixture<KafkaE2EFixture>
+    public class PythonEventhubAppTest : BaseE2E, IClassFixture<KafkaE2EFixture>
     {
         private KafkaE2EFixture kafkaE2EFixture;
         ITestOutputHelper output;
 
-        public PythonConfluentAppTest(KafkaE2EFixture kafkaE2EFixture, ITestOutputHelper output) : base(kafkaE2EFixture, Language.PYTHON, BrokerType.CONFLUENT, output)
+        public PythonEventhubAppTest(KafkaE2EFixture kafkaE2EFixture, ITestOutputHelper output) : base(kafkaE2EFixture, Language.PYTHON, BrokerType.EVENTHUB, output)
         {
             this.kafkaE2EFixture = kafkaE2EFixture;
             this.output = output;
         }
 
         [Fact]
-        public async Task Python_App_Test_Single_Event_Confluent()
+        public async Task Python_App_Test_Single_Event_Eventhub()
         {
             string reqMsg = "Single-Event";
-            string url = "http://localhost:" + Constants.PYTHONAPP_CONFLUENT_PORT + "/api/" + Constants.PYTHON_SINGLE_APP_NAME;
-            
+            string url = "http://localhost:" + Constants.PYTHONAPP_EVENTHUB_PORT + "/api/" + Constants.PYTHON_SINGLE_APP_NAME;
+
             Dictionary<string, string> reqParm = new Dictionary<string, string>();
             reqParm.TryAdd("message", reqMsg);
-            
+
             HttpRequestEntity httpRequestEntity = new HttpRequestEntity(url, HttpMethods.Get,
                null, reqParm, null);
 
             List<string> expectedOutput = new List<string> { reqMsg };
-            
+
             await Test(AppType.SINGLE_EVENT, InvokeType.HTTP, httpRequestEntity, null, expectedOutput);
-            
         }
 
+        
         [Fact]
         public async Task Python_App_Test_Multi_Event_Confluent()
         {
@@ -50,8 +50,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests
             string reqMsg2 = "Multi-Event2";
             string reqMsg3 = "Multi-Event3";
 
-            string url = "http://localhost:" + Constants.PYTHONAPP_CONFLUENT_PORT + "/api/" + Constants.PYTHON_MULTI_APP_NAME;
-            
+            string url = "http://localhost:" + Constants.PYTHONAPP_EVENTHUB_PORT + "/api/" + Constants.PYTHON_MULTI_APP_NAME;
+
             Dictionary<string, string> reqParm = new Dictionary<string, string>();
             reqParm.TryAdd("message", reqMsg1);
             reqParm.TryAdd("message1", reqMsg2);
@@ -59,11 +59,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests
 
             HttpRequestEntity httpRequestEntity = new HttpRequestEntity(url, HttpMethods.Get,
                null, reqParm, null);
-            
+
             List<string> expectedOutput = new List<string> { reqMsg1, reqMsg2, reqMsg3 };
 
             await Test(AppType.BATCH_EVENT, InvokeType.HTTP, httpRequestEntity, null, expectedOutput);
         }
-
     }
 }

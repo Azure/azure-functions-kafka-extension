@@ -18,7 +18,7 @@ if ($message) {
     $body = "Message received:  $message. The message transfered to the kafka broker."
 }
 
-Push-OutputBinding -Name Message -Value ("Message: " + $message)
+Push-OutputBinding -Name Message -Value ($message)
 
 # Associate values to output bindings by calling 'Push-OutputBinding'.
 Push-OutputBinding -Name Response -Value ([HttpResponseContext]@{
