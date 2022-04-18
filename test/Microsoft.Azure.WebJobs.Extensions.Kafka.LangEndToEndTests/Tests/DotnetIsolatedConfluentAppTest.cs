@@ -25,44 +25,44 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests
 			this.output = output;
 		}
 
-		//[Fact]
-		//public async Task DotnetIsolated_App_Test_Single_Event_Confluent()
-		//{
-		//	string reqMsg = "Single-Event";
-		//	string url = "http://localhost:" + Constants.DOTNETWORKERAPP_CONFLUENT_PORT + "/api/" + Constants.DOTNETWORKER_SINGLE_APP_NAME;
+		[Fact]
+		public async Task DotnetIsolated_App_Test_Single_Event_Confluent()
+		{
+			string reqMsg = "Single-Event";
+			string url = "http://localhost:" + Constants.DOTNETWORKERAPP_CONFLUENT_PORT + "/api/" + Constants.DOTNETWORKER_SINGLE_APP_NAME;
 
-		//	Dictionary<string, string> reqParm = new Dictionary<string, string>();
-		//	reqParm.TryAdd("message", reqMsg);
+			Dictionary<string, string> reqParm = new Dictionary<string, string>();
+			reqParm.TryAdd("message", reqMsg);
 
-		//	HttpRequestEntity httpRequestEntity = new HttpRequestEntity(url, HttpMethods.Get,
-		//	   null, reqParm, null);
+			HttpRequestEntity httpRequestEntity = new HttpRequestEntity(url, HttpMethods.Get,
+			   null, reqParm, null);
 
-		//	List<string> expectedOutput = new List<string> { reqMsg };
+			List<string> expectedOutput = new List<string> { reqMsg };
 
-		//	await Test(AppType.SINGLE_EVENT, InvokeType.HTTP, httpRequestEntity, null, expectedOutput);
-		//}
+			await Test(AppType.SINGLE_EVENT, InvokeType.HTTP, httpRequestEntity, null, expectedOutput);
+		}
 
-		//[Fact]
-		//public async Task DotnetIsolated_App_Test_Multi_Event_Confluent()
-		//{
-		//	string reqMsg1 = "Multi-Event1";
-		//	string reqMsg2 = "Multi-Event2";
-		//	string reqMsg3 = "Multi-Event3";
+		[Fact]
+		public async Task DotnetIsolated_App_Test_Multi_Event_Confluent()
+		{
+			string reqMsg1 = "Multi-Event1";
+			string reqMsg2 = "Multi-Event2";
+			string reqMsg3 = "Multi-Event3";
 
-		//	string url = "http://localhost:" + Constants.DOTNETWORKERAPP_CONFLUENT_PORT + "/api/" + Constants.DOTNETWORKER_MULTI_APP_NAME;
+			string url = "http://localhost:" + Constants.DOTNETWORKERAPP_CONFLUENT_PORT + "/api/" + Constants.DOTNETWORKER_MULTI_APP_NAME;
 
-		//	Dictionary<string, string> reqParm = new Dictionary<string, string>();
-		//	reqParm.TryAdd("message", reqMsg1);
-		//	reqParm.TryAdd("message1", reqMsg2);
-		//	reqParm.TryAdd("message2", reqMsg3);
+			Dictionary<string, string> reqParm = new Dictionary<string, string>();
+			reqParm.TryAdd("message", reqMsg1);
+			reqParm.TryAdd("message1", reqMsg2);
+			reqParm.TryAdd("message2", reqMsg3);
 
-		//	HttpRequestEntity httpRequestEntity = new HttpRequestEntity(url, HttpMethods.Get,
-		//	   null, reqParm, null);
+			HttpRequestEntity httpRequestEntity = new HttpRequestEntity(url, HttpMethods.Get,
+			   null, reqParm, null);
 
-		//	List<string> expectedOutput = new List<string> { reqMsg1, reqMsg2, reqMsg3 };
+			List<string> expectedOutput = new List<string> { reqMsg1, reqMsg2, reqMsg3 };
 
-		//	await Test(AppType.BATCH_EVENT, InvokeType.HTTP, httpRequestEntity, null, expectedOutput);
-		//}
+			await Test(AppType.BATCH_EVENT, InvokeType.HTTP, httpRequestEntity, null, expectedOutput);
+		}
 
 	}
 }

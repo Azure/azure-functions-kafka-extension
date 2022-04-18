@@ -59,7 +59,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 		public const string DOTNET_WORKER_RUNTIME = "dotnet";
 
 
-		public const string DOTNETWORKERAPP_CONFLUENT_PORT = "50200";
+		public const string DOTNETWORKERAPP_CONFLUENT_PORT = "59251";
 		public const string DOTNETWORKERAPP_EVENTHUB_PORT = "59200";
 		public const string DOTNETWORKERAPP_CONFLUENT_IMAGE = "azure-functions-kafka-dotnet-isolated-confluent";
 		public const string DOTNETWORKERAPP_EVENTHUB_IMAGE = "azure-functions-kafka-dotnet-isolated-eventhub";
