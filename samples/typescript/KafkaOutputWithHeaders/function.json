@@ -1,0 +1,30 @@
+{
+  "bindings": [
+    {
+      "authLevel": "function",
+      "type": "httpTrigger",
+      "direction": "in",
+      "name": "req",
+      "methods": [
+        "get"      
+       ]
+    },
+    {
+      "type": "kafka",
+      "name": "outputKafkaMessage",
+      "topic": "kafkaeventhubtest1",
+      "brokerList": "%BrokerList%",
+      "username": "$ConnectionString",
+      "password": "%KafkaPassword%",
+      "protocol": "SASLSSL",
+      "authenticationMode": "PLAIN",
+      "direction": "out"
+    },
+    {
+      "type": "http",
+      "direction": "out",
+      "name": "res"
+    }
+  ],
+  "scriptFile": "../dist/KafkaOutputWithHeaders/index.js"
+}

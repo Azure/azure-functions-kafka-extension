@@ -1,5 +1,10 @@
 import { AzureFunction, Context } from "@azure/functions"
 
+class KafkaHeaders {
+    Key: string;
+    Value: string;
+}
+
 // This is to describe the metadata of a Kafka event
 class KafkaEvent {
     Offset : number;
@@ -7,7 +12,7 @@ class KafkaEvent {
     Topic : string;
     Timestamp : string;
     Value : string;
-    Headers: Map<string, string>;
+    Headers: KafkaHeaders[];
 
     constructor(metadata:any) {
         this.Offset = metadata.Offset;
@@ -31,7 +36,10 @@ const kafkaTrigger: AzureFunction = async function (context: Context, event: str
     context.log("Event Topic: " + event_obj.Topic);
     context.log("Event Timestamp: " + event_obj.Timestamp);
     context.log("Event Value (as string): " + event_obj.Value);
-    context.log("Event Headers: ", event_obj.Headers);
+    context.log("Event Headers: ");
+    event_obj.Headers.forEach((header: KafkaHeaders) => {
+        context.log("Key: ", header.Key, "Value: ", atob(header.Value))
+    });
 };
 
 export default kafkaTrigger;
