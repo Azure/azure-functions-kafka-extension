@@ -6,4 +6,3 @@ foreach ($kafkaEvent in $kafkaEvents) {
     $kevent = $kafkaEvent | ConvertFrom-Json -AsHashtable
     $kevent.Headers
 }
-# $TriggerMetadata
