@@ -18,8 +18,13 @@ public class KafkaTriggerWithHeaders {
                 protocol = BrokerProtocol.SASLSSL,
                 // sslCaLocation = "confluent_cloud_cacert.pem", // Enable this line for windows.
                 dataType = "string"
-             ) String kafkaEventData,
+             ) KafkaEntity kafkaEventData,
             final ExecutionContext context) {
-            context.getLogger().info(kafkaEventData);
+            context.getLogger().info("Java Kafka trigger function called for message: " + kafkaEventData.Value);
+            context.getLogger().info("Headers for the message:");
+            for (KafkaHeaders header : kafkaEventData.Headers) {
+                String decodedValue = new String(Base64.getDecoder().decode(header.Value));
+                context.getLogger().info("Key:" + header.Key + " Value:" + decodedValue);                    
+            }
     }
 }

@@ -14,5 +14,5 @@
         "dataType": "string"
       }
     ],
-    "scriptFile": "../dist/UsersTrigger/index.js"
+    "scriptFile": "../dist/KafkaTrigger/index.js"
   }

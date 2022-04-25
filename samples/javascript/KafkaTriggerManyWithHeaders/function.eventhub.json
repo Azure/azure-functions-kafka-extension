@@ -1,19 +1,18 @@
 {
-  "scriptFile": "__init__.py",
   "bindings": [
     {
       "type": "kafkaTrigger",
-      "name": "kevents",
+      "name": "event",
       "direction": "in",
       "brokerList": "BrokerList",
-      "topic": "python-many",
+      "topic": "kafkaheaders",
       "username": "$ConnectionString",
-      "password": "EventHubConnectionString",
+      "password": "KafkaPassword",
       "protocol": "saslSsl",
       "authenticationMode": "plain",
       "consumerGroup": "$Default",
-      "cardinality" : "MANY",
-      "dataType": "string"
+      "dataType": "binary",
+      "cardinality" : "MANY"
     }
   ]
 }

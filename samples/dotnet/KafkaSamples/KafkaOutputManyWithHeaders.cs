@@ -7,9 +7,9 @@ using Microsoft.Extensions.Logging;
 
 namespace KafkaSamples
 {
-    public class KafkaOutputMany
+    public class KafkaOutputManyWithHeaders
     {
-        [FunctionName("KafkaOutputMany")]
+        [FunctionName("KafkaOutputManyWithHeaders")]
         public static IActionResult Output(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
             [Kafka("BrokerList",
@@ -18,15 +18,15 @@ namespace KafkaSamples
                     Password = "%KafkaPassword%",
                     Protocol = BrokerProtocol.SaslSsl,
                    AuthenticationMode = BrokerAuthenticationMode.Plain
-            )] out KafkaEventData<string>[] eventData,
+            )] out KafkaEventData<string>[] eventDataArr,
             ILogger log)
         {
             log.LogInformation("C# HTTP trigger function processed a request.");
             eventDataArr = new KafkaEventData<string>[2];
             eventDataArr[0] = new KafkaEventData<string>("one");
-            eventDataArr[0].Headers.Add("test", "dotnet");
+            eventDataArr[0].Headers.Add("test", System.Text.Encoding.UTF8.GetBytes("dotnet"));
             eventDataArr[1] = new KafkaEventData<string>("two");
-            eventDataArr[1].Headers.Add("test", "dotnet");
+            eventDataArr[1].Headers.Add("test1", System.Text.Encoding.UTF8.GetBytes("dotnet"));
             return new OkObjectResult("Ok");
         }
     }

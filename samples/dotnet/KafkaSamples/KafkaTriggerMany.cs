@@ -5,9 +5,9 @@ using Microsoft.Extensions.Logging;
 
 namespace KafkaSamples
 {
-    public class KafkaTrigger 
+    public class KafkaTriggerMany
     {
-        [FunctionName("KafkaTrigger")]
+        [FunctionName("KafkaTriggerMany")]
         public static void Run(
             [KafkaTrigger("BrokerList",
                           "kafkaeventhubtest1",

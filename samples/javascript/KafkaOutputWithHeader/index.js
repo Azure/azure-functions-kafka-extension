@@ -8,7 +8,6 @@ module.exports = async function (context, req) {
         ? "Message received: " + message + ". The message transfered to the kafka broker."
         : "This HTTP triggered function executed successfully. Pass a message in the query string or in the request body for a personalized response.";
     context.bindings.outputKafkaMessage = "{ \"Offset\":364,\"Partition\":0,\"Topic\":\"kafkaeventhubtest1\",\"Timestamp\":\"2022-04-09T03:20:06.591Z\", \"Value\": \"" + message + "\", \"Headers\": [{ \"Key\": \"test\", \"Value\": \"javascript\" }] }"
-    console.log(context)
     context.res = {
         // status: 200, /* Defaults to 200 */
         body: responseMessage

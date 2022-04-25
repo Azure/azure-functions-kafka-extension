@@ -18,10 +18,11 @@ namespace KafkaSamples
                           ConsumerGroup = "$Default")] KafkaEventData<string> kevent, ILogger log)
         {
             log.LogInformation($"C# Kafka trigger function processed a message: {kevent.Value}");
+            log.LogInformation("Headers: ");
             var headers = kevent.Headers;
             foreach (var header in headers)
             {
-                log.LogInformation($"Headers for Kafka: Key = {header.Key} Value = {System.Text.Encoding.UTF8.GetString(header.Value)}");
+                log.LogInformation($"Key = {header.Key} Value = {System.Text.Encoding.UTF8.GetString(header.Value)}");
             }
         }
     }

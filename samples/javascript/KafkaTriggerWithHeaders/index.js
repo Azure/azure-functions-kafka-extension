@@ -5,5 +5,5 @@ module.exports = async function (context, event) {
     // let event_str = dec.write(event);
     let event_str = event;
     context.log.info(`JavaScript Kafka trigger function called for message ${JSON.stringify(event_str)}`);
-    console.log("Headers ",context.bindingData.headers);
+    console.log("Headers for this message:",context.bindingData.headers);
 };
