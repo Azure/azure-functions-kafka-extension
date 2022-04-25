@@ -1,20 +1,28 @@
 package com.contoso.kafka;
 
+import java.util.*;
 import com.microsoft.azure.functions.annotation.*;
 import com.microsoft.azure.functions.*;
 
 import java.util.Optional;
 
-public class KafkaOutputWithHeaders {
-    @FunctionName("KafkaOutputWithHeaders")
+public class SampleKafkaOutput {
+    /**
+     * This function listens at endpoint "api/KafkaOutput" and send message to the conluent-topic. Two ways to invoke it using "curl" command in bash:
+     * 1. curl -d "HTTP BODY" {your host}/api/KafkaOutput
+     * 2. curl "{your host}/api/KafkaOutput?message=hello"
+     * This sample is for a local cluster. Modify topic and brokerList on the @KafkaOutput annotataion
+     * For the Confluence Cloud example, please refer the KafkaTrigger-Java-Many on the `TriggerFunction.java`.
+     */
+    @FunctionName("KafkaOutput")
     public HttpResponseMessage run(
             @HttpTrigger(name = "req", methods = {HttpMethod.GET, HttpMethod.POST}, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
             @KafkaOutput(
                 name = "kafkaOutput",
                 topic = "topic",  
                 brokerList="%BrokerList%",
-                username= "$ConnectionString",
-                password = "ConfluentCloudPassword",
+                username = "%ConfluentCloudUsername%", 
+                password = "EventHubConnectionString",
                 authenticationMode = BrokerAuthenticationMode.PLAIN,
                 // sslCaLocation = "confluent_cloud_cacert.pem", // Enable this line for windows.  
                 protocol = BrokerProtocol.SASLSSL
@@ -26,8 +34,7 @@ public class KafkaOutputWithHeaders {
         String query = request.getQueryParameters().get("message");
         String message = request.getBody().orElse(query);
         context.getLogger().info("Message:" + message);
-        String kevent = "{ \"Offset\":364,\"Partition\":0,\"Topic\":\"kafkaeventhubtest1\",\"Timestamp\":\"2022-04-09T03:20:06.591Z\", \"Value\": \""+ message + "\", \"Headers\": [{ \"Key\": \"test\", \"Value\": \"java\" }] }";
-        output.setValue(kevent);
+        output.setValue(message);
         return request.createResponseBuilder(HttpStatus.OK).body("Ok").build();
     }
 }

@@ -19,10 +19,10 @@
 //             @HttpTrigger(name = "req", methods = {HttpMethod.GET, HttpMethod.POST}, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
 //             @KafkaOutput(
 //                 name = "kafkaOutput",
-//                 topic = "message", 
+//                 topic = "topic",  
 //                 brokerList="%BrokerList%",
 //                 username = "%ConfluentCloudUsername%", 
-//                 password = "%ConfluentCloudPassword%",
+//                 password = "ConfluentCloudPassword",
 //                 authenticationMode = BrokerAuthenticationMode.PLAIN,
 //                 // sslCaLocation = "confluent_cloud_cacert.pem", // Enable this line for windows.  
 //                 protocol = BrokerProtocol.SASLSSL

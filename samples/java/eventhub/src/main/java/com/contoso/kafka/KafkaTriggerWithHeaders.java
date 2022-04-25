@@ -13,7 +13,7 @@ public class KafkaTriggerWithHeaders {
                 brokerList="%BrokerList%",
                 consumerGroup="$Default", 
                 username= "$ConnectionString",
-                password = "ConfluentCloudPassword",
+                password = "EventHubConnectionString",
                 authenticationMode = BrokerAuthenticationMode.PLAIN,
                 protocol = BrokerProtocol.SASLSSL,
                 // sslCaLocation = "confluent_cloud_cacert.pem", // Enable this line for windows.

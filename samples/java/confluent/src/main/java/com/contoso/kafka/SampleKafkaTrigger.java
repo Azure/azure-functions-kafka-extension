@@ -20,11 +20,11 @@
 //     public void runSingle(
 //             @KafkaTrigger(
 //                 name = "KafkaTrigger",
-//                 topic = "message", 
+//                 topic = "topic",  
 //                 brokerList="%BrokerList%",
 //                 consumerGroup="$Default", 
 //                 username = "%ConfluentCloudUsername%", 
-//                 password = "%ConfluentCloudPassword%",
+//                 password = "ConfluentCloudPassword",
 //                 authenticationMode = BrokerAuthenticationMode.PLAIN,
 //                 protocol = BrokerProtocol.SASLSSL,
 //                 // sslCaLocation = "confluent_cloud_cacert.pem", // Enable this line for windows.

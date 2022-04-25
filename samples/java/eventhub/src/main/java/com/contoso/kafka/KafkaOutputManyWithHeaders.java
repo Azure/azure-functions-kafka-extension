@@ -14,7 +14,7 @@ public class KafkaOutputManyWithHeaders {
                 topic = "topic",  
                 brokerList="%BrokerList%",
                 username= "$ConnectionString",
-                password = "ConfluentCloudPassword",
+                password = "EventHubConnectionString",
                 authenticationMode = BrokerAuthenticationMode.PLAIN,
                 // sslCaLocation = "confluent_cloud_cacert.pem", // Enable this line for windows.  
                 protocol = BrokerProtocol.SASLSSL
