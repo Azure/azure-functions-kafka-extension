@@ -3,16 +3,16 @@ using Microsoft.Azure.WebJobs.Extensions.Kafka;
 using Microsoft.Azure.WebJobs.Extensions.Storage;
 using Microsoft.Extensions.Logging;
 
-namespace KafkaSamples
+namespace Eventhub
 {
     public class KafkaTriggerSingleWithHeaders
     {
         [FunctionName("KafkaTriggerSingleWithHeaders")]
         public static void Run(
             [KafkaTrigger("BrokerList",
-                          "kafkaeventhubtest1",
+                          "topic",
                           Username = "$ConnectionString",
-                          Password = "%KafkaPassword%",
+                          Password = "%EventHubConnectionString%",
                           Protocol = BrokerProtocol.SaslSsl,
                           AuthenticationMode = BrokerAuthenticationMode.Plain,
                           ConsumerGroup = "$Default")] KafkaEventData<string> kevent, ILogger log)

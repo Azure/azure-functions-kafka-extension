@@ -5,22 +5,24 @@ using Microsoft.Azure.Functions.Worker.Http;
 using Newtonsoft.Json.Linq;
 
 
-namespace KafkaSamples
+namespace Confluent
 {
-    public class KafkaTrigger
+    public class KafkaTriggerWithHeaders
     {
-        [Function("KafkaTrigger")]
+        [Function("KafkaTriggerWithHeaders")]
         public static void Run(
             [KafkaTrigger("BrokerList",
-                          "kafkaeventhubtest1",
-                          Username = "$ConnectionString",
-                          Password = "%KafkaPassword%",
+                          "topic",
+                          Username = "ConfluentCloudUserName",
+                          Password = "ConfluentCloudPassword",
                           Protocol = BrokerProtocol.SaslSsl,
                           AuthenticationMode = BrokerAuthenticationMode.Plain,
                           ConsumerGroup = "$Default")] string eventData, FunctionContext context)
         {
+            var eventJsonObject = JObject.Parse(eventData);
             var logger = context.GetLogger("KafkaFunction");
-            logger.LogInformation($"C# Kafka trigger function processed a message: {JObject.Parse(eventData)["Value"]}");
+            logger.LogInformation($"C# Kafka trigger function processed a message: {eventJsonObject["Value"]}");
+            logger.LogInformation($"Headers for this event: {eventJsonObject["Headers"]}");
         }
     }
 }

@@ -1,0 +1,9 @@
+{
+    "IsEncrypted": false,
+    "Values": {
+        "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+        "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+        "BrokerList": "<YOUR_EVENTHUB_NAMESPACE_NAME>.servicebus.windows.net:9093",
+        "EventHubConnectionString": "<YOUR_EVENTHUB_CONNECTIONSTRING>"
+    }
+}

@@ -4,11 +4,11 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Azure.Functions.Worker.Http;
 using System.Net;
 
-namespace KafkaSamples
+namespace Eventhub
 {
-    public class KafkaOutputManyWithHeadera
+    public class KafkaOutputMany
     {
-        [Function("KafkaOutputManyWithHeadera")]
+        [Function("KafkaOutputMany")]
         
         public static MultipleOutputTypeForBatch Output(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequestData req,
@@ -18,15 +18,29 @@ namespace KafkaSamples
             log.LogInformation("C# HTTP trigger function processed a request.");
             var response = req.CreateResponse(HttpStatusCode.OK);
 
-            string[] events = new string[2];
-            events[0] = "{ \"Offset\":364,\"Partition\":0,\"Topic\":\"kafkaeventhubtest1\",\"Timestamp\":\"2022-04-09T03:20:06.591Z\", \"Value\": \"one\", \"Headers\": [{ \"Key\": \"test\", \"Value\": \"dotnet-isolated\" }] }";
-            events[1] = "{ \"Offset\":364,\"Partition\":0,\"Topic\":\"kafkaeventhubtest1\",\"Timestamp\":\"2022-04-09T03:20:06.591Z\", \"Value\": \"\two\", \"Headers\": [{ \"Key\": \"test\", \"Value\": \"dotnet-isolated\" }] }";
+            string[] messages = new string[2];
+            messages[0] = "one";
+            messages[1] = "two";
 
             return new MultipleOutputTypeForBatch()
             {
-                Kevents = events,
+                Kevents = messages,
                 HttpResponse = response
             };
         }
+    }
+
+    public class MultipleOutputTypeForBatch
+    {
+        [KafkaOutput("BrokerList",
+                     "topic",
+                     Username = "$ConnectionString",
+                     Password = "EventHubConnectionString",
+            Protocol = BrokerProtocol.SaslSsl,
+            AuthenticationMode = BrokerAuthenticationMode.Plain
+        )]        
+        public string[] Kevents { get; set; }
+
+        public HttpResponseData HttpResponse { get; set; }
     }
 }

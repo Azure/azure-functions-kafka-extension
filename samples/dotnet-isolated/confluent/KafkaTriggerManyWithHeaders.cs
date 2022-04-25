@@ -5,16 +5,16 @@ using Microsoft.Azure.Functions.Worker.Http;
 using Newtonsoft.Json.Linq;
 
 
-namespace KafkaSamples
+namespace Confluent
 {
-    public class KafkaTriggerMany
+    public class KafkaTriggerManyWithHeaders
     {
-        [Function("KafkaTriggerMany")]
+        [Function("KafkaTriggerManyWithHeaders")]
         public static void Run(
             [KafkaTrigger("BrokerList",
-                          "kafkaeventhubtest1",
-                          Username = "$ConnectionString",
-                          Password = "%KafkaPassword%",
+                          "topic",
+                          Username = "ConfluentCloudUserName",
+                          Password = "ConfluentCloudPassword",
                           Protocol = BrokerProtocol.SaslSsl,
                           AuthenticationMode = BrokerAuthenticationMode.Plain,
                           ConsumerGroup = "$Default",

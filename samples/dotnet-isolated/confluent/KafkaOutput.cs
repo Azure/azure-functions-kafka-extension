@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Azure.Functions.Worker.Http;
 using System.Net;
 
-namespace KafkaSamples
+namespace Confluent
 {
     public class KafkaOutput
     {
@@ -34,9 +34,9 @@ namespace KafkaSamples
     public class MultipleOutputType
     {
         [KafkaOutput("BrokerList",
-                    "kafkaeventhubtest1",
-                    Username = "$ConnectionString",
-                    Password = "%KafkaPassword%",
+                    "topic",
+                    Username = "ConfluentCloudUserName",
+                    Password = "ConfluentCloudPassword",
             Protocol = BrokerProtocol.SaslSsl,
             AuthenticationMode = BrokerAuthenticationMode.Plain
         )]        

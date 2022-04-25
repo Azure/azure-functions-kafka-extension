@@ -5,30 +5,27 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.Kafka;
 using Microsoft.Extensions.Logging;
 
-namespace KafkaSamples
+namespace Confluent
 {
-    public class KafkaOutput
+    public class KafkaOutputMany
     {
-        [FunctionName("KafkaOutput")]
+        [FunctionName("KafkaOutputMany")]
         public static IActionResult Output(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
             [Kafka("BrokerList",
-                    "kafkaeventhubtest1",
-                    Username = "$ConnectionString",
-                    Password = "%KafkaPassword%",
+                    "topic",
+                    Username = "ConfluentCloudUserName",
+                    Password = "ConfluentCloudPassword",
                     Protocol = BrokerProtocol.SaslSsl,
                    AuthenticationMode = BrokerAuthenticationMode.Plain
-            )] out string eventData,
+            )] out KafkaEventData<string>[] eventDataArr,
             ILogger log)
         {
             log.LogInformation("C# HTTP trigger function processed a request.");
-
-            string message = req.Query["message"];
-
-            string responseMessage = "Ok";            
-            eventData = message;
-
-            return new OkObjectResult(responseMessage);
+            eventDataArr = new KafkaEventData<string>[2];
+            eventDataArr[0] = new KafkaEventData<string>("one");
+            eventDataArr[1] = new KafkaEventData<string>("two");
+            return new OkObjectResult("Ok");
         }
     }
 }

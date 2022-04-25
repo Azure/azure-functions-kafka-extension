@@ -4,16 +4,16 @@ using Microsoft.Azure.WebJobs.Extensions.Storage;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 
-namespace KafkaSamples
+namespace Confluent
 {
     public class KafkaTriggerManyWithHeaders
     {
         [FunctionName("KafkaTriggerManyWithHeaders")]
         public static void Run(
             [KafkaTrigger("BrokerList",
-                          "kafkaeventhubtest1",
-                          Username = "$ConnectionString",
-                          Password = "%KafkaPassword%",
+                          "topic",
+                          Username = "ConfluentCloudUserName",
+                          Password = "ConfluentCloudPassword",
                           Protocol = BrokerProtocol.SaslSsl,
                           AuthenticationMode = BrokerAuthenticationMode.Plain,
                           ConsumerGroup = "$Default")] KafkaEventData<string>[] events, ILogger log)

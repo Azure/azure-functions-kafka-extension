@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Azure.Functions.Worker.Http;
 using System.Net;
 
-namespace KafkaSamples
+namespace Confluent
 {
     public class KafkaOutputWithHeaders
     {
