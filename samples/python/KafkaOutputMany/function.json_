@@ -16,7 +16,7 @@
       "direction": "out",
       "name": "outputMessage",
       "brokerList": "BrokerList",
-      "topic": "kafkaOutputMany",
+      "topic": "topic",
       "username": "%ConfluentCloudUserName%",
       "password": "%ConfluentCloudPassword%",
       "protocol": "SASLSSL",

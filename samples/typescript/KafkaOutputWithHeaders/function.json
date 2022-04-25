@@ -12,10 +12,10 @@
     {
       "type": "kafka",
       "name": "outputKafkaMessage",
-      "topic": "kafkaeventhubtest1",
+      "topic": "topic",
       "brokerList": "%BrokerList%",
-      "username": "$ConnectionString",
-      "password": "%KafkaPassword%",
+      "username" : "%ConfluentCloudUserName%",
+      "password" : "%ConfluentCloudPassword%",
       "protocol": "SASLSSL",
       "authenticationMode": "PLAIN",
       "direction": "out"

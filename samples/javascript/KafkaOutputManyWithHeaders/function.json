@@ -6,15 +6,14 @@
       "direction": "in",
       "name": "req",
       "methods": [
-        "get",
-        "post"
+        "get"
       ]
     },
     {
       "type": "kafka",
       "name": "outputKafkaMessage",
       "brokerList": "BrokerList",
-      "topic": "kafkaheaders",
+      "topic": "topic",
       "username": "ConfluentCloudUsername",
       "password": "ConfluentCloudPassword",
       "protocol": "SASLSSL",

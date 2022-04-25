@@ -4,7 +4,7 @@
             "type": "kafkaTrigger",
             "name": "event",
             "direction": "in",
-            "topic": "users",
+            "topic": "topic",
             "brokerList": "%BrokerList%",
             "username": "$ConnectionString",
             "password": "EventHubConnectionString",

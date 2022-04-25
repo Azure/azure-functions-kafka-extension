@@ -4,19 +4,18 @@
       "authLevel": "function",
       "type": "httpTrigger",
       "direction": "in",
-      "name": "Request",
+      "name": "req",
       "methods": [
-        "get",
-        "post"
-      ]
+        "get"      
+       ]
     },
     {
       "type": "kafka",
-      "name": "Message",
-      "brokerList": "BrokerList",
+      "name": "outputKafkaMessage",
       "topic": "topic",
-      "username" : "%ConfluentCloudUserName%",
-      "password" : "%ConfluentCloudPassword%",
+      "brokerList": "%BrokerList%",
+      "username": "$ConnectionString",
+      "password": "EventHubConnectionString",
       "protocol": "SASLSSL",
       "authenticationMode": "PLAIN",
       "direction": "out"
@@ -24,7 +23,8 @@
     {
       "type": "http",
       "direction": "out",
-      "name": "Response"
+      "name": "res"
     }
-  ]
+  ],
+  "scriptFile": "../dist/KafkaOutputWithHeaders/index.js"
 }

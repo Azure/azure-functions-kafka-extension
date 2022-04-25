@@ -4,16 +4,16 @@
       "type": "kafkaTrigger",
       "direction": "in",
       "name": "event",
-      "brokerList": "BrokerList",
       "topic": "topic",
-      "username" : "%ConfluentCloudUserName%",
+      "brokerList": "%BrokerList%",
+      "username": "$ConnectionString",
       "password": "EventHubConnectionString",
-      "consumerGroup" : "$Default",
+      "consumerGroup" : "functions",
       "protocol": "saslSsl",
       "authenticationMode": "plain",
       "cardinality": "MANY",
       "dataType": "string"
     }
   ],
-  "scriptFile": "../dist/KafkaTriggerManyWithHeaders/index.js"
+  "scriptFile": "../dist/KafkaTriggerMany/index.js"
 }

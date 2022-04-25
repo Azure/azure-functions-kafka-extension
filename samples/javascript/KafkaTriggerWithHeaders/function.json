@@ -8,7 +8,7 @@
       "username": "%ConfluentCloudUserName%",
       "password": "%ConfluentCloudPassword%",      
       "protocol": "saslSsl",
-      "topic": "kafkaheader", 
+      "topic": "topic", 
       "consumerGroup": "$Default",
       "dataType": "string"
     }

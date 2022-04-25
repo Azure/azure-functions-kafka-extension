@@ -12,7 +12,7 @@
     {
       "type": "kafka",
       "name": "outputKafkaMessage",
-      "topic": "KafkaOutput",
+      "topic": "topic",
       "brokerList": "%BrokerList%",
       "username": "%ConfluentCloudUserName%",
       "password": "%ConfluentCloudPassword%",

@@ -1,10 +1,11 @@
 {
+  "scriptFile": "__init__.py",
   "bindings": [
     {
       "authLevel": "function",
       "type": "httpTrigger",
       "direction": "in",
-      "name": "Request",
+      "name": "req",
       "methods": [
         "get",
         "post"
@@ -12,19 +13,19 @@
     },
     {
       "type": "kafka",
-      "name": "Message",
+      "direction": "out",
+      "name": "out",
       "brokerList": "BrokerList",
       "topic": "topic",
-      "username" : "%ConfluentCloudUserName%",
-      "password" : "%ConfluentCloudPassword%",
+      "username": "$ConnectionString",
+      "password": "EventHubConnectionString",
       "protocol": "SASLSSL",
-      "authenticationMode": "PLAIN",
-      "direction": "out"
+      "authenticationMode": "PLAIN"
     },
     {
       "type": "http",
       "direction": "out",
-      "name": "Response"
+      "name": "$return"
     }
   ]
 }

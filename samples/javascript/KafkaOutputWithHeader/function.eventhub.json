@@ -13,7 +13,7 @@
       "type": "kafka",
       "name": "outputKafkaMessage",
       "brokerList": "BrokerList",
-      "topic": "kafkaheaders",
+      "topic": "topic",
       "username": "$ConnectionString",
       "password": "EventHubConnectionString",
       "protocol": "SASLSSL",

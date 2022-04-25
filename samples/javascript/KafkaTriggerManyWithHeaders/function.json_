@@ -5,7 +5,7 @@
       "name": "event",
       "direction": "in",
       "brokerList": "BrokerList",
-      "topic": "kafkaheaders",
+      "topic": "topic",
       "username": "%ConfluentCloudUserName%",
       "password": "%ConfluentCloudPassword%",      
       "protocol": "saslSsl",

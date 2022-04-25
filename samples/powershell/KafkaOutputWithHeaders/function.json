@@ -15,8 +15,8 @@
       "name": "Message",
       "brokerList": "BrokerList",
       "topic": "topic",
-      "username": "$ConnectionString",
-      "password": "%KafkaPassword%",
+      "username" : "%ConfluentCloudUserName%",
+      "password" : "%ConfluentCloudPassword%",
       "protocol": "SASLSSL",
       "authenticationMode": "PLAIN",
       "direction": "out"

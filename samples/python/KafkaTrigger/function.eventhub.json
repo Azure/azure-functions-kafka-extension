@@ -6,8 +6,8 @@
           "name": "kevent",
           "topic": "topic",
           "brokerList": "%BrokerList%",
-          "username": "%ConfluentCloudUserName%",
-          "password": "%ConfluentCloudPassword%",
+          "username": "$ConnectionString",
+          "password": "EventHubConnectionString",
           "consumerGroup" : "functions",
           "protocol": "saslSsl",
           "authenticationMode": "plain"

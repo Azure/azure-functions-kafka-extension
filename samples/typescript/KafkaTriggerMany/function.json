@@ -4,7 +4,7 @@
       "type": "kafkaTrigger",
       "direction": "in",
       "name": "event",
-      "topic": "users",
+      "topic": "topic",
       "brokerList": "%BrokerList%",
       "username": "%ConfluentCloudUserName%",
       "password": "%ConfluentCloudPassword%",

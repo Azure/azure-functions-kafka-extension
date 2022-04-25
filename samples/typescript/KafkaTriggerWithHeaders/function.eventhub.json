@@ -2,16 +2,17 @@
   "bindings": [
     {
       "type": "kafkaTrigger",
-      "name": "kafkaEvent",
       "direction": "in",
+      "name": "event",
       "brokerList": "BrokerList",
       "topic": "topic",
-      "username" : "%ConfluentCloudUserName%",
+      "username": "$ConnectionString",
       "password": "EventHubConnectionString",
+      "consumerGroup" : "$Default",
       "protocol": "saslSsl",
       "authenticationMode": "plain",
-      "consumerGroup": "$Default",
-      "dataType" : "string"
+      "dataType": "string"
     }
-  ]
+  ],
+  "scriptFile": "../dist/KafkaTriggerWithHeaders/index.js"
 }

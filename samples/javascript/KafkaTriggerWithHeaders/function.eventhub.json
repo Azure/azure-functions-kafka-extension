@@ -8,7 +8,7 @@
       "username": "$ConnectionString",
       "password": "EventHubConnectionString",  
       "protocol": "saslSsl",
-      "topic": "kafkaheader", 
+      "topic": "topic", 
       "consumerGroup": "$Default",
       "dataType": "string"
     }

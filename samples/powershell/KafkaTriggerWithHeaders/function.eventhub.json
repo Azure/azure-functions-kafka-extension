@@ -6,7 +6,7 @@
       "direction": "in",
       "brokerList": "BrokerList",
       "topic": "topic",
-      "username" : "%ConfluentCloudUserName%",
+      "username": "$ConnectionString",
       "password": "EventHubConnectionString",
       "protocol": "saslSsl",
       "authenticationMode": "plain",
