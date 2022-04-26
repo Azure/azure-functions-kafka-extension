@@ -70,12 +70,12 @@ steps:
       targetType: filePath
       filePath: ./script/create_package.sh
 
-  - task: Bash@3
-    displayName: Start Kakfa in single node with Java and Python
-    inputs:
-      targetType: filePath
-      filePath: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/server/start-kafka-test-environment.sh
-      workingDirectory: test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/server
+  # - task: Bash@3
+  #   displayName: Start Kakfa in single node with Java and Python
+  #   inputs:
+  #     targetType: filePath
+  #     filePath: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/server/start-kafka-test-environment.sh
+  #     workingDirectory: test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/server
 
   - task: DotNetCoreCLI@2
     displayName: Run language e2e tests
