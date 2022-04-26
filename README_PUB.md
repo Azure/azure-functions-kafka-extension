@@ -39,3 +39,8 @@ Before working with the Kafka extension, you must setup the managed Kafka Broker
 
 The Kafka bindings are only fully supported on [Premium](https://docs.microsoft.com/en-us/azure/azure-functions/functions-premium-plan) and [Dedicated App Service](https://docs.microsoft.com/en-us/azure/azure-functions/dedicated-plan) plans. Consumption plans aren&#39;t supported.
  Kafka bindings are only supported for Azure Functions version 3.x and later versions.
+
+ # Next Steps
+
+- Run a function when a Kafka message is created (Trigger)
+- Send Kafka message from Azure Functions (Output Binding)
