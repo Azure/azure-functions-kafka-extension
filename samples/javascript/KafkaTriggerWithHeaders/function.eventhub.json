@@ -10,7 +10,8 @@
       "protocol": "saslSsl",
       "topic": "topic", 
       "consumerGroup": "$Default",
-      "dataType": "string"
+      "dataType": "string",
+      "authenticationMode": "plain"
     }
   ]
 }

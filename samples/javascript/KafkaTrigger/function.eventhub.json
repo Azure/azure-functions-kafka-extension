@@ -11,7 +11,7 @@
             "protocol": "saslSsl",
             "authenticationMode": "plain",
             "consumerGroup" : "$Default",
-            "dataType": "binary"
+            "dataType": "string"
         }
     ]
 }
