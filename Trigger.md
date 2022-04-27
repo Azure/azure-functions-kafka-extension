@@ -1,6 +1,7 @@
 # Public Documentation
 
 **NOTE:** The Kafka bindings are only fully supported on [Premium](https://docs.microsoft.com/en-us/azure/azure-functions/functions-premium-plan) and [Dedicated App Service](https://docs.microsoft.com/en-us/azure/azure-functions/dedicated-plan) plans. Consumption plans are not supported.
+
 **NOTE:** Kafka bindings are only supported for Azure Functions version 3.x and later versions.
 
 # Examples
@@ -53,7 +54,10 @@ For connection to a secure Kafka Broker -
 |sslCaLocation|ssl.ca.location|Path to CA certificate file for verifying the broker's certificate|
 
 # JS/TS/PS/Python Configuration
-|function.json property|Descirption|
+
+The following tables explain the binding configuration properties that you set in the [function.json](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference?tabs=blob#function-code) file -
+
+|function.json property|Description|
 |-|-|
 |type|Must be set to kafkaTrigger.|
 |direction|Must be set to in.|
@@ -75,7 +79,7 @@ For connection to a secure Kafka Broker -
 |sslCertificateLocation|ssl.certificate.location|Path to client's certificate|
 |sslCaLocation|ssl.ca.location|Path to CA certificate file for verifying the broker's certificate|
 
- When you are developing locally, add your application settings in the local.settings.json file in the Values collection.
+ When you are developing locally, add your application settings in the [local.settings.json](https://docs.microsoft.com/en-us/azure/azure-functions/functions-develop-local#local-settings-file) file in the Values collection.
 
 **NOTE:** Username and password should reference a Azure function configuration variable and not be hardcoded.
 
@@ -96,4 +100,5 @@ In the portal, this setting can be found under Configuration > Function runtime 
 <!---Insert Screenshot--->
 
 In the CLI, you can enable Runtime Scale Monitoring by using the following command:
+
 ```az resource update -g <resource_group> -n <function_app_name>/config/web --set properties.functionsRuntimeScaleMonitoringEnabled=1 --resource-type Microsoft.Web/sites```
