@@ -16,8 +16,8 @@
       "name": "outputMessage",
       "brokerList": "BrokerList",
       "topic": "topic",
-      "username": "%ConfluentCloudUserName%",
-      "password": "%ConfluentCloudPassword%",
+      "username": "$ConnectionString",
+      "password": "EventHubConnectionString",
       "protocol": "SASLSSL",
       "authenticationMode": "PLAIN"
     },

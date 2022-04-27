@@ -7,7 +7,7 @@
       "brokerList": "BrokerList",
       "topic": "topic",
       "username" : "%ConfluentCloudUserName%",
-      "password": "EventHubConnectionString",
+      "password": "ConfluentCloudPassword",
       "consumerGroup" : "$Default",
       "protocol": "saslSsl",
       "authenticationMode": "plain",

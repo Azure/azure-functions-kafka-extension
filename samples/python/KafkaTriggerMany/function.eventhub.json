@@ -6,13 +6,13 @@
             "direction": "in",
             "name" : "kevents",
             "protocol" : "SASLSSL",
-            "password" : "%ConfluentCloudPassword%",
+            "password" : "EventHubConnectionString",
             "topic" : "message_python",
             "authenticationMode" : "PLAIN",
             "cardinality" : "MANY",
             "dataType": "string",
             "consumerGroup" : "$Default",
-            "username" : "%ConfluentCloudUserName%",
+            "username" : "$ConnectionString",
             "BrokerList" : "%BrokerList%"    
         }
     ]

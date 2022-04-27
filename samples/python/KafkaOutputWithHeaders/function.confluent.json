@@ -17,7 +17,7 @@
       "brokerList": "BrokerList",
       "topic": "topic",
       "username" : "%ConfluentCloudUserName%",
-      "password": "KafkaPassword",
+      "password": "ConfluentCloudPassword",
       "protocol": "SASLSSL",
       "authenticationMode": "PLAIN"
     },
