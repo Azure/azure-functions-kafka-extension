@@ -12,7 +12,7 @@ public class KafkaTriggerWithHeaders {
                 topic = "topic",  
                 brokerList="%BrokerList%",
                 consumerGroup="$Default", 
-                username= "$ConnectionString",
+                username = "%ConfluentCloudUsername%", 
                 password = "ConfluentCloudPassword",
                 authenticationMode = BrokerAuthenticationMode.PLAIN,
                 protocol = BrokerProtocol.SASLSSL,

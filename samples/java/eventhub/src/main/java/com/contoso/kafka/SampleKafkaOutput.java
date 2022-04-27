@@ -21,7 +21,7 @@ public class SampleKafkaOutput {
                 name = "kafkaOutput",
                 topic = "topic",  
                 brokerList="%BrokerList%",
-                username = "%ConfluentCloudUsername%", 
+                username = "$ConnectionString", 
                 password = "EventHubConnectionString",
                 authenticationMode = BrokerAuthenticationMode.PLAIN,
                 // sslCaLocation = "confluent_cloud_cacert.pem", // Enable this line for windows.  

@@ -14,7 +14,7 @@ public class KafkaOutputMany {
                 name = "kafkaOutput",
                 topic = "topic",  
                 brokerList="%BrokerList%",
-                username = "$ConnectionString", 
+                username = "%ConfluentCloudUsername%", 
                 password = "ConfluentCloudPassword",
                 authenticationMode = BrokerAuthenticationMode.PLAIN,
                 // sslCaLocation = "confluent_cloud_cacert.pem", // Enable this line for windows.  
