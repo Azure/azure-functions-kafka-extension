@@ -9,6 +9,8 @@ Write-Host "PowerShell HTTP trigger function processed a request."
 # Interact with query parameters or the body of the request.
 $message = $Request.Query.Message
 
+$message
+
 Push-OutputBinding -Name outputMessage -Value ($message)
 
 # Associate values to output bindings by calling 'Push-OutputBinding'.

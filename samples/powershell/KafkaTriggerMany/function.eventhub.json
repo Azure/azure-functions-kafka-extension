@@ -2,18 +2,17 @@
     "bindings": [
       {
             "type": "kafkaTrigger",
-            "name": "kafkaEvent",
+            "name": "kafkaEvents",
             "direction": "in",
             "protocol" : "SASLSSL",
-            "password" : "%ConfluentCloudPassword%",
+            "password" : "EventHubConnectionString",
             "dataType" : "string",
-            "topic" : "message",
+            "topic" : "topic",
             "authenticationMode" : "PLAIN",
             "cardinality" : "MANY",
             "consumerGroup" : "$Default",
-            "username" : "%ConfluentCloudUserName%",
-            "brokerList" : "%BrokerList%",
-            "sslCaLocation": "confluent_cloud_cacert.pem"
+            "username" : "$ConnectionString",
+            "brokerList" : "%BrokerList%"
         }
     ]
 }

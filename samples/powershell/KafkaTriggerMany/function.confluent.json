@@ -7,7 +7,7 @@
             "protocol" : "SASLSSL",
             "password" : "%ConfluentCloudPassword%",
             "dataType" : "string",
-            "topic" : "message",
+            "topic" : "topic",
             "authenticationMode" : "PLAIN",
             "cardinality" : "MANY",
             "consumerGroup" : "$Default",

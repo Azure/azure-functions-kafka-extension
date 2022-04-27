@@ -5,13 +5,12 @@
             "name": "kafkaEvent",
             "direction": "in",
             "protocol" : "SASLSSL",
-            "password" : "%ConfluentCloudPassword%",
+            "password" : "EventHubConnectionString",
             "dataType" : "string",
-            "topic" : "message",
+            "topic" : "topic",
             "authenticationMode" : "PLAIN",
-            "cardinality" : "MANY",
             "consumerGroup" : "$Default",
-            "username" : "%ConfluentCloudUserName%",
+            "username" : "$ConnectionString",
             "brokerList" : "%BrokerList%",
             "sslCaLocation": "confluent_cloud_cacert.pem"
         }
