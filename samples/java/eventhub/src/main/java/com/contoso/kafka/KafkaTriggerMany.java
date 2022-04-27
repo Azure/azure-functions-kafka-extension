@@ -12,7 +12,7 @@ public class KafkaTriggerMany {
                 topic = "topic",  
                 brokerList="%BrokerList%",
                 consumerGroup="$Default", 
-                username = "%ConfluentCloudUsername%", 
+                username = "$ConnectionString", 
                 password = "EventHubConnectionString",
                 authenticationMode = BrokerAuthenticationMode.PLAIN,
                 protocol = BrokerProtocol.SASLSSL,
