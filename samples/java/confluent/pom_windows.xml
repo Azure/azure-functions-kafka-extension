@@ -14,8 +14,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <azure.functions.maven.plugin.version>1.8.0</azure.functions.maven.plugin.version>
-        <azure.functions.java.library.version>1.4.0</azure.functions.java.library.version>
+        <azure.functions.maven.plugin.version>1.18.0</azure.functions.maven.plugin.version>
+        <azure.functions.java.library.version>2.0.0</azure.functions.java.library.version>
         <functionAppName>kafka-function-20190419163130420</functionAppName>
         <functionAppRegion>westus</functionAppRegion>
         <stagingDirectory>${project.build.directory}/azure-functions/${functionAppName}</stagingDirectory>
