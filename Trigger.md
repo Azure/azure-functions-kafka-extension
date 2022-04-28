@@ -4,6 +4,9 @@
 
 **NOTE:** Kafka bindings are only supported for Azure Functions version 3.x and later versions.
 
+Use the Kafka output binding to send messages to a Kafka topic
+For information on setup and configuration details, see the overview
+
 # Examples
 
 # C# Attributes
@@ -53,7 +56,7 @@ For connection to a secure Kafka Broker -
 |sslCertificateLocation|ssl.certificate.location|Path to client's certificate|
 |sslCaLocation|ssl.ca.location|Path to CA certificate file for verifying the broker's certificate|
 
-# JS/TS/PS/Python Configuration
+# Javascript/Typescript/Powershell/Python Configuration
 
 The following tables explain the binding configuration properties that you set in the [function.json](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference?tabs=blob#function-code) file -
 
@@ -85,12 +88,33 @@ For connection to a secure Kafka Broker -
 
 
 # host.json settings
+
+This section describes the configuration settings available for this binding in versions 2.x and higher. Settings in the host.json file apply to all functions in a function app instance. For more information about function app configuration settings in versions 2.x and later versions, see [host.json reference for Azure Functions](https://docs.microsoft.com/en-us/azure/azure-functions/functions-host-json).
+
 |Setting|Description|Default Value
 |-|-|-|
 |MaxBatchSize|Maximum batch size when calling a Kafka trigger function|64
 |SubscriberIntervalInSeconds|Defines the minimum frequency in which messages will be executed by function. Only if the message volume is less than MaxBatchSize / SubscriberIntervalInSeconds|1
 |ExecutorChannelCapacity|Defines the channel capacity in which messages will be sent to functions. Once the capacity is reached the Kafka subscriber will pause until the function catches up|1
 |ChannelFullRetryIntervalInMs|Defines the interval in milliseconds in which the subscriber should retry adding items to channel once it reaches the capacity|50
+
+The settings exposed here are to customize how librdkafka works. [Librdkafka Documentation](https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md) for information on each setting.
+
+|Setting|librdkafka property|
+|-|-|
+|ReconnectBackoffMs|reconnect.backoff.max.ms|
+|ReconnectBackoffMaxMs|reconnect.backoff.max.ms|
+|StatisticsIntervalMs|statistics.interval.ms|
+|SessionTimeoutMs|session.timeout.ms|
+|MaxPollIntervalMs|max.poll.interval.ms|
+|QueuedMinMessages|queued.min.messages|
+|QueuedMaxMessagesKbytes|queued.max.messages.kbytes|
+|MaxPartitionFetchBytes|max.partition.fetch.bytes|
+|FetchMaxBytes|fetch.max.bytes|
+|AutoCommitIntervalMs|auto.commit.interval.ms|
+|LibkafkaDebug|debug|
+|MetadataMaxAgeMs|metadata.max.age.ms|
+|SocketKeepaliveEnable|socket.keepalive.enable|
 
 # Enable Runtime Scaling
 In order for the Kafka trigger to scale out to multiple instances, the Runtime Scale Monitoring setting must be enabled.
