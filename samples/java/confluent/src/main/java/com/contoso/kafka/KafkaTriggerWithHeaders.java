@@ -2,6 +2,8 @@ package com.contoso.kafka;
 
 import java.util.*;
 import com.microsoft.azure.functions.annotation.*;
+import com.contoso.kafka.entity.KafkaEntity;
+import com.contoso.kafka.entity.KafkaHeaders;
 import com.microsoft.azure.functions.*;
 
 public class KafkaTriggerWithHeaders {

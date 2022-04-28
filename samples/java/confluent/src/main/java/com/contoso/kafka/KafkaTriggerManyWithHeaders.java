@@ -3,8 +3,8 @@ package com.contoso.kafka;
 import java.util.*;
 import com.microsoft.azure.functions.annotation.*;
 
-import org.json.JSONObject;
-
+import com.contoso.kafka.entity.KafkaEntity;
+import com.contoso.kafka.entity.KafkaHeaders;
 import com.google.gson.Gson;
 import com.microsoft.azure.functions.*;
 

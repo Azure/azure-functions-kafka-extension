@@ -1,6 +1,8 @@
 package com.contoso.kafka;
 
 import com.microsoft.azure.functions.annotation.*;
+import com.contoso.kafka.entity.KafkaEntity;
+import com.contoso.kafka.entity.KafkaHeaders;
 import com.microsoft.azure.functions.*;
 
 import java.util.Optional;
