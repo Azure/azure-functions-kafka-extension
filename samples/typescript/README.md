@@ -8,8 +8,8 @@ We provide two samples.
 
 | Name | Description | Kafka Cluster| Enabled |
 | ----- | --------------- | -------| ---|
-| UsersTrigger | Simple Kafka trigger sample | local | yes |
-| UsersTriggerMany | Kafka batch processing sample | local | yes |
+| KafkaTrigger | Simple Kafka trigger sample | local | yes |
+| KafkaTriggerMany | Kafka batch processing sample | local | yes |
 
 ## Difference between Javascript and TypeScript
 
