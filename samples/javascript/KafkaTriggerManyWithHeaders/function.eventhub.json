@@ -1,0 +1,18 @@
+{
+  "bindings": [
+    {
+      "type": "kafkaTrigger",
+      "name": "event",
+      "direction": "in",
+      "brokerList": "BrokerList",
+      "topic": "topic",
+      "username": "$ConnectionString",
+      "password": "EventHubConnectionString",
+      "protocol": "saslSsl",
+      "authenticationMode": "plain",
+      "consumerGroup": "$Default",
+      "dataType": "string",
+      "cardinality" : "MANY"
+    }
+  ]
+}

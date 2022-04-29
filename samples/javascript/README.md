@@ -39,17 +39,17 @@ In the table below, `Kafka Cluster` local means that the sample users a Kafka cl
 
 | Name | Description | Kafka Cluster| Enabled |
 | ----- | --------------- | -------| ---|
-| UsersTrigger | Simple Kafka trigger sample | local | yes |
-| UsersTriggerMany | Kafka batch processing sample with Confluent Cloud | Confluent Cloud | no |
+| KafkaTrigger | Simple Kafka trigger sample | local | yes |
+| KafkaTriggerMany | Kafka batch processing sample with Confluent Cloud | Confluent Cloud | no |
 
 
 ### Modify function.json_ and local.settings.json
 
-If you want to use the `UsersTriggerMany` sample, rename `UsersTriggerMany/function.json_` to `UsersTriggerMany/function.json`. This allows the Azure Functions Runtime to detect the function.
+If you want to use the `KafkaTriggerMany` sample, rename `KafkaTriggerMany/function.json_` to `KafkaTriggerMany/function.json`. This allows the Azure Functions Runtime to detect the function.
 
 Then copy `local.settings.json.example` to `local.settings.json` and configure your [ccloud](https://docs.confluent.io/current/cloud/cli/index.html) environment.
 
-### Modify UsersTriggerMany/function.json (Windows user only)
+### Modify KafkaTriggerMany/function.json (Windows user only)
 
 If you want to run the sample on your Windows with Confluent Cloud and you are not using DevContainer, uncomment the following line. It is the settings of the CA certificate. .NET Core that is azure functions host language can not access the Windows registry, which means it can not access the CA certificate of the Confluent Cloud.
 
