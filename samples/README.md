@@ -96,7 +96,7 @@ _function.json_
   } ]
 }
 ```
-**NOTE** For EventHub, username should be set to "$ConnectionString" only. The password should be the actual connection string value that could be set in local.settings.json or appsettings (Please see [local-settings](#local.settings.json) section for more details).
+**NOTE** For EventHub, username should be set to "$ConnectionString" only. The password should be the actual connection string value that could be set in local.settings.json or appsettings (Please see [local-settings](#localsettingsjson) section for more details).
 
 ### local.settings.json
 
