@@ -30,7 +30,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
 
             var result = consumer.Consume(10 * 1000);
 
-            Assert.Equal(inputMessage, result.Message.Value.ToKafkaEventData().Value);
+            Assert.Equal(inputMessage, result.Message.Value);
         }
 
         [Fact]
@@ -44,7 +44,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
             Assert.True(response.IsSuccessStatusCode);
 
             var result = consumer.Consume(10 * 1000);
-            Assert.Equal(inputMessage, result.Message.Value.ToKafkaEventData().Value);
+            Assert.Equal(inputMessage, result.Message.Value);
         }
     }
 }
