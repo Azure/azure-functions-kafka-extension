@@ -121,7 +121,7 @@ In order for the Kafka trigger to scale out to multiple instances, the Runtime S
 
 In the portal, this setting can be found under Configuration > Function runtime settings for your function app.
 
-<!---Insert Screenshot--->
+![My image](../images/virtual-network-trigger-toggle.png)
 
 In the CLI, you can enable Runtime Scale Monitoring by using the following command:
 
