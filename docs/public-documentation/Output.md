@@ -61,6 +61,8 @@ The following Java function uses the @KafkaOutput annotation from the Azure func
 |requestTimeoutMs|The acknowledge timeout of the producer request in milliseconds. default: 5000|
 |maxRetries|How many times to retry sending a failing Message. **Note:** default: 2. Retrying may cause reordering unless EnableIdempotence is set to true.|
 
+For connection to a secure Kafka Broker -
+
 |Setting|librdkafka property|Description|
 |-|-|-|
 | authenticationMode | sasl.mechanism | SASL mechanism to use for authentication |
@@ -82,7 +84,7 @@ Here&#39;s the binding data in the _function.json_ file:
 \&lt;-- placeholder for the examples --\&gt;
 
 | **function.json property** | **Description** |
-|-|-|-|
+|-|-|
 |type|Must be set to kafkaOutput.|
 |direction|Must be set to out.|
 |name|Name of the variable that represents  request or request body in the function code.|
