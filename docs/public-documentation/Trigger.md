@@ -9,6 +9,174 @@ For information on setup and configuration details, see the overview
 
 # Examples
 
+## C#
+
+The C# function can be created using one of the following C# modes:
+
+- [In-process class library](https://docs.microsoft.com/en-us/azure/azure-functions/functions-dotnet-class-library): compiled C# function that runs in the same process as the Functions runtime.
+- [Isolated process class library](https://docs.microsoft.com/en-us/azure/azure-functions/dotnet-isolated-process-guide): compiled C# function that runs in a process isolated from the runtime. Isolated process is required to support C# functions running on .NET 5.0.
+
+The following example shows a C# function that reads and logs the Kafka message as a KafkaEvent:
+
+### InProcess
+The following example shows a C# function that reads and logs the Kafka message as a KafkaEvent:
+
+```csharp
+[FunctionName("KafkaTrigger")]
+public static void Run(
+    [KafkaTrigger("BrokerList",
+                    "topic",
+                    Username = "ConfluentCloudUserName",
+                    Password = "ConfluentCloudPassword",
+                    Protocol = BrokerProtocol.SaslSsl,
+                    AuthenticationMode = BrokerAuthenticationMode.Plain,
+                    ConsumerGroup = "$Default")] KafkaEventData<string> kevent, ILogger log)
+{            
+    log.LogInformation($"C# Kafka trigger function processed a message: {kevent.Value}");
+}
+```
+
+
+### IsolatedProcess
+```csharp
+[Function("KafkaTrigger")]
+public static void Run(
+    [KafkaTrigger("BrokerList",
+                    "topic",
+                    Username = "ConfluentCloudUserName",
+                    Password = "ConfluentCloudPassword",
+                    Protocol = BrokerProtocol.SaslSsl,
+                    AuthenticationMode = BrokerAuthenticationMode.Plain,
+                    ConsumerGroup = "$Default")] string eventData, FunctionContext context)
+{
+    var logger = context.GetLogger("KafkaFunction");
+    logger.LogInformation($"C# Kafka trigger function processed a message: {JObject.Parse(eventData)["Value"]}");
+}
+```
+
+## Java
+
+The following example shows an Kafka trigger binding which logs the message body of the Kafka trigger.
+
+```java
+@FunctionName("KafkaTrigger")
+public void runSingle(
+        @KafkaTrigger(
+            name = "KafkaTrigger",
+            topic = "topic",  
+            brokerList="%BrokerList%",
+            consumerGroup="$Default", 
+            username = "%ConfluentCloudUsername%", 
+            password = "ConfluentCloudPassword",
+            authenticationMode = BrokerAuthenticationMode.PLAIN,
+            protocol = BrokerProtocol.SASLSSL,
+            dataType = "string") String kafkaEventData,
+        final ExecutionContext context) 
+    {
+        context.getLogger().info(kafkaEventData);
+    }
+```
+
+## Javascript
+
+The following example shows a Kafka trigger binding in a function.json file and a JavaScript function that uses the binding. The function reads and logs a Kafka  message.
+
+Here's the binding data in the function.json file:
+```json
+{
+    "bindings": [
+        {
+            "type": "kafkaTrigger",
+            "name": "event",
+            "direction": "in",
+            "topic": "topic",
+            "brokerList": "%BrokerList%",
+            "username": "%ConfluentCloudUserName%",
+            "password": "%ConfluentCloudPassword%",
+            "protocol": "saslSsl",
+            "authenticationMode": "plain",
+            "consumerGroup" : "$Default",
+            "dataType": "string"
+        }
+    ]
+}
+```
+Here's the JavaScript script code:
+```js
+module.exports = async function (context, event) {
+    context.log.info(`JavaScript Kafka trigger function called for message ${event.Value}`);
+};
+```
+
+## Powershell
+The following example demonstrates how to read a Kafka message passed to a function via a trigger.
+
+Kafka trigger is defined in function.json file where type is set to kafkaTrigger.
+
+```json
+{
+    "bindings": [
+      {
+            "type": "kafkaTrigger",
+            "name": "kafkaEvent",
+            "direction": "in",
+            "protocol" : "SASLSSL",
+            "password" : "%ConfluentCloudPassword%",
+            "dataType" : "string",
+            "topic" : "topic",
+            "authenticationMode" : "PLAIN",
+            "consumerGroup" : "$Default",
+            "username" : "%ConfluentCloudUserName%",
+            "brokerList" : "%BrokerList%",
+            "sslCaLocation": "confluent_cloud_cacert.pem"
+        }
+    ]
+}
+```
+
+The code in the Run.ps1 file declares a parameter as $kafkaEvent, which allows you to read the kafka event message in your function.
+
+```ps
+using namespace System.Net
+
+param($kafkaEvent, $TriggerMetadata)
+
+Write-Output "Powershell Kafka trigger function called for message $kafkaEvent.Value"
+```
+
+
+## Python
+
+The following example demonstrates how to read a Kafka queue message via a trigger.
+
+A Kafka binding is defined in function.json where type is set to KafkaTrigger.
+
+```json
+{
+      "scriptFile": "main.py",
+      "bindings": [
+        {
+          "type": "kafkaTrigger",
+          "name": "kevent",
+          "topic": "topic",
+          "brokerList": "%BrokerList%",
+          "username": "%ConfluentCloudUserName%",
+          "password": "%ConfluentCloudPassword%",
+          "consumerGroup" : "functions",
+          "protocol": "saslSsl",
+          "authenticationMode": "plain"
+        }
+    ]
+}
+```
+
+```py
+import logging
+from azure.functions import KafkaEvent
+
+def main(kevent : KafkaEvent):
+    logging.info("Python Kafka trigger function called for message " + kevent.metadata["Value"])
+```
 # C# Attributes
 
 |Setting|Description|

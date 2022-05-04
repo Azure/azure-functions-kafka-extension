@@ -9,10 +9,94 @@ Use the Kafka output binding to send messages to a Kafka topic.
 
 # C#
 
+The C# function can be created using one of the following C# modes:
+
 - [In-process class library](https://docs.microsoft.com/en-us/azure/azure-functions/functions-dotnet-class-library): compiled C# function that runs in the same process as the Functions runtime.
 - [Isolated process class library](https://docs.microsoft.com/en-us/azure/azure-functions/dotnet-isolated-process-guide): compiled C# function that runs in a process isolated from the runtime. Isolated process is required to support C# functions running on .NET 5.0.
 
-\&lt;-- placeholder for the examples --\&gt;
+
+
+### InProcess
+
+The following example shows a C# function that sends the message to the Kafka topic, using data provided in HTTP GET request.
+
+```csharp
+[FunctionName("KafkaOutput")]
+public static IActionResult Output(
+    [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
+    [Kafka("BrokerList",
+            "topic",
+            Username = "ConfluentCloudUserName",
+            Password = "ConfluentCloudPassword",
+            Protocol = BrokerProtocol.SaslSsl,
+            AuthenticationMode = BrokerAuthenticationMode.Plain
+    )] out string eventData,
+    ILogger log)
+{
+    log.LogInformation("C# HTTP trigger function processed a request.");
+
+    string message = req.Query["message"];
+
+    string responseMessage = "Ok";            
+    eventData = message;
+
+    return new OkObjectResult(responseMessage);
+}
+```
+
+### IsolatedProcess
+
+The following example shows a C# function that writes a message string to Kafka, using the method return value as the output. The function gets triggered on a HTTP GET request. This example has a custom return type which is MultipleOutputType that consists of HTTP response and Kafka output. In class MultipleOutputType, Kevent is the output binding variable for Kafka. 
+
+```csharp
+using System;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Extensions.Logging;
+using Microsoft.Azure.Functions.Worker.Http;
+using System.Net;
+
+namespace Confluent
+{
+    public class KafkaOutput
+    {
+        [Function("KafkaOutput")]
+        
+        public static MultipleOutputType Output(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequestData req,
+            FunctionContext executionContext)
+        {
+            var log = executionContext.GetLogger("HttpFunction");
+            log.LogInformation("C# HTTP trigger function processed a request.");
+
+            string message = req.FunctionContext
+                                .BindingContext
+                                .BindingData["message"]
+                                .ToString();
+
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            return new MultipleOutputType()
+            {
+                Kevent = message,
+                HttpResponse = response
+            };
+        }
+    }
+
+    public class MultipleOutputType
+    {
+        [KafkaOutput("BrokerList",
+                    "topic",
+                    Username = "ConfluentCloudUserName",
+                    Password = "ConfluentCloudPassword",
+            Protocol = BrokerProtocol.SaslSsl,
+            AuthenticationMode = BrokerAuthenticationMode.Plain
+        )]        
+        public string Kevent { get; set; }
+
+        public HttpResponseData HttpResponse { get; set; }
+    }
+}
+```
 
 |Setting|Description|
 |-|-|
@@ -42,9 +126,31 @@ Username and password should reference a Azure function configuration variable a
 
 # Java
 
-The following Java function uses the @KafkaOutput annotation from the Azure function Java Client library to describe the configuration for a Kafka topic output binding. The function sends a message to the Kafka topic
+The following Java function uses the @KafkaOutput annotation from the Azure function Java Client library to describe the configuration for a Kafka topic output binding. The function sends a message to the Kafka topic.
 
-\&lt;-- placeholder for the examples --\&gt;
+```java
+@FunctionName("KafkaOutput")
+public HttpResponseMessage run(
+        @HttpTrigger(name = "req", methods = {HttpMethod.GET}, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
+        @KafkaOutput(
+            name = "kafkaOutput",
+            topic = "topic",  
+            brokerList="%BrokerList%",
+            username = "%ConfluentCloudUsername%", 
+            password = "ConfluentCloudPassword",
+            authenticationMode = BrokerAuthenticationMode.PLAIN
+            protocol = BrokerProtocol.SASLSSL
+        )  OutputBinding<String> output,
+        final ExecutionContext context) {
+    context.getLogger().info("Java HTTP trigger processed a request.");
+
+    // Parse query parameter
+    String message = request.getQueryParameters().get("message");
+    context.getLogger().info("Message:" + message);
+    output.setValue(message);
+    return request.createResponseBuilder(HttpStatus.OK).body("Ok").build();
+}
+```
 
 ## Annotation
 
@@ -77,11 +183,171 @@ For connection to a secure Kafka Broker -
 
 # JavaScript/TypeScript/Python/Powershell
 
+
+### JavaScript
+
 The following example shows a Kafka output binding in a _function.json_ file and a [JavaScript function](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node) that uses the binding. The function reads in the message from an HTTP trigger and outputs it to the Kafka topic.
 
 Here&#39;s the binding data in the _function.json_ file:
 
-\&lt;-- placeholder for the examples --\&gt;
+```json
+{
+  "bindings": [
+    {
+      "authLevel": "function",
+      "type": "httpTrigger",
+      "direction": "in",
+      "name": "req",
+      "methods": [
+        "get"
+      ]
+    },
+    {
+      "type": "kafka",
+      "name": "outputKafkaMessage",
+      "brokerList": "BrokerList",
+      "topic": "topic",
+      "username": "ConfluentCloudUsername",
+      "password": "ConfluentCloudPassword",
+      "protocol": "SASLSSL",
+      "authenticationMode": "PLAIN",
+      "direction": "out"
+    },
+    {
+      "type": "http",
+      "direction": "out",
+      "name": "res"
+    }
+  ]
+}
+```
+
+Here's JavaScript code:
+
+```js
+module.exports = async function (context, req) {
+    context.log('JavaScript HTTP trigger function processed a request.');
+
+    const message = (req.query.message);
+    context.bindings.outputKafkaMessage = message;
+    context.res = {
+        body: 'Ok'
+    };
+}
+```
+
+### Powershell
+The following example shows a Kafka output binding in a function.json file and a Powershell function that uses the binding. The function reads in the message from an HTTP trigger and outputs it to the Kafka topic.
+
+Here&#39;s the binding data in the _function.json_ file:
+```json
+{
+  "bindings": [
+    {
+      "authLevel": "function",
+      "type": "httpTrigger",
+      "direction": "in",
+      "name": "Request",
+      "methods": [
+        "get"
+      ]
+    },
+    {
+      "type": "kafka",
+      "name": "outputMessage",
+      "brokerList": "BrokerList",
+      "topic": "topic",
+      "username" : "%ConfluentCloudUserName%",
+      "password" : "%ConfluentCloudPassword%",
+      "protocol": "SASLSSL",
+      "authenticationMode": "PLAIN",
+      "direction": "out"
+    },
+    {
+      "type": "http",
+      "direction": "out",
+      "name": "Response"
+    }
+  ]
+}
+```
+In your function, use the Push-OutputBinding to send an event through the Kafka output binding.
+
+
+```ps1
+using namespace System.Net
+
+# Input bindings are passed in via param block.
+param($Request, $TriggerMetadata)
+
+# Write to the Azure Functions log stream.
+Write-Host "PowerShell HTTP trigger function processed a request."
+
+# Interact with query parameters or the body of the request.
+$message = $Request.Query.Message
+
+$message
+
+Push-OutputBinding -Name outputMessage -Value ($message)
+
+# Associate values to output bindings by calling 'Push-OutputBinding'.
+Push-OutputBinding -Name Response -Value ([HttpResponseContext]@{
+    StatusCode = [HttpStatusCode]::OK
+})
+```
+
+### Python
+
+The following example shows a Kafka output binding in a function.json file and a Python function that uses the binding. The function reads in the message from an HTTP trigger and outputs it to the Kafka topic.
+
+Here&#39;s the binding data in the _function.json_ file:
+
+```json
+{
+  "scriptFile": "main.py",
+  "bindings": [
+    {
+      "authLevel": "function",
+      "type": "httpTrigger",
+      "direction": "in",
+      "name": "req",
+      "methods": [
+        "get"
+      ]
+    },
+    {
+      "type": "kafka",
+      "direction": "out",
+      "name": "outputMessage",
+      "brokerList": "BrokerList",
+      "topic": "topic",
+      "username": "%ConfluentCloudUserName%",
+      "password": "%ConfluentCloudPassword%",
+      "protocol": "SASLSSL",
+      "authenticationMode": "PLAIN"
+    },
+    {
+      "type": "http",
+      "direction": "out",
+      "name": "$return"
+    }
+  ]
+}
+```
+
+In _init_.py:
+```py
+import logging
+
+import azure.functions as func
+
+
+def main(req: func.HttpRequest, outputMessage: func.Out[str]) -> func.HttpResponse:
+    input_msg = req.params.get('message')
+    outputMessage.set(input_msg)
+    return 'OK'
+```
+
 
 | **function.json property** | **Description** |
 |-|-|
