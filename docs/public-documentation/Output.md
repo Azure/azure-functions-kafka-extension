@@ -126,7 +126,7 @@ Username and password should reference a Azure function configuration variable a
 
 # Java
 
-The following Java function uses the @KafkaOutput annotation from the Azure function Java Client library to describe the configuration for a Kafka topic output binding. The function sends a message to the Kafka topic.
+The following Java function uses the @KafkaOutput annotation from the Azure function Java Client library (https://mvnrepository.com/artifact/com.microsoft.azure.functions/azure-functions-java-library) to describe the configuration for a Kafka topic output binding. The function sends a message to the Kafka topic.
 
 ```java
 @FunctionName("KafkaOutput")
