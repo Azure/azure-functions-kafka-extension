@@ -147,7 +147,8 @@ Write-Output "Powershell Kafka trigger function called for message $kafkaEvent.V
 
 ## Python
 
-The following example demonstrates how to read a Kafka queue message via a trigger.
+The following example shows a Kafka trigger binding in a function.json file and a Python function that uses the binding. The function reads and logs a Kafka message.
+
 
 A Kafka binding is defined in function.json where type is set to KafkaTrigger.
 
@@ -169,7 +170,7 @@ A Kafka binding is defined in function.json where type is set to KafkaTrigger.
     ]
 }
 ```
-
+Here's the Python script code:
 ```py
 import logging
 from azure.functions import KafkaEvent
