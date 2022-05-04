@@ -285,9 +285,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                                 }
                                 else
                                 {
-                                    var kafkaEventData = this.requiresKey ? 
-                                        (IKafkaEventData)new KafkaEventData<TKey, TValue>(consumeResult) : 
-                                        (IKafkaEventData) new KafkaEventData<TKey, TValue>(consumeResult);
+                                    var kafkaEventData = (IKafkaEventData)new KafkaEventData<TKey, TValue>(consumeResult) ;
 
                                     // add message to executor
                                     // if executor pending items is full, flush it
