@@ -56,7 +56,7 @@ public static void Run(
 
 ## Java
 
-The following example shows an Kafka trigger binding which logs the message body of the Kafka trigger.
+The following Java function uses the @KafkaTrigger annotation from the Java Client library (https://mvnrepository.com/artifact/com.microsoft.azure.functions/azure-functions-java-library) to describe the configuration for a KafkaTrigger trigger. The function grabs the message placed on the topic and adds it to the logs.
 
 ```java
 @FunctionName("KafkaTrigger")
@@ -79,7 +79,7 @@ public void runSingle(
 
 ## Javascript
 
-The following example shows a Kafka trigger binding in a function.json file and a JavaScript function that uses the binding. The function reads and logs a Kafka  message.
+The following example shows a Kafka trigger binding in a function.json file and a [JavaScript](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node) function that uses the binding. The function reads and logs a Kafka  message.
 
 Here's the binding data in the function.json file:
 ```json
@@ -178,6 +178,82 @@ from azure.functions import KafkaEvent
 def main(kevent : KafkaEvent):
     logging.info("Python Kafka trigger function called for message " + kevent.metadata["Value"])
 ```
+
+### Typescript
+
+The following example shows a Kafka trigger binding in a function.json file and a Typescript function that uses the binding. The function reads and logs a Kafka message.
+
+Here's the binding data in the function.json file:
+
+```json
+{
+    "bindings": [
+      {
+        "type": "kafkaTrigger",
+        "direction": "in",
+        "name": "event",
+        "topic": "topic",
+        "brokerList": "%BrokerList%",
+        "username": "%ConfluentCloudUserName%",
+        "password": "%ConfluentCloudPassword%",
+        "consumerGroup" : "functions",
+        "protocol": "saslSsl",
+        "authenticationMode": "plain",
+        "dataType": "string"
+      }
+    ],
+    "scriptFile": "../dist/KafkaTrigger/index.js"
+  }
+```
+Here's the Typescript script code:
+```ts
+import { AzureFunction, Context } from "@azure/functions"
+
+// This is to describe the metadata of a Kafka event
+class KafkaEvent {
+    Offset : number;
+    Partition : number;
+    Topic : string;
+    Timestamp : string;
+    Value : string;
+    
+    constructor(metadata:any) {
+        this.Offset = metadata.Offset;
+        this.Partition = metadata.Partition;
+        this.Topic = metadata.Topic;
+        this.Timestamp = metadata.Timestamp;
+        this.Value = metadata.Value;
+    }
+
+    public getValue<T>() : T {
+        return JSON.parse(this.Value).payload;
+    }
+}
+
+// This is a sample interface that describes the actual data in your event.
+interface EventData {
+    registertime : number;
+    userid : string;
+    regionid: string;
+    gender: string;
+}
+
+const kafkaTrigger: AzureFunction = async function (context: Context, event_str: string): Promise<void> {
+
+    let event_obj = new KafkaEvent(eval(event_str));
+
+    context.log("Event Offset: " + event_obj.Offset);
+    context.log("Event Partition: " + event_obj.Partition);
+    context.log("Event Topic: " + event_obj.Topic);
+    context.log("Event Timestamp: " + event_obj.Timestamp);
+    context.log("Event Value (as string): " + event_obj.Value);
+};
+
+export default kafkaTrigger;
+```
+
+
+
 # C# Attributes
 
 |Setting|Description|

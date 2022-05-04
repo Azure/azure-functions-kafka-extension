@@ -222,7 +222,7 @@ Here&#39;s the binding data in the _function.json_ file:
 }
 ```
 
-Here's JavaScript code:
+Here is JavaScript code:
 
 ```js
 module.exports = async function (context, req) {
@@ -239,7 +239,7 @@ module.exports = async function (context, req) {
 ### Powershell
 The following example shows a Kafka output binding in a function.json file and a Powershell function that uses the binding. The function reads in the message from an HTTP trigger and outputs it to the Kafka topic.
 
-Here&#39;s the binding data in the _function.json_ file:
+Here is the binding data in the _function.json_ file:
 ```json
 {
   "bindings": [
@@ -300,7 +300,7 @@ Push-OutputBinding -Name Response -Value ([HttpResponseContext]@{
 
 The following example shows a Kafka output binding in a function.json file and a Python function that uses the binding. The function reads in the message from an HTTP trigger and outputs it to the Kafka topic.
 
-Here&#39;s the binding data in the _function.json_ file:
+Here is the binding data in the _function.json_ file:
 
 ```json
 {
@@ -334,6 +334,7 @@ Here&#39;s the binding data in the _function.json_ file:
   ]
 }
 ```
+Here is the Python script code:
 
 In _init_.py:
 ```py
@@ -346,6 +347,63 @@ def main(req: func.HttpRequest, outputMessage: func.Out[str]) -> func.HttpRespon
     input_msg = req.params.get('message')
     outputMessage.set(input_msg)
     return 'OK'
+```
+
+### Typescript
+
+The following example shows a Kafka output binding in a function.json file and a Typescript function that uses the binding. The function reads in the message from an HTTP trigger and outputs it to the Kafka topic.
+
+Here is the binding data in the _function.json_ file:
+
+```json
+{
+  "bindings": [
+    {
+      "authLevel": "function",
+      "type": "httpTrigger",
+      "direction": "in",
+      "name": "req",
+      "methods": [
+        "get"      
+       ]
+    },
+    {
+      "type": "kafka",
+      "name": "outputKafkaMessage",
+      "topic": "topic",
+      "brokerList": "%BrokerList%",
+      "username": "%ConfluentCloudUserName%",
+      "password": "%ConfluentCloudPassword%",
+      "protocol": "SASLSSL",
+      "authenticationMode": "PLAIN",
+      "direction": "out"
+    },
+    {
+      "type": "http",
+      "direction": "out",
+      "name": "res"
+    }
+  ],
+  "scriptFile": "../dist/KafkaOutput/index.js"
+}
+```
+
+Here's the typescript script code:
+
+```ts
+import { AzureFunction, Context, HttpRequest } from "@azure/functions"
+
+const kafkaOutput: AzureFunction = async function (context: Context, req: HttpRequest): Promise<void> {
+    const message = req.query.message;
+    const responseMessage = 'Ok'
+    context.bindings.outputKafkaMessage = message;
+    context.res = {
+        body: responseMessage
+    };
+
+};
+
+export default kafkaOutput;
 ```
 
 
