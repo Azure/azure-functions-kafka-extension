@@ -2,6 +2,7 @@ name: $(Build.SourceBranchName)_$(Build.Reason)_$(majorVersion).$(Build.BuildId)
 variables:
   buildConfiguration: Release
   majorVersion: 0.0.0
+  isReleaseTriggered: $[startsWith(variables['Build.SourceBranch'], 'signin')]
 
 # Enable PR validation on branches master and dev
 pr:
@@ -66,7 +67,7 @@ steps:
 
   - task: EsrpCodeSigning@1
     displayName: Sign extension assembly
-    condition: succeeded()
+    condition: and(succeeded(), eq(variables.isReleaseTriggered, 'True'))
     inputs:
       connectedServiceName: ESRP Service
       folderPath: src/Microsoft.Azure.WebJobs.Extensions.Kafka/bin/Release/netstandard2.0
@@ -121,7 +122,7 @@ steps:
 
   - task: EsrpCodeSigning@1
     displayName: Sign extension package
-    condition: and(succeeded(), eq(variables.isTagTriggered, 'True'))
+    condition: and(succeeded(), eq(variables.isReleaseTriggered, 'True'))
     inputs:
       connectedServiceName: ESRP Service
       folderPath: $(Build.ArtifactStagingDirectory)\$(version)
