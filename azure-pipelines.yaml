@@ -70,7 +70,7 @@ steps:
     condition: and(succeeded(), eq(variables.isReleaseTriggered, 'True'))
     inputs:
       connectedServiceName: ESRP Service
-      folderPath: src/Microsoft.Azure.WebJobs.Extensions.Kafka/bin/Release/netstandard2.0
+      folderPath: src/Microsoft.Azure.WebJobs.Extensions.Kafka/bin/Debug/netstandard2.0/
       pattern: Microsoft.Azure.WebJobs.Extensions.Kafka.dll
       signConfigType: inlineSignParams
       inlineOperation: |
