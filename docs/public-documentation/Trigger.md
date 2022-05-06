@@ -9,6 +9,457 @@ For information on setup and configuration details, see the overview
 
 # Examples
 
+## C#
+
+The C# function can be created using one of the following C# modes:
+
+- [In-process class library](https://docs.microsoft.com/en-us/azure/azure-functions/functions-dotnet-class-library): compiled C# function that runs in the same process as the Functions runtime.
+- [Isolated process class library](https://docs.microsoft.com/en-us/azure/azure-functions/dotnet-isolated-process-guide): compiled C# function that runs in a process isolated from the runtime. Isolated process is required to support C# functions running on .NET 5.0.
+
+The following example shows a C# function that reads and logs the Kafka message as a KafkaEvent:
+
+### InProcess
+The following example shows a C# function that reads and logs the Kafka message as a KafkaEvent:
+
+```csharp
+[FunctionName("KafkaTrigger")]
+public static void Run(
+    [KafkaTrigger("BrokerList",
+                    "topic",
+                    Username = "ConfluentCloudUserName",
+                    Password = "ConfluentCloudPassword",
+                    Protocol = BrokerProtocol.SaslSsl,
+                    AuthenticationMode = BrokerAuthenticationMode.Plain,
+                    ConsumerGroup = "$Default")] KafkaEventData<string> kevent, ILogger log)
+{            
+    log.LogInformation($"C# Kafka trigger function processed a message: {kevent.Value}");
+}
+```
+
+To receive events in a batch, make string or KafkaEventData an array.
+
+```csharp
+[FunctionName("KafkaTriggerMany")]
+public static void Run(
+    [KafkaTrigger("BrokerList",
+                    "topic",
+                    Username = "ConfluentCloudUserName",
+                    Password = "ConfluentCloudPassword",
+                    Protocol = BrokerProtocol.SaslSsl,
+                    AuthenticationMode = BrokerAuthenticationMode.Plain,
+                    ConsumerGroup = "$Default")] KafkaEventData<string>[] events, ILogger log)
+{       
+    foreach (KafkaEventData<string> kevent in events)
+    {    
+        log.LogInformation($"C# Kafka trigger function processed a message: {kevent.Value}");
+    }
+}
+```
+
+### IsolatedProcess
+```csharp
+[Function("KafkaTrigger")]
+public static void Run(
+    [KafkaTrigger("BrokerList",
+                    "topic",
+                    Username = "ConfluentCloudUserName",
+                    Password = "ConfluentCloudPassword",
+                    Protocol = BrokerProtocol.SaslSsl,
+                    AuthenticationMode = BrokerAuthenticationMode.Plain,
+                    ConsumerGroup = "$Default")] string eventData, FunctionContext context)
+{
+    var logger = context.GetLogger("KafkaFunction");
+    logger.LogInformation($"C# Kafka trigger function processed a message: {JObject.Parse(eventData)["Value"]}");
+}
+```
+
+To receive events in a batch, make string an array.
+
+```csharp
+[Function("KafkaTriggerMany")]
+public static void Run(
+    [KafkaTrigger("BrokerList",
+                    "topic",
+                    Username = "ConfluentCloudUserName",
+                    Password = "ConfluentCloudPassword",
+                    Protocol = BrokerProtocol.SaslSsl,
+                    AuthenticationMode = BrokerAuthenticationMode.Plain,
+                    ConsumerGroup = "$Default",
+                    IsBatched = true)] string[] events, FunctionContext context)
+{
+    foreach (var kevent in events)
+    {
+        var logger = context.GetLogger("KafkaFunction");
+        logger.LogInformation($"C# Kafka trigger function processed a message: {JObject.Parse(kevent)["Value"]}");
+    }
+}
+```
+
+## Java
+
+The following Java function uses the @KafkaTrigger annotation from the Java Client library (https://mvnrepository.com/artifact/com.microsoft.azure.functions/azure-functions-java-library) to describe the configuration for a KafkaTrigger trigger. The function grabs the message placed on the topic and adds it to the logs.
+
+```java
+@FunctionName("KafkaTrigger")
+public void runSingle(
+        @KafkaTrigger(
+            name = "KafkaTrigger",
+            topic = "topic",  
+            brokerList="%BrokerList%",
+            consumerGroup="$Default", 
+            username = "%ConfluentCloudUsername%", 
+            password = "ConfluentCloudPassword",
+            authenticationMode = BrokerAuthenticationMode.PLAIN,
+            protocol = BrokerProtocol.SASLSSL,
+            dataType = "string") String kafkaEventData,
+        final ExecutionContext context) 
+    {
+        context.getLogger().info(kafkaEventData);
+    }
+```
+
+To receive events in a batch, change type to an array. In the following function, the trigger annotation is applied to an array of string and the cardinality parameter is changed to Cardinality.MANY. 
+
+```java
+@FunctionName("KafkaTriggerMany")
+public void runMany(
+        @KafkaTrigger(
+            name = "kafkaTriggerMany",
+            topic = "topic",  
+            brokerList="%BrokerList%",
+            consumerGroup="$Default", 
+            username = "%ConfluentCloudUsername%", 
+            password = "ConfluentCloudPassword",
+            authenticationMode = BrokerAuthenticationMode.PLAIN,
+            protocol = BrokerProtocol.SASLSSL,
+            cardinality = Cardinality.MANY,
+            dataType = "string"
+            ) String[] kafkaEvents,
+        final ExecutionContext context) {
+        for (String kevent: kafkaEvents) {
+            context.getLogger().info(kevent);
+        }    
+}
+```
+
+## Javascript
+
+The following example shows a Kafka trigger binding in a function.json file and a [JavaScript](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node) function that uses the binding. The function reads and logs a Kafka  message.
+
+Here's the binding data in the function.json file:
+```json
+{
+    "bindings": [
+        {
+            "type": "kafkaTrigger",
+            "name": "event",
+            "direction": "in",
+            "topic": "topic",
+            "brokerList": "%BrokerList%",
+            "username": "%ConfluentCloudUserName%",
+            "password": "%ConfluentCloudPassword%",
+            "protocol": "saslSsl",
+            "authenticationMode": "plain",
+            "consumerGroup" : "$Default",
+            "dataType": "string"
+        }
+    ]
+}
+```
+Here's the JavaScript script code:
+```js
+module.exports = async function (context, event) {
+    context.log.info(`JavaScript Kafka trigger function called for message ${event.Value}`);
+};
+```
+
+To receive events in a batch, set cardinality to many in the function.json file, as shown in the following examples.
+```json
+{
+    "bindings": [
+        {
+            "type": "kafkaTrigger",
+            "name": "event",
+            "direction": "in",
+            "protocol" : "SASLSSL",
+            "password" : "%ConfluentCloudPassword%",
+            "dataType" : "string",
+            "topic" : "topic",
+            "authenticationMode" : "PLAIN",
+            "cardinality" : "MANY",
+            "consumerGroup" : "$Default",
+            "username" : "%ConfluentCloudUserName%",
+            "brokerList" : "%BrokerList%"
+        }
+    ]
+}
+```
+Here's the Javascript code: 
+```js
+module.exports = async function (context, events) {
+    function print(event) {
+        var eventJson = JSON.parse(event)
+        context.log.info(`JavaScript Kafka trigger function called for message ${eventJson.Value}`);
+    }
+    events.map(print);
+};
+```
+
+
+## Powershell
+The following example demonstrates how to read a Kafka message passed to a function via a trigger.
+
+Kafka trigger is defined in function.json file where type is set to kafkaTrigger.
+
+```json
+{
+    "bindings": [
+      {
+            "type": "kafkaTrigger",
+            "name": "kafkaEvent",
+            "direction": "in",
+            "protocol" : "SASLSSL",
+            "password" : "%ConfluentCloudPassword%",
+            "dataType" : "string",
+            "topic" : "topic",
+            "authenticationMode" : "PLAIN",
+            "consumerGroup" : "$Default",
+            "username" : "%ConfluentCloudUserName%",
+            "brokerList" : "%BrokerList%",
+            "sslCaLocation": "confluent_cloud_cacert.pem"
+        }
+    ]
+}
+```
+
+The code in the Run.ps1 file declares a parameter as $kafkaEvent, which allows you to read the kafka event message in your function.
+
+```ps1
+using namespace System.Net
+
+param($kafkaEvent, $TriggerMetadata)
+
+Write-Output "Powershell Kafka trigger function called for message $kafkaEvent.Value"
+```
+
+To receive events in a batch, set cardinality to many in the function.json file, as shown in the following examples.
+```json
+{
+    "bindings": [
+      {
+            "type": "kafkaTrigger",
+            "name": "kafkaEvent",
+            "direction": "in",
+            "protocol" : "SASLSSL",
+            "password" : "%ConfluentCloudPassword%",
+            "dataType" : "string",
+            "topic" : "topic",
+            "authenticationMode" : "PLAIN",
+            "cardinality" : "MANY",
+            "consumerGroup" : "$Default",
+            "username" : "%ConfluentCloudUserName%",
+            "brokerList" : "%BrokerList%",
+            "sslCaLocation": "confluent_cloud_cacert.pem"
+        }
+    ]
+}
+```
+Here's the Powerhsell code: 
+
+```ps1
+using namespace System.Net
+
+param($kafkaEvents, $TriggerMetadata)
+
+foreach ($kafkaEvent in $kafkaEvents) {
+    $event = $kafkaEvent | ConvertFrom-Json -AsHashtable
+    Write-Output "Powershell Kafka trigger function called for message $event.Value"
+}
+```
+
+
+
+## Python
+
+The following example shows a Kafka trigger binding in a function.json file and a Python function that uses the binding. The function reads and logs a Kafka message.
+
+
+A Kafka binding is defined in function.json where type is set to KafkaTrigger.
+
+```json
+{
+    "scriptFile": "main.py",
+    "bindings": [
+        {
+          "type": "kafkaTrigger",
+          "name": "kevent",
+          "topic": "topic",
+          "brokerList": "%BrokerList%",
+          "username": "%ConfluentCloudUserName%",
+          "password": "%ConfluentCloudPassword%",
+          "consumerGroup" : "functions",
+          "protocol": "saslSsl",
+          "authenticationMode": "plain"
+        }
+    ]
+}
+```
+Here's the Python script code:
+```py
+import logging
+from azure.functions import KafkaEvent
+
+def main(kevent : KafkaEvent):
+    logging.info("Python Kafka trigger function called for message " + kevent.metadata["Value"])
+```
+
+To receive events in a batch, set cardinality to many in the function.json file, as shown in the following examples.
+
+```json
+{
+    "scriptFile": "main.py",
+    "bindings": [
+        {
+            "type" : "kafkaTrigger",
+            "direction": "in",
+            "name" : "kevents",
+            "protocol" : "SASLSSL",
+            "password" : "%ConfluentCloudPassword%",
+            "topic" : "message_python",
+            "authenticationMode" : "PLAIN",
+            "cardinality" : "MANY",
+            "dataType": "string",
+            "consumerGroup" : "$Default",
+            "username" : "%ConfluentCloudUserName%",
+            "BrokerList" : "%BrokerList%"    
+        }
+    ]
+}
+```
+
+Here's Python code: 
+```py
+def main(kevents : typing.List[KafkaEvent]):
+    for event in kevents:
+        logging.info(event.get_body())
+```
+
+
+### Typescript
+
+The following example shows a Kafka trigger binding in a function.json file and a Typescript function that uses the binding. The function reads and logs a Kafka message.
+
+Here's the binding data in the function.json file:
+
+```json
+{
+    "bindings": [
+      {
+        "type": "kafkaTrigger",
+        "direction": "in",
+        "name": "event",
+        "topic": "topic",
+        "brokerList": "%BrokerList%",
+        "username": "%ConfluentCloudUserName%",
+        "password": "%ConfluentCloudPassword%",
+        "consumerGroup" : "functions",
+        "protocol": "saslSsl",
+        "authenticationMode": "plain",
+        "dataType": "string"
+      }
+    ],
+    "scriptFile": "../dist/KafkaTrigger/index.js"
+  }
+```
+Here's the Typescript script code:
+```ts
+import { AzureFunction, Context } from "@azure/functions"
+
+// This is to describe the metadata of a Kafka event
+class KafkaEvent {
+    Offset : number;
+    Partition : number;
+    Topic : string;
+    Timestamp : string;
+    Value : string;
+    
+    constructor(metadata:any) {
+        this.Offset = metadata.Offset;
+        this.Partition = metadata.Partition;
+        this.Topic = metadata.Topic;
+        this.Timestamp = metadata.Timestamp;
+        this.Value = metadata.Value;
+    }
+
+    public getValue<T>() : T {
+        return JSON.parse(this.Value).payload;
+    }
+}
+
+// This is a sample interface that describes the actual data in your event.
+interface EventData {
+    registertime : number;
+    userid : string;
+    regionid: string;
+    gender: string;
+}
+
+const kafkaTrigger: AzureFunction = async function (context: Context, event_str: string): Promise<void> {
+
+    let event_obj = new KafkaEvent(eval(event_str));
+
+    context.log("Event Offset: " + event_obj.Offset);
+    context.log("Event Partition: " + event_obj.Partition);
+    context.log("Event Topic: " + event_obj.Topic);
+    context.log("Event Timestamp: " + event_obj.Timestamp);
+    context.log("Event Value (as string): " + event_obj.Value);
+};
+
+export default kafkaTrigger;
+```
+
+To receive events in a batch, set cardinality to many in the function.json file, as shown in the following examples.
+
+```json
+{
+  "bindings": [
+    {
+      "type": "kafkaTrigger",
+      "direction": "in",
+      "name": "events",
+      "topic": "topic",
+      "brokerList": "%BrokerList%",
+      "username": "%ConfluentCloudUserName%",
+      "password": "%ConfluentCloudPassword%",
+      "consumerGroup" : "functions",
+      "protocol": "saslSsl",
+      "authenticationMode": "plain",
+      "cardinality": "MANY",
+      "dataType": "string"
+    }
+  ],
+  "scriptFile": "../dist/KafkaTriggerMany/index.js"
+}
+```
+
+Here's Typescript code: 
+```ts
+const kafkaTrigger: AzureFunction = async function (context: Context, events: string[]): Promise<void> {
+
+    for(var event of events) {
+        let event_obj = new KafkaEvent(eval(event));
+        context.log("Event Offset: " + event_obj.Offset);
+        context.log("Event Partition: " + event_obj.Partition);
+        context.log("Event Topic: " + event_obj.Topic);
+        context.log("Event Timestamp: " + event_obj.Timestamp);
+        context.log("Event Value (as string): " + event_obj.Value);    
+    }
+};
+
+export default kafkaTrigger;
+```
+
+
 # C# Attributes
 
 |Setting|Description|
