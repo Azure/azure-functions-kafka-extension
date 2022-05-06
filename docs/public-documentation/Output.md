@@ -584,3 +584,27 @@ For connection to a secure Kafka Broker -
 | sslKeyPassword | ssl.key.password | Password for client&#39;s certificate |
 | sslCertificateLocation | ssl.certificate.location | Path to client&#39;s certificate |
 | sslCaLocation | ssl.ca.location | Path to CA certificate file for verifying the broker&#39;s certificate |
+
+# host.json settings
+
+This section describes the configuration settings available for this binding in versions 2.x and higher. Settings in the host.json file apply to all functions in a function app instance. For more information about function app configuration settings in versions 2.x and later versions, see [host.json reference for Azure Functions](https://docs.microsoft.com/en-us/azure/azure-functions/functions-host-json).
+
+The settings exposed here are to customize how librdkafka works. [Librdkafka Documentation](https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md) for information on each setting.
+
+|Setting|librdkafka property|
+|-|-|
+|LibkafkaDebug|debug|
+|MetadataMaxAgeMs|metadata.max.age.ms|
+|SocketKeepaliveEnable|socket.keepalive.enable|
+
+
+# Enable Runtime Scaling
+In order for the Kafka Output to scale out to multiple instances, the Runtime Scale Monitoring setting must be enabled.
+
+In the portal, this setting can be found under Configuration > Function runtime settings for your function app.
+
+![My image](../images/virtual-network-trigger-toggle.png)
+
+In the CLI, you can enable Runtime Scale Monitoring by using the following command:
+
+```az resource update -g <resource_group> -n <function_app_name>/config/web --set properties.functionsRuntimeScaleMonitoringEnabled=1 --resource-type Microsoft.Web/sites```
