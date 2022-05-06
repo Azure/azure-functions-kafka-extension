@@ -51,7 +51,7 @@ The following Java function uses the @KafkaOutput annotation from the Azure func
 |Parameter|Description|
 |-|-|
 |name|The variable name used in function code for the request or request body.|
-|dataType| <p>Defines how Functions runtime should treat the parameter value. Possible values are:</p><ul><li>"" or string: treat it as a string whose value is serialized from the parameter</li><li>binary: treat it as a binary data whose value comes from for example OutputBinding&lt;byte[]&lt;</li></ul>|
+|dataType| <p>Defines how Functions runtime should treat the parameter value. Possible values are:</p><ul><li>"" or string: treat it as a string whose value is serialized from the parameter</li><li>binary: treat it as a binary data whose value comes from for example OutputBinding&lt;byte[]&gt;</li></ul>|
 |topic|Defines the topic.|
 |brokerList|Defines the broker list.|
 |maxMessageBytes|Defines the maximum transmit message size. Default: 1MB|
