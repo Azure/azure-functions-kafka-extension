@@ -56,6 +56,29 @@ public static void Run(
 }
 ```
 
+The following function logs the message and headers for that KafkaEvent. 
+
+```csharp
+[FunctionName("KafkaTriggerWithHeaders")]
+public static void Run(
+    [KafkaTrigger("BrokerList",
+                    "topic",
+                    Username = "ConfluentCloudUserName",
+                    Password = "ConfluentCloudPassword",
+                    Protocol = BrokerProtocol.SaslSsl,
+                    AuthenticationMode = BrokerAuthenticationMode.Plain,
+                    ConsumerGroup = "$Default")] KafkaEventData<string> kevent, ILogger log)
+{
+    log.LogInformation($"C# Kafka trigger function processed a message: {kevent.Value}");
+    log.LogInformation("Headers: ");
+    var headers = kevent.Headers;
+    foreach (var header in headers)
+    {
+        log.LogInformation($"Key = {header.Key} Value = {System.Text.Encoding.UTF8.GetString(header.Value)}");
+    }
+}
+```
+
 ### IsolatedProcess
 ```csharp
 [Function("KafkaTrigger")]
@@ -142,6 +165,31 @@ public void runMany(
 }
 ```
 
+The following function logs the message and headers for that KafkaEvent. 
+
+```java
+@FunctionName("KafkaTriggerWithHeaders")
+public void runSingle(
+        @KafkaTrigger(
+            name = "KafkaTrigger",
+            topic = "topic",  
+            brokerList="%BrokerList%",
+            consumerGroup="$Default", 
+            username = "%ConfluentCloudUsername%", 
+            password = "ConfluentCloudPassword",
+            authenticationMode = BrokerAuthenticationMode.PLAIN,
+            protocol = BrokerProtocol.SASLSSL
+            ) KafkaEntity kafkaEventData,
+        final ExecutionContext context) {
+        context.getLogger().info("Java Kafka trigger function called for message: " + kafkaEventData.Value);
+        context.getLogger().info("Headers for the message:");
+        for (KafkaHeaders header : kafkaEventData.Headers) {
+            String decodedValue = new String(Base64.getDecoder().decode(header.Value));
+            context.getLogger().info("Key:" + header.Key + " Value:" + decodedValue);                    
+        }
+}
+```
+
 ## Javascript
 
 The following example shows a Kafka trigger binding in a function.json file and a [JavaScript](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node) function that uses the binding. The function reads and logs a Kafka  message.
@@ -205,6 +253,20 @@ module.exports = async function (context, events) {
 };
 ```
 
+
+The following function logs the message and headers for that KafkaEvent. 
+
+```js
+module.exports = async function (context, event) {
+    var keventJson = JSON.parse(kevent)
+    context.log.info(`JavaScript Kafka trigger function called for message ${keventJson.Value}`);
+    context.log.info(`Headers for this message:`)
+    let headers =  keventJson.Headers;
+    headers.forEach(element => {
+        context.log.info(`Key: ${element.Key} Value:${Buffer.from(element.Value, 'base64')}`) 
+    });
+};
+```
 
 ## Powershell
 The following example demonstrates how to read a Kafka message passed to a function via a trigger.
@@ -277,7 +339,20 @@ foreach ($kafkaEvent in $kafkaEvents) {
 }
 ```
 
+The following function logs the message and headers for that KafkaEvent. 
+```ps1
+using namespace System.Net
 
+param($kafkaEvent, $TriggerMetadata)
+
+Write-Output "Powershell Kafka trigger function called for message" + $kafkaEvent.Value
+Write-Output "Headers for this message:"
+foreach ($header in $kafkaEvent.Headers) {
+    $DecodedValue = [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String($header.Value))
+    $Key = $header.Key
+    Write-Output "Key: $Key Value: $DecodedValue"
+}
+```
 
 ## Python
 
@@ -344,6 +419,15 @@ def main(kevents : typing.List[KafkaEvent]):
         logging.info(event.get_body())
 ```
 
+
+The following function logs the message and headers for that KafkaEvent. 
+```py
+def main(kevent : KafkaEvent):
+    logging.info("Python Kafka trigger function called for message " + kevent.metadata["Value"])
+    headers = json.loads(kevent.metadata["Headers"])
+    for header in headers:
+        logging.info("Key: "+ header['Key'] + " Value: "+ str(base64.b64decode(header['Value']).decode('ascii')))
+```
 
 ### Typescript
 
@@ -454,6 +538,50 @@ const kafkaTrigger: AzureFunction = async function (context: Context, events: st
         context.log("Event Timestamp: " + event_obj.Timestamp);
         context.log("Event Value (as string): " + event_obj.Value);    
     }
+};
+
+export default kafkaTrigger;
+```
+
+The following function logs the message and headers for that KafkaEvent. 
+```ts
+import { AzureFunction, Context } from "@azure/functions"
+
+class KafkaHeaders {
+    Key: string;
+    Value: string;
+}
+
+// This is to describe the metadata of a Kafka event
+class KafkaEvent {
+    Offset : number;
+    Partition : number;
+    Topic : string;
+    Timestamp : string;
+    Value : string;
+    Headers: KafkaHeaders[];
+
+    constructor(metadata:any) {
+        this.Offset = metadata.Offset;
+        this.Partition = metadata.Partition;
+        this.Topic = metadata.Topic;
+        this.Timestamp = metadata.Timestamp;
+        this.Value = metadata.Value;
+        this.Headers = metadata.Headers;
+    }
+
+    public getValue<T>() : T {
+        return JSON.parse(this.Value).payload;
+    }
+}
+
+const kafkaTrigger: AzureFunction = async function (context: Context, event: string): Promise<void> {
+    let event_obj = new KafkaEvent(eval(event));
+    context.log("Event Value (as string): " + event_obj.Value);
+    context.log("Event Headers: ");
+    event_obj.Headers.forEach((header: KafkaHeaders) => {
+        context.log("Key: ", header.Key, "Value: ", atob(header.Value))
+    });
 };
 
 export default kafkaTrigger;

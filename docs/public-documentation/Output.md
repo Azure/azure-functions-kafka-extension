@@ -67,6 +67,30 @@ public static IActionResult Output(
 }
 ```
 
+To send a Kafka Event with message and headers to a topic, create a KafkaEventData object and set it as output. 
+```csharp
+[FunctionName("KafkaOutputWithHeaders")]
+public static IActionResult Output(
+    [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
+    [Kafka("BrokerList",
+            "topic",
+            Username = "ConfluentCloudUserName",
+            Password = "ConfluentCloudPassword",
+            Protocol = BrokerProtocol.SaslSsl,
+            AuthenticationMode = BrokerAuthenticationMode.Plain
+    )] out KafkaEventData<string> eventData,
+    ILogger log)
+{
+    log.LogInformation("C# HTTP trigger function processed a request.");
+
+    string message = req.Query["message"];        
+    eventData = new KafkaEventData<string>(message);
+    eventData.Headers.Add("test", System.Text.Encoding.UTF8.GetBytes("dotnet")); 
+
+    return new OkObjectResult("Ok");
+}
+```
+
 ### IsolatedProcess
 
 The following example shows a C# function that writes a message string to Kafka, using the method return value as the output. The function gets triggered on a HTTP GET request. This example has a custom return type which is MultipleOutputType that consists of HTTP response and Kafka output. In class MultipleOutputType, Kevent is the output binding variable for Kafka. 
@@ -252,6 +276,67 @@ public HttpResponseMessage run(
 }
 ```
 
+The following example refer to this KafkaEntity class: 
+```java 
+public class KafkaEntity {
+    public int Offset;
+    public int Partition;
+    public String Timestamp;
+    public String Topic;
+    public String Value;
+    public KafkaHeaders Headers[];
+
+     public KafkaEntity(int Offset, int Partition, String Topic, String Timestamp, String Value,KafkaHeaders[] headers) {
+        this.Offset = Offset;
+        this.Partition = Partition;
+        this.Topic = Topic;
+        this.Timestamp = Timestamp;
+        this.Value = Value;
+        this.Headers = headers;
+    }
+}
+
+public class KafkaHeaders {
+    public String Key;
+    public String Value;
+
+    public KafkaHeaders(String key, String value) {
+      this.Key = key;
+      this.Value = value;
+    }
+}
+```
+
+The following function is an example for sending message with headers to a Kafka topic. 
+Note, the Offset, Partition, topic and timestamp for the Kafka Event are generated at runtime. Only value and headers can be set inside the function. 
+
+```java
+@FunctionName("KafkaOutputWithHeaders")
+    public HttpResponseMessage run(
+      @HttpTrigger(name = "req", methods = {HttpMethod.GET, HttpMethod.POST}, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
+      @KafkaOutput(
+          name = "kafkaOutput",
+          topic = "topic",  
+          brokerList="%BrokerList%",
+          username = "%ConfluentCloudUsername%", 
+          password = "ConfluentCloudPassword",
+          authenticationMode = BrokerAuthenticationMode.PLAIN,
+          protocol = BrokerProtocol.SASLSSL
+      )  OutputBinding<KafkaEntity> output,
+      final ExecutionContext context) {
+          context.getLogger().info("Java HTTP trigger processed a request.");
+  
+          // Parse query parameter
+          String query = request.getQueryParameters().get("message");
+          String message = request.getBody().orElse(query);
+          KafkaHeaders[] headers = new KafkaHeaders[1];
+          headers[0] = new KafkaHeaders("test", "java");
+          KafkaEntity kevent = new KafkaEntity(0, 0, "", "", message, headers);
+          output.setValue(kevent);
+          return request.createResponseBuilder(HttpStatus.OK).body("Ok").build();
+      }
+```
+
 ## Annotation
 
 |Parameter|Description|
@@ -343,7 +428,22 @@ module.exports = async function (context, req) {
     
     context.bindings.outputKafkaMessages = ["one", "two"];
     context.res = {
-        body: responseMessage
+        body: 'Ok'
+    };
+}
+```
+
+The following example shows how to send a KafkaEvent with message and headers to a Kafka topic: 
+Note, the Offset, Partition, topic and timestamp for the Kafka Event are generated at runtime. Only value and headers can be set inside the function. 
+
+```js
+module.exports = async function (context, req) {
+    context.log('JavaScript HTTP trigger function processed a request.');
+
+    const message = (req.query.message || (req.body && req.body.message));
+    context.bindings.outputKafkaMessage = "{ \"Offset\":0,\"Partition\":0,\"Topic\":\"\",\"Timestamp\":\"\", \"Value\": \"" + message + "\", \"Headers\": [{ \"Key\": \"test\", \"Value\": \"javascript\" }] }"
+    context.res = {
+        body: 'Ok'
     };
 }
 ```
@@ -429,6 +529,43 @@ Push-OutputBinding -Name Response -Value ([HttpResponseContext]@{
 })
 ```
 
+The following example shows how to send a KafkaEvent with message and headers to a Kafka topic: 
+Note, the Offset, Partition, topic and timestamp for the Kafka Event are generated at runtime. Only value and headers can be set inside the function. 
+
+```ps1
+using namespace System.Net
+
+# Input bindings are passed in via param block.
+param($Request, $TriggerMetadata)
+
+# Write to the Azure Functions log stream.
+Write-Host "PowerShell HTTP trigger function processed a request."
+
+# Interact with query parameters or the body of the request.
+$message = $Request.Query.Message
+
+$kevent = @{
+    Offset = 0
+    Partition = 0
+    Topic = ""
+    Timestamp = ""
+    Value = $message
+    Headers= @(@{
+        Key= "test"
+        Value= "powershell"
+    }
+    )
+}
+
+Push-OutputBinding -Name Message -Value $kevent
+
+# Associate values to output bindings by calling 'Push-OutputBinding'.
+Push-OutputBinding -Name Response -Value ([HttpResponseContext]@{
+    StatusCode = [HttpStatusCode]::OK
+    Body = 'ok'
+})
+```
+
 ### Python
 
 The following example shows a Kafka output binding in a function.json file and a Python function that uses the binding. The function reads in the message from an HTTP trigger and outputs it to the Kafka topic.
@@ -487,6 +624,22 @@ Here's Python code that sends multiple messages:
 ```py
 def main(req: HttpRequest, outputMessage: Out[str] ) -> HttpResponse:
     outputMessage.set(['one', 'two'])
+    return 'OK'
+```
+
+The following example shows how to send a KafkaEvent with message and headers to a Kafka topic: 
+Note, the Offset, Partition, topic and timestamp for the Kafka Event are generated at runtime. Only value and headers can be set inside the function. 
+
+```py
+import logging
+
+import azure.functions as func
+import json
+
+def main(req: func.HttpRequest, out: func.Out[str]) -> func.HttpResponse:
+    message = req.params.get('message')
+    kevent =  { "Offset":0,"Partition":0,"Topic":"","Timestamp":"", "Value": message, "Headers": [{ "Key": "test", "Value": "python" }] }
+    out.set(json.dumps(kevent))
     return 'OK'
 ```
 
@@ -555,13 +708,31 @@ const kafkaOutputMany: AzureFunction = async function (context: Context, req: Ht
     const responseMessage = 'Ok'
     context.bindings.outputKafkaMessage = ['one', 'two'];
     context.res = {
-        // status: 200, /* Defaults to 200 */
         body: responseMessage
     };
 
 };
 
 export default kafkaOutputMany;
+```
+
+The following example shows how to send a KafkaEvent with message and headers to a Kafka topic: 
+Note, the Offset, Partition, topic and timestamp for the Kafka Event are generated at runtime. Only value and headers can be set inside the function. 
+
+```ts
+import { AzureFunction, Context, HttpRequest } from "@azure/functions"
+
+const kafkaOutput: AzureFunction = async function (context: Context, req: HttpRequest): Promise<void> {
+    const message = req.query.message;
+    const responseMessage = 'Ok'
+    context.bindings.outputKafkaMessage = "{ \"Offset\":0,\"Partition\":0,\"Topic\":\"\",\"Timestamp\":\"\", \"Value\": \"" + message + "\", \"Headers\": [{ \"Key\": \"test\", \"Value\": \"typescript\" }] }";
+    context.res = {
+        body: responseMessage
+    };
+
+};
+
+export default kafkaOutput;
 ```
 
 
