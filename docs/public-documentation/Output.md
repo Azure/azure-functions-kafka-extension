@@ -184,6 +184,7 @@ namespace Confluent
 |RequestTimeoutMs|The acknowledgement timeout of the producer request in milliseconds. default: 5000|
 |MaxRetries|How many times to retry sending a failing Message. **Note:** default: 2. <remarks>Retrying may cause reordering unless <c>EnableIdempotence</c> is set to <c>true</c>.</remarks>|
 
+For connection to a secure Kafka Broker -
 
 |Setting|librdkafka property|Description|
 |-|-|-|
@@ -278,7 +279,6 @@ For connection to a secure Kafka Broker -
 | sslKeyPassword | ssl.key.password | Password for client&#39;s certificate |
 | sslCertificateLocation | ssl.certificate.location | Path to client&#39;s certificate |
 | sslCaLocation | ssl.ca.location | Path to CA certificate file for verifying the broker&#39;s certificate |
-| dataType |
 
 # JavaScript/TypeScript/Python/Powershell
 
