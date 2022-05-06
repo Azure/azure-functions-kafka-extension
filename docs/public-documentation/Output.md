@@ -285,11 +285,25 @@ public class KafkaEntity {
     public String Topic;
     public String Value;
     public KafkaHeaders Headers[];
+
+     public KafkaEntity(int Offset, int Partition, String Topic, String Timestamp, String Value,KafkaHeaders[] headers) {
+        this.Offset = Offset;
+        this.Partition = Partition;
+        this.Topic = Topic;
+        this.Timestamp = Timestamp;
+        this.Value = Value;
+        this.Headers = headers;
+    }
 }
 
 public class KafkaHeaders {
     public String Key;
     public String Value;
+
+    public KafkaHeaders(String key, String value) {
+      this.Key = key;
+      this.Value = value;
+    }
 }
 ```
 
