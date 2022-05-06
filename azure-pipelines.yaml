@@ -2,7 +2,7 @@ name: $(Build.SourceBranchName)_$(Build.Reason)_$(majorVersion).$(Build.BuildId)
 variables:
   buildConfiguration: Release
   majorVersion: 0.0.0
-  isReleaseTriggered: $[startsWith(variables['Build.SourceBranch'], 'shrohilla/codesignin')]
+  isReleaseTriggered: $[startsWith(variables['Build.SourceBranch'], 'shrohilla/code')]
 
 # Enable PR validation on branches master and dev
 pr:
