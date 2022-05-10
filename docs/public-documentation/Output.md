@@ -2,7 +2,7 @@
 
 **NOTE:**  The Kafka bindings are only fully supported on [Premium](https://docs.microsoft.com/en-us/azure/azure-functions/functions-premium-plan) and [Dedicated App Service](https://docs.microsoft.com/en-us/azure/azure-functions/dedicated-plan) plans. Consumption plans are not supported. Kafka bindings are only supported for Azure Functions version 3.x and later versions
 
-Use the Kafka output binding to send messages to a Kafka topic.
+Use the Kafka trigger binding to receive messages from a Kafka topic.
  For information on setup and configuration details, see the overview page.
 
 # Examples
