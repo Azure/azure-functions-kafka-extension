@@ -125,7 +125,7 @@ steps:
     condition: and(succeeded(), eq(variables.isReleaseTriggered, 'True'))
     inputs:
       connectedServiceName: ESRP Service
-      folderPath: $(Build.ArtifactStagingDirectory)\$(version)
+      folderPath: $(Build.ArtifactStagingDirectory)
       pattern: Microsoft.Azure.WebJobs.Extensions.Kafka.*.nupkg
       signConfigType: inlineSignParams
       inlineOperation: |
