@@ -11,10 +11,6 @@ $message = $Request.Query.Message
 $message1 = $Request.Query.Message1
 $message2 = $Request.Query.Message2
 
-# if (-not $message) {
-#     $message = $Request.Body.Message
-# }
-
 $body = "This HTTP triggered function executed successfully. Pass a message in the query string or in the request body for a personalized response."
 
 if ($message -And $message1 -And $message2) {

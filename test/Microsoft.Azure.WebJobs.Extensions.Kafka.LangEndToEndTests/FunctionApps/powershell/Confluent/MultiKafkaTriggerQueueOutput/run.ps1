@@ -5,7 +5,6 @@ param($kafkaEvents, $TriggerMetadata)
 $messages = @()
 foreach ($kafkaEvent in $kafkaEvents) {
     $kafkaEvent | ConvertFrom-Json -AsHashtable -outvariable event
-    # $event.Value
     $messages += $event.Value
 }
 
