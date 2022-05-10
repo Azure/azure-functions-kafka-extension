@@ -51,6 +51,8 @@ You can find all Kafka related configuration on the `function.json.` In the case
 
 _function.json_
 
+#### For Confluent
+
 ```json
 {
   "scriptFile" : "../kafka-function-1.0-SNAPSHOT.jar",
@@ -72,12 +74,37 @@ _function.json_
 }
 ```
 
+#### For EventHub
+
+```json
+{
+  "scriptFile" : "../kafka-function-1.0-SNAPSHOT.jar",
+  "entryPoint" : "com.contoso.kafka.TriggerFunction.runMany",
+  "bindings" : [ {
+    "type" : "kafkaTrigger",
+    "direction" : "in",
+    "name" : "kafkaEvents",
+    "password" : "%EventHubConnectionString%",
+    "protocol" : "SASLSSL",
+    "dataType" : "string",
+    "topic" : "message",
+    "authenticationMode" : "PLAIN",
+    "consumerGroup" : "$Default",
+    "cardinality" : "MANY",
+    "username" : "$ConnectionString",
+    "brokerList" : "%BrokerList%"
+  } ]
+}
+```
+**NOTE** For EventHub, username should be set to "$ConnectionString" only. The password should be the actual connection string value that could be set in local.settings.json or appsettings (Please see [local-settings](#localsettingsjson) section for more details).
+
 ### local.settings.json
 
 It is the configuration of a local function runtime. If you deploy the target application on Azure with a `local.settings.json,` you will require the same settings on the Function App [App settings](https://docs.microsoft.com/en-us/azure/azure-functions/functions-how-to-use-azure-function-app-settings#settings). 
 
-For more details, refer to [Local settings file](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local?tabs=macos%2Ccsharp%2Cbash#local-settings-file).
+**NOTE** All the passwords and connection strings settings are recommended to be put in appsettings. For more details, refer to [Local settings file](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local?tabs=v4%2Cmacos%2Ccsharp%2Cportal%2Cbash#local-settings).
 
+#### For Confluent
 ```json
 {
     "IsEncrypted": false,
@@ -85,12 +112,26 @@ For more details, refer to [Local settings file](https://docs.microsoft.com/en-u
         "BrokerList": "{YOUR_CONFLUENT_CLOUD_BROKER}",
         "ConfluentCloudUserName": "{YOUR_CONFLUENT_CLOUD_USERNAME}",
         "ConfluentCloudPassword": "{YOUR_CONFLUENT_CLOUD_PASSWORD}",
-        "FUNCTIONS_WORKER_RUNTIME": "python",
-        "AzureWebJobsStorage": ""
+        "FUNCTIONS_WORKER_RUNTIME": "<runtime>",
+        "AzureWebJobsStorage": "",
+        "topic": "{YOUR_KAFKA_TOPIC_NAME}"
     }
 }
 ```
 
+#### For EventHub
+```json
+{
+    "IsEncrypted": false,
+    "Values": {
+        "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+        "FUNCTIONS_WORKER_RUNTIME": "<runtime>",
+        "BrokerList": "<YOUR_EVENTHUB_NAMESPACE_NAME>.servicebus.windows.net:9093",
+        "EventHubConnectionString": "<YOUR_EVENTHUB_CONNECTIONSTRING>",
+        "topic": "{YOUR_KAFKA_TOPIC_NAME}"
+    }
+}
+```
 ### Extension Bundle and install Kafka extension
 
 Currently, in Azure Functions - most triggers and bindings are ordinarily obtained using the extension bundle. However, currently, the Kafka extension is not part of the extension bundle (will be added in the future). Meanwhile, you will have to install the Kafka extension manually.
@@ -182,3 +223,19 @@ The sample provides a devcontainer profile. Open the folder in VsCode and perfor
   }
 }
 ```
+
+### Headers
+Headers are supported for both Kafka Trigger and Kafka Output binding. You can find the samples for headers in this folder with name `KafkaTriggerWithHeaders`, `KafkaTriggerManyWithHeaders` for Trigger functions and `KafakOutputWithHeaders`, `KafkaOutputManyWithHeaders` for output binding functions. 
+#### Output Binding Functions
+`KafkaOutputWithHeaders` is a sample for single event type while `KafkaOutputManyWithHeaders` is for batch events.
+
+To run `KafkaOutputWithHeaders` function, send a http GET request with message at url  `http://localhost:7071/api/KafkaOutputWithHeaders?message=<your_message>`. It will create a new Kafka Event with payload as your_message and headers as `{ Key: 'test', Value: '<language>'}`. 
+
+Similarly, to run `KafkaOutputManyWithHeaders` function, send a http GET request  at url  `http://localhost:7071/api/KafkaOutputManyWithHeaders`.  It would create two messages with headers on given topic. 
+
+#### Trigger Functions
+`KafkaTriggerWithHeaders` is a sample for single event type while `KafkaTriggerManyWithHeaders` is for batch events. 
+
+`KafkaTriggerWithHeaders` will be triggered whenever there is a Kafka Event. It prints the message and the corresponding headers for that message. 
+
+Similarly, `KafkaTriggerManyWithHeaders` is a trigger function which processes batch of Kafka events. For all the events in the batch, it prints the message and corresponding headers. 

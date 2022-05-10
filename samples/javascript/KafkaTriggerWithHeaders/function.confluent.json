@@ -1,0 +1,16 @@
+{
+  "bindings": [
+    {
+      "type": "kafkaTrigger",
+      "name": "event",
+      "direction": "in",
+      "brokerList": "BrokerList",
+      "username": "%ConfluentCloudUserName%",
+      "password": "%ConfluentCloudPassword%",      
+      "protocol": "saslSsl",
+      "topic": "topic", 
+      "consumerGroup": "$Default",
+      "dataType": "string"
+    }
+  ]
+}
