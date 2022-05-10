@@ -76,7 +76,7 @@ steps:
       inlineOperation: |
           [
             {
-              "KeyCode": "CP-229961",
+              "KeyCode": "CP-230012",
               "OperationCode": "SigntoolSign",
               "Parameters": {
                 "OpusName": "Microsoft",
@@ -89,7 +89,7 @@ steps:
               "ToolVersion": "1.0"
             },
             {
-              "KeyCode": "CP-229961",
+              "KeyCode": "CP-230012",
               "OperationCode": "SigntoolVerify",
               "Parameters": {},
               "ToolName": "sign",
@@ -131,14 +131,14 @@ steps:
       inlineOperation: |
             [
                 {
-                  "KeyCode": "CP-229713",
+                  "KeyCode": "CP-230012",
                   "OperationCode": "NuGetSign",
                   "Parameters": {},
                   "ToolName": "sign",
                   "ToolVersion": "1.0"
                 },
                 {
-                  "KeyCode": "CP-229713",
+                  "KeyCode": "CP-230012",
                   "OperationCode": "NuGetVerify",
                   "Parameters": {},
                   "ToolName": "sign",
