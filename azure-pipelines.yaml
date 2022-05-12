@@ -34,14 +34,14 @@ steps:
     displayName: Build project
     inputs:
       command: 'build'
-      arguments: '--configuration Release -property:Version=$(fileVersion) -p:IsLocalBuild=False'
+      arguments: '--configuration Release -p:IsLocalBuild=False'
       projects: src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
 
   - task: DotNetCoreCLI@2
     displayName: Build test projects
     inputs:
       command: 'build'
-      arguments: '--configuration Release -property:Version=$(fileVersion) -p:IsLocalBuild=False'
+      arguments: '--configuration Release -p:IsLocalBuild=False'
       projects: |
         test/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.csproj
         test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests.csproj
@@ -135,7 +135,6 @@ steps:
       packDirectory: '$(Build.ArtifactStagingDirectory)'
       searchPatternPack: src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
       configurationToPack: Release
-      buildProperties: Version=$(version);CommitHash=$(Build.SourceVersion)
       includesymbols: true
 
   - task: EsrpCodeSigning@1
