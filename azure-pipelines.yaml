@@ -30,8 +30,16 @@ steps:
   - task: DotNetCoreCLI@2
     displayName: Build project
     inputs:
+      command: 'build'
+      arguments: '--configuration Release -p:IsLocalBuild=False'
+      projects: src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
+
+  - task: DotNetCoreCLI@2
+    displayName: Build test projects
+    inputs:
+      command: 'build'
+      arguments: '--configuration Release -p:IsLocalBuild=False'
       projects: |
-        src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
         test/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.csproj
         test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests.csproj
         test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.csproj
@@ -117,8 +125,14 @@ steps:
       command: test
       projects: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
 
-  - script: dotnet pack -o '$(Build.ArtifactStagingDirectory)' --include-symbols src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
+  - task: DotNetCoreCLI@2
     displayName: Pack NuGet package
+    inputs:
+      command: pack
+      packDirectory: '$(Build.ArtifactStagingDirectory)'
+      searchPatternPack: src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
+      configurationToPack: Release
+      includesymbols: true
 
   - task: EsrpCodeSigning@1
     displayName: Sign extension package
