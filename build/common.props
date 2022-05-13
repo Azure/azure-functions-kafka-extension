@@ -1,7 +1,7 @@
 <Project>
   <PropertyGroup>
     <!-- Extensions can have independent versions and only increment when released -->
-    <Version>3.3.3$(VersionSuffix)</Version>
+    <Version>3.4$(VersionSuffix)</Version>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Authors>Microsoft</Authors>
     <Company>Microsoft</Company>
@@ -9,6 +9,12 @@
     <RepositoryType>git</RepositoryType>
     <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
     <CodeAnalysisRuleSet>..\..\src.ruleset</CodeAnalysisRuleSet>
+
+    <!-- Add strong name signing properties -->
+    <SignAssembly>true</SignAssembly>
+    <PublicSign>true</PublicSign>
+    <DelaySign>false</DelaySign>
+    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)MSSharedLibKey.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
     <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\stylecop.json" Link="stylecop.json" />
