@@ -1,0 +1,17 @@
+{
+  "bindings" : [ {
+    "type" : "kafkaTrigger",
+    "direction" : "in",
+    "name" : "kafkaEvents",
+    "protocol" : "SASLSSL",
+    "password" : "ConfluentCloudPassword",
+    "dataType" : "string",
+    "topic" : "topic",
+    "authenticationMode" : "PLAIN",
+    "avroSchema" : "{\"type\":\"record\",\"name\":\"Payment\",\"namespace\":\"io.confluent.examples.clients.basicavro\",\"fields\":[{\"name\":\"id\",\"type\":\"string\"},{\"name\":\"amount\",\"type\":\"double\"},{\"name\":\"type\",\"type\":\"string\"}]}",
+    "cardinality" : "MANY",
+    "consumerGroup" : "$Default",
+    "username" : "ConfluentCloudUsername",
+    "brokerList" : "%BrokerList%"
+  } ]
+}
