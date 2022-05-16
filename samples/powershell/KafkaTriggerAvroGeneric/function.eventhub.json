@@ -1,5 +1,4 @@
 {
-  "scriptFile": "main.py",
   "bindings" : [ {
     "type" : "kafkaTrigger",
     "direction" : "in",
