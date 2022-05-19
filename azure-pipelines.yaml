@@ -112,7 +112,7 @@ steps:
       targetType: filePath
       filePath: ./script/create_package.sh
 
-   - task: Bash@3
+  - task: Bash@3
      displayName: Start Kakfa in single node with Java and Python
      inputs:
        targetType: filePath
