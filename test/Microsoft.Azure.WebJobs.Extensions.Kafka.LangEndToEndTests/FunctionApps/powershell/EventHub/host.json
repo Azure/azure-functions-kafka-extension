@@ -8,9 +8,6 @@
       }
     }
   },
-  "managedDependency": {
-    "enabled": true
-  },
   "extensions": {
     "kafka": {
         "maxBatchSize": 3
