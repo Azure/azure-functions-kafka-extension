@@ -1,0 +1,23 @@
+{
+  "bindings": [
+    {
+      "type": "kafkaTrigger",
+      "name": "kafkaEvent",
+      "direction": "in",
+      "brokerList": "ConfluentBrokerList",
+      "topic": "e2e-kafka-powershell-single-confluent",
+      "username": "ConfluentCloudUsername",
+      "password": "ConfluentCloudPassword",
+      "protocol": "saslSsl",
+      "authenticationMode": "plain",
+      "consumerGroup": "$Default"
+    },
+    {
+      "type": "queue",
+      "direction": "out",
+      "name": "Msg",
+      "queueName": "e2e-powershell-single-confluent",
+      "connection": "AzureWebJobsStorage"
+    }
+  ]
+}

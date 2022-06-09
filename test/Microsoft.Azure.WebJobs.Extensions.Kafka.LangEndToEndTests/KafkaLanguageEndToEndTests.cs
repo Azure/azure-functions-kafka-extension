@@ -16,7 +16,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
             this.endToEndTestFixture = endToEndTestFixture;
         }
 
-        [Fact]
+        /*[Fact]
         public async Task Java8_Smoke_Test_For_Output_And_SingleTrigger()
         {
             var random = new Random();
@@ -44,7 +44,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
             Assert.True(response.IsSuccessStatusCode);
 
             var result = consumer.Consume(10 * 1000);
-            Assert.Equal(inputMessage, result.Message.Value);
-        }
+            Assert.Equal(inputMessage, result.Message.Value.ToKafkaEventData().Value);
+        }*/
     }
 }

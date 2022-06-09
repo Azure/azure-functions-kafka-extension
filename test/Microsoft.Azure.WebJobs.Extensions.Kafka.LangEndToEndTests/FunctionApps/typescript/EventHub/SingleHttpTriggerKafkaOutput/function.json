@@ -1,0 +1,31 @@
+{
+  "bindings": [
+    {
+      "authLevel": "function",
+      "type": "httpTrigger",
+      "direction": "in",
+      "name": "req",
+      "methods": [
+        "get",
+        "post"
+      ]
+    },
+    {
+      "type": "kafka",
+      "name": "outputKafkaMessage",
+      "brokerList": "EventHubBrokerList",
+      "topic": "e2e-kafka-typescript-single-eventhub",
+      "username": "$ConnectionString",
+      "password": "%EventHubConnectionString%",
+      "protocol": "SASLSSL",
+      "authenticationMode": "PLAIN",
+      "direction": "out"
+    },
+    {
+      "type": "http",
+      "direction": "out",
+      "name": "res"
+    }
+  ],
+  "scriptFile": "../dist/SingleHttpTriggerKafkaOutput/index.js"
+}
