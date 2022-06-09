@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.process
 {
-	public class ProcessManager: IDisposable
+	public class ProcessLifecycleManager: IDisposable
 	{
-		private static ProcessManager instance = new ProcessManager();
+		private static ProcessLifecycleManager instance = new ProcessLifecycleManager();
 		private static List<Process> processList;
-		public static ProcessManager GetInstance()
+		public static ProcessLifecycleManager GetInstance()
 		{
 			return instance;
 		}
@@ -23,7 +23,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.process
 			}
 		}
 
-		private ProcessManager()
+		private ProcessLifecycleManager()
 		{
 			processList = new List<Process>();
 		}
