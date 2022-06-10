@@ -1,4 +1,4 @@
-# How to run the Java
+# How to run the Application 
 
 For `func start`, replace the process by following.
 Java use maven. You also don't need to do `func extensions install`.
