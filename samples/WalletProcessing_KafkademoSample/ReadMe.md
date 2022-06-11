@@ -1,4 +1,12 @@
-# How to run the Application 
+# Azure Functions Kafka Trigger JAVA Code Sample 
+
+Use Case Scenario
+Let’s take a look at the scenario of wallet transaction processing – The goal of this use-case is to process the wallet transaction and notify users via email /sms/in-app. This is a fictitious example to showcase the Kafka trigger and output binding usage with Avro and header data. The code can be further customized and extended as per your requirements.
+
+The wallet producer helps generate  wallet transactions in the Avro serialized format to kafka topic- wallet_event.
+•	Once the message arrives at a Kafka topic a  function app is triggered which de-serializes the transaction data and initiates header data which is used to send notifications accordingly.
+•	Then a new message is constructed with header data and this message is then sent to notification_event_topic using the Kafka output binding 
+•	The Notification listener function  will be invoked once there is a new message in the kafka topic - notification_event_topic, then the respective notification events are passed on to the email, sms and inapp topics using the kafka output bindings which are picked by the corresponding event function apps.
 
 For `func start`, replace the process by following.
 Java use maven. You also don't need to do `func extensions install`.
