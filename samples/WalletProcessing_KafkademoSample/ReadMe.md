@@ -150,7 +150,10 @@ Update the **schemaRegistryUrl** in pom.xml with the API endpoint of the Schema 
 
 Now that we have all the components in place, we can test the end-to-end functionality. Lets build and run the function&#39;s code by starting the local Functions runtime host from the folder which has been cloned :
 
-![alt text](img/img20.png)
+```bash
+mvn clean package
+mvn azure-functions:run
+```
 
 You should see that the worker process has been started and initialized.
 
