@@ -177,7 +177,9 @@ You can use the Azure Portal to toggle the Runtime Scale Monitoring setting unde
 You can now deploy your locally created Function app to the app created in Azure by using the following [func command](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local?tabs=windows,csharp,bash#publish) by replacing the  **NameOfFunctionApp**  with the name of the Function app created in Azure in the previous step.
  Note: To use this command from Az CLI you have to be logged into Azure using Azure CLI.
 
-![alt text](img/img24.png)
+```bash
+func azure function publish <NameOfFunctionApp>
+```
 
 **OR**
 
@@ -186,7 +188,7 @@ Update the following in the pom.xml **schemaRegistryUrl**, **functionAppName**, 
 Execute the following command to deploy to azure:
 
 ```azurecli
-**mvn azure-functions:deploy**
+mvn azure-functions:deploy
 ```
 
 Note: Ensure the function app&#39;s configuration – Application settings are updated with Kafka broker, API key/secret and topics similar to the configuration in local.settings.json.
