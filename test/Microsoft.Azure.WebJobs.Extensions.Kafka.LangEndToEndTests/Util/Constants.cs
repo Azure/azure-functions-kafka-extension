@@ -145,5 +145,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 			{ Language.JAVASCRIPT, JS_WORKER_RUNTIME },
 			{ Language.TYPESCRIPT, TS_WORKER_RUNTIME }
 		};
+
+		public static List<string> IndexQueryParamMapping = new List<string>() { "message", "message1", "message2" };
 	}
 }

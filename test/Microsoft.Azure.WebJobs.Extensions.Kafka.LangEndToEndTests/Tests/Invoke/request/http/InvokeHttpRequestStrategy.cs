@@ -14,8 +14,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests.Invok
 {
     public class InvokeHttpRequestStrategy : InvokeRequestStrategy<HttpResponseMessage>
     {
-        //Request:Command<HttpResponse> Response:HttpResponse
-        //Execute Request Return Reponse
         private IExecutor<Command<HttpResponseMessage>, HttpResponseMessage> httpCommandExecutor;
         private HttpRequestEntity httpRequestEntity;
 
@@ -25,8 +23,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests.Invok
             this.httpCommandExecutor = new HttpCommandExecutor();
         }
 
-        //Why do we need executor and command abs? Why two and not one?
-        //Single Http client for language vs test?
         public Task<HttpResponseMessage> InvokeRequestAsync()
         {
             Command<HttpResponseMessage> httpCmd = (new HttpCommand.HttpCommandBuilder()).

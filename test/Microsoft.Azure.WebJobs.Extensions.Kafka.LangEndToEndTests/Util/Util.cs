@@ -1,6 +1,8 @@
-﻿using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.brokers;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.brokers;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.languages;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.type;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.entity;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue;
 using System;
 using System.Collections.Generic;
@@ -38,6 +40,40 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 		{
 			var base64EncodedBytes = Convert.FromBase64String(base64EncodedData);
 			return Encoding.UTF8.GetString(base64EncodedBytes);
+		}
+
+		public static List<string> GenerateRandomMsgs(AppType appType)
+		{
+			var randomStrings = new List<string>();
+			
+			int numMsgs = (appType == AppType.SINGLE_EVENT ? Constants.SINGLE_MESSAGE_COUNT : Constants.BATCH_MESSAGE_COUNT);
+			for (int i = 0; i < numMsgs; i++)
+			{
+				randomStrings.Add(Guid.NewGuid().ToString());
+			}
+
+			return randomStrings;
+		}
+
+		public static string GenerateTriggerUrl(string portNum, string appName)
+		{
+			return "http://localhost:" + portNum + "/api/" + appName;
+		}
+
+		public static HttpRequestEntity GenerateTestHttpRequestEntity(string portNum, string appName, List<string> reqMsgs)
+		{
+			//Generate Trigger Url
+			string triggerUrl = Utils.GenerateTriggerUrl(Constants.PYTHONAPP_CONFLUENT_PORT, Constants.PYTHON_MULTI_APP_NAME);
+
+			//Generate Request Query Params
+			Dictionary<string, string> reqParms = new Dictionary<string, string>();
+			for (int i = 0; i < reqMsgs.Count; i++)
+			{
+				reqParms.TryAdd(Constants.IndexQueryParamMapping[i], reqMsgs[i]);
+			}
+
+			return new HttpRequestEntity(triggerUrl, HttpMethods.Get,
+			   null, reqParms, null);
 		}
 	}
 }

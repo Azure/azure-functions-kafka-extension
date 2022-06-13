@@ -36,8 +36,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
         {
             if(!isInitialized)
             {
-                TestSuitInitializer testSuitInitializer = new TestSuitInitializer();
                 //Infra setup + Func Apps Startup Start
+                TestSuitInitializer testSuitInitializer = new TestSuitInitializer();
                 testSuitInitializer.InitializeTestSuit(language, brokerType);
                 isInitialized = true;
             }
@@ -45,7 +45,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
 
         async Task IAsyncLifetime.DisposeAsync()
         {
-
             TestSuiteCleaner testSuitCleaner = new TestSuiteCleaner();
             await testSuitCleaner.CleanupTestSuiteAsync(language, brokerType);
             Console.WriteLine("DisposeAsync");
@@ -68,6 +67,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
         public void SetBrokerType(BrokerType brokerType)
         {
             this.brokerType = brokerType;
+        }
+
+        public AppType GetAppType()
+        {
+            return this.appType;
         }
     }
 }

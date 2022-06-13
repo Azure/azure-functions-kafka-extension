@@ -22,13 +22,6 @@ using System.Windows.Input;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.initializer
 {
-    // build the eventhub name
-    // build the azure storage queue name
-    // InitializeTestSuit
-    // orchestration of
-    // InitializeInfra -- Azure
-    // Initilize Kafka broker
-    // start app
     public class TestSuitInitializer
     {
 
@@ -55,9 +48,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.initializer
             Command<Process> command = new ShellCommand.ShellCommandBuilder()
                                             .SetLanguage(language)
                                             .SetBrokerType(brokerType)
+                                            .SetShellCommandType(ShellCommandType.DOCKER_RUN)
                                             .Build();
             IExecutor<Command<Process>, Process> executor = new ShellCommandExecutor();
-            ProcessManager.GetInstance().AddProcess(await executor.ExecuteAsync(command));
+            ProcessLifecycleManager.GetInstance().AddProcess(await executor.ExecuteAsync(command));
         }
 
         private async Task ClearStorageQueueAsync(Language language, BrokerType brokerType)
