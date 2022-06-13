@@ -1,4 +1,8 @@
 ---
+page_type: sample
+languages: java
+products: azure-functions
+name: Azure Functions Kafka Trigger Java Sample
 layout: post
 title: Azure Functions Kafka Trigger Java Sample
 description: Sample Wallet Processing scenario to showcase Kafka trigger extension 
