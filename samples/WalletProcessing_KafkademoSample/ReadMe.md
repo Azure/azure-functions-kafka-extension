@@ -6,10 +6,8 @@ name: Azure Functions Kafka Trigger Java Sample
 layout: post
 title: Azure Functions Kafka Trigger Java Sample
 description: Sample Wallet Processing scenario to showcase Kafka trigger extension 
-author: raorugan
-ms.author: raorugan
-ms.service: functions
-ms.topic: post
+author: shrohilla, raorugan
+ms.author: shrohilla, raorugan
 ms.date: 06/13/2022
 ---
 
