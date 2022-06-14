@@ -17,14 +17,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.htt
     {
         private HttpRequestEntity httpRequestEntity;
         private HttpClient httpClient;
-        //private int MAX_RETRIES = 3;
+        
         private AsyncRetryPolicy retryPolicy = Policy.Handle<HttpRequestException>()
             .WaitAndRetryAsync(
                retryCount: 6,
                sleepDurationProvider: _ => TimeSpan.FromSeconds(20)
             );
                
-        //Overkill - Why this structure?
         private HttpCommand(HttpCommandBuilder httpCommandBuilder)
         {
             this.httpRequestEntity = httpCommandBuilder.GetHttpRequestEntity();
