@@ -28,42 +28,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests
         [Fact]
         public async Task Java_App_Test_Single_Event_Eventhub()
         {
-            string reqMsg = "Single-Event";
-            string url = "http://localhost:" + Constants.JAVAAPP_EVENTHUB_PORT + "/api/" + Constants.JAVA_SINGLE_APP_NAME;
+            //Generate Random Guids
+            List<string> reqMsgs = Utils.GenerateRandomMsgs(AppType.SINGLE_EVENT);
 
-            Dictionary<string, string> reqParm = new Dictionary<string, string>();
-            reqParm.TryAdd("message", reqMsg);
+            //Create HttpRequestEntity with url and query parameters
+            HttpRequestEntity httpRequestEntity = Utils.GenerateTestHttpRequestEntity(Constants.JAVAAPP_EVENTHUB_PORT, Constants.JAVA_SINGLE_APP_NAME, reqMsgs);
 
-            HttpRequestEntity httpRequestEntity = new HttpRequestEntity(url, HttpMethods.Get,
-               null, reqParm, null);
-
-            List<string> expectedOutput = new List<string> { reqMsg };
-
-            await Test(AppType.SINGLE_EVENT, InvokeType.HTTP, httpRequestEntity, null, expectedOutput);
-
+            //Test e2e flow with trigger httpRequestEntity and expectedOutcome
+            await Test(AppType.SINGLE_EVENT, InvokeType.HTTP, httpRequestEntity, null, reqMsgs);
         }
 
 
         [Fact]
         public async Task Java_App_Test_Multi_Event_Eventhub()
         {
-            string reqMsg1 = "Multi-Event1";
-            string reqMsg2 = "Multi-Event2";
-            string reqMsg3 = "Multi-Event3";
+            //Generate Random Guids
+            List<string> reqMsgs = Utils.GenerateRandomMsgs(AppType.BATCH_EVENT);
 
-            string url = "http://localhost:" + Constants.JAVAAPP_EVENTHUB_PORT + "/api/" + Constants.JAVA_MULTI_APP_NAME;
+            //Create HttpRequestEntity with url and query parameters
+            var httpRequestEntity = Utils.GenerateTestHttpRequestEntity(Constants.JAVAAPP_EVENTHUB_PORT, Constants.JAVA_MULTI_APP_NAME, reqMsgs);
 
-            Dictionary<string, string> reqParm = new Dictionary<string, string>();
-            reqParm.TryAdd("message", reqMsg1);
-            reqParm.TryAdd("message1", reqMsg2);
-            reqParm.TryAdd("message2", reqMsg3);
-
-            HttpRequestEntity httpRequestEntity = new HttpRequestEntity(url, HttpMethods.Get,
-               null, reqParm, null);
-
-            List<string> expectedOutput = new List<string> { reqMsg1, reqMsg2, reqMsg3 };
-
-            await Test(AppType.BATCH_EVENT, InvokeType.HTTP, httpRequestEntity, null, expectedOutput);
+            //Test e2e flow with trigger httpRequestEntity and expectedOutcome
+            await Test(AppType.BATCH_EVENT, InvokeType.HTTP, httpRequestEntity, null, reqMsgs);
         }
     }
 }

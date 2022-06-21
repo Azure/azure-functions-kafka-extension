@@ -6,7 +6,6 @@ using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.queue;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.executor;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.executor.CommandExecutor;
-using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.helper;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.process;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.eventhub;
