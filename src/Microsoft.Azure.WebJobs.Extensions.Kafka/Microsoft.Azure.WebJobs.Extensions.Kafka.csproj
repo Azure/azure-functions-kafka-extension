@@ -33,10 +33,10 @@
     <WarningsAsErrors />
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Confluent.Kafka" Version="1.9.0" />
-    <PackageReference Include="Confluent.SchemaRegistry" Version="1.9.0" />
-    <PackageReference Include="Confluent.SchemaRegistry.Serdes.Avro" Version="1.9.0" />
-    <PackageReference Include="Confluent.SchemaRegistry.Serdes.Protobuf" Version="1.9.0" />
+    <PackageReference Include="Confluent.Kafka" Version="1.8.2" />
+    <PackageReference Include="Confluent.SchemaRegistry" Version="1.8.2" />
+    <PackageReference Include="Confluent.SchemaRegistry.Serdes.Avro" Version="1.8.2" />
+    <PackageReference Include="Confluent.SchemaRegistry.Serdes.Protobuf" Version="1.8.2" />
     <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.14" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.1.0-beta004">
       <PrivateAssets>all</PrivateAssets>
