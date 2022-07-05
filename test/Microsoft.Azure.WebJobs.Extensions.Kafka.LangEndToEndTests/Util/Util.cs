@@ -63,7 +63,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 		public static HttpRequestEntity GenerateTestHttpRequestEntity(string portNum, string appName, List<string> reqMsgs)
 		{
 			//Generate Trigger Url
-			string triggerUrl = Utils.GenerateTriggerUrl(Constants.PYTHONAPP_CONFLUENT_PORT, Constants.PYTHON_MULTI_APP_NAME);
+			string triggerUrl = Utils.GenerateTriggerUrl(portNum, appName);
 
 			//Generate Request Query Params
 			Dictionary<string, string> reqParms = new Dictionary<string, string>();

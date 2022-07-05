@@ -1,12 +1,18 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure;
+using Azure.Core;
 using Azure.Identity;
+using Azure.ResourceManager;
 using Azure.ResourceManager.EventHubs;
 using Azure.ResourceManager.EventHubs.Models;
+using Azure.ResourceManager.Resources;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util;
+using Microsoft.Rest;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.eventhub
 {
@@ -14,10 +20,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
     {
         private readonly static int MAX_RETRY_COUNT = 3;
         private static SemaphoreSlim _semaphore;
-        private readonly string subscriptionId;
         private readonly DefaultAzureCredential credential;
         private static EventHubQueueManager instance = new EventHubQueueManager();
-        private EventHubsManagementClient eventHubsManagementClient;
+        public static AzureLocation DefaultLocation = AzureLocation.EastUS2;
+        private ConcurrentDictionary<string, EventHubCollection> queueClientFactory;
         public static EventHubQueueManager GetInstance()
         {
             return instance;
@@ -26,15 +32,35 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
         private EventHubQueueManager()
         {
             _semaphore = new SemaphoreSlim(1, 1);
-            subscriptionId = Environment.GetEnvironmentVariable(Constants.AZURE_SUBSCRIPTION_ID);
             credential = new DefaultAzureCredential();
-            eventHubsManagementClient = new EventHubsManagementClient(subscriptionId, credential);
-
+            queueClientFactory = new ConcurrentDictionary<string, EventHubCollection>();
         }
+
 
         public Task clearAsync(string queueName)
         {
             throw new NotImplementedException();
+        }
+
+        private async Task<EventHubCollection> GetEventhubCollection(string eventhubNamespace)
+        {
+            if (queueClientFactory.TryGetValue(eventhubNamespace, out EventHubCollection eventhubCollection)) 
+            { 
+                return eventhubCollection;
+            }
+
+            var client = new ArmClient(credential);
+            var subscription = await client.GetDefaultSubscriptionAsync();
+            var resourceGroups = subscription.GetResourceGroups();
+            var resourceGroup = (await resourceGroups.GetAsync(Constants.RESOURCE_GROUP)).Value;
+            
+            var namespaceCollection = resourceGroup.GetEventHubNamespaces();
+            var eventHubNamespace = (await namespaceCollection.GetAsync(eventhubNamespace)).Value;
+            var newEventhubCollection = eventHubNamespace.GetEventHubs();
+            
+            queueClientFactory.TryAdd(eventhubNamespace, newEventhubCollection);
+            
+            return newEventhubCollection;
         }
 
         public async Task createAsync(string queueName)
@@ -46,15 +72,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
             {
                 try
                 {
-                   await _semaphore.WaitAsync();
+                    await _semaphore.WaitAsync();
 
-                    var newEventHubresponse = await eventHubsManagementClient.EventHubs.CreateOrUpdateAsync(Constants.RESOURCE_GROUP, Constants.EVENTHUB_NAMESPACE, queueName,
-                        new Eventhub()
+                    var eventhubCollection = await GetEventhubCollection(Constants.EVENTHUB_NAMESPACE);
+                    EventHubResource eventHub = (await eventhubCollection.CreateOrUpdateAsync(WaitUntil.Completed, queueName, 
+                        new EventHubData()
                         {
                             MessageRetentionInDays = 1,
-                            PartitionCount = 4
-                        }).ConfigureAwait(false);
-                    Console.WriteLine(newEventHubresponse.ToString());
+                            PartitionCount = 4                      
+                        }
+                        )).Value;
+
                     return;
                 }
                 catch (Exception ex)
@@ -71,29 +99,31 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
             }
         }
 
-        public async Task deleteAsync(string queueName)
-        {
-            int count = 0;
-            while (count <= MAX_RETRY_COUNT)
-            {
-                try
-                {
-                    await eventHubsManagementClient.EventHubs.DeleteAsync(Constants.RESOURCE_GROUP, Constants.EVENTHUB_NAMESPACE, queueName);
-                    return;
-                }
-                catch (Exception ex)
-                {
-                    if (count >= MAX_RETRY_COUNT)
-                        throw ex;
-                }
-                finally
-                {
-                    count++;
-                }
-            }
-        }
+		public async Task deleteAsync(string queueName)
+		{
+			int count = 0;
+			while (count <= MAX_RETRY_COUNT)
+			{
+				try
+				{
+                    var eventhubCollection = await GetEventhubCollection(Constants.EVENTHUB_NAMESPACE);
+                    var eventhub = (await eventhubCollection.GetAsync(queueName)).Value;
+                    await eventhub.DeleteAsync(WaitUntil.Completed);
+					return;
+				}
+				catch (Exception ex)
+				{
+					if (count >= MAX_RETRY_COUNT)
+						throw ex;
+				}
+				finally
+				{
+					count++;
+				}
+			}
+		}
 
-        public Task<QueueResponse> readAsync(int batchSize, string queueName)
+		public Task<QueueResponse> readAsync(int batchSize, string queueName)
         {
             throw new NotImplementedException();
         }

@@ -36,8 +36,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 		public const string KAFKA = "kafka";
 		public const string FUNC_START = "func start";
 		public const string HIPHEN = "-";
-		public const string RESOURCE_GROUP = "kafkagroup";
-		public const string EVENTHUB_NAMESPACE = "kafkaextensiontest";
+		public const string RESOURCE_GROUP = "EventHubRG";
+		public const string EVENTHUB_NAMESPACE = "kafkaextension";
 		public const string SINGLE = "single";
 		public const string MULTI = "multi";
 

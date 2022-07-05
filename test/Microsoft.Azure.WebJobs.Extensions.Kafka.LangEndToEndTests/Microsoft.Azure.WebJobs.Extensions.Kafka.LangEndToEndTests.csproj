@@ -10,6 +10,9 @@
     <Compile Remove="FunctionApps\**" />
     <EmbeddedResource Remove="FunctionApps\**" />
     <None Remove="FunctionApps\**" />
+    <Compile Remove="server\**" />
+    <EmbeddedResource Remove="server\**" />
+    <None Remove="server\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -24,9 +27,10 @@
     <PackageReference Include="xunit" Version="2.4.0" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.0" />
     <PackageReference Include="coverlet.collector" Version="1.2.0" />
-	<PackageReference Include="Azure.ResourceManager" Version="1.0.0-beta.8" />
-	<PackageReference Include="Azure.ResourceManager.EventHubs" Version="1.0.0-preview.1" />
-	<PackageReference Include="Azure.Identity " Version="1.6.0-beta.1" />
+	<PackageReference Include="Azure.ResourceManager" Version="1.1.2" />
+	<PackageReference Include="Azure.ResourceManager.EventHubs" Version="1.0.0-beta.4" />
+	<PackageReference Include="Azure.Identity" Version="1.6.0" />
+	<PackageReference Include="Microsoft.Azure.Management.EventHub" Version="5.0.0" />
 	<PackageReference Include="Azure.Storage.Queues" Version="12.9.0" />
   </ItemGroup>
 

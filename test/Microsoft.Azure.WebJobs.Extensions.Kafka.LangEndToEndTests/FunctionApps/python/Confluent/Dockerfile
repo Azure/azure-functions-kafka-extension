@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/azure-functions/python:4-python3.8-core-tools
+FROM mcr.microsoft.com/azure-functions/python:4-python3.9-core-tools
 
 # Copy Local File
 RUN mkdir /workspace
