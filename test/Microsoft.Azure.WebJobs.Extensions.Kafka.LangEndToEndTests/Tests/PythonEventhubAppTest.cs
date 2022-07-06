@@ -33,7 +33,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests
             List<string> reqMsgs = Utils.GenerateRandomMsgs(AppType.SINGLE_EVENT);
 
             //Create HttpRequestEntity with url and query parameters
-            HttpRequestEntity httpRequestEntity = Utils.GenerateTestHttpRequestEntity(Constants.PYTHONAPP_EVENTHUB_PORT, Constants.PYTHON_MULTI_APP_NAME, reqMsgs);
+            HttpRequestEntity httpRequestEntity = Utils.GenerateTestHttpRequestEntity(Constants.PYTHONAPP_EVENTHUB_PORT, Constants.PYTHON_SINGLE_APP_NAME, reqMsgs);
 
             //Test e2e flow with trigger httpRequestEntity and expectedOutcome
             await Test(AppType.SINGLE_EVENT, InvokeType.HTTP, httpRequestEntity, null, reqMsgs);
