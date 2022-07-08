@@ -54,33 +54,33 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// <summary>
         /// Gets or sets the Maximum transmit message size. Default: 1MB
         /// </summary>
-        public int? MaxMessageBytes { get; set; }
+        public int MaxMessageBytes { get; set; } = 1_000_000;
 
         /// <summary>
         /// Maximum number of messages batched in one MessageSet. default: 10000
         /// </summary>
-        public int? BatchSize { get; set; }
+        public int BatchSize { get; set; } = 10_000;
 
         /// <summary>
         /// When set to `true`, the producer will ensure that messages are successfully produced exactly once and in the original produce order. default: false
         /// </summary>
-        public bool? EnableIdempotence { get; set; }
+        public bool EnableIdempotence { get; set; } = false;
 
         /// <summary>
         /// Local message timeout. This value is only enforced locally and limits the time a produced message waits for successful delivery. A time of 0 is infinite. This is the maximum time used to deliver a message (including retries). Delivery error occurs when either the retry count or the message timeout are exceeded. default: 300000
         /// </summary>
-        public int? MessageTimeoutMs { get; set; }
+        public int MessageTimeoutMs { get; set; } = 300_000;
 
         /// <summary>
         /// The ack timeout of the producer request in milliseconds. default: 5000
         /// </summary>
-        public int? RequestTimeoutMs { get; set; }
+        public int RequestTimeoutMs { get; set; } = 5_000;
 
         /// <summary>
         /// How many times to retry sending a failing Message. **Note:** default: 2 
         /// </summary>
         /// <remarks>Retrying may cause reordering unless <c>EnableIdempotence</c> is set to <c>true</c>.</remarks>
-        public int? MaxRetries { get; set; }
+        public int MaxRetries { get; set; } = 2;
 
         /// <summary>
         /// SASL mechanism to use for authentication. 
