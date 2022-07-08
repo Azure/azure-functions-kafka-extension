@@ -80,9 +80,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         private KafkaEventData<string> BuildKafkaEventData(JObject dataObj)
         {
-            KafkaEventData<string> messageToSend = new KafkaEventData<string>((string)dataObj["Value"]);
-            messageToSend.Timestamp = (DateTime)dataObj["Timestamp"];
-            messageToSend.Partition = (int)dataObj["Partition"];
+            KafkaEventData<string> messageToSend = new KafkaEventData<string>((string)dataObj["Value"])
+            {
+                Timestamp = (DateTime)dataObj["Timestamp"],
+                Partition = (int)dataObj["Partition"]
+            };
             JArray headerList = (JArray)dataObj["Headers"];
             foreach (JObject header in headerList) {
                 messageToSend.Headers.Add((string)header["Key"], Encoding.UTF8.GetBytes((string)header["Value"]));

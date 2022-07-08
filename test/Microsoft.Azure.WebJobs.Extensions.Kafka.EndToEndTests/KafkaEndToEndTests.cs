@@ -621,6 +621,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                 .Select(x => {
                     var eventData = new KafkaEventData<string>
                     {
+                        Topic = Constants.StringTopicWithTenPartitionsName,
                         Value = x.ToString()
                     };
 
@@ -650,6 +651,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             var input = Enumerable.Range(0, 10)
                 .Select(x => new KafkaEventData<string>
                 {
+                    Topic = Constants.StringTopicWithTenPartitionsName,
                     Value = x.ToString()
                 });
 
@@ -672,10 +674,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
         private async Task<List<KafkaEventData<string>>> ProduceAndConsumeAsync(IEnumerable<KafkaEventData<string>> events) 
         {
             var eventList = events.ToList();
-            foreach (var kafkaEvent in eventList)
-            {
-                kafkaEvent.Topic = Constants.StringTopicWithTenPartitionsName;
-            }
             var eventCount = eventList.Count;
             var output = new ConcurrentBag<KafkaEventData<string>>();
             using (var host = await StartHostAsync(new[] { typeof(KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>), typeof(KafkaTriggerForProduceAndConsume<KafkaEventData<string>>) },
