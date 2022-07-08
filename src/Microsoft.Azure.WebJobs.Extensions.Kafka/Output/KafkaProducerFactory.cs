@@ -122,6 +122,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 MessageSendMaxRetries = entity.Attribute.MaxRetries,
                 MessageTimeoutMs = entity.Attribute.MessageTimeoutMs,
                 RequestTimeoutMs = entity.Attribute.RequestTimeoutMs,
+                MessageMaxBytes = entity.Attribute.MaxMessageBytes,
                 SaslPassword = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.Password),
                 SaslUsername = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.Username),
                 SslKeyLocation = resolvedSslKeyLocation,
