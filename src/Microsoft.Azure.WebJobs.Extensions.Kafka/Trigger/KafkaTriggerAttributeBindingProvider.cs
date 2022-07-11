@@ -54,7 +54,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var valueDeserializer = SerializationHelper.ResolveValueDeserializer(keyAndValueTypes.ValueType, keyAndValueTypes.AvroSchema);            
 
             var binding = CreateBindingStrategyFor(keyAndValueTypes.KeyType ?? typeof(Ignore), keyAndValueTypes.ValueType, keyAndValueTypes.RequiresKey, valueDeserializer, parameter, consumerConfig);
-            
             return Task.FromResult<ITriggerBinding>(new KafkaTriggerBindingWrapper(binding));
         }
 
