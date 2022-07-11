@@ -30,11 +30,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.cleanup
 
 		private async Task KillFunctionDockersAsync(Language language, BrokerType brokerType)
 		{
-			Command<Process> command = new ShellCommand.ShellCommandBuilder()
+			/*Command<Process> command = new ShellCommand.ShellCommandBuilder()
 											.SetLanguage(language)
 											.SetBrokerType(brokerType)
 											.SetShellCommandType(ShellCommandType.DOCKER_KILL)
-											.Build();
+											.Build();*/
+			Command<Process> command = ShellCommandFactory.CreateShellCommand(ShellCommandType.DOCKER_KILL, brokerType, language);
 			IExecutor<Command<Process>, Process> executor = new ShellCommandExecutor();
 			await executor.ExecuteAsync(command);
 		}

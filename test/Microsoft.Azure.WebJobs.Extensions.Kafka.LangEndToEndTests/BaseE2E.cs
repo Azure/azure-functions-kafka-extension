@@ -13,6 +13,7 @@ using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests.Invoke.re
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests.Invoke.request.queue;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests.Invoke.Type;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.TestLogger;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -22,6 +23,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 using Xunit.Sdk;
+using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
 {
@@ -32,6 +34,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
         private BrokerType brokerType;
         private E2ETestInvoker invoker;
         ITestOutputHelper output;
+        private readonly ILogger logger = TestLogger.TestLogger.logger;
+
         protected BaseE2E(KafkaE2EFixture kafkaE2EFixture, Language language, BrokerType brokerType, ITestOutputHelper output)
         {
             this.kafkaE2EFixture = kafkaE2EFixture;
@@ -52,6 +56,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
         public async Task Test(AppType appType, InvokeType invokeType, HttpRequestEntity httpRequestEntity,
             KafkaEntity queueEntity, List<string> expectedOutput)
         {
+            //Send invocation Http request to the function app 
             await InvokeE2ETest(appType, invokeType, httpRequestEntity, queueEntity);
             
             // wait for the function completion
@@ -95,8 +100,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
                 }
                 catch(Exception ex)
                 {
-                    //Change this to logging
-                    Console.WriteLine($"Unable to invoke functions for language:{language} broker:{brokerType} with exception {ex}");
+                    logger.LogError($"Unable to invoke functions for language:{language} broker:{brokerType} with exception {ex}");
                     throw ex;
                 }
             }

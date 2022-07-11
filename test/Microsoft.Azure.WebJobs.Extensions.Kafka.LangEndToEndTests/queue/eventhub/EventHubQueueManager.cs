@@ -12,7 +12,7 @@ using Azure.ResourceManager.EventHubs;
 using Azure.ResourceManager.EventHubs.Models;
 using Azure.ResourceManager.Resources;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util;
-using Microsoft.Rest;
+using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.eventhub
 {
@@ -22,8 +22,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
         private static SemaphoreSlim _semaphore;
         private readonly DefaultAzureCredential credential;
         private static EventHubQueueManager instance = new EventHubQueueManager();
-        public static AzureLocation DefaultLocation = AzureLocation.EastUS2;
         private ConcurrentDictionary<string, EventHubCollection> queueClientFactory;
+        private readonly ILogger logger = TestLogger.TestLogger.logger;
         public static EventHubQueueManager GetInstance()
         {
             return instance;
@@ -87,7 +87,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex);
+                    logger.LogError($"Exception occured while creating Eventhub {ex}");
                     if (count >= MAX_RETRY_COUNT)
                         throw ex;
                 }

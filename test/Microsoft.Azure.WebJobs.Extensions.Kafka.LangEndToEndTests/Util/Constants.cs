@@ -1,4 +1,5 @@
-﻿using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.brokers;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.brokers;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.languages;
 using System;
 using System.Collections.Generic;
@@ -8,6 +9,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 {
 	public static class Constants
 	{
+		public const string HTTP_GET = "GET";
+		public const string HTTP_POST = "POST";
+		public const string HTTP_PUT = "PUT";
+		public const string HTTP_DELETE = "DELETE";
+
 		public const int BATCH_MESSAGE_COUNT = 3;
 		public const int SINGLE_MESSAGE_COUNT = 1;
 

@@ -13,31 +13,37 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.executor.pr
 
         public async Task<Process> ExecuteAsync(string request)
         {
+            if (string.IsNullOrEmpty(request)) 
+            { 
+                throw new ArgumentNullException(nameof(request));
+            }
+
+            var requestProcess = CreateProcess(request);
+            await Task.Run(() => requestProcess.Start());
+
+            return requestProcess;
+        }
+
+        private Process CreateProcess(string request)
+        {
             Process process = new Process();
-            string shell = null;
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                shell = "cmd.exe";
                 process.StartInfo.ArgumentList.Add("/C");
-                process.StartInfo.FileName = shell;
+                process.StartInfo.FileName = "cmd.exe";
                 process.StartInfo.ArgumentList.Add(request);
             }
             else
             {
-                shell = "/bin/bash";
                 process.StartInfo.Arguments = $"-c \"{request}\"";
-                process.StartInfo.FileName = shell;
-                //process.StartInfo.ArgumentList.Add(request);
-                Console.WriteLine($"Process Arguments: {$"-c \"{request}\""}");
+                process.StartInfo.FileName = "/bin/bash";
             }
 
-			process.StartInfo.UseShellExecute = false;
+            process.StartInfo.UseShellExecute = false;
             process.StartInfo.RedirectStandardError = true;
             process.StartInfo.RedirectStandardOutput = true;
             process.StartInfo.CreateNoWindow = false;
-
-            await Task.Run(() => process.Start());
 
             return process;
         }

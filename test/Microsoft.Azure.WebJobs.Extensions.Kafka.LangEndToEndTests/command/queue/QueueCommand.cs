@@ -31,10 +31,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.que
                 this.queueManager = AzureStorageQueueManager.GetInstance();
             }
         }
-        public void Dispose()
-        {
-            //throw new NotImplementedException();
-        }
+        public void Dispose() { }
 
         public async Task<QueueResponse> ExecuteCommandAsync()
         {

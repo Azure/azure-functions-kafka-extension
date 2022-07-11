@@ -11,6 +11,7 @@ using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.eventhub;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.operation;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.storageQueue;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -25,33 +26,37 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
         private AppType appType;
         private BrokerType brokerType;
         protected bool isInitialized = false;
+        private readonly ILogger logger = TestLogger.TestLogger.logger;
 
         public KafkaE2EFixture()
         {
-            Console.WriteLine("Kafkae2efixture");
+            logger.LogInformation($"Kafkae2efixture for {language} {appType} {brokerType}");
         }
 
         public void OrchestrateInitialization()
         {
-            if(!isInitialized)
+            if (isInitialized)
             {
-                //Infra setup + Func Apps Startup Start
-                TestSuitInitializer testSuitInitializer = new TestSuitInitializer();
-                testSuitInitializer.InitializeTestSuit(language, brokerType);
-                isInitialized = true;
+                return;            
             }
+
+            //Azure Infra setup and Func Apps Startup
+            TestSuitInitializer testSuitInitializer = new TestSuitInitializer();
+            testSuitInitializer.InitializeTestSuit(language, brokerType);
+            
+            isInitialized = true;
         }
 
         async Task IAsyncLifetime.DisposeAsync()
         {
             TestSuiteCleaner testSuitCleaner = new TestSuiteCleaner();
             await testSuitCleaner.CleanupTestSuiteAsync(language, brokerType);
-            Console.WriteLine("DisposeAsync");
+            logger.LogInformation("DisposeAsync");
         }
 
         Task IAsyncLifetime.InitializeAsync()
         {
-            Console.WriteLine("InitializeAsync");
+            logger.LogInformation("InitializeAsync");
             return Task.CompletedTask;
         }
 

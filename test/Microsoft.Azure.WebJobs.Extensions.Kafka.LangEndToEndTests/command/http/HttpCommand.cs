@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 using Polly;
 using Polly.Retry;
 using Xunit;
+using Microsoft.Extensions.Logging;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.http
 {
@@ -17,7 +19,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.htt
     {
         private HttpRequestEntity httpRequestEntity;
         private HttpClient httpClient;
-        
+        private readonly ILogger logger = TestLogger.TestLogger.logger;
+
         private AsyncRetryPolicy retryPolicy = Policy.Handle<HttpRequestException>()
             .WaitAndRetryAsync(
                retryCount: 6,
@@ -40,36 +43,41 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.htt
         {
             string httpMethod = httpRequestEntity.GetHttpMethod();
 
-            if(httpMethod.Equals(HttpMethods.Post))
+            switch (httpMethod)
             {
-                return await httpClient.PostAsync(httpRequestEntity.GetUrl(), null);
+				case Constants.HTTP_POST:
+                    return await httpClient.PostAsync(httpRequestEntity.GetUrl(), null);
+
+                case Constants.HTTP_PUT:
+                    return await httpClient.PutAsync(httpRequestEntity.GetUrl(), null);
+
+                case Constants.HTTP_DELETE:
+                    return await httpClient.DeleteAsync(httpRequestEntity.GetUrl());
+
+                case Constants.HTTP_GET:
+                    var requestUri = new Uri(httpRequestEntity.GetUrlWithQuery());
+                    return await GetAsync(requestUri);
+                default:
+                    throw new NotImplementedException();
             }
-            else if(httpMethod.Equals(HttpMethods.Put))
+        }
+
+        private async Task<HttpResponseMessage> GetAsync(Uri requestUri)
+        {
+            HttpResponseMessage response = null;
+
+            try
             {
-                return await httpClient.PutAsync(httpRequestEntity.GetUrl(), null);
+                response = await retryPolicy.ExecuteAsync(async () => await httpClient.GetAsync(requestUri));
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                logger.LogInformation($"request:{requestUri.AbsoluteUri} response:{response.StatusCode.ToString()}");
             }
-            else if (httpMethod.Equals(HttpMethods.Delete))
+            catch (Exception ex)
             {
-                return await httpClient.DeleteAsync(httpRequestEntity.GetUrl());
+                logger.LogError($"{ex}");
+                throw ex;
             }
-            else
-            {
-                var requestUri = new Uri(httpRequestEntity.GetUrlWithQuery());
-                HttpResponseMessage response = null;
-                
-                try
-                {
-                    response = await retryPolicy.ExecuteAsync(async () => await httpClient.GetAsync(requestUri));
-                    Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-                    Console.WriteLine($"request:{requestUri.AbsoluteUri} response:{response.StatusCode.ToString()}");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex);
-                    throw ex;
-                }
-                return response;
-            }
+            return response;
         }
 
         public sealed class HttpCommandBuilder

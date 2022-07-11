@@ -15,7 +15,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 		public static string GetEnvVariable(string varName) { return Environment.GetEnvironmentVariable(varName); }
 		public static string BuildCloudBrokerName(QueueType queueType, AppType appType, Language language)
 		{
-			//return Constants.
 			return Constants.E2E + Constants.HIPHEN + Constants.KAFKA + Constants.HIPHEN + LanguageToLower(language) + Constants.HIPHEN + GiveAppTypeInString(appType) + Constants.HIPHEN + queueType.ToString().ToLower();
 		}
 
@@ -38,6 +37,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 
 		public static string Base64Decode(string base64EncodedData)
 		{
+			if (string.IsNullOrEmpty(base64EncodedData))
+			{
+				throw new ArgumentNullException(base64EncodedData);
+			}
 			var base64EncodedBytes = Convert.FromBase64String(base64EncodedData);
 			return Encoding.UTF8.GetString(base64EncodedBytes);
 		}
@@ -55,7 +58,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 			return randomStrings;
 		}
 
-		public static string GenerateTriggerUrl(string portNum, string appName)
+		private static string GenerateTriggerUrl(string portNum, string appName)
 		{
 			return "http://localhost:" + portNum + "/api/" + appName;
 		}

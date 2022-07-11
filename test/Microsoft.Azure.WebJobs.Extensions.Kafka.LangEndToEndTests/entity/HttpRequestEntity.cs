@@ -39,7 +39,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.entity
             var query = new List<string>();
             foreach (KeyValuePair<string, string> entry in requestParams)
             {
-                query.Add($"{entry.Key}={entry.Value}");
+                if (!string.IsNullOrEmpty(entry.Key) && !string.IsNullOrEmpty(entry.Value)) 
+                { 
+                    query.Add($"{entry.Key}={entry.Value}");
+                }
             }
             return string.Join("&", query.ToArray());
         }

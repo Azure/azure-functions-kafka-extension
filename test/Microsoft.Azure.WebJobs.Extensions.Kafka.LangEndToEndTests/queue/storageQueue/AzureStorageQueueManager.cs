@@ -7,6 +7,8 @@ using Azure.Identity;
 using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util;
+using Microsoft.Extensions.Logging;
+using Microsoft.VisualStudio.TestTools.UnitTesting.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.storageQueue
 {
@@ -17,6 +19,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.stora
         private readonly string connectionString;
         private static AzureStorageQueueManager instance = new AzureStorageQueueManager();
         private ConcurrentDictionary<string, QueueClient> queueClientFactory;
+        private readonly ILogger logger = TestLogger.TestLogger.logger;
+
         public static AzureStorageQueueManager GetInstance()
         {
             return instance;
@@ -34,7 +38,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.stora
             await queueClient.CreateIfNotExistsAsync();
             await queueClient.ClearMessagesAsync();
             queueClientFactory.GetOrAdd(queueName, queueClient);
-            Console.WriteLine($"Clearing the queue: {queueName}");
+            logger.LogInformation($"Clearing the queue: {queueName}");
         }
 
         public Task createAsync(string queueName)
@@ -64,7 +68,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.stora
                 QueueMessage[] retrievedMessage = await queueClient.ReceiveMessagesAsync(batchSize);
                 foreach (QueueMessage message in retrievedMessage)
                 {
-                    Console.WriteLine($"Dequeued message: '{message.Body}'"); 
+                    logger.LogInformation($"Dequeued message: '{message.Body}'");
                     response.AddString(Utils.Base64Decode(message.Body.ToString()));
                 }
             }

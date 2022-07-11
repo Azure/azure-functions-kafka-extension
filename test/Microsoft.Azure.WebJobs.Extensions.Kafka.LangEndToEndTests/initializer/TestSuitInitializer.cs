@@ -12,6 +12,7 @@ using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.eventhub;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.operation;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.storageQueue;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -23,6 +24,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.initializer
 {
     public class TestSuitInitializer
     {
+        private readonly ILogger logger = TestLogger.TestLogger.logger;
 
         public void InitializeTestSuit(Language language, BrokerType brokerType)
         {
@@ -44,11 +46,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.initializer
         } 
         private async Task StartupApplicationAsync(Language language, BrokerType brokerType)
         {
-            Command<Process> command = new ShellCommand.ShellCommandBuilder()
+            /*Command<Process> command = new ShellCommand.ShellCommandBuilder()
                                             .SetLanguage(language)
                                             .SetBrokerType(brokerType)
                                             .SetShellCommandType(ShellCommandType.DOCKER_RUN)
-                                            .Build();
+                                            .Build();*/
+            Command<Process> command = ShellCommandFactory.CreateShellCommand(ShellCommandType.DOCKER_RUN, brokerType, language);
             IExecutor<Command<Process>, Process> executor = new ShellCommandExecutor();
             ProcessLifecycleManager.GetInstance().AddProcess(await executor.ExecuteAsync(command));
         }
@@ -79,8 +82,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.initializer
                         AppType.SINGLE_EVENT, language);
             string eventHubMultiName = Utils.BuildCloudBrokerName(QueueType.EventHub,
                         AppType.BATCH_EVENT, language);
-            Console.WriteLine($"Create Eventhub {eventHubSingleName} {eventHubMultiName}");
-
+            
+            logger.LogInformation($"Create Eventhub {eventHubSingleName} {eventHubMultiName}");
+            
             await BuildEventHubAsync(eventHubSingleName, eventHubMultiName);
         }
 
