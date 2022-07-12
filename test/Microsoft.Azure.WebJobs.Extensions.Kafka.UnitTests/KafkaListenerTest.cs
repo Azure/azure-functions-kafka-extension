@@ -350,6 +350,62 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal("path/to/key", target.ConsumerConfig.SslKeyLocation);
             Assert.Equal("path/to/cacert", target.ConsumerConfig.SslCaLocation);
             Assert.Equal(kafkaOptions.AutoCommitIntervalMs, target.ConsumerConfig.AutoCommitIntervalMs);
+            Assert.Equal(AutoOffsetReset.Earliest, target.ConsumerConfig.AutoOffsetReset);
+            Assert.Equal(true, target.ConsumerConfig.EnableAutoCommit);
+            Assert.Equal(false, target.ConsumerConfig.EnableAutoOffsetStore);
+            Assert.Equal(180000, target.ConsumerConfig.MetadataMaxAgeMs);
+            Assert.Equal(true, target.ConsumerConfig.SocketKeepaliveEnable);
+            Assert.Equal(AutoOffsetReset.Earliest, target.ConsumerConfig.AutoOffsetReset);
+
+            await target.StopAsync(default);
+        }
+
+        [Fact]
+        public async Task When_Options_With_AutoOffsetReset_Latest_Are_Set_Should_Be_Set_In_Consumer_Config()
+        {
+            var executor = new Mock<ITriggeredFunctionExecutor>();
+            var consumer = new Mock<IConsumer<Ignore, string>>();
+
+            var listenerConfig = new KafkaListenerConfiguration()
+            {
+                BrokerList = "testBroker",
+                Topic = "topic",
+                ConsumerGroup = "group1",
+                SslKeyPassword = "password1",
+                SslCertificateLocation = "path/to/cert",
+                SslKeyLocation = "path/to/key",
+                SslCaLocation = "path/to/cacert"
+            };
+
+            var kafkaOptions = new KafkaOptions()
+            {
+                AutoOffsetReset = AutoOffsetReset.Latest
+            };
+
+            var target = new KafkaListenerForTest<Ignore, string>(
+                executor.Object,
+                true,
+                kafkaOptions,
+                listenerConfig,
+                requiresKey: true,
+                valueDeserializer: null,
+                NullLogger.Instance,
+                functionId: "testId"
+                );
+
+            target.SetConsumer(consumer.Object);
+
+            await target.StartAsync(default);
+
+            Assert.Equal(12, target.ConsumerConfig.Count());
+            Assert.Equal("testBroker", target.ConsumerConfig.BootstrapServers);
+            Assert.Equal("group1", target.ConsumerConfig.GroupId);
+            Assert.Equal("password1", target.ConsumerConfig.SslKeyPassword);
+            Assert.Equal("path/to/cert", target.ConsumerConfig.SslCertificateLocation);
+            Assert.Equal("path/to/key", target.ConsumerConfig.SslKeyLocation);
+            Assert.Equal("path/to/cacert", target.ConsumerConfig.SslCaLocation);
+            Assert.Equal(kafkaOptions.AutoCommitIntervalMs, target.ConsumerConfig.AutoCommitIntervalMs);
+            Assert.Equal(AutoOffsetReset.Latest, target.ConsumerConfig.AutoOffsetReset);
             Assert.Equal(true, target.ConsumerConfig.EnableAutoCommit);
             Assert.Equal(false, target.ConsumerConfig.EnableAutoOffsetStore);
             Assert.Equal(180000, target.ConsumerConfig.MetadataMaxAgeMs);

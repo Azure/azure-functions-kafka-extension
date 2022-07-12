@@ -137,6 +137,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public int AutoCommitIntervalMs { get; set; } = 200;
 
         /// <summary>
+        /// Ges or sets the AutoOffsetReset option for librdkafka library.
+        /// default: Earliest
+        /// Allowed Values: Latest, Earliest
+        /// Librdkafka: auto.commit.offset
+        /// </summary>
+        public AutoOffsetReset AutoOffsetReset {
+            get => this.AutoOffsetReset;
+            set => this.AutoOffsetReset = AutoOffsetReset.Latest.Equals(value) ? AutoOffsetReset.Latest : AutoOffsetReset.Earliest; 
+        }
+
+        /// <summary>
         /// Gets or sets the debug option for librdkafka library.
         /// Default = "" (disable)
         /// A comma-separated list of debug contexts to enable: all,generic,broker,topic,metadata,producer,queue,msg,protocol,cgrp,security,fetch
