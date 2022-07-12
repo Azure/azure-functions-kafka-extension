@@ -355,7 +355,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(false, target.ConsumerConfig.EnableAutoOffsetStore);
             Assert.Equal(180000, target.ConsumerConfig.MetadataMaxAgeMs);
             Assert.Equal(true, target.ConsumerConfig.SocketKeepaliveEnable);
-            Assert.Equal(AutoOffsetReset.Earliest, target.ConsumerConfig.AutoOffsetReset);
 
             await target.StopAsync(default);
         }
@@ -410,7 +409,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(false, target.ConsumerConfig.EnableAutoOffsetStore);
             Assert.Equal(180000, target.ConsumerConfig.MetadataMaxAgeMs);
             Assert.Equal(true, target.ConsumerConfig.SocketKeepaliveEnable);
-            Assert.Equal(AutoOffsetReset.Earliest, target.ConsumerConfig.AutoOffsetReset);
 
             await target.StopAsync(default);
         }
