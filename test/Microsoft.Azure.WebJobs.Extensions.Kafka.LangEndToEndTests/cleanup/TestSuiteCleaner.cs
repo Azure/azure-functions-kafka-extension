@@ -18,6 +18,11 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.cleanup
 {
+	/* Responsible for all cleanup after the test suite runs -
+	 * Kills the running docker containers
+	 * Kills all the processes created
+	 * Cleans up the used Azure Resources
+	*/
 	public class TestSuiteCleaner
 	{
 		public async Task CleanupTestSuiteAsync(Language language, BrokerType brokerType) 

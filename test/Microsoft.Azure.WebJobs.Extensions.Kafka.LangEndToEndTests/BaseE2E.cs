@@ -27,6 +27,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
 {
+    /* This class acts as the base class for all the language test case classes.
+     * Takes care of Initial Orchestration and actual flow of the test.
+    */
     public class BaseE2E
     {
         private KafkaE2EFixture kafkaE2EFixture;
@@ -56,7 +59,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
         public async Task Test(AppType appType, InvokeType invokeType, HttpRequestEntity httpRequestEntity,
             KafkaEntity queueEntity, List<string> expectedOutput)
         {
-            //Send invocation Http request to the function app 
+            //Send invocation Http request to the function apps 
             await InvokeE2ETest(appType, invokeType, httpRequestEntity, queueEntity);
             
             // wait for the function completion

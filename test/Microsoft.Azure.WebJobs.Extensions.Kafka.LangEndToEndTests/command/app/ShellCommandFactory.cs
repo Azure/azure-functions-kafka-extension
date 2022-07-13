@@ -7,6 +7,8 @@ using System.Text;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
 {
+    /* Static Factory class to create supported Shell Commands
+    */
     public static class ShellCommandFactory
     {
         public static ShellCommand CreateShellCommand(ShellCommandType shellCommandType, BrokerType brokerType, Language language)

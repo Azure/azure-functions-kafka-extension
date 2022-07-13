@@ -12,6 +12,8 @@ using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
 {
+    /* Representation of commands needed to be run on shell. 
+    */
     public class ShellCommand: Command<Process>
     {
         private Process process;

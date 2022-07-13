@@ -16,6 +16,8 @@ using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.eventhub
 {
+    /* Implementation of IQueueManager responsible for management of Azure Eventhub Resource.
+    */
     public class EventHubQueueManager : IQueueManager<QueueRequest, QueueResponse>
     {
         private readonly static int MAX_RETRY_COUNT = 3;

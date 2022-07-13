@@ -15,6 +15,8 @@ using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.http
 {
+    /* Responsible for creation and execution of commands to handle http request response.
+    */
     public class HttpCommand : Command<HttpResponseMessage>
     {
         private HttpRequestEntity httpRequestEntity;

@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.executor.CommandExecutor
 {
+    /* Executor for Http Commands
+    */
     public class HttpCommandExecutor : IExecutor<Command<HttpResponseMessage>, HttpResponseMessage>
     {
         public Task<HttpResponseMessage> ExecuteAsync(command.Command<HttpResponseMessage> request)

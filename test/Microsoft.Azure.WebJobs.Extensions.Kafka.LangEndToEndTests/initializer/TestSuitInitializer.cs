@@ -22,6 +22,10 @@ using System.Windows.Input;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.initializer
 {
+    /* Responsible for all initilisation before actual test startup -
+     * Creation of Azure resources - Eventhubs and Storage Queues
+     * Function App startup
+    */
     public class TestSuitInitializer
     {
         private readonly ILogger logger = TestLogger.TestLogger.logger;
@@ -46,11 +50,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.initializer
         } 
         private async Task StartupApplicationAsync(Language language, BrokerType brokerType)
         {
-            /*Command<Process> command = new ShellCommand.ShellCommandBuilder()
-                                            .SetLanguage(language)
-                                            .SetBrokerType(brokerType)
-                                            .SetShellCommandType(ShellCommandType.DOCKER_RUN)
-                                            .Build();*/
             Command<Process> command = ShellCommandFactory.CreateShellCommand(ShellCommandType.DOCKER_RUN, brokerType, language);
             IExecutor<Command<Process>, Process> executor = new ShellCommandExecutor();
             ProcessLifecycleManager.GetInstance().AddProcess(await executor.ExecuteAsync(command));

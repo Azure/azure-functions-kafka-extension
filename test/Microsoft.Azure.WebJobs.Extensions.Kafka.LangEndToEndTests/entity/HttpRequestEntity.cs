@@ -6,6 +6,8 @@ using System.Text;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.entity
 {
+    /* Custom representation of Http Requests.
+    */
     public class HttpRequestEntity
     {
         private string url;

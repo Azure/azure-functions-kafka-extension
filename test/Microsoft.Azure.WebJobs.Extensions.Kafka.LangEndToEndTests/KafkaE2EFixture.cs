@@ -20,6 +20,10 @@ using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
 {
+    /* Common fixture for all language test case classes which does -
+     * Azure Infra setup and Func Apps Startup
+     * Stopping Func Apps and Azure Infra cleanup
+    */
     public class KafkaE2EFixture : IAsyncLifetime
     {
         private Language language;
@@ -49,6 +53,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
 
         async Task IAsyncLifetime.DisposeAsync()
         {
+            //Stopping Func Apps and Azure Infra cleanup
             TestSuiteCleaner testSuitCleaner = new TestSuiteCleaner();
             await testSuitCleaner.CleanupTestSuiteAsync(language, brokerType);
             logger.LogInformation("DisposeAsync");

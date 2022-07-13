@@ -4,6 +4,8 @@ using System.Text;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.languages
 {
+    /* Represents the supported languages for function apps using kafka extension.
+    */
     public enum Language
     {
         PYTHON,

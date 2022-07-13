@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests.Invoke
 {
+    /* Responsible for actual invocation of function app depending on the passed strategy.
+    */
     public class E2ETestInvoker
     {
         public async Task Invoke(InvokeRequestStrategy<HttpResponseMessage> invokeStrategy)

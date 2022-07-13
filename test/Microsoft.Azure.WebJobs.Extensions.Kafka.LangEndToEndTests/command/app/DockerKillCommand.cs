@@ -7,7 +7,10 @@ using System.Text;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
 {
-	public class DockerKillCommand : ShellCommand
+    /* Shell Command responsible for kill the running the docker container 
+     * containing function app images for particular language.
+    */
+    public class DockerKillCommand : ShellCommand
 	{
 		public DockerKillCommand(BrokerType brokerType, Language language)
 		{

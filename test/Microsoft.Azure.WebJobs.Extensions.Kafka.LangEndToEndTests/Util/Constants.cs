@@ -7,6 +7,8 @@ using System.Text;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 {
+	/* Collection of test Constants
+	*/
 	public static class Constants
 	{
 		public const string HTTP_GET = "GET";

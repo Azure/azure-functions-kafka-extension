@@ -12,6 +12,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.storageQueue
 {
+    /* Implementation of IQueueManager responsible for management of Azure Queue Resource.
+    */
     public class AzureStorageQueueManager : IQueueManager<QueueRequest, QueueResponse>
     {
         private readonly static int MAX_RETRY_COUNT = 3;

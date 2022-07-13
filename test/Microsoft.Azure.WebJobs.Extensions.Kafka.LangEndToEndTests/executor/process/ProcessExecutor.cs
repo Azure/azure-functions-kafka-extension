@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.executor.process
 {
+    /* Executes string requests/commands as Processes.
+    */
     public class ProcessExecutor : IExecutor<string, Process>
     {
         public ProcessExecutor() { }

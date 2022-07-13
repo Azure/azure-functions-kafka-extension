@@ -7,6 +7,9 @@ using System.Text;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
 {
+    /* Shell Command responsible for creating running the docker container 
+     * containing function app images for particular language.
+    */
 	public class DockerRunCommand : ShellCommand
 	{
 		public DockerRunCommand(BrokerType brokerType, Language language) 

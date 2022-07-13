@@ -5,7 +5,8 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue
 {
-  
+    /* Interface for Management of External Resources required for testing.
+    */
     public interface IQueueManager<Request, Response>
     {
         public Task<Response> readAsync(int batchSize, string queueName);

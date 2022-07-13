@@ -5,6 +5,8 @@ using System.Text;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue
 {
+	/* Common class for requests sent different Queue Types(External Resources).
+	*/
 	public class QueueRequest : IEnumerable<string>
 	{
 		public List<string> requestList { get; set; }

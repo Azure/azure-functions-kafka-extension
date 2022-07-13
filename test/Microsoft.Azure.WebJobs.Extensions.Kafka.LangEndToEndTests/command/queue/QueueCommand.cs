@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.queue
 {
+    /* Responsible for creation and execution of commands to interact with Queue Type resources(External Resources).
+    */
     public class QueueCommand : Command<QueueResponse>, IDisposable
     {
         private QueueType queueType;
