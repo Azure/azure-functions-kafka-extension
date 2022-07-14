@@ -37,7 +37,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
         private BrokerType brokerType;
         private E2ETestInvoker invoker;
         ITestOutputHelper output;
-        private readonly ILogger logger = TestLogger.TestLogger.logger;
+        private readonly ILogger logger = TestLogger.TestLogger.GetTestLogger();
 
         protected BaseE2E(KafkaE2EFixture kafkaE2EFixture, Language language, BrokerType brokerType, ITestOutputHelper output)
         {

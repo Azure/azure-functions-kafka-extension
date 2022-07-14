@@ -21,7 +21,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.htt
     {
         private HttpRequestEntity httpRequestEntity;
         private HttpClient httpClient;
-        private readonly ILogger logger = TestLogger.TestLogger.logger;
+        private readonly ILogger logger = TestLogger.TestLogger.GetTestLogger();
 
         private AsyncRetryPolicy retryPolicy = Policy.Handle<HttpRequestException>()
             .WaitAndRetryAsync(

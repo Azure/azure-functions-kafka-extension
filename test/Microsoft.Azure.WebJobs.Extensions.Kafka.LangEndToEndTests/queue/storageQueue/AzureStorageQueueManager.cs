@@ -21,7 +21,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.stora
         private readonly string connectionString;
         private static AzureStorageQueueManager instance = new AzureStorageQueueManager();
         private ConcurrentDictionary<string, QueueClient> queueClientFactory;
-        private readonly ILogger logger = TestLogger.TestLogger.logger;
+        private readonly ILogger logger = TestLogger.TestLogger.GetTestLogger();
 
         public static AzureStorageQueueManager GetInstance()
         {

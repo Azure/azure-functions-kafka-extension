@@ -25,7 +25,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
         private readonly DefaultAzureCredential credential;
         private static EventHubQueueManager instance = new EventHubQueueManager();
         private ConcurrentDictionary<string, EventHubCollection> queueClientFactory;
-        private readonly ILogger logger = TestLogger.TestLogger.logger;
+        private readonly ILogger logger = TestLogger.TestLogger.GetTestLogger();
         public static EventHubQueueManager GetInstance()
         {
             return instance;

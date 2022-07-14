@@ -30,7 +30,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
         private AppType appType;
         private BrokerType brokerType;
         protected bool isInitialized = false;
-        private readonly ILogger logger = TestLogger.TestLogger.logger;
+        private readonly ILogger logger = TestLogger.TestLogger.GetTestLogger();
 
         public KafkaE2EFixture()
         {

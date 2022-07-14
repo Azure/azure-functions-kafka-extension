@@ -10,10 +10,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.TestLogger
 	*/
 	static class TestLogger
 	{
-		public static ILoggerFactory loggerFactory = new LoggerFactory();
-		public static ILogger logger = GetTestLogger();
+		private static ILoggerFactory loggerFactory = new LoggerFactory();
+		private static ILogger logger = CreateTestLogger();
 
-		private static ILogger GetTestLogger()
+		public static ILogger GetTestLogger()
+		{
+			return logger;
+		}
+		private static ILogger CreateTestLogger()
 		{
 			return loggerFactory.CreateLogger<ConsoleLoggerOptions>();
 		}

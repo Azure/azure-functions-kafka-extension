@@ -28,7 +28,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.initializer
     */
     public class TestSuitInitializer
     {
-        private readonly ILogger logger = TestLogger.TestLogger.logger;
+        private readonly ILogger logger = TestLogger.TestLogger.GetTestLogger();
 
         public void InitializeTestSuit(Language language, BrokerType brokerType)
         {
