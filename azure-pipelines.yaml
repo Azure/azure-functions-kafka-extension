@@ -27,13 +27,33 @@ pool:
     - ImageOverride -equals MMSUbuntu20.04TLS
 
 steps:
+  - task: UsePythonVersion@0
+    inputs:
+        versionSpec: '3.9' 
+        addToPath: true
+    displayName: 'Install Python'
+  - task: NodeTool@0
+    inputs:
+      versionSpec: $(NODE_VERSION)
+    displayName: 'Install Node.js'
+  - task: UseDotNet@2
+    displayName: 'Use .NET Core sdk'
+    inputs:
+      packageType: sdk
+      version: 6.0.301
+      installationPath: $(Agent.ToolsDirectory)/dotnet
+  - task: JavaToolInstaller@0
+    inputs:
+      versionSpec: '8'
+      jdkArchitectureOption: 'x64'
+      jdkSourceOption: 'PreInstalled'
+    displayName: Java Installation
   - task: DotNetCoreCLI@2
     displayName: Build project
     inputs:
       command: 'build'
       arguments: '--configuration Release -p:IsLocalBuild=False'
       projects: src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
-
   - task: DotNetCoreCLI@2
     displayName: Build test projects
     inputs:
@@ -105,12 +125,11 @@ steps:
             }
           ]
   
-
-  - task: Bash@3
-    displayName: Package current source as NuGet package and pack it in Docker
-    inputs:
-      targetType: filePath
-      filePath: ./script/create_package.sh
+  #- task: Bash@3
+  #  displayName: Package current source as NuGet package and pack it in Docker
+  #  inputs:
+  #    targetType: filePath
+  #    filePath: ./script/create_package.sh
 
   #- task: Bash@3
   #  displayName: Start Kakfa in single node with Java and Python
