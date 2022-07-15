@@ -2,6 +2,7 @@ FROM mcr.microsoft.com/azure-functions/powershell:4-powershell7-core-tools
 
 # Copy Local File
 RUN mkdir /workspace
+COPY ./temp /workspace/temp
 COPY ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/powershell/Confluent /workspace
 WORKDIR /workspace
 

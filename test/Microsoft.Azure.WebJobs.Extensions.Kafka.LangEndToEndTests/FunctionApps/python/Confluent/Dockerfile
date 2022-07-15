@@ -2,6 +2,7 @@ FROM mcr.microsoft.com/azure-functions/python:4-python3.8-core-tools
 
 # Copy Local File
 RUN mkdir /workspace
+COPY ./temp /workspace/temp
 COPY ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/python/Confluent /workspace
 WORKDIR /workspace
 

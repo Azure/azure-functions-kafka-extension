@@ -2,6 +2,7 @@ FROM mcr.microsoft.com/azure-functions/node:4-node14-core-tools
 
 # Copy Local File
 RUN mkdir /workspace
+COPY ./temp /workspace/temp
 COPY ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/typescript/Confluent /workspace
 WORKDIR /workspace
 

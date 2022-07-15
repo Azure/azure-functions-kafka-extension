@@ -4,6 +4,7 @@ ARG WORK_DIR=/workspace
 ARG TARGET_DIR=${WORK_DIR}/target/azure-functions/KafkaEventHubE2E
 # Copy Local File
 RUN mkdir /workspace
+COPY ./temp /workspace/temp
 COPY ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/java/EventHub /workspace
 WORKDIR ${WORK_DIR}
 # dotnet 
