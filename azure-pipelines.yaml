@@ -34,7 +34,7 @@ steps:
     displayName: 'Install Python'
   - task: NodeTool@0
     inputs:
-      versionSpec: $(NODE_VERSION)
+      versionSpec: '14.x'
     displayName: 'Install Node.js'
   - task: UseDotNet@2
     displayName: 'Use .NET Core sdk'
@@ -48,6 +48,9 @@ steps:
       jdkArchitectureOption: 'x64'
       jdkSourceOption: 'PreInstalled'
     displayName: Java Installation
+  - pwsh: |
+     Get-Command mvn
+  displayName: 'Check Maven is installed'
   - task: DotNetCoreCLI@2
     displayName: Build project
     inputs:
