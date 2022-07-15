@@ -50,7 +50,7 @@ steps:
     displayName: Java Installation
   - pwsh: |
      Get-Command mvn
-  displayName: 'Check Maven is installed'
+    displayName: 'Check Maven is installed'
   - task: DotNetCoreCLI@2
     displayName: Build project
     inputs:
