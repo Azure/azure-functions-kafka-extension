@@ -2,10 +2,10 @@ FROM mcr.microsoft.com/azure-functions/node:4-node14-core-tools
 
 # Copy Local File
 RUN mkdir /workspace
-COPY . /workspace
-WORKDIR /workspace/test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/javascript/EventHub
+COPY ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/javascript/EventHub /workspace
+WORKDIR /workspace
 
-ENV LD_LIBRARY_PATH=/workspace/test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/javascript/EventHub/bin/runtimes/linux-x64/native
+ENV LD_LIBRARY_PATH=/workspace/bin/runtimes/linux-x64/native
 
 RUN npm install
 RUN dotnet nuget add source /workspace/temp --name local && dotnet nuget list source

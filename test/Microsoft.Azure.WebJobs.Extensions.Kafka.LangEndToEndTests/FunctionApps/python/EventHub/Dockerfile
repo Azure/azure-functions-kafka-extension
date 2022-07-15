@@ -2,10 +2,10 @@ FROM mcr.microsoft.com/azure-functions/python:4-python3.8-core-tools
 
 # Copy Local File
 RUN mkdir /workspace
-COPY . /workspace
-WORKDIR /workspace/test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/python/EventHub
+COPY ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/python/EventHub /workspace
+WORKDIR /workspace
 
-ENV LD_LIBRARY_PATH=/workspace/test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/python/EventHub/bin/runtimes/linux-x64/native
+ENV LD_LIBRARY_PATH=/workspace/bin/runtimes/linux-x64/native
 
 RUN python -m venv .venv 
 RUN pip install -r requirements.txt
