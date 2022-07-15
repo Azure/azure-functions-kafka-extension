@@ -691,6 +691,7 @@ The settings exposed here are to customize how librdkafka works. [Librdkafka Doc
 |MaxPartitionFetchBytes|max.partition.fetch.bytes|
 |FetchMaxBytes|fetch.max.bytes|
 |AutoCommitIntervalMs|auto.commit.interval.ms|
+|AutoOffsetReset|auto.offset.reset|
 |LibkafkaDebug|debug|
 |MetadataMaxAgeMs|metadata.max.age.ms|
 |SocketKeepaliveEnable|socket.keepalive.enable|

@@ -319,11 +319,13 @@ The settings exposed here are targeted to more advanced users that want to custo
 |MaxPartitionFetchBytes|max.partition.fetch.bytes|Trigger
 |FetchMaxBytes|fetch.max.bytes|Trigger
 |AutoCommitIntervalMs|auto.commit.interval.ms|Trigger
+|AutoOffsetReset|auto.offset.reset|Trigger
 |LibkafkaDebug|debug|Both
 |MetadataMaxAgeMs|metadata.max.age.ms|Both
 |SocketKeepaliveEnable|socket.keepalive.enable|Both
 
 **NOTE:** `MetadataMaxAgeMs` default is `180000` `SocketKeepaliveEnable` default is `true` otherwise, the default value is the same as the [Configuration properties](https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md). The reason of the default settings, refer to this [issue](https://github.com/Azure/azure-functions-kafka-extension/issues/187).
+**NOTE:** `AutoOffsetReset` default is Earliest. Allowed Values are `Earliest` and `Latest`.
 
 If you are missing an configuration setting please create an issue and describe why you need it.
 
