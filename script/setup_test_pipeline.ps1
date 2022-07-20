@@ -45,3 +45,6 @@ $funcExePath = Join-Path $FUNC_CLI_DIRECTORY $FUNC_EXE_NAME
 if ($IsMacOS -or $IsLinux) {
     chmod +x $funcExePath
 }
+
+Write-Host 'Adding Func Core tools to PATH'
+[Environment]::SetEnvironmentVariable("PATH", $Env:PATH + ";$FUNC_CLI_DIRECTORY", [EnvironmentVariableTarget]::Machine)
