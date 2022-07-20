@@ -23,7 +23,7 @@ else
     $coreToolsUrl = "https://functionsclibuilds.blob.core.windows.net/builds/$FUNC_RUNTIME_VERSION/latest"
 }
 
-$FUNC_CLI_DIRECTORY = Join-Path $PSScriptRoot 'Azure.Functions.Cli'
+$FUNC_CLI_DIRECTORY = Join-Path $Agent.BuildDirectory 'Azure.Functions.Cli'
 Write-Host $FUNC_CLI_DIRECTORY
 
 Write-Host 'Deleting the Core Tools if exists...'
@@ -46,5 +46,5 @@ if ($IsMacOS -or $IsLinux) {
     chmod +x $funcExePath
 }
 
-Write-Host 'Adding Func Core tools to PATH'
+Write-Host "Setting Core tools in PATH"
 Write-Host "##vso[task.setvariable variable=PATH;]${env:PATH};$FUNC_CLI_DIRECTORY";
