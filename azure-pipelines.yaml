@@ -27,6 +27,36 @@ pool:
     - ImageOverride -equals MMSUbuntu20.04TLS
 
 steps:
+  - task: UsePythonVersion@0
+    inputs:
+        versionSpec: '3.9' 
+        addToPath: true
+    displayName: 'Install Python'
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '14.x'
+    displayName: 'Install Node.js'
+  - task: UseDotNet@2
+    displayName: 'Use .NET Core sdk'
+    inputs:
+      packageType: sdk
+      version: 6.0.301
+      installationPath: $(Agent.ToolsDirectory)/dotnet
+  - task: JavaToolInstaller@0
+    inputs:
+      versionSpec: '8'
+      jdkArchitectureOption: 'x64'
+      jdkSourceOption: 'PreInstalled'
+    displayName: Java Installation
+  - pwsh: |
+     Get-Command mvn
+    displayName: 'Check Maven is installed'
+  - pwsh: |
+      ./script/setup_test_pipeline.ps1
+    displayName: 'Install the Core Tools'
+  - pwsh: |
+     func --help
+    displayName: 'Check core tools is installed'
   - task: DotNetCoreCLI@2
     displayName: Build project
     inputs:
