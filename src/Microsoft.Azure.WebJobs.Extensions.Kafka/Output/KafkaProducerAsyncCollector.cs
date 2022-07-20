@@ -80,7 +80,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         private object BuildKafkaEventData(JObject dataObj)
         {
-            if (dataObj["Key"] != null && (string)dataObj["Key"] != null)
+            if (dataObj["Key"] != null)
             {
                 return BuildKafkaEventDataForKeyValue(dataObj);
             }
