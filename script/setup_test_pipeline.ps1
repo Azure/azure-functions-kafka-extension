@@ -4,7 +4,7 @@ param
     $UseCoreToolsBuildFromIntegrationTests
 )
 
-$FUNC_RUNTIME_VERSION = '3'
+$FUNC_RUNTIME_VERSION = '4'
 $arch = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString().ToLowerInvariant()
 if ($IsWindows) {
     $FUNC_EXE_NAME = "func.exe"

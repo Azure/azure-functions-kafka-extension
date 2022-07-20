@@ -6,4 +6,4 @@ func --version
 
 cd $FUNCTION_DIR
 func extensions install
-func start
+func start --python
