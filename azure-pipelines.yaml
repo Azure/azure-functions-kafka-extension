@@ -51,12 +51,17 @@ steps:
   - pwsh: |
      Get-Command mvn
     displayName: 'Check Maven is installed'
-  #- pwsh: |
-  #    ./script/setup_test_pipeline.ps1
-  #  displayName: 'Install the Core Tools'
+  - pwsh: |
+      ./script/setup_test_pipeline.ps1
+    displayName: 'Install the Core Tools'
   - pwsh: |
      Get-Command func
     displayName: 'Check core tools is installed'
+  - task: Bash@3
+    displayName: Run Python Confluent Functions
+    inputs:
+      targetType: filePath
+      filePath: ./script/run_function.sh
   #- task: DotNetCoreCLI@2
   #  displayName: Build project
   #  inputs:
