@@ -63,7 +63,7 @@ steps:
       targetType: filePath
       filePath: ./script/create_package.sh
   - task: Bash@3
-    displayName: Run Python Confluent Functions
+    displayName: Run Powershell Confluent Functions
     inputs:
       targetType: filePath
       filePath: ./script/run_function.sh
