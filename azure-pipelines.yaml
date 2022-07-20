@@ -55,7 +55,7 @@ steps:
       ./script/setup_test_pipeline.ps1
     displayName: 'Install the Core Tools'
   - pwsh: |
-     func start
+     Get-Command func
     displayName: 'Check core tools is installed'
   #- task: DotNetCoreCLI@2
   #  displayName: Build project
