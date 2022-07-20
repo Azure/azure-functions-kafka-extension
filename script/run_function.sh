@@ -5,4 +5,5 @@ FUNCTION_DIR="./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/
 func --version
 
 cd $FUNCTION_DIR
+func extensions install
 func start
