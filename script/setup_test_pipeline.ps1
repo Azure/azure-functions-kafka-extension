@@ -23,7 +23,7 @@ else
     $coreToolsUrl = "https://functionsclibuilds.blob.core.windows.net/builds/$FUNC_RUNTIME_VERSION/latest"
 }
 
-$FUNC_CLI_DIRECTORY = Join-Path $Agent.BuildDirectory 'Azure.Functions.Cli'
+$FUNC_CLI_DIRECTORY = Join-Path $(Agent.BuildDirectory) 'Azure.Functions.Cli'
 Write-Host $FUNC_CLI_DIRECTORY
 
 Write-Host 'Deleting the Core Tools if exists...'
