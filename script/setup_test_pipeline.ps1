@@ -47,4 +47,4 @@ if ($IsMacOS -or $IsLinux) {
 }
 
 Write-Host 'Adding Func Core tools to PATH'
-[Environment]::SetEnvironmentVariable("PATH", $Env:PATH + ";$FUNC_CLI_DIRECTORY", [EnvironmentVariableTarget]::Machine)
+Write-Host "##vso[task.setvariable variable=PATH;]${env:PATH};$FUNC_CLI_DIRECTORY";
