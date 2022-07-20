@@ -8,7 +8,7 @@ WORKING_DIR=temp
 if [ -d "$WORKING_DIR" ]; then rm -rf $WORKING_DIR; fi
 
 dotnet pack -o temp --include-symbols src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj /p:Version=100.100.100-pre
-dotnet nuget add source ./temp --name local && dotnet nuget list source
+dotnet nuget add source $PWD/temp --name local && dotnet nuget list source
 
 cd $CURRENT_DIR
 
