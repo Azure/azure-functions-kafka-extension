@@ -6,7 +6,17 @@ param
 
 $FUNC_RUNTIME_VERSION = '3'
 $arch = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString().ToLowerInvariant()
-$os = if ($IsWindows) { "win" } else { if ($IsMacOS) { "osx" } else { "linux" } }
+if ($IsWindows) {
+    $FUNC_EXE_NAME = "func.exe"
+    $os = "win"
+} else {
+    $FUNC_EXE_NAME = "func"
+    if ($IsMacOS) {
+        $os = "osx"
+    } else {
+        $os = "linux"
+    }
+}
 
 $env:CORE_TOOLS_URL = $null
 $coreToolsUrl = $null
