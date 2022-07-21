@@ -42,26 +42,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.que
         {
             QueueResponse response = null;
 
-            if (QueueOperation.CREATE == this.queueOperation)
+            switch (queueOperation)
             {
-                await queueManager.createAsync(queueName);
+                case QueueOperation.CREATE:
+                    await queueManager.createAsync(queueName);
+                    break;
+                case QueueOperation.DELETE:
+                    await queueManager.deleteAsync(queueName);
+                    break;
+                case QueueOperation.CLEAR:
+                    await queueManager.clearAsync(queueName);
+					break;
+                case QueueOperation.READ:
+                    response = await queueManager.readAsync(Constants.SINGLE_MESSAGE_COUNT, queueName);
+                    break;
+                case QueueOperation.READMANY:
+                    response = await queueManager.readAsync(Constants.BATCH_MESSAGE_COUNT, queueName);
+                    break;
+                default:
+                    throw new NotImplementedException();
             }
-            else if (QueueOperation.CLEAR == this.queueOperation)
-            {
-                await queueManager.clearAsync(queueName);
-            }
-            else if (QueueOperation.DELETE == this.queueOperation)
-            {
-                await queueManager.deleteAsync(queueName);
-            }
-            else if (QueueOperation.READ == this.queueOperation)
-            {
-                response = await queueManager.readAsync(Constants.SINGLE_MESSAGE_COUNT, queueName);
-            }
-            else if (QueueOperation.READMANY == this.queueOperation)
-            {
-                response = await queueManager.readAsync(Constants.BATCH_MESSAGE_COUNT, queueName);
-            }
+
             return response;
         }
     }
