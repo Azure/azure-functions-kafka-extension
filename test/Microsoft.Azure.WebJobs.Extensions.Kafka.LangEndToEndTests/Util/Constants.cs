@@ -28,6 +28,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 		public const string DOCKER_ENVVAR_FLAG = "-e";
 		public const string DOCKER_NAME_FLAG = "--name";
 
+		public const string CD = "cd";
+		public const string CMD_AND = "&&";
+		public const string FUNC_EXT_INSTALL = "func extensions install";
+		public const string FUNC_START = "func start";
+		public const string MVN_CLN_PKG = "mvn clean package";
+		public const string MVN_RUN_FUNC = "mvn azure-functions:run";
+		public const string FUNC_PORT_FLAG = "-p";
+		public const string SCRIPT_ROOT = "--script-root";
+
 		public const string CONFLUENT_USERNAME_VAR = "ConfluentCloudUsername";
 		public const string CONFLUENT_PASSWORD_VAR = "ConfluentCloudPassword";
 		public const string CONFLUENT_BROKERLIST_VAR = "ConfluentBrokerList";
@@ -42,7 +51,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 		public const string SPACE_CHAR = " ";
 		public const string E2E = "e2e";
 		public const string KAFKA = "kafka";
-		public const string FUNC_START = "func start";
 		public const string HIPHEN = "-";
 		public const string RESOURCE_GROUP = "EventHubRG";
 		public const string EVENTHUB_NAMESPACE = "kafkaextension";

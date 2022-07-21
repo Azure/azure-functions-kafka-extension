@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.executor.process
 {
@@ -20,9 +21,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.executor.pr
                 throw new ArgumentNullException(nameof(request));
             }
 
+            Assert.Equal("func extensions install --script-root C:\\Users\\jainh\\source\\repos\\azure-functions-kafka-extension\\test\\Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests\\FunctionApps\\python\\Confluent && func start --script-root C:\\Users\\jainh\\source\\repos\\azure-functions-kafka-extension\\test\\Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests\\FunctionApps\\python\\Confluent -p 55701", request);
+
             var requestProcess = CreateProcess(request);
             await Task.Run(() => requestProcess.Start());
 
+            
             return requestProcess;
         }
 

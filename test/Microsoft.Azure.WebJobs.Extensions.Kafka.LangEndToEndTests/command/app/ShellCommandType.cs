@@ -8,6 +8,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
     */
     public enum ShellCommandType
     {
-        DOCKER_RUN, DOCKER_KILL
+        DOCKER_RUN, DOCKER_KILL, FUNC_START
     }
 }

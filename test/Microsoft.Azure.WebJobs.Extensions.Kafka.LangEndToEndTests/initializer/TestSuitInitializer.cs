@@ -50,7 +50,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.initializer
         } 
         private async Task StartupApplicationAsync(Language language, BrokerType brokerType)
         {
-            Command<Process> command = ShellCommandFactory.CreateShellCommand(ShellCommandType.DOCKER_RUN, brokerType, language);
+            Command<Process> command = ShellCommandFactory.CreateShellCommand(ShellCommandType.FUNC_START, brokerType, language);
             IExecutor<Command<Process>, Process> executor = new ShellCommandExecutor();
             ProcessLifecycleManager.GetInstance().AddProcess(await executor.ExecuteAsync(command));
         }

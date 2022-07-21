@@ -19,6 +19,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
                     return new DockerRunCommand(brokerType, language);
                 case ShellCommandType.DOCKER_KILL:
                     return new DockerKillCommand(brokerType, language);
+                case ShellCommandType.FUNC_START:
+                    return new FuncStartCommand(brokerType, language);
                 default:
                     throw new NotImplementedException();
             }

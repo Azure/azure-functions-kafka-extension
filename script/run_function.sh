@@ -1,7 +1,6 @@
 #!/bin/bash
 
 #FUNCTION_DIR="./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/python/Confluent"
-FUNCTION_DIR="./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/powershell/Confluent"
 
 func --version
 
