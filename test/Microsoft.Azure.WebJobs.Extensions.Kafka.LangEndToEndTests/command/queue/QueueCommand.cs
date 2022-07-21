@@ -45,19 +45,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.que
             switch (queueOperation)
             {
                 case QueueOperation.CREATE:
-                    await queueManager.createAsync(queueName);
+                    await queueManager.CreateAsync(queueName);
                     break;
                 case QueueOperation.DELETE:
-                    await queueManager.deleteAsync(queueName);
+                    await queueManager.DeleteAsync(queueName);
                     break;
                 case QueueOperation.CLEAR:
-                    await queueManager.clearAsync(queueName);
+                    await queueManager.ClearAsync(queueName);
 					break;
                 case QueueOperation.READ:
-                    response = await queueManager.readAsync(Constants.SINGLE_MESSAGE_COUNT, queueName);
+                    response = await queueManager.ReadAsync(Constants.SINGLE_MESSAGE_COUNT, queueName);
                     break;
                 case QueueOperation.READMANY:
-                    response = await queueManager.readAsync(Constants.BATCH_MESSAGE_COUNT, queueName);
+                    response = await queueManager.ReadAsync(Constants.BATCH_MESSAGE_COUNT, queueName);
                     break;
                 default:
                     throw new NotImplementedException();

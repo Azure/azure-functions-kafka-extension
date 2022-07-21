@@ -37,7 +37,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.stora
             queueClientFactory = new ConcurrentDictionary<string, QueueClient>();
         }
 
-        public async Task clearAsync(string queueName)
+        public async Task ClearAsync(string queueName)
         {
             QueueClient queueClient = new QueueClient(connectionString, queueName);
             await queueClient.CreateIfNotExistsAsync();
@@ -46,17 +46,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.stora
             logger.LogInformation($"Clearing the queue: {queueName}");
         }
 
-        public Task createAsync(string queueName)
+        public Task CreateAsync(string queueName)
         {
             throw new NotImplementedException();
         }
 
-        public Task deleteAsync(string queueName)
+        public Task DeleteAsync(string queueName)
         {
             throw new NotImplementedException();
         }
 
-        public async Task<QueueResponse> readAsync(int batchSize, string queueName)
+        public async Task<QueueResponse> ReadAsync(int batchSize, string queueName)
         {
             QueueClient queueClient = queueClientFactory.GetOrAdd(queueName, (queueName) =>
                 { 
@@ -80,7 +80,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.stora
             return response;
         }
 
-        public Task<QueueResponse> writeAsync(QueueRequest messageEntity, string queueName)
+        public Task<QueueResponse> WriteAsync(QueueRequest messageEntity, string queueName)
         {
             throw new NotImplementedException();
         }

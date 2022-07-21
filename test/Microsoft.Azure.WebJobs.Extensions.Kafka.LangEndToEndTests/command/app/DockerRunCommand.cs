@@ -17,10 +17,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
 	{
 		public DockerRunCommand(BrokerType brokerType, Language language) 
 		{
-            cmd = buildDockerStartCmd(brokerType, language);
+            cmd = BuildDockerStartCmd(brokerType, language);
         }
 
-        private string buildDockerStartCmd(BrokerType brokerType, Language language)
+        private string BuildDockerStartCmd(BrokerType brokerType, Language language)
         {
             //Starts the list with docker run and port specific to language
             List<string> cmdList = new List<string>() { Constants.DOCKER_RUN, Constants.DOCKER_PORT_FLAG, $"{Constants.BrokerLanguagePortMapping[new Tuple<BrokerType, Language>(brokerType, language)]}{Constants.COLON_7071}" };

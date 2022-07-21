@@ -21,27 +21,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.kafka
             return instance;
         }
 
-        public async Task clearAsync(string queueName)
+        public async Task CreateAsync(string queueName)
         {
             throw new NotImplementedException();
         }
 
-        public async Task createAsync(string queueName)
+        public async Task ClearAsync(string queueName)
         {
             throw new NotImplementedException();
         }
 
-        public async Task deleteAsync(string queueName)
+        public async Task DeleteAsync(string queueName)
         {
             throw new NotImplementedException();
         }
 
-        public async Task<string> readAsync(int batchSize, string queueName)
+        public async Task<string> ReadAsync(int batchSize, string queueName)
         {
             throw new NotImplementedException();
         }
 
-        public async Task<string> writeAsync(string messageEntity, string queueName)
+        public async Task<string> WriteAsync(string messageEntity, string queueName)
         {
             throw new NotImplementedException();
         }

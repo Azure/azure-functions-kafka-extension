@@ -12,10 +12,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue
     */
     public interface IQueueManager<Request, Response>
     {
-        public Task<Response> readAsync(int batchSize, string queueName);
-        public Task<Response> writeAsync(Request messageEntity, string queueName);
-        public Task createAsync(string queueName);
-        public Task deleteAsync(string queueName);
-        public Task clearAsync(string queueName);
+        public Task<Response> ReadAsync(int batchSize, string queueName);
+        public Task<Response> WriteAsync(Request messageEntity, string queueName);
+        public Task CreateAsync(string queueName);
+        public Task DeleteAsync(string queueName);
+        public Task ClearAsync(string queueName);
     }
 }
