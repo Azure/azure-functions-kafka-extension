@@ -52,7 +52,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.initializer
         {
             Command<Process> command = ShellCommandFactory.CreateShellCommand(ShellCommandType.FUNC_START, brokerType, language);
             IExecutor<Command<Process>, Process> executor = new ShellCommandExecutor();
-            ProcessLifecycleManager.GetInstance().AddProcess(await executor.ExecuteAsync(command));
+            ProcessLifecycleManager.GetInstance().AddProcess(language, brokerType, await executor.ExecuteAsync(command));
         }
 
         private async Task ClearStorageQueueAsync(Language language, BrokerType brokerType)

@@ -3,8 +3,6 @@ using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.brokers;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.languages;
 using System;
 using System.Collections.Generic;
-using System.Text;
-
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 {
 	/* Collection of test Constants
@@ -19,7 +17,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 		public const int BATCH_MESSAGE_COUNT = 3;
 		public const int SINGLE_MESSAGE_COUNT = 1;
 
+		public const string FUNCTIONS_FOLDER = "./../../../FunctionApps";
+
 		public const string DOTNETISOLATED = "dotnet-isolated";
+
+		public const string CONFLUENT = "Confluent";
+		public const string EVENTHUB = "EventHub";
 
 		public const string DOCKER_RUN = "docker run";
 		public const string DOCKER_KILL = "docker rm -f";
@@ -160,6 +163,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 			{ Language.JAVA, JAVA_WORKER_RUNTIME },
 			{ Language.JAVASCRIPT, JS_WORKER_RUNTIME },
 			{ Language.TYPESCRIPT, TS_WORKER_RUNTIME }
+		};
+
+		public static Dictionary<BrokerType, string> BrokerProviderMapping = new Dictionary<BrokerType, string>()
+		{
+			{ BrokerType.CONFLUENT, CONFLUENT },
+			{ BrokerType.EVENTHUB, EVENTHUB }
 		};
 
 		public static List<string> IndexQueryParamMapping = new List<string>() { "message", "message1", "message2" };

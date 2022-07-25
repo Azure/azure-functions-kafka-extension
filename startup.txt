@@ -1,0 +1,25 @@
+Found Python version 3.9.0 (py).
+
+Azure Functions Core Tools
+Core Tools Version:       3.0.4502 Commit hash: N/A  (64-bit)
+Function Runtime Version: 3.5.2.0
+
+Skipping 'AzureWebJobsStorage' from local settings as it's already defined in current environment variables.
+Skipping 'ConfluentBrokerList' from local settings as it's already defined in current environment variables.
+Skipping 'ConfluentCloudPassword' from local settings as it's already defined in current environment variables.
+Skipping 'ConfluentCloudUsername' from local settings as it's already defined in current environment variables.
+
+Functions:
+
+	MultiHttpTriggerKafkaOutput: [GET] http://localhost:55701/api/MultiHttpTriggerKafkaOutput
+
+	SingleHttpTriggerKafkaOutput: [GET,POST] http://localhost:55701/api/SingleHttpTriggerKafkaOutput
+
+	MultiKafkaTriggerQueueOutput: kafkaTrigger
+
+	SingleKafkaTriggerQueueOutput: kafkaTrigger
+
+For detailed output, run func with --verbose flag.
+[2022-07-25T09:39:58.110Z] Worker process started and initialized.
+[2022-07-25T09:40:02.837Z] Host lock lease acquired by instance ID '000000000000000000000000244E0DC8'.
+^C

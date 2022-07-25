@@ -80,5 +80,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util
 			return new HttpRequestEntity(triggerUrl, HttpMethods.Get,
 			   null, reqParms, null);
 		}
+
+		public static string BuildFuncRootPath(BrokerType brokerType, Language language) 
+		{ 
+			return Constants.FUNCTIONS_FOLDER + "//" + Constants.LanguageRuntimeMapping[language] + "//" + Constants.BrokerProviderMapping[brokerType];
+		}
 	}
 }
