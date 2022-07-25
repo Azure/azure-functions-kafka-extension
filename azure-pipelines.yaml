@@ -36,11 +36,11 @@ steps:
     inputs:
       versionSpec: '14.x'
     displayName: 'Install Node.js'
-  - task: UseDotNet@2
-    displayName: 'Use .NET Core sdk'
-    inputs:
-      packageType: sdk
-      version: 6.0.301
+  #- task: UseDotNet@2
+  #  displayName: 'Use .NET Core sdk'
+  #  inputs:
+  #    packageType: sdk
+  #    version: 6.0.301
       installationPath: $(Agent.ToolsDirectory)/dotnet
   - task: JavaToolInstaller@0
     inputs:
