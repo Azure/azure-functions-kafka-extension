@@ -57,27 +57,27 @@ steps:
   - pwsh: |
      Get-Command func
     displayName: 'Check core tools is installed'
-  - task: Bash@3
-    displayName: Package current source as NuGet package and pack it in Docker
-    inputs:
-      targetType: filePath
-      filePath: ./script/create_package.sh
-  - task: Bash@3
-    displayName: Run Powershell Confluent Functions
-    inputs:
-      targetType: filePath
-      filePath: ./script/run_function.sh
-    env:
-      AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
-      AZURE_CLIENT_SECRET: $(AZURE_CLIENT_SECRET)
-      AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
-      AZURE_TENANT_ID: $(AZURE_TENANT_ID)
-      AzureWebJobsStorage: $(AzureWebJobsStorage)
-      ConfluentBrokerList: $(ConfluentBrokerList)
-      ConfluentCloudPassword: $(ConfluentCloudPassword)
-      ConfluentCloudUsername: $(ConfluentCloudUsername)
-      EventHubBrokerList: $(EventHubBrokerList)
-      EventHubConnectionString: $(EventHubConnectionString)
+  #- task: Bash@3
+  #  displayName: Package current source as NuGet package and pack it in Docker
+  #  inputs:
+  #    targetType: filePath
+  #    filePath: ./script/create_package.sh
+  #- task: Bash@3
+  #  displayName: Run Powershell Confluent Functions
+  #  inputs:
+  #    targetType: filePath
+  #    filePath: ./script/run_function.sh
+  #  env:
+  #    AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
+  #    AZURE_CLIENT_SECRET: $(AZURE_CLIENT_SECRET)
+  #    AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
+  #    AZURE_TENANT_ID: $(AZURE_TENANT_ID)
+  #    AzureWebJobsStorage: $(AzureWebJobsStorage)
+  #    ConfluentBrokerList: $(ConfluentBrokerList)
+  #    ConfluentCloudPassword: $(ConfluentCloudPassword)
+  #    ConfluentCloudUsername: $(ConfluentCloudUsername)
+  #    EventHubBrokerList: $(EventHubBrokerList)
+  #    EventHubConnectionString: $(EventHubConnectionString)
   #- task: DotNetCoreCLI@2
   #  displayName: Build project
   #  inputs:
@@ -155,30 +155,29 @@ steps:
   #            "ToolVersion": "1.0"
   #          }
   #        ]
-  
 
-  #- task: Bash@3
-  #  displayName: Package current source as NuGet package and pack it in Docker
-  #  inputs:
-  #    targetType: filePath
-  #    filePath: ./script/create_package.sh
+  - task: Bash@3
+    displayName: Package current source as NuGet package and pack it in Docker
+    inputs:
+      targetType: filePath
+      filePath: ./script/create_package.sh
 
-  #- task: DotNetCoreCLI@2
-  #  displayName: Run language e2e tests
-  #  inputs:
-  #    command: test
-  #    projects: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
-  #  env:
-  #    AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
-  #    AZURE_CLIENT_SECRET: $(AZURE_CLIENT_SECRET)
-  #    AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
-  #    AZURE_TENANT_ID: $(AZURE_TENANT_ID)
-  #    AzureWebJobsStorage: $(AzureWebJobsStorage)
-  #    ConfluentBrokerList: $(ConfluentBrokerList)
-  #    ConfluentCloudPassword: $(ConfluentCloudPassword)
-  #    ConfluentCloudUsername: $(ConfluentCloudUsername)
-  #    EventHubBrokerList: $(EventHubBrokerList)
-  #    EventHubConnectionString: $(EventHubConnectionString)
+  - task: DotNetCoreCLI@2
+    displayName: Run language e2e tests
+    inputs:
+      command: test
+      projects: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
+    env:
+      AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
+      AZURE_CLIENT_SECRET: $(AZURE_CLIENT_SECRET)
+      AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
+      AZURE_TENANT_ID: $(AZURE_TENANT_ID)
+      AzureWebJobsStorage: $(AzureWebJobsStorage)
+      ConfluentBrokerList: $(ConfluentBrokerList)
+      ConfluentCloudPassword: $(ConfluentCloudPassword)
+      ConfluentCloudUsername: $(ConfluentCloudUsername)
+      EventHubBrokerList: $(EventHubBrokerList)
+      EventHubConnectionString: $(EventHubConnectionString)
 
   #- task: DotNetCoreCLI@2
   #  displayName: Pack NuGet package
