@@ -1,4 +1,7 @@
-﻿using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue;
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the MIT License. See License.txt in the project root for license information.
+
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.eventhub;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.operation;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.storageQueue;
@@ -39,26 +42,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.que
         {
             QueueResponse response = null;
 
-            if (QueueOperation.CREATE == this.queueOperation)
+            switch (queueOperation)
             {
-                await queueManager.createAsync(queueName);
+                case QueueOperation.CREATE:
+                    await queueManager.CreateAsync(queueName);
+                    break;
+                case QueueOperation.DELETE:
+                    await queueManager.DeleteAsync(queueName);
+                    break;
+                case QueueOperation.CLEAR:
+                    await queueManager.ClearAsync(queueName);
+					break;
+                case QueueOperation.READ:
+                    response = await queueManager.ReadAsync(Constants.SINGLE_MESSAGE_COUNT, queueName);
+                    break;
+                case QueueOperation.READMANY:
+                    response = await queueManager.ReadAsync(Constants.BATCH_MESSAGE_COUNT, queueName);
+                    break;
+                default:
+                    throw new NotImplementedException();
             }
-            else if (QueueOperation.CLEAR == this.queueOperation)
-            {
-                await queueManager.clearAsync(queueName);
-            }
-            else if (QueueOperation.DELETE == this.queueOperation)
-            {
-                await queueManager.deleteAsync(queueName);
-            }
-            else if (QueueOperation.READ == this.queueOperation)
-            {
-                response = await queueManager.readAsync(Constants.SINGLE_MESSAGE_COUNT, queueName);
-            }
-            else if (QueueOperation.READMANY == this.queueOperation)
-            {
-                response = await queueManager.readAsync(Constants.BATCH_MESSAGE_COUNT, queueName);
-            }
+
             return response;
         }
     }

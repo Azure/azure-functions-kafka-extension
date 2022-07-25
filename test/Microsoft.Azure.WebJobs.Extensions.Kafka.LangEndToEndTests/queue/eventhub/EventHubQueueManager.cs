@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the MIT License. See License.txt in the project root for license information.
+
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
@@ -39,7 +42,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
         }
 
 
-        public Task clearAsync(string queueName)
+        public Task ClearAsync(string queueName)
         {
             throw new NotImplementedException();
         }
@@ -65,7 +68,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
             return newEventhubCollection;
         }
 
-        public async Task createAsync(string queueName)
+        public async Task CreateAsync(string queueName)
         {
             int count = 0;
 
@@ -101,7 +104,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
             }
         }
 
-		public async Task deleteAsync(string queueName)
+		public async Task DeleteAsync(string queueName)
 		{
 			int count = 0;
 			while (count <= MAX_RETRY_COUNT)
@@ -125,12 +128,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.queue.event
 			}
 		}
 
-		public Task<QueueResponse> readAsync(int batchSize, string queueName)
+		public Task<QueueResponse> ReadAsync(int batchSize, string queueName)
         {
             throw new NotImplementedException();
         }
 
-        public Task<QueueResponse> writeAsync(QueueRequest writeRequest, string queueName)
+        public Task<QueueResponse> WriteAsync(QueueRequest writeRequest, string queueName)
         {
             throw new NotImplementedException();
         }

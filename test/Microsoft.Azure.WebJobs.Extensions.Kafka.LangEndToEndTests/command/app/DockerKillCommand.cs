@@ -1,4 +1,7 @@
-﻿using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.brokers;
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the MIT License. See License.txt in the project root for license information.
+
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.brokers;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.languages;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util;
 using System;
@@ -14,9 +17,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.command.app
 	{
 		public DockerKillCommand(BrokerType brokerType, Language language)
 		{
-            cmd = buildDockerKillCmd(brokerType, language);
+            cmd = BuildDockerKillCmd(brokerType, language);
         }
-        private string buildDockerKillCmd(BrokerType brokerType, Language language)
+        private string BuildDockerKillCmd(BrokerType brokerType, Language language)
         {
             //Starting the list with docker rm
             List<string> cmdList = new List<string>() { Constants.DOCKER_KILL };

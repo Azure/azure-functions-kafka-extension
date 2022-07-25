@@ -1,4 +1,7 @@
-﻿using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.languages;
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the MIT License. See License.txt in the project root for license information.
+
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.languages;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.type;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.brokers;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.executor;
