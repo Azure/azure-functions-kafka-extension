@@ -41,7 +41,7 @@ steps:
   #  inputs:
   #    packageType: sdk
   #    version: 6.0.301
-      installationPath: $(Agent.ToolsDirectory)/dotnet
+  #    installationPath: $(Agent.ToolsDirectory)/dotnet
   - task: JavaToolInstaller@0
     inputs:
       versionSpec: '8'
