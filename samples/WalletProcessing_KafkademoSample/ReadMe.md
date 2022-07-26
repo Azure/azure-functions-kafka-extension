@@ -4,7 +4,7 @@ languages:
 - java
 products: 
 - azure-functions
-description: Sample Wallet Processing scenario to showcase Kafka trigger extension 
+description: Sample Wallet Processing Scenario to showcase Kafka trigger extension 
 ---
 
 # Azure Functions Kafka Trigger Java Sample
