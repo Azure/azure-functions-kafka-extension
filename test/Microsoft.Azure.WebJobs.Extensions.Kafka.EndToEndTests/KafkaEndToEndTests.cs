@@ -528,14 +528,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             nameof(KafkaOutputFunctions.Produce_AsyncColletor_Raw_ByteArray_Without_Key),
             typeof(SingleItem_RawByteArray_Trigger),
             Constants.StringTopicWithTenPartitionsName)]
-        [InlineData(
-            nameof(KafkaOutputFunctions.Produce_AsyncCollector_Raw_SpecificAvro),
-            typeof(MultiItem_Raw_SpecificAvro_Without_Key_Trigger),
-            Constants.MyAvroRecordTopicName)]
-        [InlineData(
-            nameof(KafkaOutputFunctions.Produce_Return_Parameter_Raw_Protobuf_Without_Key),
-            typeof(MultiItem_Raw_Protobuf_Trigger),
-            Constants.MyProtobufTopicName)]
+        // [InlineData(
+        //     nameof(KafkaOutputFunctions.Produce_AsyncCollector_Raw_SpecificAvro),
+        //     typeof(MultiItem_Raw_SpecificAvro_Without_Key_Trigger),
+        //     Constants.MyAvroRecordTopicName)]
+        // [InlineData(
+        //     nameof(KafkaOutputFunctions.Produce_Return_Parameter_Raw_Protobuf_Without_Key),
+        //     typeof(MultiItem_Raw_Protobuf_Trigger),
+        //     Constants.MyProtobufTopicName)]
         public async Task Produce_And_Consume_Without_Key(string producerFunctionName, Type triggerFunctionType, string topicName)
         {
             const int producedMessagesCount = 20;
@@ -563,27 +563,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
         }
 
         [Theory]
-        [InlineData(
-            nameof(KafkaOutputFunctions.Produce_AsyncCollector_String_With_Long_Key),
-            typeof(MultiItem_KafkaEventData_String_With_Long_Key_Trigger),
-            Constants.StringTopicWithLongKeyAndTenPartitionsName)]
+        // [InlineData(
+        //     nameof(KafkaOutputFunctions.Produce_AsyncCollector_String_With_Long_Key),
+        //     typeof(MultiItem_KafkaEventData_String_With_Long_Key_Trigger),
+        //     Constants.StringTopicWithLongKeyAndTenPartitionsName)]
         [InlineData(
             nameof(KafkaOutputFunctions.Produce_Out_Parameter_KafkaEventData_Array_String_With_String_Key),
             typeof(MultiItem_KafkaEventData_String_With_String_Key_Trigger),
             Constants.StringTopicWithTenPartitionsName)]
-        [InlineData(
-            nameof(KafkaOutputFunctions.Produce_AsyncCollector_Avro_With_String_key),
-            typeof(MultiItem_SpecificAvro_With_String_Key_Trigger),
-            Constants.MyAvroRecordTopicName)]
-        [InlineData(
-            nameof(KafkaOutputFunctions.Produce_AsyncCollector_Avro_With_String_key),
-            typeof(MultiItem_GenericAvro_With_String_Key_Trigger),
-            Constants.MyAvroRecordTopicName)]
-        [InlineData(
-            nameof(KafkaOutputFunctions.Produce_AsyncCollector_Protobuf_With_String_Key),
-            typeof(MultiItem_Protobuf_With_String_Key_Trigger),
-            Constants.MyProtobufTopicName
-            )]
+        // [InlineData(
+        //     nameof(KafkaOutputFunctions.Produce_AsyncCollector_Avro_With_String_key),
+        //     typeof(MultiItem_SpecificAvro_With_String_Key_Trigger),
+        //     Constants.MyAvroRecordTopicName)]
+        // [InlineData(
+        //     nameof(KafkaOutputFunctions.Produce_AsyncCollector_Avro_With_String_key),
+        //     typeof(MultiItem_GenericAvro_With_String_Key_Trigger),
+        //     Constants.MyAvroRecordTopicName)]
+        // [InlineData(
+        //     nameof(KafkaOutputFunctions.Produce_AsyncCollector_Protobuf_With_String_Key),
+        //     typeof(MultiItem_Protobuf_With_String_Key_Trigger),
+        //     Constants.MyProtobufTopicName
+        //     )]
         [InlineData(
             nameof(KafkaOutputFunctions.Produce_Return_Parameter_KafkaEventData_Array_String_With_String_Key),
             typeof(MultiItem_RawStringArray_Trigger),
