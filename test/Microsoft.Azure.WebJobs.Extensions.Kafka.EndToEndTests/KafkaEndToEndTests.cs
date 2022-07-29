@@ -511,109 +511,109 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
         // }
 
 
-        // [Theory]
-        // [InlineData(
-        //     nameof(KafkaOutputFunctions.Produce_Out_Parameter_KafkaEventData_Array_String_Without_Key),
-        //     typeof(SingleItem_Raw_String_Without_Key_Trigger),
-        //     Constants.StringTopicWithTenPartitionsName)]
-        // [InlineData(
-        //     nameof(KafkaOutputFunctions.Produce_Return_Parameter_Raw_String_Array),
-        //     typeof(MultiItem_Raw_StringArray_Without_Key_Trigger),
-        //     Constants.StringTopicWithTenPartitionsName)]
-        // [InlineData(
-        //     nameof(KafkaOutputFunctions.Produce_AsyncColletor_Raw_String_Without_Key),
-        //     typeof(MultiItem_KafkaEventData_String_With_Ignore_Key_Trigger),
-        //     Constants.StringTopicWithTenPartitionsName)]
-        // [InlineData(
-        //     nameof(KafkaOutputFunctions.Produce_AsyncColletor_Raw_ByteArray_Without_Key),
-        //     typeof(SingleItem_RawByteArray_Trigger),
-        //     Constants.StringTopicWithTenPartitionsName)]
-        // [InlineData(
-        //     nameof(KafkaOutputFunctions.Produce_AsyncCollector_Raw_SpecificAvro),
-        //     typeof(MultiItem_Raw_SpecificAvro_Without_Key_Trigger),
-        //     Constants.MyAvroRecordTopicName)]
-        // [InlineData(
-        //     nameof(KafkaOutputFunctions.Produce_Return_Parameter_Raw_Protobuf_Without_Key),
-        //     typeof(MultiItem_Raw_Protobuf_Trigger),
-        //     Constants.MyProtobufTopicName)]
-        // public async Task Produce_And_Consume_Without_Key(string producerFunctionName, Type triggerFunctionType, string topicName)
-        // {
-        //     const int producedMessagesCount = 20;
-        //     var messagePrefix = Guid.NewGuid().ToString() + ":";
+        [Theory]
+        [InlineData(
+            nameof(KafkaOutputFunctions.Produce_Out_Parameter_KafkaEventData_Array_String_Without_Key),
+            typeof(SingleItem_Raw_String_Without_Key_Trigger),
+            Constants.StringTopicWithTenPartitionsName)]
+        [InlineData(
+            nameof(KafkaOutputFunctions.Produce_Return_Parameter_Raw_String_Array),
+            typeof(MultiItem_Raw_StringArray_Without_Key_Trigger),
+            Constants.StringTopicWithTenPartitionsName)]
+        [InlineData(
+            nameof(KafkaOutputFunctions.Produce_AsyncColletor_Raw_String_Without_Key),
+            typeof(MultiItem_KafkaEventData_String_With_Ignore_Key_Trigger),
+            Constants.StringTopicWithTenPartitionsName)]
+        [InlineData(
+            nameof(KafkaOutputFunctions.Produce_AsyncColletor_Raw_ByteArray_Without_Key),
+            typeof(SingleItem_RawByteArray_Trigger),
+            Constants.StringTopicWithTenPartitionsName)]
+        [InlineData(
+            nameof(KafkaOutputFunctions.Produce_AsyncCollector_Raw_SpecificAvro),
+            typeof(MultiItem_Raw_SpecificAvro_Without_Key_Trigger),
+            Constants.MyAvroRecordTopicName)]
+        [InlineData(
+            nameof(KafkaOutputFunctions.Produce_Return_Parameter_Raw_Protobuf_Without_Key),
+            typeof(MultiItem_Raw_Protobuf_Trigger),
+            Constants.MyProtobufTopicName)]
+        public async Task Produce_And_Consume_Without_Key(string producerFunctionName, Type triggerFunctionType, string topicName)
+        {
+            const int producedMessagesCount = 20;
+            var messagePrefix = Guid.NewGuid().ToString() + ":";
 
-        //     using (var host = await StartHostAsync(new[] { typeof(KafkaOutputFunctions), triggerFunctionType }))
-        //     {
-        //         var jobHost = host.GetJobHost();
+            using (var host = await StartHostAsync(new[] { typeof(KafkaOutputFunctions), triggerFunctionType }))
+            {
+                var jobHost = host.GetJobHost();
 
-        //         await jobHost.CallOutputTriggerStringAsync(
-        //             GetStaticMethod(typeof(KafkaOutputFunctions), producerFunctionName),
-        //             topicName,
-        //             Enumerable.Range(1, producedMessagesCount).Select(x => messagePrefix + x)
-        //             );
+                await jobHost.CallOutputTriggerStringAsync(
+                    GetStaticMethod(typeof(KafkaOutputFunctions), producerFunctionName),
+                    topicName,
+                    Enumerable.Range(1, producedMessagesCount).Select(x => messagePrefix + x)
+                    );
 
-        //         await TestHelpers.Await(() =>
-        //         {
-        //             var foundCount = loggerProvider.GetAllUserLogMessages().Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains(messagePrefix));
-        //             return foundCount == producedMessagesCount;
-        //         });
+                await TestHelpers.Await(() =>
+                {
+                    var foundCount = loggerProvider.GetAllUserLogMessages().Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains(messagePrefix));
+                    return foundCount == producedMessagesCount;
+                });
 
-        //         // Give time for the commit to be saved
-        //         await Task.Delay(1000);
-        //     }
-        // }
+                // Give time for the commit to be saved
+                await Task.Delay(1000);
+            }
+        }
 
-        // [Theory]
-        // [InlineData(
-        //     nameof(KafkaOutputFunctions.Produce_AsyncCollector_String_With_Long_Key),
-        //     typeof(MultiItem_KafkaEventData_String_With_Long_Key_Trigger),
-        //     Constants.StringTopicWithLongKeyAndTenPartitionsName)]
-        // [InlineData(
-        //     nameof(KafkaOutputFunctions.Produce_Out_Parameter_KafkaEventData_Array_String_With_String_Key),
-        //     typeof(MultiItem_KafkaEventData_String_With_String_Key_Trigger),
-        //     Constants.StringTopicWithTenPartitionsName)]
-        // [InlineData(
-        //     nameof(KafkaOutputFunctions.Produce_AsyncCollector_Avro_With_String_key),
-        //     typeof(MultiItem_SpecificAvro_With_String_Key_Trigger),
-        //     Constants.MyAvroRecordTopicName)]
-        // [InlineData(
-        //     nameof(KafkaOutputFunctions.Produce_AsyncCollector_Avro_With_String_key),
-        //     typeof(MultiItem_GenericAvro_With_String_Key_Trigger),
-        //     Constants.MyAvroRecordTopicName)]
-        // [InlineData(
-        //     nameof(KafkaOutputFunctions.Produce_AsyncCollector_Protobuf_With_String_Key),
-        //     typeof(MultiItem_Protobuf_With_String_Key_Trigger),
-        //     Constants.MyProtobufTopicName
-        //     )]
-        // [InlineData(
-        //     nameof(KafkaOutputFunctions.Produce_Return_Parameter_KafkaEventData_Array_String_With_String_Key),
-        //     typeof(MultiItem_RawStringArray_Trigger),
-        //     Constants.StringTopicWithTenPartitionsName)]
-        // public async Task Produce_And_Consume_With_Key(string producerFunctionName, Type triggerFunctionType, string topicName)
-        // {
-        //     const int producedMessagesCount = 20;
-        //     var messagePrefix = Guid.NewGuid().ToString() + ":";
+        [Theory]
+        [InlineData(
+            nameof(KafkaOutputFunctions.Produce_AsyncCollector_String_With_Long_Key),
+            typeof(MultiItem_KafkaEventData_String_With_Long_Key_Trigger),
+            Constants.StringTopicWithLongKeyAndTenPartitionsName)]
+        [InlineData(
+            nameof(KafkaOutputFunctions.Produce_Out_Parameter_KafkaEventData_Array_String_With_String_Key),
+            typeof(MultiItem_KafkaEventData_String_With_String_Key_Trigger),
+            Constants.StringTopicWithTenPartitionsName)]
+        [InlineData(
+            nameof(KafkaOutputFunctions.Produce_AsyncCollector_Avro_With_String_key),
+            typeof(MultiItem_SpecificAvro_With_String_Key_Trigger),
+            Constants.MyAvroRecordTopicName)]
+        [InlineData(
+            nameof(KafkaOutputFunctions.Produce_AsyncCollector_Avro_With_String_key),
+            typeof(MultiItem_GenericAvro_With_String_Key_Trigger),
+            Constants.MyAvroRecordTopicName)]
+        [InlineData(
+            nameof(KafkaOutputFunctions.Produce_AsyncCollector_Protobuf_With_String_Key),
+            typeof(MultiItem_Protobuf_With_String_Key_Trigger),
+            Constants.MyProtobufTopicName
+            )]
+        [InlineData(
+            nameof(KafkaOutputFunctions.Produce_Return_Parameter_KafkaEventData_Array_String_With_String_Key),
+            typeof(MultiItem_RawStringArray_Trigger),
+            Constants.StringTopicWithTenPartitionsName)]
+        public async Task Produce_And_Consume_With_Key(string producerFunctionName, Type triggerFunctionType, string topicName)
+        {
+            const int producedMessagesCount = 20;
+            var messagePrefix = Guid.NewGuid().ToString() + ":";
 
-        //     using (var host = await StartHostAsync(new[] { typeof(KafkaOutputFunctions), triggerFunctionType }))
-        //     {
-        //         var jobHost = host.GetJobHost();
+            using (var host = await StartHostAsync(new[] { typeof(KafkaOutputFunctions), triggerFunctionType }))
+            {
+                var jobHost = host.GetJobHost();
 
-        //         await jobHost.CallOutputTriggerStringWithKeyAsync(
-        //             GetStaticMethod(typeof(KafkaOutputFunctions), producerFunctionName),
-        //             topicName,
-        //             Enumerable.Range(1, producedMessagesCount).Select(x => messagePrefix + x),
-        //             Enumerable.Range(1, producedMessagesCount).Select(x => x.ToString())
-        //             );
+                await jobHost.CallOutputTriggerStringWithKeyAsync(
+                    GetStaticMethod(typeof(KafkaOutputFunctions), producerFunctionName),
+                    topicName,
+                    Enumerable.Range(1, producedMessagesCount).Select(x => messagePrefix + x),
+                    Enumerable.Range(1, producedMessagesCount).Select(x => x.ToString())
+                    );
 
-        //         await TestHelpers.Await(() =>
-        //         {
-        //             var foundCount = loggerProvider.GetAllUserLogMessages().Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains(messagePrefix));
-        //             return foundCount == producedMessagesCount;
-        //         });
+                await TestHelpers.Await(() =>
+                {
+                    var foundCount = loggerProvider.GetAllUserLogMessages().Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains(messagePrefix));
+                    return foundCount == producedMessagesCount;
+                });
 
-        //         // Give time for the commit to be saved
-        //         await Task.Delay(1000);
-        //     }
-        // }
+                // Give time for the commit to be saved
+                await Task.Delay(1000);
+            }
+        }
 
         [Fact]
         public async Task Produce_And_Consume_With_Headers()
