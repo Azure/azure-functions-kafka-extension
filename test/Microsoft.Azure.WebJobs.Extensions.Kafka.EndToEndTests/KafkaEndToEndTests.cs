@@ -89,7 +89,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
         //     Assert.DoesNotContain(loggerProvider2.GetAllUserLogMessages().Where(p => p.FormattedMessage != null).Select(x => x.FormattedMessage), x => x.Contains(messagePrefixBatch1));
         // }
 
-        // private MethodInfo GetStaticMethod(Type type, string methodName) => type.GetMethod(methodName, BindingFlags.Static | BindingFlags.Public);
+        private MethodInfo GetStaticMethod(Type type, string methodName) => type.GetMethod(methodName, BindingFlags.Static | BindingFlags.Public);
 
         // [Fact]
         // public async Task SinglePartition_StringValue_ArrayTrigger_Resume_Continue_Where_Stopped()
