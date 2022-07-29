@@ -270,4 +270,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             }
         }
     }
+
+    internal static class SingleItem_Single_Partition_Raw_String_Without_Key_Trigger_Retry
+    {
+        [FixedDelayRetry(5, "00:00:01")]
+        public static void Trigger(
+            [KafkaTrigger("LocalBroker", Constants.StringTopicWithOnePartitionName, ConsumerGroup = Constants.ConsumerGroupID)] KafkaEventData<string> kafkaEvent,
+            ILogger log)
+        {
+            log.LogInformation(kafkaEvent.Value.ToString());
+            throw new Exception("unhandled error");
+        }
+    }
 }
