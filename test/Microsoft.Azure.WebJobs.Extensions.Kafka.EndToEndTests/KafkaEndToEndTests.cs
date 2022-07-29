@@ -89,62 +89,62 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
         //     Assert.DoesNotContain(loggerProvider2.GetAllUserLogMessages().Where(p => p.FormattedMessage != null).Select(x => x.FormattedMessage), x => x.Contains(messagePrefixBatch1));
         // }
 
-        private MethodInfo GetStaticMethod(Type type, string methodName) => type.GetMethod(methodName, BindingFlags.Static | BindingFlags.Public);
+        // private MethodInfo GetStaticMethod(Type type, string methodName) => type.GetMethod(methodName, BindingFlags.Static | BindingFlags.Public);
 
-        [Fact]
-        public async Task SinglePartition_StringValue_ArrayTrigger_Resume_Continue_Where_Stopped()
-        {
-            const int producedMessagesCount = 80;
-            var messageMasterPrefix = Guid.NewGuid().ToString();
-            var messagePrefixBatch1 = messageMasterPrefix + ":1:";
-            var messagePrefixBatch2 = messageMasterPrefix + ":2:";
+        // [Fact]
+        // public async Task SinglePartition_StringValue_ArrayTrigger_Resume_Continue_Where_Stopped()
+        // {
+        //     const int producedMessagesCount = 80;
+        //     var messageMasterPrefix = Guid.NewGuid().ToString();
+        //     var messagePrefixBatch1 = messageMasterPrefix + ":1:";
+        //     var messagePrefixBatch2 = messageMasterPrefix + ":2:";
 
-            var loggerProvider1 = CreateTestLoggerProvider();
+        //     var loggerProvider1 = CreateTestLoggerProvider();
 
-            using (var host = await StartHostAsync(new[] { typeof(MultiItem_KafkaEventData_String_Without_Key_Trigger), typeof(KafkaOutputFunctions) }, loggerProvider1))
-            {
-                var jobHost = host.GetJobHost();
+        //     using (var host = await StartHostAsync(new[] { typeof(MultiItem_KafkaEventData_String_Without_Key_Trigger), typeof(KafkaOutputFunctions) }, loggerProvider1))
+        //     {
+        //         var jobHost = host.GetJobHost();
 
-                await jobHost.CallOutputTriggerStringAsync(
-                    GetStaticMethod(typeof(KafkaOutputFunctions), nameof(KafkaOutputFunctions.Produce_AsyncCollector_String_Without_Key)),
-                    endToEndTestFixture.StringTopicWithOnePartition.Name,
-                    Enumerable.Range(1, producedMessagesCount).Select(x => messagePrefixBatch1 + x));
+        //         await jobHost.CallOutputTriggerStringAsync(
+        //             GetStaticMethod(typeof(KafkaOutputFunctions), nameof(KafkaOutputFunctions.Produce_AsyncCollector_String_Without_Key)),
+        //             endToEndTestFixture.StringTopicWithOnePartition.Name,
+        //             Enumerable.Range(1, producedMessagesCount).Select(x => messagePrefixBatch1 + x));
 
-                await TestHelpers.Await(() =>
-                {
-                    var foundCount = loggerProvider1.GetAllUserLogMessages().Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains(messagePrefixBatch1));
-                    return foundCount == producedMessagesCount;
-                });
+        //         await TestHelpers.Await(() =>
+        //         {
+        //             var foundCount = loggerProvider1.GetAllUserLogMessages().Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains(messagePrefixBatch1));
+        //             return foundCount == producedMessagesCount;
+        //         });
 
-                // Give time for the commit to be saved
-                await Task.Delay(1500);
+        //         // Give time for the commit to be saved
+        //         await Task.Delay(1500);
 
-                await host.StopAsync();
-            }
+        //         await host.StopAsync();
+        //     }
 
-            var loggerProvider2 = CreateTestLoggerProvider();
+        //     var loggerProvider2 = CreateTestLoggerProvider();
 
-            using (var host = await StartHostAsync(new[] { typeof(KafkaOutputFunctions), typeof(MultiItem_KafkaEventData_String_Without_Key_Trigger) }, loggerProvider2))
-            {
-                var jobHost = host.GetJobHost();
+        //     using (var host = await StartHostAsync(new[] { typeof(KafkaOutputFunctions), typeof(MultiItem_KafkaEventData_String_Without_Key_Trigger) }, loggerProvider2))
+        //     {
+        //         var jobHost = host.GetJobHost();
 
-                await jobHost.CallOutputTriggerStringAsync(
-                    GetStaticMethod(typeof(KafkaOutputFunctions), nameof(KafkaOutputFunctions.Produce_AsyncCollector_String_Without_Key)),
-                    endToEndTestFixture.StringTopicWithOnePartition.Name,
-                    Enumerable.Range(1 + producedMessagesCount, producedMessagesCount).Select(x => messagePrefixBatch2 + x));
+        //         await jobHost.CallOutputTriggerStringAsync(
+        //             GetStaticMethod(typeof(KafkaOutputFunctions), nameof(KafkaOutputFunctions.Produce_AsyncCollector_String_Without_Key)),
+        //             endToEndTestFixture.StringTopicWithOnePartition.Name,
+        //             Enumerable.Range(1 + producedMessagesCount, producedMessagesCount).Select(x => messagePrefixBatch2 + x));
 
-                await TestHelpers.Await(() =>
-                {
-                    var foundCount = loggerProvider2.GetAllUserLogMessages().Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains(messagePrefixBatch2));
-                    return foundCount == producedMessagesCount;
-                });
+        //         await TestHelpers.Await(() =>
+        //         {
+        //             var foundCount = loggerProvider2.GetAllUserLogMessages().Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains(messagePrefixBatch2));
+        //             return foundCount == producedMessagesCount;
+        //         });
 
-                await host.StopAsync();
-            }
+        //         await host.StopAsync();
+        //     }
 
-            // Ensure 2 run does not have any item from previous run
-            Assert.DoesNotContain(loggerProvider2.GetAllUserLogMessages().Where(p => p.FormattedMessage != null).Select(x => x.FormattedMessage), x => x.Contains(messagePrefixBatch1));
-        }
+        //     // Ensure 2 run does not have any item from previous run
+        //     Assert.DoesNotContain(loggerProvider2.GetAllUserLogMessages().Where(p => p.FormattedMessage != null).Select(x => x.FormattedMessage), x => x.Contains(messagePrefixBatch1));
+        // }
 
         // [Fact]
         // public async Task SinglePartition_StringValue_ByteArrayTrigger_Resume_Continue_Where_Stopped()
@@ -615,60 +615,60 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
         //     }
         // }
 
-        // [Fact]
-        // public async Task Produce_And_Consume_With_Headers()
-        // {
-        //     var input = Enumerable.Range(1, 10)
-        //         .Select(x => {
-        //             var eventData = new KafkaEventData<string>
-        //             {
-        //                 Value = x.ToString()
-        //             };
+        [Fact]
+        public async Task Produce_And_Consume_With_Headers()
+        {
+            var input = Enumerable.Range(1, 10)
+                .Select(x => {
+                    var eventData = new KafkaEventData<string>
+                    {
+                        Value = x.ToString()
+                    };
 
-        //             for (var i = 0; i < x; i++)
-        //             {
-        //                 eventData.Headers.Add("testHeader", Encoding.UTF8.GetBytes("testValue" + i));
-        //             }
-        //             return eventData;
-        //         });
+                    for (var i = 0; i < x; i++)
+                    {
+                        eventData.Headers.Add("testHeader", Encoding.UTF8.GetBytes("testValue" + i));
+                    }
+                    return eventData;
+                });
 
-        //     var output = await ProduceAndConsumeAsync(input);
+            var output = await ProduceAndConsumeAsync(input);
 
-        //     foreach (var inputEvent in input)
-        //     {
-        //         var outputEvent = output.SingleOrDefault(x => x.Value == inputEvent.Value);
+            foreach (var inputEvent in input)
+            {
+                var outputEvent = output.SingleOrDefault(x => x.Value == inputEvent.Value);
 
-        //         Assert.NotNull(outputEvent);
-        //         Assert.Equal(inputEvent.Headers.Count, outputEvent.Headers.Count);
-        //         Assert.Equal("testValue0", Encoding.UTF8.GetString(outputEvent.Headers.GetFirst("testHeader")));
-        //         Assert.Throws<NotSupportedException>(() => outputEvent.Headers.Remove("testHeader"));
-        //     }
-        // }
+                Assert.NotNull(outputEvent);
+                Assert.Equal(inputEvent.Headers.Count, outputEvent.Headers.Count);
+                Assert.Equal("testValue0", Encoding.UTF8.GetString(outputEvent.Headers.GetFirst("testHeader")));
+                Assert.Throws<NotSupportedException>(() => outputEvent.Headers.Remove("testHeader"));
+            }
+        }
 
-        // [Fact]
-        // public async Task Produce_And_Consume_Without_Headers()
-        // {
-        //     var input = Enumerable.Range(0, 10)
-        //         .Select(x => new KafkaEventData<string>
-        //         {
-        //             Value = x.ToString()
-        //         });
+        [Fact]
+        public async Task Produce_And_Consume_Without_Headers()
+        {
+            var input = Enumerable.Range(0, 10)
+                .Select(x => new KafkaEventData<string>
+                {
+                    Value = x.ToString()
+                });
 
-        //     var output = await ProduceAndConsumeAsync(input.ToArray());
+            var output = await ProduceAndConsumeAsync(input.ToArray());
 
-        //     foreach (var inputEvent in input)
-        //     {
-        //         var outputEvent = output.SingleOrDefault(x => x.Value == inputEvent.Value);
+            foreach (var inputEvent in input)
+            {
+                var outputEvent = output.SingleOrDefault(x => x.Value == inputEvent.Value);
 
-        //         Assert.NotNull(outputEvent);
-        //         Assert.Equal(0, outputEvent.Headers.Count);
+                Assert.NotNull(outputEvent);
+                Assert.Equal(0, outputEvent.Headers.Count);
 
-        //         //All events should have the same headers instance
-        //         Assert.Same(outputEvent.Headers, output.First().Headers);
-        //         Assert.Throws<NotSupportedException>(() => outputEvent.Headers.Remove("testHeader"));
-        //     }
+                //All events should have the same headers instance
+                Assert.Same(outputEvent.Headers, output.First().Headers);
+                Assert.Throws<NotSupportedException>(() => outputEvent.Headers.Remove("testHeader"));
+            }
             
-        // }
+        }
 
         private async Task<List<KafkaEventData<string>>> ProduceAndConsumeAsync(IEnumerable<KafkaEventData<string>> events) 
         {
