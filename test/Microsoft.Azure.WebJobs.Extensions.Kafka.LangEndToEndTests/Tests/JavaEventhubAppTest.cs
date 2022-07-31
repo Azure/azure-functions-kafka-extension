@@ -1,31 +1,23 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-using Microsoft.AspNetCore.Http;
-using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.languages;
-using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.type;
-using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.entity;
-using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests.Invoke.Type;
-using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
-using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Util;
-using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.apps.brokers;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests
 {
-    public class JavaEventhubAppTest : BaseE2E, IClassFixture<KafkaE2EFixture>
+	public class JavaEventhubAppTest : BaseE2E, IClassFixture<KafkaE2EFixture>
     {
-        private KafkaE2EFixture kafkaE2EFixture;
-        ITestOutputHelper output;
+        private readonly KafkaE2EFixture _kafkaE2EFixture;
+        readonly ITestOutputHelper _output;
 
         public JavaEventhubAppTest(KafkaE2EFixture kafkaE2EFixture, ITestOutputHelper output) : base(kafkaE2EFixture, Language.JAVA, BrokerType.EVENTHUB, output)
         {
-            this.kafkaE2EFixture = kafkaE2EFixture;
-            this.output = output;
+            _kafkaE2EFixture = kafkaE2EFixture;
+            _output = output;
         }
 
         [Fact]
