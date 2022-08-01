@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Resources;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure;
@@ -53,7 +54,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 			var resourceGroups = subscription.GetResourceGroups();
 			var resourceGroup = (await resourceGroups.GetAsync(Constants.RESOURCE_GROUP)).Value;
 
-			var namespaceCollection = resourceGroup.GetEventHubNamespaces();
+			var namespaceCollection = resourceGroup.GetEventHubsNamespaces();
 			var eventHubNamespace = (await namespaceCollection.GetAsync(eventhubNamespace)).Value;
 			var newEventhubCollection = eventHubNamespace.GetEventHubs();
 
