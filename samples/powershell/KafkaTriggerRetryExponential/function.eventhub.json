@@ -11,8 +11,7 @@
             "authenticationMode" : "PLAIN",
             "consumerGroup" : "$Default",
             "username" : "$ConnectionString",
-            "brokerList" : "%BrokerList%",
-            "sslCaLocation": "confluent_cloud_cacert.pem"
+            "brokerList" : "%BrokerList%"
         }
     ],
     "retry": {
