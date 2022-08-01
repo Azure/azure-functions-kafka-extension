@@ -1,14 +1,10 @@
 ---
 page_type: sample
-languages: java
-products: azure-functions
-name: Azure Functions Kafka Trigger Java Sample
-layout: post
-title: Azure Functions Kafka Trigger Java Sample
-description: Sample Wallet Processing scenario to showcase Kafka trigger extension 
-author: shrohilla, raorugan
-ms.author: shrohilla, raorugan
-ms.date: 06/13/2022
+languages: 
+- java
+products: 
+- azure-functions
+description: Sample Wallet Processing Scenario to showcase Kafka trigger extension 
 ---
 
 # Azure Functions Kafka Trigger Java Sample
@@ -23,7 +19,8 @@ The flow of the application is captured in this diagram:
 
 ![alt text](img/arch_diag.png)
  
-Pre-requisites:
+## Pre-requisites
+
 1. An Azure account with an active subscription. [Create an account for free](https://azure.microsoft.com/free/?ref=microsoft.com&amp;utm_source=microsoft.com&amp;utm_medium=docs&amp;utm_campaign=visualstudio).
 2. The [Azure Functions Core Tools](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local#v2) version 4.x.
 3. The [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli) version 2.4 or later.
@@ -35,13 +32,13 @@ Pre-requisites:
     - [Create an instance of Apache Kafka and the topics needed in a Confluent Cloud managed Kafka cluster](https://docs.microsoft.com/en-us/azure/partner-solutions/apache-kafka-confluent-cloud/create)
     - [Create an instance of Azure functions](https://docs.microsoft.com/en-us/azure/azure-functions/functions-premium-plan)
 
-# Build and deploy the producer and consumer applications to Azure functions
+## Build and deploy the producer and consumer applications to Azure functions
 
 1. [Setup schema registry for the wallet\_event topic](https://docs.confluent.io/cloud/current/get-started/schema-registry.html#quick-start-for-schema-management-on-ccloud).
 2. Setup a producer code to write Avro serialized messages to a Kafka topic.
 3. Setup Kafka trigger apps to track the events arriving at various Kafka topics.
 
-# Execute the Kafka producer to generate events
+## Execute the Kafka producer to generate events
 
 1. Run the producer program to produce serialized messages into the Kafka topic
 
@@ -81,15 +78,16 @@ Here is how the header data looks:
 
 ![alt text](img/img11.png)
 
-**Clean Up**
+## Clean Up
 
 1. Delete the resources (Azure function&#39;s instance – Kafka trigger apps, Kafka clusters hosted on Confluent Cloud – topics, schema registry)
 
 The next section provides a summary of how to set up the Azure services and infrastructure to build the entire solution. References to the documentation and other resources are provided where applicable.
 
-# Setup the Kafka cluster using Confluent Cloud on Azure offering
+## Setup the Kafka cluster using Confluent Cloud on Azure offering
 
-Provision a [Confluent Cloud cluster on Azure Marketplace](https://docs.microsoft.com/azure/partner-solutions/apache-kafka-confluent-cloud/create?WT.mc_id=data-28802-abhishgu). 
+Provision a [Confluent Cloud cluster on Azure Marketplace](https://docs.microsoft.com/azure/partner-solutions/apache-kafka-confluent-cloud/create?WT.mc_id=data-28802-abhishgu).
+ 
 **Provide configuration details**  for creating a Confluent Cloud organization on Azure. Post completion of creation steps a Confluent organization is created which can be identified through Azure portal and using single sign-on url you can directly login to Confluent cloud UI portal.
 
 ![alt text](img/img12.png)
@@ -98,13 +96,13 @@ Create a new Kafka cluster in the default environment or create a new environmen
 
 ![alt text](img/img13.png)
 
-# Setup the schema registry
+## Setup the schema registry
 
 Confluent Cloud [Schema Registry](https://docs.confluent.io/cloud/current/get-started/schema-registry.html#quick-start-for-schema-management-on-ccloud) helps to manage schemas in Confluent Cloud. Enable schema registry once you login to the cluster. Select the schema registry region closer to the cluster. To use Confluent Cloud Schema Registry for managing Kafka clusters, you need an API key specific to Schema Registry. Click the  **Schema Registry**  tab, then click  **Edit**  on the  **API credentials**  card. Create a new set of API key and secret and note down the values.
 
 ![alt text](img/img14.png)
 
-# Create the topics
+## Create the topics
 
 Create new [Kafka Topics](https://docs.confluent.io/cloud/current/client-apps/topics/manage.html) as follows using the default topic settings.
 
@@ -122,7 +120,7 @@ Here is the view of the topic wallet\_event once the schema is mapped:
 
 Create a new API Key and Secret which can be found under the Cluster-> Data Integration -> API keys - note these values
 
-# Update the code
+## Update the code
 
 - Clone [this repository](https://github.com/Azure/azure-functions-kafka-extension/tree/dev/samples/WalletProcessing_KafkademoSample) using Git to a folder.
 - Update the local.settings.json file to point to your Kafka cluster that you set up in the previous step.
@@ -146,7 +144,7 @@ Update the producer-config.properties file. These values will be leveraged by th
 
 Update the **schemaRegistryUrl** in pom.xml with the API endpoint of the Schema registry.
 
-# Now lets see things in action!! 
+## Now lets see things in action!! 
 
 Now that we have all the components in place, we can test the end-to-end functionality. Lets build and run the function&#39;s code by starting the local Functions runtime host from the folder which has been cloned :
 
@@ -163,7 +161,7 @@ Run the WalletProducer.java to generate messages into the Kafka topic wallet\_ev
 
 ![alt text](img/img22.png)
 
-# Deploy the app to Azure Functions Premium Plan
+## Deploy the app to Azure Functions Premium Plan
 
 Now you are ready to deploy this Function app to a [Azure Functions Premium Plan](https://docs.microsoft.com/en-us/azure/azure-functions/functions-premium-plan). Use the following [link](https://docs.microsoft.com/en-us/azure/azure-functions/functions-premium-plan#create-a-premium-plan) for instructions on how to first create an Azure Functions Premium plan Function app. Note the name of the Function app.
 
@@ -205,11 +203,11 @@ Finally, you can head over to the portal and for example use the [Live Metrics v
 
 ![alt text](img/img28.png)
 
-# Clean up the resources
+## Clean up the resources
 
 Once you&#39;re done, delete the services so that you do not incur unwanted costs. If they are in the same resource group, simply [deleting the resource group](https://docs.microsoft.com/azure/azure-resource-manager/management/delete-resource-group?tabs=azure-portal&amp;WT.mc_id=data-14444-abhishgu#delete-resource-group) will suffice. You can also delete the resources (Confluent Cloud organization, Azure functions) individually.
 
-# References 
+## References 
 
 [Apache Kafka bindings for Azure Functions | Microsoft Docs](https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-kafka?tabs=in-process%2Cportal&amp;pivots=programming-language-csharp)
 
