@@ -13,7 +13,7 @@ public class KafkaTriggerRetry {
     @FunctionName("KafkaTriggerRetry")
     @FixedDelayRetry(maxRetryCount = 3, delayInterval = "00:00:02")
     public void runSingle(
-            @KafkaTrigger(name = "KafkaTrigger", topic = "topic", brokerList = "%BrokerList%", consumerGroup = "$Default", username = "$ConnectionString", password = "EventHubConnectionString", authenticationMode = BrokerAuthenticationMode.PLAIN, protocol = BrokerProtocol.SASLSSL, dataType = "string") String kafkaEventData,
+            @KafkaTrigger(name = "KafkaTrigger", topic = "topic", brokerList = "%BrokerList%", consumerGroup = "$Default", username = "ConfluentCloudUsername", password = "ConfluentCloudPassword", authenticationMode = BrokerAuthenticationMode.PLAIN, protocol = BrokerProtocol.SASLSSL, dataType = "string") String kafkaEventData,
             final ExecutionContext context) throws Exception {
         context.getLogger().info(kafkaEventData);
         throw new Exception("Unhandled Error");
