@@ -419,3 +419,19 @@ By default end to end tests will try to connect to Kafka on `localhost:9092`. If
     "LocalBroker": "location-of-your-kafka-broker:9092"
 }
 ```
+
+## Error Handling and Retries
+
+Handling errors in Azure Functions is important to avoid lost data, missed events, and to monitor the health of your application. It's also important to understand the retry behaviors of event-based triggers.
+
+### Retries
+Kafka Extensions supports the Function Level retries, it is evaluated when a **trigger** function raises an **uncaught exception**. As a best practice, you should catch all exceptions in your code and rethrow any errors that you want to result in a retry.
+
+### Retry Strategies
+There are two retry strategies supported by policy that you can configure :-
+ 1. Fixed Delay
+    A specified amount of time is allowed to elapse between each retry.
+
+ 2. Exponential Backoff
+    The first retry waits for the minimum delay. On subsequent retries, time is added exponentially to the initial duration for each retry, until the maximum delay is reached. Exponential back-off adds some small randomization to delays to stagger retries in high-throughput scenarios.
+    
