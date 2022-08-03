@@ -105,7 +105,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         private static object BuildKafkaEventDataForKeyValue(JObject dataObj)
         {
-            KafkaEventData<string, string> messageToSend = new KafkaEventData<string, string>((string)dataObj["Key"], (string)dataObj["Value"]);
+            string value = null;
+            if (dataObj["Value"] != null && dataObj["Value"].Type.ToString().Equals("Object"))
+            {
+                value = Newtonsoft.Json.JsonConvert.SerializeObject(dataObj["Value"]);
+            } else
+            {
+                value = (string)dataObj["Value"];
+            }
+            KafkaEventData<string, string> messageToSend = new KafkaEventData<string, string>((string)dataObj["Key"], value);
             messageToSend.Timestamp = (DateTime)dataObj["Timestamp"];
             messageToSend.Partition = (int)dataObj["Partition"];
             JArray headerList = (JArray)dataObj["Headers"];
