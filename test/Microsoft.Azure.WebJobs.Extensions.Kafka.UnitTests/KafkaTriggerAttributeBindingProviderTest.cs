@@ -93,8 +93,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
         [Theory]
         [InlineData(nameof(ByteArray_Fn), typeof(Null))]
-        [InlineData(nameof(RawByteArray_Fn), typeof(Ignore))]
-        [InlineData(nameof(ByteArrayWithoutKey_Fn), typeof(Ignore))]
+        [InlineData(nameof(RawByteArray_Fn), typeof(string))]
+        [InlineData(nameof(ByteArrayWithoutKey_Fn), typeof(string))]
         public async Task When_No_Type_Is_Set_Should_Create_ByteArray_Listener(string functionName, Type expectedKeyType)
         {
             var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")
@@ -129,8 +129,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
         [Theory]
         [InlineData(nameof(String_Fn), typeof(Null))]
-        [InlineData(nameof(RawString_Fn), typeof(Ignore))]
-        [InlineData(nameof(StringWithoutKey_Fn), typeof(Ignore))]
+        [InlineData(nameof(RawString_Fn), typeof(string))]
+        [InlineData(nameof(StringWithoutKey_Fn), typeof(string))]
         public async Task When_String_Value_Type_Is_Set_Should_Create_String_Listener(string functionName, Type expectedKeyType)
         {
             var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")
@@ -166,8 +166,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
         [Theory]
         [InlineData(nameof(GenericAvro_Fn), typeof(Null))]
-        [InlineData(nameof(GenericAvroWithoutKey_Fn), typeof(Ignore))]
-        [InlineData(nameof(RawGenericAvro_Fn), typeof(Ignore))]
+        [InlineData(nameof(GenericAvroWithoutKey_Fn), typeof(string))]
+        [InlineData(nameof(RawGenericAvro_Fn), typeof(string))]
         public async Task When_Avro_Schema_Is_Provided_Should_Create_GenericRecord_Listener(string functionName, Type expectedKeyType)
         {
             var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")
@@ -203,8 +203,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
         [Theory]
         [InlineData(nameof(SpecificAvro_Fn), typeof(Null))]
-        [InlineData(nameof(RawSpecificAvro_Fn), typeof(Ignore))]
-        [InlineData(nameof(SpecificAvroWithoutKey_Fn), typeof(Ignore))]
+        [InlineData(nameof(RawSpecificAvro_Fn), typeof(string))]
+        [InlineData(nameof(SpecificAvroWithoutKey_Fn), typeof(string))]
         public async Task When_Value_Type_Is_Specific_Record_Should_Create_SpecificRecord_Listener(string functionName, Type expectedKeyType)
         {
             var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")
@@ -240,8 +240,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
         [Theory]
         [InlineData(nameof(Protobuf_Fn), typeof(Null))]
-        [InlineData(nameof(RawProtobuf_Fn), typeof(Ignore))]
-        [InlineData(nameof(ProtobufWithoutKey_Fn), typeof(Ignore))]
+        [InlineData(nameof(RawProtobuf_Fn), typeof(string))]
+        [InlineData(nameof(ProtobufWithoutKey_Fn), typeof(string))]
         public async Task When_Value_Type_Is_Protobuf_Should_Create_Protobuf_Listener(string functionName, Type expectedKeyType)
         {
             var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")
