@@ -39,7 +39,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public IKafkaProducer Create(KafkaProducerEntity entity)
         {
-            AzureFunctionsFileHelper.InitializeLibrdKafka(this.loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("Kafka")));
+            AzureFunctionsFileHelper.InitializeLibrdKafka(this.loggerFactory.CreateLogger(typeof(AzureFunctionsFileHelper)));
 
             // Goal is to create as less producers as possible
             // We can group producers based on following criterias
@@ -74,7 +74,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private IProducer<byte[], byte[]> CreateBaseProducer(ProducerConfig producerConfig)
         {
             var builder = new ProducerBuilder<byte[], byte[]>(producerConfig);
-            ILogger logger = this.loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("Kafka"));
+            ILogger logger = this.loggerFactory.CreateLogger("Kafka");
             builder.SetLogHandler((_, m) =>
             {
                 logger.Log((LogLevel)m.LevelAs(LogLevelType.MicrosoftExtensionsLogging), $"Libkafka: {m?.Message}");
@@ -94,7 +94,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 typeof(KafkaProducer<,>).MakeGenericType(keyType, valueType),
                 producerBaseHandle,
                 valueSerializer,
-                loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("Kafka")));
+                loggerFactory.CreateLogger(typeof(KafkaProducer<,>)));
         }
 
         public ProducerConfig GetProducerConfig(KafkaProducerEntity entity)
