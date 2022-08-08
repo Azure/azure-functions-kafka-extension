@@ -3,15 +3,14 @@
 
 using System.Threading.Tasks;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
+namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common;
+
+// Interface for Management of External Resources required for testing.
+public interface IQueueManager<Request, Response>
 {
-	// Interface for Management of External Resources required for testing.
-	public interface IQueueManager<Request, Response>
-	{
-		Task<Response> ReadAsync(int batchSize, string queueName);
-		Task<Response> WriteAsync(Request messageEntity, string queueName);
-		Task CreateAsync(string queueName);
-		Task DeleteAsync(string queueName);
-		Task ClearAsync(string queueName);
-	}
+	Task<Response> ReadAsync(int batchSize, string queueName);
+	Task<Response> WriteAsync(Request messageEntity, string queueName);
+	Task CreateAsync(string queueName);
+	Task DeleteAsync(string queueName);
+	Task ClearAsync(string queueName);
 }

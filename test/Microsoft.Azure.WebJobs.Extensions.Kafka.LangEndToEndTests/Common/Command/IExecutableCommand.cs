@@ -3,11 +3,10 @@
 
 using System.Threading.Tasks;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
+namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common;
+
+// Interface for all executable commands.
+public interface IExecutableCommand<Type>
 {
-	// Interface for all executable commands.
-	public interface IExecutableCommand<Type>
-	{
-		Task<Type> ExecuteCommandAsync();
-	}
+	Task<Type> ExecuteCommandAsync();
 }

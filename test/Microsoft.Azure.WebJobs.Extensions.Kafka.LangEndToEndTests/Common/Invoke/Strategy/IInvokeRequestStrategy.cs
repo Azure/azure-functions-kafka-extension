@@ -3,11 +3,10 @@
 
 using System.Threading.Tasks;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
+namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common;
+
+// Interface for strategy required to invoke function app
+public interface IInvokeRequestStrategy<Response>
 {
-	// Interface for strategy required to invoke function app
-	public interface IInvokeRequestStrategy<Response>
-	{
-		Task<Response> InvokeRequestAsync();
-	}
+	Task<Response> InvokeRequestAsync();
 }

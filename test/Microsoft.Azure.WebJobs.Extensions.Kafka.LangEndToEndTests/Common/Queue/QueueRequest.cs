@@ -4,29 +4,30 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
+namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common;
+
+// Common class for requests sent different Queue Types(External Resources).
+public class QueueRequest : IEnumerable<string>
 {
-	// Common class for requests sent different Queue Types(External Resources).
-	public class QueueRequest : IEnumerable<string>
+	private readonly List<string> _requestList;
+
+	public QueueRequest()
 	{
-		private readonly List<string> _requestList;
-		public QueueRequest()
-		{
-			_requestList = new List<string>();
-		}
-		public int GetLength()
-		{
-			return _requestList.Count;
-		}
+		_requestList = new List<string>();
+	}
 
-		public IEnumerator<string> GetEnumerator()
-		{
-			return _requestList.GetEnumerator();
-		}
+	public IEnumerator<string> GetEnumerator()
+	{
+		return _requestList.GetEnumerator();
+	}
 
-		IEnumerator IEnumerable.GetEnumerator()
-		{
-			return GetEnumerator();
-		}
+	IEnumerator IEnumerable.GetEnumerator()
+	{
+		return GetEnumerator();
+	}
+
+	public int GetLength()
+	{
+		return _requestList.Count;
 	}
 }

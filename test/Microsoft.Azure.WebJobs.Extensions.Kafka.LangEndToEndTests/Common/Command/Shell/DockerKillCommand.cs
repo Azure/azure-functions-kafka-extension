@@ -4,26 +4,26 @@
 using System;
 using System.Collections.Generic;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
+namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common;
+
+/* Shell Command responsible for kill the running the docker container 
+* containing function app images for particular language.
+*/
+public class DockerKillCommand : ShellCommand
 {
-	/* Shell Command responsible for kill the running the docker container 
-	* containing function app images for particular language.
-	*/
-	public class DockerKillCommand : ShellCommand
+	public DockerKillCommand(BrokerType brokerType, Language language)
 	{
-		public DockerKillCommand(BrokerType brokerType, Language language)
-		{
-			cmd = BuildDockerKillCmd(brokerType, language);
-		}
-		private string BuildDockerKillCmd(BrokerType brokerType, Language language)
-		{
-			//Starting the list with docker rm
-			List<string> cmdList = new List<string>() { Constants.DOCKER_KILL };
+		cmd = BuildDockerKillCmd(brokerType, language);
+	}
 
-			//Adding the image name to kill
-			cmdList.Add(Constants.BrokerLanguageImageMapping[new Tuple<BrokerType, Language>(brokerType, language)]);
+	private string BuildDockerKillCmd(BrokerType brokerType, Language language)
+	{
+		//Starting the list with docker rm
+		var cmdList = new List<string> { Constants.DOCKER_KILL };
 
-			return string.Join(Constants.STRINGLITERAL_SPACE_CHAR, cmdList);
-		}
+		//Adding the image name to kill
+		cmdList.Add(Constants.BrokerLanguageImageMapping[new Tuple<BrokerType, Language>(brokerType, language)]);
+
+		return string.Join(Constants.STRINGLITERAL_SPACE_CHAR, cmdList);
 	}
 }

@@ -4,14 +4,13 @@
 using System.Diagnostics;
 using System.Threading.Tasks;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
+namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common;
+
+// Executor for Shell Commands
+public class ShellCommandExecutor : IExecutor<IExecutableCommand<Process>, Process>
 {
-	// Executor for Shell Commands
-	public class ShellCommandExecutor : IExecutor<IExecutableCommand<Process>, Process>
+	public Task<Process> ExecuteAsync(IExecutableCommand<Process> request)
 	{
-		public Task<Process> ExecuteAsync(IExecutableCommand<Process> request)
-		{
-			return request.ExecuteCommandAsync();
-		}
+		return request.ExecuteCommandAsync();
 	}
 }

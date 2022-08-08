@@ -4,15 +4,13 @@
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
-{
-	// Executor for Http Commands
-	public class HttpCommandExecutor : IExecutor<IExecutableCommand<HttpResponseMessage>, HttpResponseMessage>
-	{
-		public Task<HttpResponseMessage> ExecuteAsync(IExecutableCommand<HttpResponseMessage> request)
-		{
-			return request.ExecuteCommandAsync();
-		}
-	}
+namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common;
 
+// Executor for Http Commands
+public class HttpCommandExecutor : IExecutor<IExecutableCommand<HttpResponseMessage>, HttpResponseMessage>
+{
+	public Task<HttpResponseMessage> ExecuteAsync(IExecutableCommand<HttpResponseMessage> request)
+	{
+		return request.ExecuteCommandAsync();
+	}
 }

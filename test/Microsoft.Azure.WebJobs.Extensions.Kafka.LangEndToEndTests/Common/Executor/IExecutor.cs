@@ -3,11 +3,10 @@
 
 using System.Threading.Tasks;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
+namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common;
+
+// Interface for all Request Executors that return Response async
+public interface IExecutor<Request, Response>
 {
-	// Interface for all Request Executors that return Response async
-	public interface IExecutor<Request, Response>
-	{
-		Task<Response> ExecuteAsync(Request request);
-	}
+	Task<Response> ExecuteAsync(Request request);
 }
