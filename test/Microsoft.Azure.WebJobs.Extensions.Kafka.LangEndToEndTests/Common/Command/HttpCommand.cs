@@ -13,7 +13,7 @@ using Xunit;
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 {
 	// Responsible for creation and execution of commands to handle http request response.
-	public class HttpCommand : IInfraCommand<HttpResponseMessage>
+	public class HttpCommand : IExecutableCommand<HttpResponseMessage>
 	{
 		private readonly HttpRequestEntity _httpRequestEntity;
 		private readonly HttpClient _httpClient;

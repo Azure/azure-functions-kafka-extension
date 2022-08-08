@@ -36,8 +36,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 		}
 		private async Task StartupApplicationAsync(Language language, BrokerType brokerType)
 		{
-			IInfraCommand<Process> command = ShellCommandFactory.CreateShellCommand(ShellCommandType.DOCKER_RUN, brokerType, language);
-			IExecutor<IInfraCommand<Process>, Process> executor = new ShellCommandExecutor();
+			IExecutableCommand<Process> command = ShellCommandFactory.CreateShellCommand(ShellCommandType.DOCKER_RUN, brokerType, language);
+			IExecutor<IExecutableCommand<Process>, Process> executor = new ShellCommandExecutor();
 			ProcessLifecycleManager.GetInstance().AddProcess(await executor.ExecuteAsync(command));
 		}
 
@@ -53,9 +53,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 
 		private async Task ClearStorageQueueAsync(string singleEventStorageQueueName, string multiEventStorageQueueName)
 		{
-			IInfraCommand<QueueResponse> singleCommand = new QueueCommand(QueueType.AzureStorageQueue,
+			IExecutableCommand<QueueResponse> singleCommand = new QueueCommand(QueueType.AzureStorageQueue,
 						QueueOperation.CLEAR, singleEventStorageQueueName);
-			IInfraCommand<QueueResponse> multiCommand = new QueueCommand(QueueType.AzureStorageQueue,
+			IExecutableCommand<QueueResponse> multiCommand = new QueueCommand(QueueType.AzureStorageQueue,
 						QueueOperation.CLEAR, multiEventStorageQueueName);
 
 			await Task.WhenAll(singleCommand.ExecuteCommandAsync(), multiCommand.ExecuteCommandAsync());
@@ -75,9 +75,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 
 		private async Task BuildEventHubAsync(string eventhubNameSingleEvent, string eventhubNameMultiEvent)
 		{
-			IInfraCommand<QueueResponse> singleCommand = new QueueCommand(QueueType.EventHub,
+			IExecutableCommand<QueueResponse> singleCommand = new QueueCommand(QueueType.EventHub,
 						QueueOperation.CREATE, eventhubNameSingleEvent);
-			IInfraCommand<QueueResponse> multiCommand = new QueueCommand(QueueType.EventHub,
+			IExecutableCommand<QueueResponse> multiCommand = new QueueCommand(QueueType.EventHub,
 						QueueOperation.CREATE, eventhubNameMultiEvent);
 
 			await Task.WhenAll(singleCommand.ExecuteCommandAsync(), multiCommand.ExecuteCommandAsync());

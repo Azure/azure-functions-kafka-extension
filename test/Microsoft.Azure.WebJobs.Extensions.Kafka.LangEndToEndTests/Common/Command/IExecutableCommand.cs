@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 {
 	// Interface for all executable commands.
-	public interface IInfraCommand<Type>
+	public interface IExecutableCommand<Type>
 	{
 		Task<Type> ExecuteCommandAsync();
 	}

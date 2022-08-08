@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 {
 	// Representation of commands needed to be run on shell. 
-	public class ShellCommand : IInfraCommand<Process>
+	public class ShellCommand : IExecutableCommand<Process>
 	{
 		private Process process;
 		protected string cmd;

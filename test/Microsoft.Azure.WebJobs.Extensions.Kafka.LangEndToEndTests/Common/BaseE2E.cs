@@ -56,7 +56,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 			var storageQueueName = Utils.BuildStorageQueueName(_brokerType,
 						appType, _language);
 
-			IInfraCommand<QueueResponse> readQueue;
+			IExecutableCommand<QueueResponse> readQueue;
 			if (AppType.BATCH_EVENT == appType)
 			{
 				readQueue = new QueueCommand(QueueType.AzureStorageQueue,

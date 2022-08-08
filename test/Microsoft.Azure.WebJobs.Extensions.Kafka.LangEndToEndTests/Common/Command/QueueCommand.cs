@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 {
 	// Responsible for creation and execution of commands to interact with Queue Type resources(External Resources).
-	public class QueueCommand : IInfraCommand<QueueResponse>
+	public class QueueCommand : IExecutableCommand<QueueResponse>
 	{
 		private readonly QueueType _queueType;
 		private readonly QueueOperation _queueOperation;

@@ -24,8 +24,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 
 		private async Task KillFunctionDockersAsync(Language language, BrokerType brokerType)
 		{
-			IInfraCommand<Process> command = ShellCommandFactory.CreateShellCommand(ShellCommandType.DOCKER_KILL, brokerType, language);
-			IExecutor<IInfraCommand<Process>, Process> executor = new ShellCommandExecutor();
+			IExecutableCommand<Process> command = ShellCommandFactory.CreateShellCommand(ShellCommandType.DOCKER_KILL, brokerType, language);
+			IExecutor<IExecutableCommand<Process>, Process> executor = new ShellCommandExecutor();
 			await executor.ExecuteAsync(command);
 		}
 
@@ -46,9 +46,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 			string eventHubMultiName = Utils.BuildCloudBrokerName(QueueType.EventHub,
 						AppType.BATCH_EVENT, language);
 
-			IInfraCommand<QueueResponse> singleCommand = new QueueCommand(QueueType.EventHub,
+			IExecutableCommand<QueueResponse> singleCommand = new QueueCommand(QueueType.EventHub,
 									QueueOperation.DELETE, eventHubSingleName);
-			IInfraCommand<QueueResponse> multiCommand = new QueueCommand(QueueType.EventHub,
+			IExecutableCommand<QueueResponse> multiCommand = new QueueCommand(QueueType.EventHub,
 						QueueOperation.DELETE, eventHubMultiName);
 
 			await Task.WhenAll(singleCommand.ExecuteCommandAsync(), multiCommand.ExecuteCommandAsync());
