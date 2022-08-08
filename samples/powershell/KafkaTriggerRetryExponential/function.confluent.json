@@ -1,0 +1,24 @@
+{
+    "bindings": [
+      {
+            "type": "kafkaTrigger",
+            "name": "kafkaEvent",
+            "direction": "in",
+            "protocol" : "SASLSSL",
+            "password" : "%ConfluentCloudPassword%",
+            "dataType" : "string",
+            "topic" : "topic",
+            "authenticationMode" : "PLAIN",
+            "consumerGroup" : "$Default",
+            "username" : "%ConfluentCloudUserName%",
+            "brokerList" : "%BrokerList%",
+            "sslCaLocation": "confluent_cloud_cacert.pem"
+        }
+    ],
+    "retry": {
+      "strategy": "exponentialBackoff",
+      "maxRetryCount": 5,
+      "minimumInterval": "00:00:10",
+      "maximumInterval": "00:15:00"
+  }
+}

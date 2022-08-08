@@ -78,13 +78,47 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return new KafkaEventData<T>(item);
         }
 
-        private KafkaEventData<string> BuildKafkaEventData(JObject dataObj)
+        private object BuildKafkaEventData(JObject dataObj)
+        {
+            if (dataObj["Key"] != null)
+            {
+                return BuildKafkaEventDataForKeyValue(dataObj);
+            }
+            else
+            {
+                return BuildKafkaEventDataForValue(dataObj);
+            }
+        }
+
+        private static object BuildKafkaEventDataForValue(JObject dataObj)
         {
             KafkaEventData<string> messageToSend = new KafkaEventData<string>((string)dataObj["Value"]);
             messageToSend.Timestamp = (DateTime)dataObj["Timestamp"];
             messageToSend.Partition = (int)dataObj["Partition"];
             JArray headerList = (JArray)dataObj["Headers"];
-            foreach (JObject header in headerList) {
+            foreach (JObject header in headerList)
+            {
+                messageToSend.Headers.Add((string)header["Key"], Encoding.UTF8.GetBytes((string)header["Value"]));
+            }
+            return messageToSend;
+        }
+
+        private static object BuildKafkaEventDataForKeyValue(JObject dataObj)
+        {
+            string value = null;
+            if (dataObj["Value"] != null && dataObj["Value"].Type.ToString().Equals("Object"))
+            {
+                value = Newtonsoft.Json.JsonConvert.SerializeObject(dataObj["Value"]);
+            } else
+            {
+                value = (string)dataObj["Value"];
+            }
+            KafkaEventData<string, string> messageToSend = new KafkaEventData<string, string>((string)dataObj["Key"], value);
+            messageToSend.Timestamp = (DateTime)dataObj["Timestamp"];
+            messageToSend.Partition = (int)dataObj["Partition"];
+            JArray headerList = (JArray)dataObj["Headers"];
+            foreach (JObject header in headerList)
+            {
                 messageToSend.Headers.Add((string)header["Key"], Encoding.UTF8.GetBytes((string)header["Value"]));
             }
             return messageToSend;
