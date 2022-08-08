@@ -31,10 +31,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 
 		public async Task ClearAsync(string queueName)
 		{
-			QueueClient queueClient = new QueueClient(_connectionString, queueName);
+			bool _clientExists = _queueClientStore.TryGetValue(queueName, out QueueClient queueClient);
+			if (!_clientExists) 
+			{
+				queueClient = new QueueClient(_connectionString, queueName);
+				_queueClientStore.TryAdd(queueName, queueClient);
+			}
+			
 			await queueClient.CreateIfNotExistsAsync();
 			await queueClient.ClearMessagesAsync();
-			_queueClientStore.GetOrAdd(queueName, queueClient);
 			_logger.LogInformation($"Clearing the queue: {queueName}");
 		}
 

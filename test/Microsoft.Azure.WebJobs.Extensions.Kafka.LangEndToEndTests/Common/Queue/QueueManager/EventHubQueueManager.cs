@@ -35,7 +35,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 			_queueClientStore = new ConcurrentDictionary<string, EventHubCollection>();
 		}
 
-
 		public Task ClearAsync(string queueName)
 		{
 			throw new NotImplementedException();
