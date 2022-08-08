@@ -47,7 +47,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 		public static List<string> GenerateRandomMsgs(AppType appType)
 		{
 			var randomStrings = new List<string>();
-			
+
 			int numMsgs = (appType == AppType.SINGLE_EVENT ? Constants.SINGLE_MESSAGE_COUNT : Constants.BATCH_MESSAGE_COUNT);
 			for (int i = 0; i < numMsgs; i++)
 			{

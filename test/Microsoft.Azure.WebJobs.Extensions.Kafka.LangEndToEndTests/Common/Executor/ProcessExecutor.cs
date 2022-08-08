@@ -8,12 +8,9 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 {
-	/* Executes string requests/commands as Processes.
-    */
+	// Executes string requests/commands as Processes.
 	public class ProcessExecutor : IExecutor<string, Process>
 	{
-		public ProcessExecutor() { }
-
 		public async Task<Process> ExecuteAsync(string request)
 		{
 			if (string.IsNullOrEmpty(request))

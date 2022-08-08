@@ -6,8 +6,7 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 {
-	/* Invoke Strategy for http triggered function apps
-    */
+	// Invoke Strategy for http triggered function apps
 	public class InvokeHttpRequestStrategy : IInvokeRequestStrategy<HttpResponseMessage>
 	{
 		private readonly IExecutor<IInfraCommand<HttpResponseMessage>, HttpResponseMessage> _httpCommandExecutor;

@@ -1,15 +1,15 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-using System;
-using System.Collections.Concurrent;
-using System.Threading;
-using System.Threading.Tasks;
 using Azure;
 using Azure.Identity;
 using Azure.ResourceManager;
 using Azure.ResourceManager.EventHubs;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Concurrent;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 {
@@ -19,10 +19,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 		private readonly static int _MAX_RETRY_COUNT = 3;
 		private readonly SemaphoreSlim _semaphore;
 		private readonly DefaultAzureCredential _credential;
-		private static readonly EventHubQueueManager _instance = new ();
+		private static readonly EventHubQueueManager _instance = new();
 		private readonly ConcurrentDictionary<string, EventHubCollection> _queueClientStore;
 		private readonly ILogger _logger = TestLogger.GetTestLogger();
-		
+
 		public static EventHubQueueManager GetInstance()
 		{
 			return _instance;
@@ -53,7 +53,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 			var resourceGroups = subscription.GetResourceGroups();
 			var resourceGroup = (await resourceGroups.GetAsync(Constants.RESOURCE_GROUP)).Value;
 
-			var namespaceCollection = resourceGroup.GetEventHubNamespaces();
+			var namespaceCollection = resourceGroup.GetEventHubsNamespaces();
 			var eventHubNamespace = (await namespaceCollection.GetAsync(eventhubNamespace)).Value;
 			var newEventhubCollection = eventHubNamespace.GetEventHubs();
 

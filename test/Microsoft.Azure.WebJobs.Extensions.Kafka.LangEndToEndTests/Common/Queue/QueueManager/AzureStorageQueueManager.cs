@@ -1,12 +1,12 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-using System;
-using System.Collections.Concurrent;
-using System.Threading.Tasks;
 using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Concurrent;
+using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 {
@@ -14,7 +14,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 	public class AzureStorageQueueManager : IQueueManager<QueueRequest, QueueResponse>
 	{
 		private readonly string _connectionString;
-		private static readonly AzureStorageQueueManager _instance = new ();
+		private static readonly AzureStorageQueueManager _instance = new();
 		private readonly ConcurrentDictionary<string, QueueClient> _queueClientStore;
 		private readonly ILogger _logger = TestLogger.GetTestLogger();
 

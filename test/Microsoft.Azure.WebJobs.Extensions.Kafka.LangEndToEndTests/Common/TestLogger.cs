@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging.Console;
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 {
 	/* Provides a static logger instance for logging throughout the framework.
-	 * This is needed as xunit framework does not support dependency injection directly.
+	* This is needed as xunit framework does not support dependency injection directly.
 	*/
 	static class TestLogger
 	{

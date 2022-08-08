@@ -1,14 +1,14 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
+using Microsoft.Extensions.Logging;
+using Polly;
+using Polly.Retry;
 using System;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Polly;
-using Polly.Retry;
 using Xunit;
-using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 {
@@ -75,8 +75,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 		public sealed class HttpCommandBuilder
 		{
 			private HttpRequestEntity httpRequestEntity;
-
-			public HttpCommandBuilder() { }
 
 			public HttpCommandBuilder SetHttpRequestEntity(HttpRequestEntity httpRequestEntity)
 			{

@@ -1,11 +1,8 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-using Microsoft.AspNetCore.Http;
-using Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 {
@@ -58,7 +55,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 		public const string PYTHON_MULTI_APP_NAME = "MultiHttpTriggerKafkaOutput";
 		public const string PYTHONAPP_WORKER_RUNTIME = "python";
 
-		
+
 		public const string DOTNETAPP_CONFLUENT_PORT = "";
 		public const string DOTNETAPP_EVENTHUB_PORT = "";
 		public const string DOTNETAPP_CONFLUENT_IMAGE = "";

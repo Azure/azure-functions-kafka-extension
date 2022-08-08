@@ -2,19 +2,19 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 
+using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Xunit.Abstractions;
-using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 {
 	/* This class acts as the base class for all the language test case classes.
-     * Takes care of Initial Orchestration and actual flow of the test.
-    */
+	* Takes care of Initial Orchestration and actual flow of the test.
+	*/
 	public class BaseE2E
 	{
 		private readonly KafkaE2EFixture _kafkaE2EFixture;

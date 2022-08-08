@@ -8,9 +8,9 @@ using Xunit;
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 {
 	/* Common fixture for all language test case classes which does -
-     * Azure Infra setup and Func Apps Startup
-     * Stopping Func Apps and Azure Infra cleanup
-    */
+	* Azure Infra setup and Func Apps Startup
+	* Stopping Func Apps and Azure Infra cleanup
+	*/
 	public class KafkaE2EFixture : IAsyncLifetime
 	{
 		private Language _language;
@@ -32,7 +32,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 			}
 
 			//Azure Infra setup and Func Apps Startup
-			TestSuitInitializer testSuitInitializer = new ();
+			TestSuitInitializer testSuitInitializer = new();
 			testSuitInitializer.InitializeTestSuit(_language, _brokerType);
 
 			isInitialized = true;

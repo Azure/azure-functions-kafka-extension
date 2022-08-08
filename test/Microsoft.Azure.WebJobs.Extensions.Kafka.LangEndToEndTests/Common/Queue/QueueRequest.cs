@@ -1,10 +1,8 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 {
@@ -12,10 +10,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 	public class QueueRequest : IEnumerable<string>
 	{
 		private readonly List<string> _requestList;
-		public QueueRequest() { 
+		public QueueRequest()
+		{
 			_requestList = new List<string>();
 		}
-		public int GetLength() { 
+		public int GetLength()
+		{
 			return _requestList.Count;
 		}
 

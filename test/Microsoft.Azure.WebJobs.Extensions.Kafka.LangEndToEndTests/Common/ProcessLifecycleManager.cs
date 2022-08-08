@@ -4,17 +4,15 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 {
 	/* Responsible for keeping a list of all created processes 
-	 * and killing them during cleanup phase 
+	* and killing them during cleanup phase 
 	*/
 	public class ProcessLifecycleManager : IDisposable
 	{
-		private readonly static ProcessLifecycleManager instance = new ();
+		private readonly static ProcessLifecycleManager instance = new();
 		private readonly List<Process> processList;
 		public static ProcessLifecycleManager GetInstance()
 		{

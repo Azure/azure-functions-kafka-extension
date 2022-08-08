@@ -6,14 +6,13 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 {
-    /* Executor for Http Commands
-    */
-    public class HttpCommandExecutor : IExecutor<IInfraCommand<HttpResponseMessage>, HttpResponseMessage>
-    {
-        public Task<HttpResponseMessage> ExecuteAsync(IInfraCommand<HttpResponseMessage> request)
-        {
-            return request.ExecuteCommandAsync();
-        }
-    }
+	// Executor for Http Commands
+	public class HttpCommandExecutor : IExecutor<IInfraCommand<HttpResponseMessage>, HttpResponseMessage>
+	{
+		public Task<HttpResponseMessage> ExecuteAsync(IInfraCommand<HttpResponseMessage> request)
+		{
+			return request.ExecuteCommandAsync();
+		}
+	}
 
 }

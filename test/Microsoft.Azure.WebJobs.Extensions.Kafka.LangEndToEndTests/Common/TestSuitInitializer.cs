@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 {
 	/* Responsible for all initilisation before actual test startup -
-     * Creation of Azure resources - Eventhubs and Storage Queues
-     * Function App startup
-    */
+	* Creation of Azure resources - Eventhubs and Storage Queues
+	* Function App startup
+	*/
 	public class TestSuitInitializer
 	{
 		private readonly ILogger _logger = TestLogger.GetTestLogger();

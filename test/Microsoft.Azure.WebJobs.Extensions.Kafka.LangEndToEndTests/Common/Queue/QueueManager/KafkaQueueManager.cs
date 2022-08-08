@@ -12,7 +12,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 		private readonly static int _MAX_RETRY_COUNT = 3;
 		//private readonly string username;
 		//private readonly string apiKey;
-		private static KafkaQueueManager instance = new ();
+		private static KafkaQueueManager instance = new();
 
 		public KafkaQueueManager GetInstance()
 		{

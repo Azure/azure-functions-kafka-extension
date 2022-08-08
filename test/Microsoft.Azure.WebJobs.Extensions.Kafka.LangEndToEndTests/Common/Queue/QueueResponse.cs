@@ -13,7 +13,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
 		{
 			ResponseList = new List<string>();
 		}
-		public int getLength()
+		public int GetLength()
 		{
 			return ResponseList.Count;
 		}
