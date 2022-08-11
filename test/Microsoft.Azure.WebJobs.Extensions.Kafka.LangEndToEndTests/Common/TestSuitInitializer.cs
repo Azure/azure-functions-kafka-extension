@@ -16,13 +16,13 @@ public class TestSuitInitializer
 {
 	private readonly ILogger _logger = TestLogger.GetTestLogger();
 
-	public void InitializeTestSuit(Language language, BrokerType brokerType)
+	public async Task InitializeTestSuitAsync(Language language, BrokerType brokerType)
 	{
-		CreateAzureResources(language, brokerType);
-		Task.WaitAll(StartupApplicationAsync(language, brokerType));
+		await CreateAzureResourcesAsync(language, brokerType);
+		await StartupApplicationAsync(language, brokerType);
 	}
 
-	private void CreateAzureResources(Language language, BrokerType brokerType)
+	private async Task CreateAzureResourcesAsync(Language language, BrokerType brokerType)
 	{
 		var taskList = new List<Task>();
 
@@ -33,7 +33,7 @@ public class TestSuitInitializer
 
 		taskList.Add(ClearStorageQueueAsync(language, brokerType));
 
-		Task.WaitAll(taskList.ToArray());
+		await Task.WhenAll(taskList);
 	}
 
 	private async Task StartupApplicationAsync(Language language, BrokerType brokerType)

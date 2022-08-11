@@ -11,17 +11,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common;
 * Azure Infra setup and Func Apps Startup
 * Stopping Func Apps and Azure Infra cleanup
 */
-public class KafkaE2EFixture : IAsyncLifetime
+public abstract class KafkaE2EFixture : IAsyncLifetime
 {
 	private readonly ILogger _logger = TestLogger.GetTestLogger();
-	private AppType _appType;
 	private BrokerType _brokerType;
 	private Language _language;
 	protected bool isInitialized;
 
-	public KafkaE2EFixture()
+	public KafkaE2EFixture(BrokerType brokerType, Language language)
 	{
-		_logger.LogInformation($"Kafkae2efixture for {_language} {_appType} {_brokerType}");
+		_logger.LogInformation($"Kafkae2efixture for {_language} {_brokerType}");
+		_brokerType = brokerType;
+		_language = language;
+		isInitialized = false;
 	}
 
 	async Task IAsyncLifetime.DisposeAsync()
@@ -32,14 +34,9 @@ public class KafkaE2EFixture : IAsyncLifetime
 		_logger.LogInformation("DisposeAsync");
 	}
 
-	Task IAsyncLifetime.InitializeAsync()
+	async Task IAsyncLifetime.InitializeAsync()
 	{
 		_logger.LogInformation("InitializeAsync");
-		return Task.CompletedTask;
-	}
-
-	public void OrchestrateInitialization()
-	{
 		if (isInitialized)
 		{
 			return;
@@ -47,23 +44,8 @@ public class KafkaE2EFixture : IAsyncLifetime
 
 		//Azure Infra setup and Func Apps Startup
 		TestSuitInitializer testSuitInitializer = new();
-		testSuitInitializer.InitializeTestSuit(_language, _brokerType);
+		await testSuitInitializer.InitializeTestSuitAsync(_language, _brokerType);
 
 		isInitialized = true;
-	}
-
-	public void SetLanguage(Language language)
-	{
-		_language = language;
-	}
-
-	public void SetAppType(AppType appType)
-	{
-		_appType = appType;
-	}
-
-	public void SetBrokerType(BrokerType brokerType)
-	{
-		_brokerType = brokerType;
 	}
 }

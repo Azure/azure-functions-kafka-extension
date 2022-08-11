@@ -8,15 +8,12 @@ using Xunit.Abstractions;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests;
 
-public class JavaEventhubAppTest : BaseE2E, IClassFixture<KafkaE2EFixture>
+public class JavaEventhubAppTest : BaseE2E, IClassFixture<JavaEventhubE2EFixture>
 {
-	private readonly KafkaE2EFixture _kafkaE2EFixture;
 	private readonly ITestOutputHelper _output;
 
-	public JavaEventhubAppTest(KafkaE2EFixture kafkaE2EFixture, ITestOutputHelper output) : base(kafkaE2EFixture,
-		Language.JAVA, BrokerType.EVENTHUB, output)
+	public JavaEventhubAppTest(ITestOutputHelper output) : base(Language.JAVA, BrokerType.EVENTHUB, output)
 	{
-		_kafkaE2EFixture = kafkaE2EFixture;
 		_output = output;
 	}
 

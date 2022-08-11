@@ -8,15 +8,12 @@ using Xunit.Abstractions;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests;
 
-public class JavaConfluentAppTest : BaseE2E, IClassFixture<KafkaE2EFixture>
+public class JavaConfluentAppTest : BaseE2E, IClassFixture<JavaConfluentE2EFixture>
 {
-	private readonly KafkaE2EFixture _kafkaE2EFixture;
 	private readonly ITestOutputHelper _output;
 
-	public JavaConfluentAppTest(KafkaE2EFixture kafkaE2EFixture, ITestOutputHelper output) : base(kafkaE2EFixture,
-		Language.JAVA, BrokerType.CONFLUENT, output)
+	public JavaConfluentAppTest(ITestOutputHelper output) : base(Language.JAVA, BrokerType.CONFLUENT, output)
 	{
-		_kafkaE2EFixture = kafkaE2EFixture;
 		_output = output;
 	}
 

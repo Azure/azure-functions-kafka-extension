@@ -8,15 +8,12 @@ using Xunit.Abstractions;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests;
 
-public class PythonEventhubAppTest : BaseE2E, IClassFixture<KafkaE2EFixture>
+public class PythonEventhubAppTest : BaseE2E, IClassFixture<PythonEventhubE2EFixture>
 {
-	private readonly KafkaE2EFixture _kafkaE2EFixture;
 	private readonly ITestOutputHelper _output;
 
-	public PythonEventhubAppTest(KafkaE2EFixture kafkaE2EFixture, ITestOutputHelper output) : base(kafkaE2EFixture,
-		Language.PYTHON, BrokerType.EVENTHUB, output)
+	public PythonEventhubAppTest(ITestOutputHelper output) : base(Language.PYTHON, BrokerType.EVENTHUB, output)
 	{
-		_kafkaE2EFixture = kafkaE2EFixture;
 		_output = output;
 	}
 

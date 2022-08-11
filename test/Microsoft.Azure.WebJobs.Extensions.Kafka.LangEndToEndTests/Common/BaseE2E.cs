@@ -19,24 +19,15 @@ public class BaseE2E
 {
 	private readonly BrokerType _brokerType;
 	private readonly E2ETestInvoker _invoker;
-	private readonly KafkaE2EFixture _kafkaE2EFixture;
 	private readonly Language _language;
 	private readonly ILogger _logger = TestLogger.GetTestLogger();
 
-	protected BaseE2E(KafkaE2EFixture kafkaE2EFixture, Language language, BrokerType brokerType,
+	protected BaseE2E(Language language, BrokerType brokerType,
 		ITestOutputHelper output)
 	{
-		_kafkaE2EFixture = kafkaE2EFixture;
-
 		_language = language;
-		_kafkaE2EFixture.SetLanguage(language);
-
 		_brokerType = brokerType;
-		_kafkaE2EFixture.SetBrokerType(brokerType);
-
 		_invoker = new E2ETestInvoker();
-
-		_kafkaE2EFixture.OrchestrateInitialization();
 	}
 
 	public async Task Test(AppType appType, InvokeType invokeType, HttpRequestEntity httpRequestEntity,
