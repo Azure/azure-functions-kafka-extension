@@ -6,49 +6,45 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
+namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common;
+
+// Executes string requests/commands as Processes.
+public class ProcessExecutor : IExecutor<string, Process>
 {
-	/* Executes string requests/commands as Processes.
-    */
-	public class ProcessExecutor : IExecutor<string, Process>
+	public async Task<Process> ExecuteAsync(string request)
 	{
-		public ProcessExecutor() { }
-
-		public async Task<Process> ExecuteAsync(string request)
+		if (string.IsNullOrEmpty(request))
 		{
-			if (string.IsNullOrEmpty(request))
-			{
-				throw new ArgumentNullException(nameof(request));
-			}
-
-			var requestProcess = CreateProcess(request);
-			await Task.Run(() => requestProcess.Start());
-
-			return requestProcess;
+			throw new ArgumentNullException(nameof(request));
 		}
 
-		private Process CreateProcess(string request)
+		var requestProcess = CreateProcess(request);
+		await Task.Run(() => requestProcess.Start());
+
+		return requestProcess;
+	}
+
+	private Process CreateProcess(string request)
+	{
+		var process = new Process();
+
+		if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 		{
-			Process process = new Process();
-
-			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-			{
-				process.StartInfo.ArgumentList.Add("/C");
-				process.StartInfo.FileName = "cmd.exe";
-				process.StartInfo.ArgumentList.Add(request);
-			}
-			else
-			{
-				process.StartInfo.Arguments = $"-c \"{request}\"";
-				process.StartInfo.FileName = "/bin/bash";
-			}
-
-			process.StartInfo.UseShellExecute = false;
-			process.StartInfo.RedirectStandardError = true;
-			process.StartInfo.RedirectStandardOutput = true;
-			process.StartInfo.CreateNoWindow = false;
-
-			return process;
+			process.StartInfo.ArgumentList.Add("/C");
+			process.StartInfo.FileName = "cmd.exe";
+			process.StartInfo.ArgumentList.Add(request);
 		}
+		else
+		{
+			process.StartInfo.Arguments = $"-c \"{request}\"";
+			process.StartInfo.FileName = "/bin/bash";
+		}
+
+		process.StartInfo.UseShellExecute = false;
+		process.StartInfo.RedirectStandardError = true;
+		process.StartInfo.RedirectStandardOutput = true;
+		process.StartInfo.CreateNoWindow = false;
+
+		return process;
 	}
 }

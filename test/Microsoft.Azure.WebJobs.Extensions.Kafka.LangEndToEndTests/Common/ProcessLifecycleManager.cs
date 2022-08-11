@@ -4,39 +4,37 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
+namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common;
+
+/* Responsible for keeping a list of all created processes 
+* and killing them during cleanup phase 
+*/
+public class ProcessLifecycleManager : IDisposable
 {
-	/* Responsible for keeping a list of all created processes 
-	 * and killing them during cleanup phase 
-	*/
-	public class ProcessLifecycleManager : IDisposable
+	private static readonly ProcessLifecycleManager instance = new();
+	private readonly List<Process> processList;
+
+	private ProcessLifecycleManager()
 	{
-		private readonly static ProcessLifecycleManager instance = new ();
-		private readonly List<Process> processList;
-		public static ProcessLifecycleManager GetInstance()
-		{
-			return instance;
-		}
+		processList = new List<Process>();
+	}
 
-		public void Dispose()
+	public void Dispose()
+	{
+		foreach (var process in processList)
 		{
-			foreach (Process process in processList)
-			{
-				process.Kill();
-			}
+			process.Kill();
 		}
+	}
 
-		private ProcessLifecycleManager()
-		{
-			processList = new List<Process>();
-		}
+	public static ProcessLifecycleManager GetInstance()
+	{
+		return instance;
+	}
 
-		public void AddProcess(Process process)
-		{
-			processList.Add(process);
-		}
+	public void AddProcess(Process process)
+	{
+		processList.Add(process);
 	}
 }

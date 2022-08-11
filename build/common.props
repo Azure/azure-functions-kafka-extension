@@ -1,7 +1,7 @@
 <Project>
   <PropertyGroup>
     <!-- Extensions can have independent versions and only increment when released -->
-    <Version>3.4$(VersionSuffix)</Version>
+    <Version>3.5.0$(VersionSuffix)</Version>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Authors>Microsoft</Authors>
     <Company>Microsoft</Company>

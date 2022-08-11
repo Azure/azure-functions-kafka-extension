@@ -4,26 +4,24 @@
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
+namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common;
+
+// Invoke Strategy for http triggered function apps
+public class InvokeHttpRequestStrategy : IInvokeRequestStrategy<HttpResponseMessage>
 {
-	/* Invoke Strategy for http triggered function apps
-    */
-	public class InvokeHttpRequestStrategy : IInvokeRequestStrategy<HttpResponseMessage>
+	private readonly IExecutor<IExecutableCommand<HttpResponseMessage>, HttpResponseMessage> _httpCommandExecutor;
+	private readonly HttpRequestEntity _httpRequestEntity;
+
+	public InvokeHttpRequestStrategy(HttpRequestEntity httpRequestEntity)
 	{
-		private readonly IExecutor<IInfraCommand<HttpResponseMessage>, HttpResponseMessage> _httpCommandExecutor;
-		private readonly HttpRequestEntity _httpRequestEntity;
+		_httpRequestEntity = httpRequestEntity;
+		_httpCommandExecutor = new HttpCommandExecutor();
+	}
 
-		public InvokeHttpRequestStrategy(HttpRequestEntity httpRequestEntity)
-		{
-			_httpRequestEntity = httpRequestEntity;
-			_httpCommandExecutor = new HttpCommandExecutor();
-		}
-
-		public Task<HttpResponseMessage> InvokeRequestAsync()
-		{
-			IInfraCommand<HttpResponseMessage> httpCmd = new HttpCommand.HttpCommandBuilder().
-				SetHttpRequestEntity(_httpRequestEntity).Build();
-			return _httpCommandExecutor.ExecuteAsync(httpCmd);
-		}
+	public Task<HttpResponseMessage> InvokeRequestAsync()
+	{
+		IExecutableCommand<HttpResponseMessage> httpCmd =
+			new HttpCommand.HttpCommandBuilder().SetHttpRequestEntity(_httpRequestEntity).Build();
+		return _httpCommandExecutor.ExecuteAsync(httpCmd);
 	}
 }

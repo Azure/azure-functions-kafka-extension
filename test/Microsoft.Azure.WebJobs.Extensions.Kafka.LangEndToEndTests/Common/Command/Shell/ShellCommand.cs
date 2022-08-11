@@ -4,25 +4,23 @@
 using System.Diagnostics;
 using System.Threading.Tasks;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common
+namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common;
+
+// Representation of commands needed to be run on shell. 
+public class ShellCommand : IExecutableCommand<Process>
 {
-    // Representation of commands needed to be run on shell. 
-    public class ShellCommand: IInfraCommand<Process>
-    {
-        private Process process;
-        protected string cmd;
-        private readonly IExecutor<string, Process> processExecutor = null;
+	private readonly IExecutor<string, Process> processExecutor;
+	protected string cmd;
+	private Process process;
 
-        protected ShellCommand()
-        {
-            processExecutor = new ProcessExecutor();
-        }
+	protected ShellCommand()
+	{
+		processExecutor = new ProcessExecutor();
+	}
 
-        public async Task<Process> ExecuteCommandAsync()
-        {
-            process = await processExecutor.ExecuteAsync(cmd);
-            return process;
-        }
-
-    }
+	public async Task<Process> ExecuteCommandAsync()
+	{
+		process = await processExecutor.ExecuteAsync(cmd);
+		return process;
+	}
 }
