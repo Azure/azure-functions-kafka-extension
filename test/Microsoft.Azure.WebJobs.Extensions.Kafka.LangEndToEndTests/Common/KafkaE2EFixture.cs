@@ -16,14 +16,12 @@ public abstract class KafkaE2EFixture : IAsyncLifetime
 	private readonly ILogger _logger = TestLogger.GetTestLogger();
 	private BrokerType _brokerType;
 	private Language _language;
-	protected bool isInitialized;
 
 	public KafkaE2EFixture(BrokerType brokerType, Language language)
 	{
 		_logger.LogInformation($"Kafkae2efixture for {_language} {_brokerType}");
 		_brokerType = brokerType;
 		_language = language;
-		isInitialized = false;
 	}
 
 	async Task IAsyncLifetime.DisposeAsync()
@@ -37,15 +35,9 @@ public abstract class KafkaE2EFixture : IAsyncLifetime
 	async Task IAsyncLifetime.InitializeAsync()
 	{
 		_logger.LogInformation("InitializeAsync");
-		if (isInitialized)
-		{
-			return;
-		}
-
+		
 		//Azure Infra setup and Func Apps Startup
 		TestSuitInitializer testSuitInitializer = new();
 		await testSuitInitializer.InitializeTestSuitAsync(_language, _brokerType);
-
-		isInitialized = true;
 	}
 }
