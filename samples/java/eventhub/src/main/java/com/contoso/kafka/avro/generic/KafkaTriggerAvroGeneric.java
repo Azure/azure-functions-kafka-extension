@@ -52,7 +52,7 @@ public class KafkaTriggerAvroGeneric {
     }
 
     /**
-     * BindingName attribute will be useful retrieving the metadate passed like Key
+     * BindingName attribute will be useful retrieving the metadata passed like Key
      * in the case of Avro Generic Binding
      */
     @FunctionName("KafkaAvroGenericTriggerKey")
