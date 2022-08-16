@@ -4,6 +4,7 @@ import com.contoso.kafka.entity.Payment;
 import com.microsoft.azure.functions.BrokerAuthenticationMode;
 import com.microsoft.azure.functions.BrokerProtocol;
 import com.microsoft.azure.functions.ExecutionContext;
+import com.microsoft.azure.functions.annotation.BindingName;
 import com.microsoft.azure.functions.annotation.Cardinality;
 import com.microsoft.azure.functions.annotation.FunctionName;
 import com.microsoft.azure.functions.annotation.KafkaTrigger;
@@ -48,5 +49,27 @@ public class KafkaTriggerAvroGeneric {
         for (String paymentStr: paymentArr) {
             context.getLogger().info(paymentStr);
         }
+    }
+
+    /**
+     * BindingName attribute will be useful retrieving the metadata passed like Key
+     * in the case of Avro Generic Binding
+     */
+    @FunctionName("KafkaAvroGenericTriggerKey")
+    public void runAvroKey(
+            @KafkaTrigger(
+                    name = "kafkaAvroGenericKeySingle",
+                    topic = "topic",
+                    brokerList="%BrokerList%",
+                    consumerGroup="$Default",
+                    username = "$ConnectionString",
+                    password = "EventHubConnectionString",
+                    avroSchema = schema,
+                    authenticationMode = BrokerAuthenticationMode.PLAIN,
+                    protocol = BrokerProtocol.SASLSSL) Payment payment,
+            @BindingName("Key") String key,
+            final ExecutionContext context) {
+        context.getLogger().info("Key :: "+ key);
+        context.getLogger().info(payment.toString());
     }
 }
