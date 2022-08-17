@@ -25,6 +25,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly IConfiguration config;
         private readonly INameResolver nameResolver;
         private readonly ILoggerProvider loggerProvider;
+        private ILogger logger;
         private readonly ConcurrentDictionary<string, IProducer<byte[], byte[]>> baseProducers = new ConcurrentDictionary<string, IProducer<byte[], byte[]>>();
 
         public KafkaProducerFactory(
@@ -35,6 +36,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.config = config;
             this.nameResolver = nameResolver;
             this.loggerProvider = loggerProvider;
+        }
+
+        public void SetLogger(ILogger logger)
+        {
+            this.logger = logger;
         }
 
         public IKafkaProducer Create(KafkaProducerEntity entity)
@@ -74,7 +80,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private IProducer<byte[], byte[]> CreateBaseProducer(ProducerConfig producerConfig)
         {
             var builder = new ProducerBuilder<byte[], byte[]>(producerConfig);
-            ILogger logger = this.loggerProvider.CreateLogger("Kafka");
+            ILogger logger = this.loggerProvider.CreateLogger(LogCategories.CreateTriggerCategory("Kafka"));
             builder.SetLogHandler((_, m) =>
             {
                 logger.Log((LogLevel)m.LevelAs(LogLevelType.MicrosoftExtensionsLogging), $"Libkafka: {m?.Message}");
@@ -94,7 +100,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 typeof(KafkaProducer<,>).MakeGenericType(keyType, valueType),
                 producerBaseHandle,
                 valueSerializer,
-                loggerProvider.CreateLogger(LogCategories.CreateTriggerCategory("Kafka")));
+                this.logger);
         }
 
         public ProducerConfig GetProducerConfig(KafkaProducerEntity entity)

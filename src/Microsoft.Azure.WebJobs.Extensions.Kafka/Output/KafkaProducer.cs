@@ -49,8 +49,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     throw new ArgumentException($"Value serializer must implement either IAsyncSerializer or ISerializer. Type {valueSerializer.GetType().Name} does not", nameof(valueSerializer));
                 }
             }
-
+            var watch = System.Diagnostics.Stopwatch.StartNew();
             this.producer = builder.Build();
+            watch.Stop();
+            var elapsedMs = watch.ElapsedMilliseconds;
+
+            this.logger.LogError($"Producer Build Completed Time taken: {elapsedMs} ms");
         }
 
         public async Task ProduceAsync(string topic, object item)
@@ -86,7 +90,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             try
             {
+                var watch = System.Diagnostics.Stopwatch.StartNew();
                 var deliveryResult = await this.producer.ProduceAsync(topicUsed, msg);
+                watch.Stop();
+                var elapsedMs = watch.ElapsedMilliseconds;
+
+                this.logger.LogError($"Message Produced Time taken: {elapsedMs} ms");
 
                 this.logger.LogDebug("Message delivered on {topic} / {partition} / {offset}", deliveryResult.Topic, (int)deliveryResult.Partition, (long)deliveryResult.Offset);                
             }

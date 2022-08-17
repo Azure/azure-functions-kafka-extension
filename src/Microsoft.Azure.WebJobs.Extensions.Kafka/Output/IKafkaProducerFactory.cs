@@ -1,6 +1,7 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
+using Microsoft.Extensions.Logging;
 using System.Threading;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
@@ -11,5 +12,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     public interface IKafkaProducerFactory
     {
         IKafkaProducer Create(KafkaProducerEntity entity);
+        public void SetLogger(ILogger logger);
     }
 }

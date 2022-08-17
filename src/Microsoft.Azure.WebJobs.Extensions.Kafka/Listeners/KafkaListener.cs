@@ -49,6 +49,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         //protected for the unit test
         protected Lazy<KafkaTopicScaler<TKey, TValue>> topicScaler;
 
+        private DateTime start; 
+
         /// <summary>
         /// Gets the value deserializer
         /// </summary>
@@ -78,12 +80,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.functionId = functionId;
             this.consumer = new Lazy<IConsumer<TKey, TValue>>(() => CreateConsumer());
             this.topicScaler = new Lazy<KafkaTopicScaler<TKey, TValue>>(() => CreateTopicScaler());
+            this.start = DateTime.Now;
         }
 
         private IConsumer<TKey, TValue> CreateConsumer()
         {
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+
             AzureFunctionsFileHelper.InitializeLibrdKafka(this.logger);
 
+            this.start = DateTime.Now;
             var builder = this.CreateConsumerBuilder(GetConsumerConfiguration());
 
             builder.SetErrorHandler((_, e) =>
@@ -92,11 +98,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             })
             .SetPartitionsAssignedHandler((_, e) =>
             {
+                var end = DateTime.Now;
+                var diff = end - start;
+                logger.LogInformation($"Time for partition assigned: {diff.ToString()}");
                 logger.LogInformation($"Assigned partitions: [{string.Join(", ", e)}]");
+                start = DateTime.Now;
             })
             .SetPartitionsRevokedHandler((_, e) =>
             {
+                var end = DateTime.Now;
+                var diff = end - start;
+                logger.LogInformation($"Time for revoke partition assigned: {diff.ToString()}");
                 logger.LogInformation($"Revoked partitions: [{string.Join(", ", e)}]");
+                start = DateTime.Now;
             });
 
             if (ValueDeserializer != null)
@@ -109,7 +123,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 logger.Log((LogLevel)m.LevelAs(LogLevelType.MicrosoftExtensionsLogging), $"Libkafka: {m?.Message}");
             });
 
-            return builder.Build();
+            var consumer = builder.Build();
+            watch.Stop();
+            var elapsedMs = watch.ElapsedMilliseconds;
+            this.logger.LogInformation($"Consumer Built Time taken: {elapsedMs} ms");
+
+            return consumer;
         }
 
         private KafkaTopicScaler<TKey, TValue> CreateTopicScaler()
@@ -261,6 +280,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var maxBatchSize = this.options.MaxBatchSize;
             var maxBatchReleaseTime = TimeSpan.FromSeconds(this.options.SubscriberIntervalInSeconds);
             var localConsumer = this.consumer.Value;
+            long timeTakenforSingleMessage = 0;
+            long totalTime = 0;
+            int noOfMessages = 0;
             try
             {
                 var alreadyFlushedInCurrentExecution = false;
@@ -272,13 +294,29 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
                     while (availableTime > TimeSpan.Zero)
                     {
+
                         try
                         {
+                            var watch = System.Diagnostics.Stopwatch.StartNew();
                             var consumeResult = localConsumer.Consume(availableTime);
-
+                            watch.Stop();
+                            totalTime += watch.ElapsedMilliseconds;
+                            var elapsedMs = watch.ElapsedMilliseconds;
+                            timeTakenforSingleMessage += elapsedMs;
+                            //if (elapsedMs != 0)
+                            //{
+                            //    this.logger.LogInformation($"Consume Time taken: {elapsedMs} ms");
+                            //}
                             // If no message was consumed during the available time, returns null
                             if (consumeResult != null)
                             {
+                                noOfMessages++;
+                                if (noOfMessages == 1000)
+                                {
+                                    this.logger.LogInformation($"Total Time Taken: {totalTime} ms");
+                                }
+                                this.logger.LogInformation($"Time taken for this message: {timeTakenforSingleMessage} on partition: {consumeResult.Partition}");
+                                timeTakenforSingleMessage = 0;
                                 if (consumeResult.IsPartitionEOF)
                                 {
                                     this.logger.LogInformation("Reached end of {topic} / {partition} / {offset}", consumeResult.Topic, consumeResult.Partition, consumeResult.Offset);

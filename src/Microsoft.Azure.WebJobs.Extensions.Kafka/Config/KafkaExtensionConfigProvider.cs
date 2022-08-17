@@ -48,6 +48,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.configuration = configuration;
             this.kafkaProducerFactory = kafkaProducerFactory;
             this.logger = loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("Kafka"));
+            this.kafkaProducerFactory.SetLogger(logger);
         }
 
         public void Initialize(ExtensionConfigContext context)
