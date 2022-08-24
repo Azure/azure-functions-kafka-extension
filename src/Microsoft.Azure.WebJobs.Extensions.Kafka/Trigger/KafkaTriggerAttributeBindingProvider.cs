@@ -100,10 +100,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 consumerConfig.SaslPassword = this.config.ResolveSecureSetting(nameResolver, attribute.Password);
                 consumerConfig.SaslUsername = this.config.ResolveSecureSetting(nameResolver, attribute.Username);
-                consumerConfig.SslKeyLocation = this.config.ResolveSecureSetting(nameResolver, attribute.SslKeyLocation);
                 consumerConfig.SslKeyPassword = this.config.ResolveSecureSetting(nameResolver, attribute.SslKeyPassword);
-                consumerConfig.SslCertificateLocation = this.config.ResolveSecureSetting(nameResolver, attribute.SslCertificateLocation);
-                consumerConfig.SslCaLocation = this.config.ResolveSecureSetting(nameResolver, attribute.SslCaLocation);
+
+                var sslKeyLocation = this.config.ResolveSecureSetting(nameResolver, attribute.SslKeyLocation);
+                if (!AzureFunctionsFileHelper.TryGetValidFilePath(sslKeyLocation, out var resolvedSslKeyLocation))
+                {
+                    resolvedSslKeyLocation = sslKeyLocation;
+                }
+
+                var sslCertificateLocation = this.config.ResolveSecureSetting(nameResolver, attribute.SslCertificateLocation);
+                if (!AzureFunctionsFileHelper.TryGetValidFilePath(sslCertificateLocation, out var resolvedSslCertificationLocation))
+                {
+                    resolvedSslCertificationLocation = sslCertificateLocation;
+                }
+
+                var sslCaLocation = this.config.ResolveSecureSetting(nameResolver, attribute.SslCaLocation);
+                if (!AzureFunctionsFileHelper.TryGetValidFilePath(sslCaLocation, out var resolvedSslCaLocation))
+                {
+                    resolvedSslCaLocation = sslCaLocation;
+                }
+                consumerConfig.SslKeyLocation = resolvedSslKeyLocation;
+                consumerConfig.SslCertificateLocation = resolvedSslCertificationLocation;
+                consumerConfig.SslCaLocation = resolvedSslCaLocation;
 
                 if (attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet)
                 {
