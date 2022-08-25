@@ -100,28 +100,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 consumerConfig.SaslPassword = this.config.ResolveSecureSetting(nameResolver, attribute.Password);
                 consumerConfig.SaslUsername = this.config.ResolveSecureSetting(nameResolver, attribute.Username);
+                consumerConfig.SslKeyLocation = GetValidFilePath(attribute.SslKeyLocation);
                 consumerConfig.SslKeyPassword = this.config.ResolveSecureSetting(nameResolver, attribute.SslKeyPassword);
-
-                var sslKeyLocation = this.config.ResolveSecureSetting(nameResolver, attribute.SslKeyLocation);
-                if (!AzureFunctionsFileHelper.TryGetValidFilePath(sslKeyLocation, out var resolvedSslKeyLocation))
-                {
-                    resolvedSslKeyLocation = sslKeyLocation;
-                }
-
-                var sslCertificateLocation = this.config.ResolveSecureSetting(nameResolver, attribute.SslCertificateLocation);
-                if (!AzureFunctionsFileHelper.TryGetValidFilePath(sslCertificateLocation, out var resolvedSslCertificationLocation))
-                {
-                    resolvedSslCertificationLocation = sslCertificateLocation;
-                }
-
-                var sslCaLocation = this.config.ResolveSecureSetting(nameResolver, attribute.SslCaLocation);
-                if (!AzureFunctionsFileHelper.TryGetValidFilePath(sslCaLocation, out var resolvedSslCaLocation))
-                {
-                    resolvedSslCaLocation = sslCaLocation;
-                }
-                consumerConfig.SslKeyLocation = resolvedSslKeyLocation;
-                consumerConfig.SslCertificateLocation = resolvedSslCertificationLocation;
-                consumerConfig.SslCaLocation = resolvedSslCaLocation;
+                consumerConfig.SslCertificateLocation = GetValidFilePath(attribute.SslCertificateLocation);
+                consumerConfig.SslCaLocation = GetValidFilePath(attribute.SslCaLocation);
 
                 if (attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet)
                 {
@@ -135,6 +117,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
 
             return consumerConfig;
+        }
+
+        private string GetValidFilePath(string location)
+        {
+            var resolvedLocation = this.config.ResolveSecureSetting(nameResolver, location);
+            if (!AzureFunctionsFileHelper.TryGetValidFilePath(resolvedLocation, out var validPath))
+            {
+                throw new Exception($"{location} is not a valid file location");
+            }
+            return validPath;
         }
     }
 }
