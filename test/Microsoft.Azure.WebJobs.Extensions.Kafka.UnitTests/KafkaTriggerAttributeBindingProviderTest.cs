@@ -18,17 +18,42 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Xunit;
+using System.Collections.Generic;
+using System.IO;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 {
-    public class KafkaTriggerAttributeBindingProviderTest
+    public class KafkaTriggerAttributeBindingProviderTest : IDisposable
     {
+        private List<FileInfo> createdFiles = new List<FileInfo>();
         private IConfigurationRoot emptyConfiguration;
 
         public KafkaTriggerAttributeBindingProviderTest()
         {
             this.emptyConfiguration = new ConfigurationBuilder()
                 .Build();
+        }
+
+        public void Dispose()
+        {
+            foreach (var fi in this.createdFiles)
+            {
+                if (fi.Exists)
+                {
+                    fi.Delete();
+                }
+            }
+
+            this.createdFiles.Clear();
+        }
+
+        private FileInfo CreateFile(string fileName)
+        {
+            File.WriteAllText(fileName, "dummy contents");
+            var file = new FileInfo(fileName);
+            this.createdFiles.Add(file);
+
+            return file;
         }
 
         static void RawByteArray_Fn([KafkaTrigger("brokers:9092", "myTopic")] byte[] data) { }
