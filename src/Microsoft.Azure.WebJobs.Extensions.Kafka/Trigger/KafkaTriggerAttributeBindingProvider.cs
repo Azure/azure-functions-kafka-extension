@@ -84,7 +84,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return BindingFactory.GetTriggerBinding(new KafkaTriggerBindingStrategy<TKey, TValue>(), parameter, new KafkaEventDataConvertManager(this.converterManager, this.logger), listenerCreator);
         }
 
-        private KafkaListenerConfiguration CreateConsumerConfiguration(KafkaTriggerAttribute attribute)
+        public KafkaListenerConfiguration CreateConsumerConfiguration(KafkaTriggerAttribute attribute)
         {
             var consumerConfig = new KafkaListenerConfiguration()
             {

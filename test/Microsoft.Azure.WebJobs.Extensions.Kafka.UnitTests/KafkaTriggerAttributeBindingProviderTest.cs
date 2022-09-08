@@ -377,9 +377,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 new DefaultNameResolver(config),
                 NullLoggerFactory.Instance);
 
-            MethodInfo consumerConfigMethod = typeof(KafkaTriggerAttributeBindingProvider).GetMethod("CreateConsumerConfiguration", BindingFlags.NonPublic | BindingFlags.Instance);
-
-            KafkaListenerConfiguration result = (KafkaListenerConfiguration)consumerConfigMethod.Invoke(bindingProvider, new object[] { attribute });
+            KafkaListenerConfiguration result = bindingProvider.CreateConsumerConfiguration(attribute);
 
             Assert.Equal("password1", result.SslKeyPassword);
             Assert.Equal(sslCertificate.FullName, result.SslCertificateLocation);
@@ -420,9 +418,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 new DefaultNameResolver(config),
                 NullLoggerFactory.Instance);
 
-            MethodInfo consumerConfigMethod = typeof(KafkaTriggerAttributeBindingProvider).GetMethod("CreateConsumerConfiguration", BindingFlags.NonPublic | BindingFlags.Instance);
-
-            KafkaListenerConfiguration result = (KafkaListenerConfiguration)consumerConfigMethod.Invoke(bindingProvider, new object[] { attribute });
+            KafkaListenerConfiguration result = bindingProvider.CreateConsumerConfiguration(attribute);
 
             Assert.Equal("password1", result.SslKeyPassword);
             Assert.Equal(sslCertificate.FullName, result.SslCertificateLocation);
