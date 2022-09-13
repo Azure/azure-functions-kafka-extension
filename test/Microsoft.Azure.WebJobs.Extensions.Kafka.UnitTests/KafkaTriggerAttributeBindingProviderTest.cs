@@ -18,17 +18,43 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Xunit;
+using System.Collections.Generic;
+using System.IO;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.Helpers;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 {
-    public class KafkaTriggerAttributeBindingProviderTest
+    public class KafkaTriggerAttributeBindingProviderTest : IDisposable
     {
+        private List<FileInfo> createdFiles = new List<FileInfo>();
         private IConfigurationRoot emptyConfiguration;
 
         public KafkaTriggerAttributeBindingProviderTest()
         {
             this.emptyConfiguration = new ConfigurationBuilder()
                 .Build();
+        }
+
+        public void Dispose()
+        {
+            foreach (var fi in this.createdFiles)
+            {
+                if (fi.Exists)
+                {
+                    fi.Delete();
+                }
+            }
+
+            this.createdFiles.Clear();
+        }
+
+        private FileInfo CreateFile(string fileName)
+        {
+            File.WriteAllText(fileName, "dummy contents");
+            var file = new FileInfo(fileName);
+            this.createdFiles.Add(file);
+
+            return file;
         }
 
         static void RawByteArray_Fn([KafkaTrigger("brokers:9092", "myTopic")] byte[] data) { }
@@ -60,7 +86,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         static void ProtobufWithoutKey_Fn([KafkaTrigger("brokers:9092", "myTopic")] KafkaEventData<ProtoUser> protoUser) { }
         static void Protobuf_WithLongKey_Fn([KafkaTrigger("brokers:9092", "myTopic")] KafkaEventData<long, ProtoUser> protoUser) { }
         static void Protobuf_WithStringKey_Fn([KafkaTrigger("brokers:9092", "myTopic")] KafkaEventData<string, ProtoUser> protoUser) { }
-
 
         ParameterInfo GetParameterInfo(string methodName)
         {
@@ -325,6 +350,84 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var genericTypes = listener.GetType().GetGenericArguments();
             Assert.Equal(keyType, genericTypes[0]);
             Assert.Equal(valueType, genericTypes[1]);
+        }
+
+        [Fact]
+        public void GetConsumerConfig_When_Ssl_Locations_Resolve_Should_Contain_Full_Path()
+        {
+            var sslCertificate = this.CreateFile("sslCertificate.pem");
+            var sslCa = this.CreateFile("sslCa.pem");
+            var sslKeyLocation = this.CreateFile("sslKey.pem");
+
+            var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")
+            {
+                Protocol = BrokerProtocol.Ssl,
+                SslKeyPassword = "password1",
+                SslCertificateLocation = sslCertificate.FullName,
+                SslCaLocation = sslCa.FullName,
+                SslKeyLocation = sslKeyLocation.FullName
+            };
+
+            var config = this.emptyConfiguration;
+
+            var bindingProvider = new KafkaTriggerAttributeBindingProvider(
+                config,
+                Options.Create(new KafkaOptions()),
+                new KafkaEventDataConvertManager(NullLogger.Instance),
+                new DefaultNameResolver(config),
+                NullLoggerFactory.Instance);
+
+            MethodInfo consumerConfigMethod = typeof(KafkaTriggerAttributeBindingProvider).GetMethod("CreateConsumerConfiguration", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            KafkaListenerConfiguration result = (KafkaListenerConfiguration)consumerConfigMethod.Invoke(bindingProvider, new object[] { attribute });
+
+            Assert.Equal("password1", result.SslKeyPassword);
+            Assert.Equal(sslCertificate.FullName, result.SslCertificateLocation);
+            Assert.Equal(sslCa.FullName, result.SslCaLocation);
+            Assert.Equal(sslKeyLocation.FullName, result.SslKeyLocation);
+        }
+
+        [Fact]
+        public void GetConsumerConfig_When_Ssl_Locations_Resolve_InAzure_Should_Contain_Full_Path()
+        {
+            AzureEnvironment.SetRunningInAzureEnvVars();
+
+            var currentFolder = Directory.GetCurrentDirectory();
+            var folder1 = Directory.CreateDirectory(Path.Combine(currentFolder, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1));
+            Directory.CreateDirectory(Path.Combine(folder1.FullName, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2));
+
+            AzureEnvironment.SetEnvironmentVariable(AzureFunctionsFileHelper.AzureHomeEnvVarName, currentFolder);
+
+            var sslCertificate = this.CreateFile(Path.Combine(currentFolder, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2, "sslCertificate.pem"));
+            var sslCa = this.CreateFile(Path.Combine(currentFolder, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2, "sslCa.pem"));
+            var sslKeyLocation = this.CreateFile(Path.Combine(currentFolder, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2, "sslKey.pem"));
+
+            var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")
+            {
+                Protocol = BrokerProtocol.Ssl,
+                SslKeyPassword = "password1",
+                SslCertificateLocation = sslCertificate.FullName,
+                SslCaLocation = sslCa.FullName,
+                SslKeyLocation = sslKeyLocation.FullName
+            };
+
+            var config = this.emptyConfiguration;
+
+            var bindingProvider = new KafkaTriggerAttributeBindingProvider(
+                config,
+                Options.Create(new KafkaOptions()),
+                new KafkaEventDataConvertManager(NullLogger.Instance),
+                new DefaultNameResolver(config),
+                NullLoggerFactory.Instance);
+
+            MethodInfo consumerConfigMethod = typeof(KafkaTriggerAttributeBindingProvider).GetMethod("CreateConsumerConfiguration", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            KafkaListenerConfiguration result = (KafkaListenerConfiguration)consumerConfigMethod.Invoke(bindingProvider, new object[] { attribute });
+
+            Assert.Equal("password1", result.SslKeyPassword);
+            Assert.Equal(sslCertificate.FullName, result.SslCertificateLocation);
+            Assert.Equal(sslCa.FullName, result.SslCaLocation);
+            Assert.Equal(sslKeyLocation.FullName, result.SslKeyLocation);
         }
     }
 }
