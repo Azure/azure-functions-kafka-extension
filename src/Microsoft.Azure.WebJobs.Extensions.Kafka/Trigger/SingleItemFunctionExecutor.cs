@@ -3,7 +3,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -19,6 +21,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     /// </summary>
     public class SingleItemFunctionExecutor<TKey, TValue> : FunctionExecutorBase<TKey, TValue>
     {
+        ActivitySource activitySource = new ActivitySource("Microsoft.Azure.WebJobs.Extensions.Kafka");
+
         public SingleItemFunctionExecutor(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, int channelCapacity, int channelFullRetryIntervalInMs, ICommitStrategy<TKey, TValue> commitStrategy, ILogger logger)
             : base(executor, consumer, channelCapacity, channelFullRetryIntervalInMs, commitStrategy, logger)
         {
@@ -61,6 +65,26 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             logger.LogInformation("Exiting reader {processName}", nameof(SingleItemFunctionExecutor<TKey, TValue>));
         }
 
+        private Activity CreateActivity(IKafkaEventData kafkaEventData)
+        {
+            kafkaEventData.Headers.TryGetFirst("traceparent", out byte[] traceParentIdInBytes);
+            var traceParentId = Encoding.ASCII.GetString(traceParentIdInBytes);
+            Activity activity;
+            if (traceParentId != null)
+            {
+                activity = activitySource.StartActivity("Kafka Function Triggered", ActivityKind.Consumer, traceParentId);
+            }
+            else
+            {
+                activity = activitySource.StartActivity("Kafka Function Triggered", ActivityKind.Consumer);
+                if (activity != null)
+                {
+                    kafkaEventData.Headers.Add("traceparent", Encoding.ASCII.GetBytes(activity.Id));
+                }
+            }
+            return activity;
+        }
+
         private async Task ProcessPartitionItemsAsync(int partition, IEnumerable<IKafkaEventData> events, CancellationToken cancellationToken)
         {
             TopicPartition topicPartition = null;
@@ -72,8 +96,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     TriggerValue = triggerInput,
                 };
 
-                await this.ExecuteFunctionAsync(triggerData, cancellationToken);
-
+                using (var activity = CreateActivity(kafkaEventData))
+                {
+                    await this.ExecuteFunctionAsync(triggerData, cancellationToken);
+                }
                 if (topicPartition == null)
                 {
                     topicPartition = new TopicPartition(kafkaEventData.Topic, partition);

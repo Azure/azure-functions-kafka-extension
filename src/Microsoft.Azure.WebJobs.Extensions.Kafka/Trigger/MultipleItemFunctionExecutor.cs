@@ -3,7 +3,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -19,10 +21,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     /// </summary>
     public class MultipleItemFunctionExecutor<TKey, TValue> : FunctionExecutorBase<TKey, TValue>
     {
+        ActivitySource activitySource = new ActivitySource("Microsoft.Azure.WebJobs.Extensions.Kafka");
         public MultipleItemFunctionExecutor(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, int channelCapacity, int channelFullRetryIntervalInMs, ICommitStrategy<TKey, TValue> commitStrategy, ILogger logger) 
             : base(executor, consumer, channelCapacity, channelFullRetryIntervalInMs, commitStrategy, logger)
         {
             logger.LogInformation($"FunctionExecutor Loaded: {nameof(MultipleItemFunctionExecutor<TKey, TValue>)}");
+        }
+
+        private List<ActivityLink> GetLinkedActivities(IKafkaEventData[] kafkaEvents)
+        {
+            var activityLinks = new List<ActivityLink>();
+            foreach (var kafkaEvent in kafkaEvents)
+            {
+                kafkaEvent.Headers.TryGetFirst("traceparent", out byte[] traceParentIdInBytes);
+                var traceParentId = Encoding.ASCII.GetString(traceParentIdInBytes);
+                var traceParentFields = traceParentId.Split('-');
+
+                var linkedContext = new ActivityContext(ActivityTraceId.CreateFromString(traceParentFields[1].AsSpan()),
+                                                          ActivitySpanId.CreateFromString(traceParentFields[2].AsSpan()),
+                                                          ActivityTraceFlags.None);
+                activityLinks.Add(new ActivityLink(linkedContext));
+            }
+            return activityLinks;
         }
 
         protected override async Task ReaderAsync(ChannelReader<IKafkaEventData[]> reader, CancellationToken cancellationToken, ILogger logger)
@@ -40,7 +60,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                             TriggerValue = triggerInput,
                         };
 
-                        var functionResult = await this.ExecuteFunctionAsync(triggerData, cancellationToken);
+                        FunctionResult functionResult;
+                        using (var activity = activitySource.StartActivity("Kafka Function Triggered", ActivityKind.Consumer, default(ActivityContext), new ActivityTagsCollection(), GetLinkedActivities(itemsToExecute)))
+                        {
+                           functionResult = await this.ExecuteFunctionAsync(triggerData, cancellationToken);
+                        }
 
                         var offsetsToCommit = new Dictionary<int, TopicPartitionOffset>();
                         for (var i=itemsToExecute.Length - 1; i >= 0; i--)
