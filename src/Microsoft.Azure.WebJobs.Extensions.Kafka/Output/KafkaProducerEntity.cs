@@ -3,6 +3,8 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -25,17 +27,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         internal async Task SendAndCreateEntityIfNotExistsAsync<T>(T item, Guid functionInstanceId, CancellationToken cancellationToken)
         {
             var kafkaProducer = this.KafkaProducerFactory.Create(this);
+            List<Task> tasks = new List<Task>();
             if (item is ICollection collection)
             {
                 foreach (var collectionItem in collection)
                 {
-                    await kafkaProducer.ProduceAsync(this.Topic, this.GetItemToProduce(collectionItem));
+                    tasks.Add(kafkaProducer.ProduceAsync(this.Topic, this.GetItemToProduce(collectionItem)));
                 }
             }
             else
             {
-                await kafkaProducer.ProduceAsync(this.Topic, this.GetItemToProduce(item));
+                tasks.Add(kafkaProducer.ProduceAsync(this.Topic, this.GetItemToProduce(item)));
             }
+            await Task.WhenAll(tasks);
         }
 
         private object GetItemToProduce<T>(T item)
