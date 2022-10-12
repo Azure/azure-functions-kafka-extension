@@ -121,6 +121,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         private string GetValidFilePath(string location)
         {
+            if (string.IsNullOrWhiteSpace(location))
+            {
+                return null;
+            }
             var resolvedLocation = this.config.ResolveSecureSetting(nameResolver, location);
             if (!AzureFunctionsFileHelper.TryGetValidFilePath(resolvedLocation, out var validPath))
             {

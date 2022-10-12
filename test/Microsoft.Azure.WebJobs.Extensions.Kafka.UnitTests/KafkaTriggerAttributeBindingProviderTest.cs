@@ -429,5 +429,34 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(sslCa.FullName, result.SslCaLocation);
             Assert.Equal(sslKeyLocation.FullName, result.SslKeyLocation);
         }
+
+        [Fact]
+        public void GetConsumerConfig_When_Protocol_is_Not_SSL()
+        {
+            var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")
+            {
+                Protocol = BrokerProtocol.SaslSsl,
+                Username = "myusername",
+                Password = "mypassword",
+            };
+
+            var config = this.emptyConfiguration;
+
+            var bindingProvider = new KafkaTriggerAttributeBindingProvider(
+                config,
+                Options.Create(new KafkaOptions()),
+                new KafkaEventDataConvertManager(NullLogger.Instance),
+                new DefaultNameResolver(config),
+                NullLoggerFactory.Instance);
+
+            MethodInfo consumerConfigMethod = typeof(KafkaTriggerAttributeBindingProvider).GetMethod("CreateConsumerConfiguration", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            KafkaListenerConfiguration result = (KafkaListenerConfiguration)consumerConfigMethod.Invoke(bindingProvider, new object[] { attribute });
+            Assert.Equal(result.SaslUsername, "myusername");
+            Assert.Equal(result.SaslPassword, "mypassword");
+            Assert.Equal(result.SslKeyLocation, null);
+            Assert.Equal(result.SslCaLocation, null);
+            Assert.Equal(result.SslCertificateLocation, null);
+        }
     }
 }
