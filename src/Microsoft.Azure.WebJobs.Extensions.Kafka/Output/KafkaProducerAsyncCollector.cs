@@ -2,6 +2,8 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
@@ -15,6 +17,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     {
         private readonly KafkaProducerEntity entity;
         private readonly Guid functionInstanceId;
+        private List<object> eventList = new List<object>();
 
         public KafkaProducerAsyncCollector(KafkaProducerEntity entity, Guid functionInstanceId)
         {
@@ -46,7 +49,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 messageToSend = new KafkaEventData<T>(item);
             }
 
-            return entity.SendAndCreateEntityIfNotExistsAsync(messageToSend, functionInstanceId, cancellationToken);
+            eventList.Add(messageToSend);
+            return Task.FromResult(item);
         }
 
         private object ConvertToKafkaEventData(T item)
@@ -124,10 +128,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return messageToSend;
         }
 
-        public Task FlushAsync(CancellationToken cancellationToken = default(CancellationToken))
+        public async Task FlushAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            // Batching not supported.
-            return Task.FromResult(0);
+            object[] eventArr = new object[eventList.Count];
+            
+            lock (eventList)
+            {
+                eventArr = eventList.ToArray();
+                eventList.Clear();
+            }
+            List<Task> taskList = new List<Task>();
+            foreach (object obj in eventArr)
+            {
+                taskList.Add(entity.SendAndCreateEntityIfNotExistsAsync(obj, functionInstanceId, cancellationToken));
+            }
+
+            await Task.WhenAll(taskList);
         }
     }
 }
