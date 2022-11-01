@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Confluent.Kafka;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.Diagnostics;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Extensions.Logging;
 
@@ -65,25 +66,26 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             logger.LogInformation("Exiting reader {processName}", nameof(SingleItemFunctionExecutor<TKey, TValue>));
         }
 
-        private Activity CreateActivity(IKafkaEventData kafkaEventData)
-        {
-            kafkaEventData.Headers.TryGetFirst("traceparent", out byte[] traceParentIdInBytes);
-            var traceParentId = Encoding.ASCII.GetString(traceParentIdInBytes);
-            Activity activity;
-            if (traceParentId != null)
-            {
-                activity = activitySource.StartActivity("Kafka Function Triggered", ActivityKind.Consumer, traceParentId);
-            }
-            else
-            {
-                activity = activitySource.StartActivity("Kafka Function Triggered", ActivityKind.Consumer);
-                if (activity != null)
-                {
-                    kafkaEventData.Headers.Add("traceparent", Encoding.ASCII.GetBytes(activity.Id));
-                }
-            }
-            return activity;
-        }
+        //private Activity CreateActivity(IKafkaEventData kafkaEventData)
+        //{
+        //    kafkaEventData.Headers.TryGetFirst("traceparent", out byte[] traceParentIdInBytes);
+        //    var traceParentId = Encoding.ASCII.GetString(traceParentIdInBytes);
+        //    Activity activity;
+        //    if (traceParentId != null)
+        //    {
+        //        activity = activitySource.StartActivity("Kafka Function Triggered", ActivityKind.Consumer, traceParentId);
+        //    }
+        //    else
+        //    {
+        //        activity = activitySource.StartActivity("Kafka Function Triggered", ActivityKind.Consumer);
+        //        if (activity != null)
+        //        {
+        //            // Todo: Decide Whether to Add traceparent while creating new activity -- this logic is not present for eventhubs... 
+        //            kafkaEventData.Headers.Add("traceparent", Encoding.ASCII.GetBytes(activity.Id));
+        //        }
+        //    }
+        //    return activity;
+        //}
 
         private async Task ProcessPartitionItemsAsync(int partition, IEnumerable<IKafkaEventData> events, CancellationToken cancellationToken)
         {
@@ -96,10 +98,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     TriggerValue = triggerInput,
                 };
 
-                using (var activity = CreateActivity(kafkaEventData))
+                //using (var activity = CreateActivity(kafkaEventData))
+                //{
+                //    await this.ExecuteFunctionAsync(triggerData, cancellationToken);
+                //}
+
+                KafkaEventInstrumentation.TryExtractTraceParentId(kafkaEventData, out string traceparent);
+                var activity = ActivityHelper.StartActivityForProcessing(traceparent);
+                FunctionResult functionResult = await this.ExecuteFunctionAsync(triggerData, cancellationToken);
+                if (functionResult.Succeeded)
                 {
-                    await this.ExecuteFunctionAsync(triggerData, cancellationToken);
+                    ActivityHelper.SetActivityStatus(true, null);
                 }
+                else
+                {
+                    ActivityHelper.SetActivityStatus(false, functionResult.Exception);
+                }
+                ActivityHelper.StopCurrentActivity();
+
                 if (topicPartition == null)
                 {
                     topicPartition = new TopicPartition(kafkaEventData.Topic, partition);
