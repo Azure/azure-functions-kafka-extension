@@ -366,16 +366,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             Assert.DoesNotContain(loggerProvider2.GetAllUserLogMessages().Where(p => p.FormattedMessage != null).Select(x => x.FormattedMessage), x => x.Contains(messagePrefixBatch1));
         }
 
-        // /// <summary>
-        // /// Ensures that multiple hosts processing a topic with 10 partition share the content, having the events being processed at least once.
-        // /// 
-        // /// Test flow:
-        // /// 1. In a separated task producer creates 4x80 items. After the first batch is created waits for semaphore.
-        // /// 2. In main task host1 starts processing messages
-        // /// 3. When host1 has at least a message starts hosts2
-        // /// 4. When host2 obtains at least 1 partitions it triggers the semaphore
-        // /// 5. Once the producer tasks is finished (all 240 messages were created), validate that all messages were processed by host1 and host2
-        // /// </summary>
+        /// <summary>
+        /// Ensures that multiple hosts processing a topic with 10 partition share the content, having the events being processed at least once.
+        /// 
+        /// Test flow:
+        /// 1. In a separated task producer creates 4x80 items. After the first batch is created waits for semaphore.
+        /// 2. In main task host1 starts processing messages
+        /// 3. When host1 has at least a message starts hosts2
+        /// 4. When host2 obtains at least 1 partitions it triggers the semaphore
+        /// 5. Once the producer tasks is finished (all 240 messages were created), validate that all messages were processed by host1 and host2
+        /// </summary>
         [Fact]
         public async Task Multiple_Hosts_Process_Events_At_Least_Once()
         {
@@ -403,7 +403,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
                     if (i == 0)
                     {
-                         // wait until host2 has partitions assigned
+                        // wait until host2 has partitions assigned
                         Assert.True(await host2HasPartitionsSemaphore.WaitAsync(TimeSpan.FromSeconds(40)), "Host2 has not been assigned any partition after waiting for 30 seconds");
                     }
 
@@ -460,7 +460,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
                 await TestHelpers.Await(() =>
                 {
-                     // Ensure every message was processed at least once
+                    // Ensure every message was processed at least once
                     var allLogs = new List<string>(host1Log.GetAllLogMessages().Where(messageFilter).Select(x => x.FormattedMessage));
                     allLogs.AddRange(host2Log.GetAllLogMessages().Where(messageFilter).Select(x => x.FormattedMessage));
 
@@ -528,13 +528,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             typeof(SingleItem_RawByteArray_Trigger),
             Constants.StringTopicWithTenPartitionsName)]
         [InlineData(
-             nameof(KafkaOutputFunctions.Produce_AsyncCollector_Raw_SpecificAvro),
-             typeof(MultiItem_Raw_SpecificAvro_Without_Key_Trigger),
-             Constants.MyAvroRecordTopicName)]
+            nameof(KafkaOutputFunctions.Produce_AsyncCollector_Raw_SpecificAvro),
+            typeof(MultiItem_Raw_SpecificAvro_Without_Key_Trigger),
+            Constants.MyAvroRecordTopicName)]
         [InlineData(
-             nameof(KafkaOutputFunctions.Produce_Return_Parameter_Raw_Protobuf_Without_Key),
-             typeof(MultiItem_Raw_Protobuf_Trigger),
-             Constants.MyProtobufTopicName)]
+            nameof(KafkaOutputFunctions.Produce_Return_Parameter_Raw_Protobuf_Without_Key),
+            typeof(MultiItem_Raw_Protobuf_Trigger),
+            Constants.MyProtobufTopicName)]
         public async Task Produce_And_Consume_Without_Key(string producerFunctionName, Type triggerFunctionType, string topicName)
         {
             const int producedMessagesCount = 20;
@@ -563,26 +563,26 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
         [Theory]
         [InlineData(
-             nameof(KafkaOutputFunctions.Produce_AsyncCollector_String_With_Long_Key),
-             typeof(MultiItem_KafkaEventData_String_With_Long_Key_Trigger),
-             Constants.StringTopicWithLongKeyAndTenPartitionsName)]
+            nameof(KafkaOutputFunctions.Produce_AsyncCollector_String_With_Long_Key),
+            typeof(MultiItem_KafkaEventData_String_With_Long_Key_Trigger),
+            Constants.StringTopicWithLongKeyAndTenPartitionsName)]
         [InlineData(
             nameof(KafkaOutputFunctions.Produce_Out_Parameter_KafkaEventData_Array_String_With_String_Key),
             typeof(MultiItem_KafkaEventData_String_With_String_Key_Trigger),
             Constants.StringTopicWithTenPartitionsName)]
         [InlineData(
-             nameof(KafkaOutputFunctions.Produce_AsyncCollector_Avro_With_String_key),
-             typeof(MultiItem_SpecificAvro_With_String_Key_Trigger),
-             Constants.MyAvroRecordTopicName)]
+            nameof(KafkaOutputFunctions.Produce_AsyncCollector_Avro_With_String_key),
+            typeof(MultiItem_SpecificAvro_With_String_Key_Trigger),
+            Constants.MyAvroRecordTopicName)]
         [InlineData(
-             nameof(KafkaOutputFunctions.Produce_AsyncCollector_Avro_With_String_key),
-             typeof(MultiItem_GenericAvro_With_String_Key_Trigger),
-             Constants.MyAvroRecordTopicName)]
+            nameof(KafkaOutputFunctions.Produce_AsyncCollector_Avro_With_String_key),
+            typeof(MultiItem_GenericAvro_With_String_Key_Trigger),
+            Constants.MyAvroRecordTopicName)]
         [InlineData(
-             nameof(KafkaOutputFunctions.Produce_AsyncCollector_Protobuf_With_String_Key),
-             typeof(MultiItem_Protobuf_With_String_Key_Trigger),
-             Constants.MyProtobufTopicName
-             )]
+            nameof(KafkaOutputFunctions.Produce_AsyncCollector_Protobuf_With_String_Key),
+            typeof(MultiItem_Protobuf_With_String_Key_Trigger),
+            Constants.MyProtobufTopicName
+            )]
         [InlineData(
             nameof(KafkaOutputFunctions.Produce_Return_Parameter_KafkaEventData_Array_String_With_String_Key),
             typeof(MultiItem_RawStringArray_Trigger),
