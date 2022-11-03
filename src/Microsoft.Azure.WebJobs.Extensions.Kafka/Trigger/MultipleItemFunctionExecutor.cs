@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Confluent.Kafka;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.Diagnostics;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Extensions.Logging;
 
@@ -28,23 +29,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             logger.LogInformation($"FunctionExecutor Loaded: {nameof(MultipleItemFunctionExecutor<TKey, TValue>)}");
         }
 
-        private List<ActivityLink> GetLinkedActivities(IKafkaEventData[] kafkaEvents)
-        {
-            var activityLinks = new List<ActivityLink>();
-            foreach (var kafkaEvent in kafkaEvents)
-            {
-                kafkaEvent.Headers.TryGetFirst("traceparent", out byte[] traceParentIdInBytes);
-                var traceParentId = Encoding.ASCII.GetString(traceParentIdInBytes);
-                var traceParentFields = traceParentId.Split('-');
-
-                var linkedContext = new ActivityContext(ActivityTraceId.CreateFromString(traceParentFields[1].AsSpan()),
-                                                          ActivitySpanId.CreateFromString(traceParentFields[2].AsSpan()),
-                                                          ActivityTraceFlags.None);
-                activityLinks.Add(new ActivityLink(linkedContext));
-            }
-            return activityLinks;
-        }
-
         protected override async Task ReaderAsync(ChannelReader<IKafkaEventData[]> reader, CancellationToken cancellationToken, ILogger logger)
         {
             while (!cancellationToken.IsCancellationRequested && await reader.WaitToReadAsync(cancellationToken))
@@ -60,11 +44,26 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                             TriggerValue = triggerInput,
                         };
 
-                        FunctionResult functionResult;
-                        using (var activity = activitySource.StartActivity("Kafka Function Triggered", ActivityKind.Consumer, default(ActivityContext), new ActivityTagsCollection(), GetLinkedActivities(itemsToExecute)))
+                        //FunctionResult functionResult;
+                        //using (var activity = activitySource.StartActivity("Kafka Function Triggered", ActivityKind.Consumer, default(ActivityContext), new ActivityTagsCollection(), GetLinkedActivities(itemsToExecute)))
+                        //{
+                        //   functionResult = await this.ExecuteFunctionAsync(triggerData, cancellationToken);
+                        //}
+
+
+                        var links = KafkaEventInstrumentation.CreateLinkedActivities(itemsToExecute);
+                        var activity = ActivityHelper.StartActivityForProcessing(null, null, links);
+                        FunctionResult functionResult = await this.ExecuteFunctionAsync(triggerData, cancellationToken);
+                        if (functionResult.Succeeded)
                         {
-                           functionResult = await this.ExecuteFunctionAsync(triggerData, cancellationToken);
+                            ActivityHelper.SetActivityStatus(true, null);
                         }
+                        else
+                        {
+                            ActivityHelper.SetActivityStatus(false, functionResult.Exception);
+                        }
+                        ActivityHelper.StopCurrentActivity();
+
 
                         var offsetsToCommit = new Dictionary<int, TopicPartitionOffset>();
                         for (var i=itemsToExecute.Length - 1; i >= 0; i--)
