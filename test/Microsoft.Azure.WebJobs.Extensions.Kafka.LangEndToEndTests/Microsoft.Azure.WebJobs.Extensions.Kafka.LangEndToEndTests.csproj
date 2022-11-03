@@ -7,15 +7,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Confluent.Kafka" Version="1.9.0">
     <Compile Remove="FunctionApps\**" />
     <EmbeddedResource Remove="FunctionApps\**" />
     <None Remove="FunctionApps\**" />
     <Compile Remove="server\**" />
     <EmbeddedResource Remove="server\**" />
     <None Remove="server\**" />
-    
   </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Confluent.Kafka" Version="1.9.0">
       <NoWarn>NU1605</NoWarn>
     </PackageReference>
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Http" Version="3.0.12" />
