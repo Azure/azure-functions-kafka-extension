@@ -59,9 +59,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public DateTime Timestamp { get; set; }
         public TValue Value { get; set; }
 
+        public object Key { get; set; }
+
         object IKafkaEventData.Value => this.Value;
 
-        object IKafkaEventData.Key => null;
+        object IKafkaEventData.Key => this.Key;
 
         public IKafkaEventDataHeaders Headers { get; private set; } 
 
@@ -98,7 +100,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 Offset = consumeResult.Offset,
                 Partition = consumeResult.Partition,
                 Timestamp = consumeResult.Timestamp.UtcDateTime,
-                Topic = consumeResult.Topic
+                Topic = consumeResult.Topic,
+                Key = consumeResult.Key
             };
 
             return result;

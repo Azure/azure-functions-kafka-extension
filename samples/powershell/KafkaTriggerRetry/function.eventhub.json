@@ -1,0 +1,22 @@
+{
+    "bindings": [
+      {
+            "type": "kafkaTrigger",
+            "name": "kafkaEvent",
+            "direction": "in",
+            "protocol" : "SASLSSL",
+            "password" : "EventHubConnectionString",
+            "dataType" : "string",
+            "topic" : "topic",
+            "authenticationMode" : "PLAIN",
+            "consumerGroup" : "$Default",
+            "username" : "$ConnectionString",
+            "brokerList" : "%BrokerList%"
+        }
+    ],
+    "retry": {
+      "strategy": "fixedDelay",
+      "maxRetryCount": 3,
+      "delayInterval": "00:00:10"
+    }
+}

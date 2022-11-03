@@ -63,7 +63,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 Attribute = attribute,
             };
 
-            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerProvider.Instance);
+            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerFactory.Instance);
             var producer = factory.Create(entity);
 
             Assert.NotNull(producer);
@@ -85,7 +85,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 ValueType = typeof(string),
             };
 
-            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerProvider.Instance);
+            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerFactory.Instance);
             var producer = factory.Create(entity);
 
             Assert.NotNull(producer);
@@ -109,7 +109,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 AvroSchema = attribute.AvroSchema,
             };
 
-            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerProvider.Instance);
+            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerFactory.Instance);
             var producer = factory.Create(entity);
 
             Assert.NotNull(producer);
@@ -135,7 +135,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 AvroSchema = MyAvroRecord.SchemaText,
             };
 
-            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerProvider.Instance);
+            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerFactory.Instance);
             var producer = factory.Create(entity);
 
             Assert.NotNull(producer);
@@ -158,7 +158,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 ValueType = typeof(ProtoUser),
             };
 
-            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerProvider.Instance);
+            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerFactory.Instance);
             var producer = factory.Create(entity);
 
             Assert.NotNull(producer);
@@ -181,7 +181,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 ValueType = typeof(ProtoUser),
             };
 
-            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerProvider.Instance);
+            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerFactory.Instance);
             var config = factory.GetProducerConfig(entity);
             Assert.Single(config);
             Assert.Equal("brokers:9092", config.BootstrapServers);
@@ -204,7 +204,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 ValueType = typeof(ProtoUser),
             };
 
-            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerProvider.Instance);
+            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerFactory.Instance);
             var config = factory.GetProducerConfig(entity);
             Assert.Equal(5, config.Count());
             Assert.Equal("brokers:9092", config.BootstrapServers);
@@ -232,7 +232,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 ValueType = typeof(ProtoUser),
             };
 
-            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerProvider.Instance);
+            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerFactory.Instance);
             var config = factory.GetProducerConfig(entity);
             Assert.Equal(6, config.Count());
             Assert.Equal("brokers:9092", config.BootstrapServers);
@@ -263,7 +263,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 ValueType = typeof(ProtoUser)
             };
 
-            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerProvider.Instance);
+            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerFactory.Instance);
             var config = factory.GetProducerConfig(entity);
             Assert.Equal(sslCertificate.FullName, config.SslCertificateLocation);
             Assert.Equal(sslCa.FullName, config.SslCaLocation);
@@ -298,7 +298,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 ValueType = typeof(ProtoUser)
             };
 
-            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerProvider.Instance);
+            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerFactory.Instance);
             var config = factory.GetProducerConfig(entity);
             Assert.Equal(sslCertificate.FullName, config.SslCertificateLocation);
             Assert.Equal(sslCa.FullName, config.SslCaLocation);
