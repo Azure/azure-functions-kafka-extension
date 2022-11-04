@@ -709,7 +709,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                 {
                     builder
                     .AddAzureStorage()
-                    .AddKafka();
+                    .AddKafka(kafkaoption =>
+                    {
+                        kafkaoption.SessionTimeoutMs = 10000;
+                    });
                 })
                 .ConfigureAppConfiguration(c =>
                 {
