@@ -5,6 +5,7 @@ using System;
 using System.Reflection;
 using System.Threading.Tasks;
 using Confluent.Kafka;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.Trigger;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Listeners;
@@ -49,12 +50,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             var consumerConfig = CreateConsumerConfiguration(attribute);
 
-            var keyAndValueTypes = SerializationHelper.GetKeyAndValueTypes(attribute.AvroSchema, parameter.ParameterType, typeof(Ignore));
+            var keyAndValueTypes = SerializationHelper.GetKeyAndValueTypes(attribute.AvroSchema, parameter.ParameterType, typeof(string));
             var valueDeserializer = SerializationHelper.ResolveValueDeserializer(keyAndValueTypes.ValueType, keyAndValueTypes.AvroSchema);            
 
             var binding = CreateBindingStrategyFor(keyAndValueTypes.KeyType ?? typeof(Ignore), keyAndValueTypes.ValueType, keyAndValueTypes.RequiresKey, valueDeserializer, parameter, consumerConfig);
-
-            return Task.FromResult<ITriggerBinding>(binding);
+            return Task.FromResult<ITriggerBinding>(new KafkaTriggerBindingWrapper(binding));
         }
 
         ITriggerBinding CreateBindingStrategyFor(Type keyType, Type valueType, bool requiresKey, object valueDeserializer, ParameterInfo parameterInfo, KafkaListenerConfiguration listenerConfiguration)
@@ -100,10 +100,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 consumerConfig.SaslPassword = this.config.ResolveSecureSetting(nameResolver, attribute.Password);
                 consumerConfig.SaslUsername = this.config.ResolveSecureSetting(nameResolver, attribute.Username);
-                consumerConfig.SslKeyLocation = this.config.ResolveSecureSetting(nameResolver, attribute.SslKeyLocation);
+                consumerConfig.SslKeyLocation = GetValidFilePath(attribute.SslKeyLocation);
                 consumerConfig.SslKeyPassword = this.config.ResolveSecureSetting(nameResolver, attribute.SslKeyPassword);
-                consumerConfig.SslCertificateLocation = this.config.ResolveSecureSetting(nameResolver, attribute.SslCertificateLocation);
-                consumerConfig.SslCaLocation = this.config.ResolveSecureSetting(nameResolver, attribute.SslCaLocation);
+                consumerConfig.SslCertificateLocation = GetValidFilePath(attribute.SslCertificateLocation);
+                consumerConfig.SslCaLocation = GetValidFilePath(attribute.SslCaLocation);
 
                 if (attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet)
                 {
@@ -117,6 +117,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
 
             return consumerConfig;
+        }
+
+        private string GetValidFilePath(string location)
+        {
+            if (string.IsNullOrWhiteSpace(location))
+            {
+                return null;
+            }
+            var resolvedLocation = this.config.ResolveSecureSetting(nameResolver, location);
+            if (!AzureFunctionsFileHelper.TryGetValidFilePath(resolvedLocation, out var validPath))
+            {
+                throw new Exception($"{location} is not a valid file location");
+            }
+            return validPath;
         }
     }
 }
