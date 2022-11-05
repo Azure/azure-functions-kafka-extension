@@ -38,7 +38,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public Task SetValueAsync(object value, CancellationToken cancellationToken)
         {
-            return ((KafkaProducerAsyncCollector<string>)this.value).FlushAsync();
+            object retVal = (this.value.GetType().GetMethod("FlushAsync")).Invoke(this.value, new object[] { System.Reflection.Missing.Value });
+            return Task.FromResult(retVal);
         }
 
         public string ToInvokeString()
