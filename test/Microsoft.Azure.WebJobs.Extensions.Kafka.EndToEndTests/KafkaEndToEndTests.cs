@@ -404,7 +404,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                     if (i == 0)
                     {
                         // wait until host2 has partitions assigned
-                        Assert.True(await host2HasPartitionsSemaphore.WaitAsync(TimeSpan.FromSeconds(30)), "Host2 has not been assigned any partition after waiting for 30 seconds");
+                        Assert.True(await host2HasPartitionsSemaphore.WaitAsync(TimeSpan.FromSeconds(50)), "Host2 has not been assigned any partition after waiting for 30 seconds");
                     }
 
                     await Task.Delay(100);
@@ -709,7 +709,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                 {
                     builder
                     .AddAzureStorage()
-                    .AddKafka();
+                    .AddKafka(kafkaoption =>
+                    {
+                        kafkaoption.SessionTimeoutMs = 10000;
+                    });
                 })
                 .ConfigureAppConfiguration(c =>
                 {
