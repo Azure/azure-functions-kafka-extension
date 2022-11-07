@@ -139,5 +139,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// ssl.key.password in librdkafka
         /// </summary>
         public string SslKeyPassword { get; set; }
+
+        /// <summary>
+        /// Specifies whether to enable notification of delivery reports. Typically you should
+        /// set this parameter to true. Set it to false for "fire and forget" semantics and
+        /// a small boost in performance. default: true importance: low
+        /// </summary>
+        public bool EnableDeliveryReports { get; set; } = true;
     }
 }
