@@ -77,10 +77,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public int RequestTimeoutMs { get; set; } = 5_000;
 
         /// <summary>
-        /// How many times to retry sending a failing Message. **Note:** default: 2 
+        /// How many times to retry sending a failing Message. **Note:** default: 2147483647
         /// </summary>
         /// <remarks>Retrying may cause reordering unless <c>EnableIdempotence</c> is set to <c>true</c>.</remarks>
-        public int MaxRetries { get; set; } = 2;
+        public int MaxRetries { get; set; } = int.MaxValue;
 
         /// <summary>
         /// SASL mechanism to use for authentication. 

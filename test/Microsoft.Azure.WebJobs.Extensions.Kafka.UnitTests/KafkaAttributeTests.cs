@@ -21,7 +21,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(10_000, attribute.BatchSize);
             Assert.Equal(false, attribute.EnableIdempotence);
             Assert.Equal(1_000_000, attribute.MaxMessageBytes);
-            Assert.Equal(2, attribute.MaxRetries);
+            Assert.Equal(int.MaxValue, attribute.MaxRetries);
             Assert.Equal(300_000, attribute.MessageTimeoutMs);
             Assert.Equal(5_000, attribute.RequestTimeoutMs);
         }
