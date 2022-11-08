@@ -29,6 +29,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             logger.LogInformation($"FunctionExecutor Loaded: {nameof(MultipleItemFunctionExecutor<TKey, TValue>)}");
         }
 
+        private List<ActivityLink> CreateLinkedActivities(IKafkaEventData[] kafkaEvents)
+        {
+            var activityLinks = new List<ActivityLink>();
+            foreach (var kafkaEvent in kafkaEvents)
+            {
+                KafkaEventInstrumentation.TryExtractTraceParentId(kafkaEvent, out var traceParentId);
+                var link = ActivityHelper.CreateActivityLink(traceParentId);
+                activityLinks.Add(link);
+            }
+            return activityLinks;
+        }
+
         protected override async Task ReaderAsync(ChannelReader<IKafkaEventData[]> reader, CancellationToken cancellationToken, ILogger logger)
         {
             while (!cancellationToken.IsCancellationRequested && await reader.WaitToReadAsync(cancellationToken))
@@ -51,7 +63,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                         //}
 
 
-                        var links = KafkaEventInstrumentation.CreateLinkedActivities(itemsToExecute);
+                        var links = this.CreateLinkedActivities(itemsToExecute);
                         var activity = ActivityHelper.StartActivityForProcessing(null, null, links);
                         FunctionResult functionResult = await this.ExecuteFunctionAsync(triggerData, cancellationToken);
                         if (functionResult.Succeeded)

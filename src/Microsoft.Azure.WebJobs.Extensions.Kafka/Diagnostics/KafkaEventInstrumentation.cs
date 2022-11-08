@@ -24,18 +24,5 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.Diagnostics
             }
             return false;
         }
-
-        public static List<ActivityLink> CreateLinkedActivities(IKafkaEventData[] kafkaEvents)
-        {
-            var activityLinks = new List<ActivityLink>();
-            foreach (var kafkaEvent in kafkaEvents)
-            {
-                kafkaEvent.Headers.TryGetFirst("traceparent", out byte[] traceParentIdInBytes);
-                var traceParentId = Encoding.ASCII.GetString(traceParentIdInBytes);
-                var link = ActivityHelper.CreateActivityLink(traceParentId);
-                activityLinks.Add(link);
-            }
-            return activityLinks;
-        }
     }
 }
