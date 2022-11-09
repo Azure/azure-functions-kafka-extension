@@ -13,6 +13,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             Key = key ?? throw new ArgumentNullException(nameof(key));
             Value = value;
+            Console.WriteLine("Test");
         }
 
         public string Key { get; }
