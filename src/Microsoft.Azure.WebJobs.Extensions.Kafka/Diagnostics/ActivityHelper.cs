@@ -40,17 +40,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.Diagnostics
 
         public static void StopCurrentActivity()
         {
-            Activity.Current?.Stop();
+            var activity = Activity.Current;
+            if (activity != null)
+            {
+                activity.Stop();
+            }
         }
 
         public static ActivityLink CreateActivityLink(string traceParentId)
         {
             var traceParentFields = traceParentId.Split('-');
+            if (traceParentFields.Length != 4 )
+            {
+                //ERROR: Invalid traceparent Header
+            }
 
-            var linkedContext = new ActivityContext(ActivityTraceId.CreateFromString(traceParentFields[1].AsSpan()),
-                                                      ActivitySpanId.CreateFromString(traceParentFields[2].AsSpan()),
-                                                      ActivityTraceFlags.None);
-            ActivityLink activityLink = new ActivityLink(linkedContext);
+            var traceId = ActivityTraceId.CreateFromString(traceParentFields[1].AsSpan());
+            var spanId = ActivitySpanId.CreateFromString(traceParentFields[2].AsSpan());
+            var linkedContext = new ActivityContext(traceId, spanId, ActivityTraceFlags.None);
+            ActivityLink activityLink = new (linkedContext);
             return activityLink;
         }
     }
