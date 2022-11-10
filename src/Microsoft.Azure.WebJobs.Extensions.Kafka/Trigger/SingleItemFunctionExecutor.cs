@@ -22,7 +22,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     /// </summary>
     public class SingleItemFunctionExecutor<TKey, TValue> : FunctionExecutorBase<TKey, TValue>
     {
-        ActivitySource activitySource = new ActivitySource("Microsoft.Azure.WebJobs.Extensions.Kafka");
 
         public SingleItemFunctionExecutor(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, int channelCapacity, int channelFullRetryIntervalInMs, ICommitStrategy<TKey, TValue> commitStrategy, ILogger logger)
             : base(executor, consumer, channelCapacity, channelFullRetryIntervalInMs, commitStrategy, logger)
@@ -66,26 +65,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             logger.LogInformation("Exiting reader {processName}", nameof(SingleItemFunctionExecutor<TKey, TValue>));
         }
 
-        //private Activity CreateActivity(IKafkaEventData kafkaEventData)
-        //{
-        //    kafkaEventData.Headers.TryGetFirst("traceparent", out byte[] traceParentIdInBytes);
-        //    var traceParentId = Encoding.ASCII.GetString(traceParentIdInBytes);
-        //    Activity activity;
-        //    if (traceParentId != null)
-        //    {
-        //        activity = activitySource.StartActivity("Kafka Function Triggered", ActivityKind.Consumer, traceParentId);
-        //    }
-        //    else
-        //    {
-        //        activity = activitySource.StartActivity("Kafka Function Triggered", ActivityKind.Consumer);
-        //        if (activity != null)
-        //        {
-        //            // Todo: Decide Whether to Add traceparent while creating new activity -- this logic is not present for eventhubs... 
-        //            kafkaEventData.Headers.Add("traceparent", Encoding.ASCII.GetBytes(activity.Id));
-        //        }
-        //    }
-        //    return activity;
-        //}
 
         private async Task ProcessPartitionItemsAsync(int partition, IEnumerable<IKafkaEventData> events, CancellationToken cancellationToken)
         {
@@ -97,11 +76,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 {
                     TriggerValue = triggerInput,
                 };
-
-                //using (var activity = CreateActivity(kafkaEventData))
-                //{
-                //    await this.ExecuteFunctionAsync(triggerData, cancellationToken);
-                //}
 
                 KafkaEventInstrumentation.TryExtractTraceParentId(kafkaEventData, out string traceparent);
                 var activity = ActivityHelper.StartActivityForProcessing(traceparent);
