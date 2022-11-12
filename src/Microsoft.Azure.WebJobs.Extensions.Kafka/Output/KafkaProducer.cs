@@ -104,6 +104,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public void Dispose()
         {
+            this.producer?.Flush();
             this.producer?.Dispose();
             this.producer = null;
             GC.SuppressFinalize(this);
