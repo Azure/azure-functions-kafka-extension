@@ -61,5 +61,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.Diagnostics
             ActivityLink activityLink = new (linkedContext);
             return activityLink;
         }
+
+        public static void AddActivityTagsForProcessing(string kafkaTopicName, string kafkaConsumerGroup, string kafkaClientId, string kafkaPartition, string kafkaMessageKey)
+        {
+            var activity = Activity.Current;
+            if (activity != null)
+            {
+                activity.AddTag(ActivityTags.System, "kafka");
+                activity.AddTag(ActivityTags.DestinationName, kafkaTopicName);
+                activity.AddTag(ActivityTags.DestinationKind, "topic");
+                activity.AddTag(ActivityTags.Operation, "process");
+                activity.AddTag(ActivityTags.KafkaConsumerGroup, kafkaConsumerGroup);
+                activity.AddTag(ActivityTags.KafkaClientId, kafkaClientId);
+                activity.AddTag(ActivityTags.KafkaPartition, kafkaPartition);
+                activity.AddTag(ActivityTags.KafkaMessageKey, kafkaMessageKey);
+            }
+        }
     }
 }

@@ -22,10 +22,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     /// </summary>
     public class SingleItemFunctionExecutor<TKey, TValue> : FunctionExecutorBase<TKey, TValue>
     {
+        private readonly string consumerGroup;
 
-        public SingleItemFunctionExecutor(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, int channelCapacity, int channelFullRetryIntervalInMs, ICommitStrategy<TKey, TValue> commitStrategy, ILogger logger)
+        public SingleItemFunctionExecutor(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, string consumerGroup, int channelCapacity, int channelFullRetryIntervalInMs, ICommitStrategy<TKey, TValue> commitStrategy, ILogger logger)
             : base(executor, consumer, channelCapacity, channelFullRetryIntervalInMs, commitStrategy, logger)
         {
+            this.consumerGroup = consumerGroup;
             logger.LogInformation($"FunctionExecutor Loaded: {nameof(SingleItemFunctionExecutor<TKey, TValue>)}");
         }
 
@@ -79,6 +81,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
                 KafkaEventInstrumentation.TryExtractTraceParentId(kafkaEventData, out string traceparent);
                 var activity = ActivityHelper.StartActivityForProcessing(traceparent);
+                ActivityHelper.AddActivityTagsForProcessing(kafkaEventData.Topic, consumerGroup, null, kafkaEventData.Partition.ToString(), kafkaEventData.Key.ToString());
                 FunctionResult functionResult = await this.ExecuteFunctionAsync(triggerData, cancellationToken);
                 if (functionResult.Succeeded)
                 {

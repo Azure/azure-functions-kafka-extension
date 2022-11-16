@@ -22,9 +22,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     /// </summary>
     public class MultipleItemFunctionExecutor<TKey, TValue> : FunctionExecutorBase<TKey, TValue>
     {
-        public MultipleItemFunctionExecutor(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, int channelCapacity, int channelFullRetryIntervalInMs, ICommitStrategy<TKey, TValue> commitStrategy, ILogger logger) 
+        private readonly string consumerGroup;
+
+        public MultipleItemFunctionExecutor(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer,  string consumerGroup, int channelCapacity, int channelFullRetryIntervalInMs, ICommitStrategy<TKey, TValue> commitStrategy, ILogger logger) 
             : base(executor, consumer, channelCapacity, channelFullRetryIntervalInMs, commitStrategy, logger)
         {
+            this.consumerGroup = consumerGroup;
             logger.LogInformation($"FunctionExecutor Loaded: {nameof(MultipleItemFunctionExecutor<TKey, TValue>)}");
         }
 
@@ -57,6 +60,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
                         var links = this.CreateLinkedActivities(itemsToExecute);
                         var activity = ActivityHelper.StartActivityForProcessing(null, null, links);
+                        ActivityHelper.AddActivityTagsForProcessing(itemsToExecute[0].Topic, consumerGroup, null, null, null);
                         FunctionResult functionResult = await this.ExecuteFunctionAsync(triggerData, cancellationToken);
                         if (functionResult.Succeeded)
                         {
