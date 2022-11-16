@@ -64,7 +64,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// <summary>
         /// When set to `true`, the producer will ensure that messages are successfully produced exactly once and in the original produce order. default: false
         /// </summary>
-        public bool? EnableIdempotence { get; set; }
+        public bool EnableIdempotence { get; set; } = false;
 
         /// <summary>
         /// Local message timeout. This value is only enforced locally and limits the time a produced message waits for successful delivery. A time of 0 is infinite. This is the maximum time used to deliver a message (including retries). Delivery error occurs when either the retry count or the message timeout are exceeded. default: 300000
@@ -139,5 +139,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// ssl.key.password in librdkafka
         /// </summary>
         public string SslKeyPassword { get; set; }
+
+        /// <summary>
+        /// Producer will producer based on Events order type
+        /// Allowed Values are SEQUENTIAL, KEY, NONE
+        /// SEQUENTIAL will always write events in order for all events i.e. FIFO, but it will hit the performance
+        /// KEY will always write events in any order but follow SEQUENTIAL per key basis
+        /// None will always write events in any order 
+        /// Default is SEQUENTIAL
+        /// Note : For best performance we recommend None
+        /// </summary>
+        public EventsOrderType OrderType { get; set; } = EventsOrderType.SEQUENTIAL;
     }
 }
