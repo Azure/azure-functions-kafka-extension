@@ -30,13 +30,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             var kafkaProducer = this.KafkaProducerFactory.Create(this);
 
-            if (!(item is ICollection))
+            if (item is ICollection)
             {
-                kafkaProducer.Produce(this.Topic, this.GetItemToProduce(item));
-                kafkaProducer.Flush();
+                ProduceEvents((ICollection)item, kafkaProducer);
                 return Task.CompletedTask;
             }
-            ProduceEvents((ICollection)item, kafkaProducer);
+            //await kafkaProducer.ProduceAsync(this.Topic, this.GetItemToProduce(item));
+            kafkaProducer.Produce(this.Topic, this.GetItemToProduce(item));
+            kafkaProducer.Flush();
             return Task.CompletedTask;
         }
 
