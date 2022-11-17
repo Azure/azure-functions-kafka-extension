@@ -72,7 +72,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 }
 
                 var schemaRegistry = new LocalSchemaRegistry(specifiedAvroSchema);
-                return Activator.CreateInstance(typeof(AvroSerializer<>).MakeGenericType(valueType), schemaRegistry, null /* config */);
+                var serializer = Activator.CreateInstance(typeof(AvroSerializer<>).MakeGenericType(valueType), schemaRegistry, null /* config */);
+                serializer = typeof(SyncOverAsyncSerializerExtensionMethods).GetMethod("AsSyncOverAsync").MakeGenericMethod(valueType).Invoke(null, new object[] { serializer });
+                //SyncOverAsyncSerializerExtensionMethods.AsSyncOverAsync(serializer);
+                //typeof(serializer).GetMethods(BindingFlags.Static | BindingFlags.Public).Where(mi => mi.Name.Equals("AsSyncOverAsync"));
+                /*//((AvroSerializer<string>) serializer).As
+                var t = (serializer as IAsyncSerializer<>);
+                t.AsSyncOverAsync()*/
+                return serializer;
             }
 
             return null;
