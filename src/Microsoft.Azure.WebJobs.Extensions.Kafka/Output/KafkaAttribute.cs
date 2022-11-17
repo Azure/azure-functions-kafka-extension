@@ -139,16 +139,5 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// ssl.key.password in librdkafka
         /// </summary>
         public string SslKeyPassword { get; set; }
-
-        /// <summary>
-        /// Producer will producer based on Events order type
-        /// Allowed Values are SEQUENTIAL, KEY, NONE
-        /// SEQUENTIAL will always write events in order for all events i.e. FIFO, but it will hit the performance
-        /// KEY will always write events in any order but follow SEQUENTIAL per key basis
-        /// None will always write events in any order 
-        /// Default is SEQUENTIAL
-        /// Note : For best performance we recommend None
-        /// </summary>
-        public EventsOrderType OrderType { get; set; } = EventsOrderType.SEQUENTIAL;
     }
 }
