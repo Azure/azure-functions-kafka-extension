@@ -64,7 +64,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// <summary>
         /// When set to `true`, the producer will ensure that messages are successfully produced exactly once and in the original produce order. default: false
         /// </summary>
-        public bool EnableIdempotence { get; set; } = false;
+        public bool? EnableIdempotence { get; set; }
 
         /// <summary>
         /// Local message timeout. This value is only enforced locally and limits the time a produced message waits for successful delivery. A time of 0 is infinite. This is the maximum time used to deliver a message (including retries). Delivery error occurs when either the retry count or the message timeout are exceeded. default: 300000
