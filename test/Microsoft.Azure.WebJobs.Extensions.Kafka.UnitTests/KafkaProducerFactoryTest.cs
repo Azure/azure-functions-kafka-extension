@@ -9,6 +9,7 @@ using System.Reflection;
 
 using Avro.Generic;
 using Confluent.Kafka;
+using Confluent.Kafka.SyncOverAsync;
 using Confluent.SchemaRegistry.Serdes;
 
 using Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.Helpers;
@@ -116,7 +117,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.IsType<KafkaProducer<Null, GenericRecord>>(producer);
             var typedProducer = (KafkaProducer<Null, GenericRecord>)producer;
             Assert.NotNull(typedProducer.ValueSerializer);
-            Assert.IsType<AvroSerializer<GenericRecord>>(typedProducer.ValueSerializer);
+            //Assert.IsType<AvroSerializer<GenericRecord>>(typedProducer.ValueSerializer);
+            Assert.IsType<SyncOverAsyncSerializer<GenericRecord>>(typedProducer.ValueSerializer);
         }
 
 
@@ -142,7 +144,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.IsType<KafkaProducer<Null, MyAvroRecord>>(producer);
             var typedProducer = (KafkaProducer<Null, MyAvroRecord>)producer;
             Assert.NotNull(typedProducer.ValueSerializer);
-            Assert.IsType<AvroSerializer<MyAvroRecord>>(typedProducer.ValueSerializer);
+            Assert.IsType<SyncOverAsyncSerializer<MyAvroRecord>>(typedProducer.ValueSerializer);
         }
 
         [Fact]
