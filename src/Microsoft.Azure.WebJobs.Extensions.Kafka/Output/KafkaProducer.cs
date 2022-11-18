@@ -89,7 +89,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 logger.LogInformation("in Produce method");
                 this.producer.Produce(topicUsed, msg, 
-                    deliveryResult => this.logger.LogDebug("Message delivered on {topic} / {partition} / {offset}", deliveryResult.Topic, (int)deliveryResult.Partition, (long)deliveryResult.Offset));
+                    deliveryResult => {
+                        if (deliveryResult.Error.Code != ErrorCode.NoError)
+                        {
+                            this.logger.LogError("msg failed to deliver on topic :: ", topicUsed + " error :: " + deliveryResult.Error.ToString());
+                            return;
+                        }
+                        this.logger.LogDebug("Message delivered on {topic} / {partition} / {offset}", deliveryResult.Topic, (int)deliveryResult.Partition, (long)deliveryResult.Offset);
+                    });
             }
             catch (ProduceException<TKey, TValue> produceException)
             {

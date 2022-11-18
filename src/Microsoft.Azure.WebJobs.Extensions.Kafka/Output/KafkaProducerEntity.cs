@@ -37,7 +37,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
             //await kafkaProducer.ProduceAsync(this.Topic, this.GetItemToProduce(item));
             kafkaProducer.Produce(this.Topic, this.GetItemToProduce(item));
-            kafkaProducer.Flush();
             return Task.CompletedTask;
         }
 
@@ -47,7 +46,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 kafkaProducer.Produce(this.Topic, this.GetItemToProduce(collectionItem));
             }
-            kafkaProducer.Flush();
         }
 
         private object GetItemToProduce<T>(T item)
