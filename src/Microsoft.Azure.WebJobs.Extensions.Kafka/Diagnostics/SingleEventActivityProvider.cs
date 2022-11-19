@@ -16,6 +16,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.Diagnostics
         public SingleEventActivityProvider(IKafkaEventData kafkaEvent, string consumerGroup) : base(kafkaEvent.Topic, consumerGroup)
         {
             this.kafkaEvent = kafkaEvent;
+            this.CreateAndStartActivity();
         }
 
         public void CreateAndStartActivity()
@@ -32,7 +33,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.Diagnostics
         private new void AddActivityTags()
         {
             base.AddActivityTags();
-            this.Activity?.AddTag(ActivityTags.KafkaPartition, kafkaEvent.Partition);
+            this.Activity?.AddTag(ActivityTags.KafkaPartition, kafkaEvent.Partition.ToString());
             this.Activity?.AddTag(ActivityTags.KafkaMessageKey, kafkaEvent.Key);
         }
 

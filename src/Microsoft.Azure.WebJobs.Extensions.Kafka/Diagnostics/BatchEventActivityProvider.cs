@@ -18,6 +18,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.Diagnostics
         {
             this.kafkaEvents = kafkaEvents;
             this.activityLinks = new List<ActivityLink>();
+            this.CreateAndStartActivity();
         }
 
         public void CreateAndStartActivity()
