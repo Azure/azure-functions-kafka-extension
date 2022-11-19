@@ -22,9 +22,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.output
             kafkaProducerEntity.KafkaProducerFactory = kafkaProducerFactory.Object;
             kafkaProducerFactory.Setup(e => e.Create(It.IsAny<KafkaProducerEntity>())).Returns(kafkaProducer.Object);
             IKafkaProducer kafkaProducerObj = kafkaProducer.Object;
-            kafkaProducer.Setup(e => e.ProduceAsync(It.IsAny<string>(), null)).Returns(Task.CompletedTask);
+            kafkaProducer.Setup(e => e.Produce(It.IsAny<string>(), null));
             KafkaEventData<string> eventData = new KafkaEventData<string>();
-            eventData.Value = "shiv shambhu";
+            eventData.Value = "test1";
             Task task = kafkaProducerEntity.SendAndCreateEntityIfNotExistsAsync<object>(eventData, Guid.NewGuid(), CancellationToken.None);
             Assert.True(task.IsCompleted);
         }
@@ -33,16 +33,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.output
         public void SendAndCreateEntityIfNotExistsAsync_multiple_events_string()
         {
             KafkaProducerEntity kafkaProducerEntity = new KafkaProducerEntity();
-            kafkaProducerEntity.Attribute = new KafkaAttribute();
             kafkaProducerEntity.KafkaProducerFactory = kafkaProducerFactory.Object;
             kafkaProducerFactory.Setup(e => e.Create(It.IsAny<KafkaProducerEntity>())).Returns(kafkaProducer.Object);
             IKafkaProducer kafkaProducerObj = kafkaProducer.Object;
-            kafkaProducer.Setup(e => e.ProduceAsync(It.IsAny<string>(), null)).Returns(Task.CompletedTask);
+            kafkaProducer.Setup(e => e.Produce(It.IsAny<string>(), null));
             List<KafkaEventData<string>> eventList = new List<KafkaEventData<string>>();
             for (int i = 0; i < 20; i++)
             {
                 KafkaEventData<string> eventData = new KafkaEventData<string>();
-                eventData.Value = "shiv shambhu";
+                eventData.Value = "testVal";
                 eventList.Add(eventData);
             }
             Task task = kafkaProducerEntity.SendAndCreateEntityIfNotExistsAsync<object>(eventList, Guid.NewGuid(), CancellationToken.None);
