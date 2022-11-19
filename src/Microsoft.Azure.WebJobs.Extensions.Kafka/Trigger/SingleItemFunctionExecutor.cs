@@ -79,19 +79,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     TriggerValue = triggerInput,
                 };
 
-                KafkaEventInstrumentation.TryExtractTraceParentId(kafkaEventData, out string traceparent);
-                var activity = ActivityHelper.StartActivityForProcessing(traceparent);
-                ActivityHelper.AddActivityTagsForProcessing(kafkaEventData.Topic, consumerGroup, null, kafkaEventData.Partition.ToString(), kafkaEventData.Key.ToString());
-                FunctionResult functionResult = await this.ExecuteFunctionAsync(triggerData, cancellationToken);
-                if (functionResult.Succeeded)
-                {
-                    ActivityHelper.SetActivityStatus(true, null);
+                using (var singleEventActivityProvider = new SingleEventActivityProvider(kafkaEventData, consumerGroup)) { 
+                    FunctionResult functionResult = await this.ExecuteFunctionAsync(triggerData, cancellationToken);
+                    if (functionResult.Succeeded)
+                    {
+                        singleEventActivityProvider.SetActivityStatusSucceded();
+                    }
+                    else
+                    {
+                        singleEventActivityProvider.SetActivityStatusError(functionResult.Exception);
+                    }
                 }
-                else
-                {
-                    ActivityHelper.SetActivityStatus(false, functionResult.Exception);
-                }
-                ActivityHelper.StopCurrentActivity();
 
                 if (topicPartition == null)
                 {

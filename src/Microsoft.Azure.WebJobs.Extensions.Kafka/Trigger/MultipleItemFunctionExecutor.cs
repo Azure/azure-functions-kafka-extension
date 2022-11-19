@@ -31,18 +31,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             logger.LogInformation($"FunctionExecutor Loaded: {nameof(MultipleItemFunctionExecutor<TKey, TValue>)}");
         }
 
-        private List<ActivityLink> CreateLinkedActivities(IKafkaEventData[] kafkaEvents)
-        {
-            var activityLinks = new List<ActivityLink>();
-            foreach (var kafkaEvent in kafkaEvents)
-            {
-                KafkaEventInstrumentation.TryExtractTraceParentId(kafkaEvent, out var traceParentId);
-                var link = ActivityHelper.CreateActivityLink(traceParentId);
-                activityLinks.Add(link);
-            }
-            return activityLinks;
-        }
-
         protected override async Task ReaderAsync(ChannelReader<IKafkaEventData[]> reader, CancellationToken cancellationToken, ILogger logger)
         {
             while (!cancellationToken.IsCancellationRequested && await reader.WaitToReadAsync(cancellationToken))
@@ -57,21 +45,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                         {
                             TriggerValue = triggerInput,
                         };
-
-                        var links = this.CreateLinkedActivities(itemsToExecute);
-                        var activity = ActivityHelper.StartActivityForProcessing(null, null, links);
-                        ActivityHelper.AddActivityTagsForProcessing(itemsToExecute[0].Topic, consumerGroup, null, null, null);
-                        FunctionResult functionResult = await this.ExecuteFunctionAsync(triggerData, cancellationToken);
-                        if (functionResult.Succeeded)
+                        FunctionResult functionResult;
+                        using (var multiEventActivityProvider = new BatchEventActivityProvider(itemsToExecute, consumerGroup))
                         {
-                            ActivityHelper.SetActivityStatus(true, null);
+                            functionResult = await this.ExecuteFunctionAsync(triggerData, cancellationToken);
+                            if (functionResult.Succeeded)
+                            {
+                                multiEventActivityProvider.SetActivityStatusSucceded();
+                            }
+                            else
+                            {
+                                multiEventActivityProvider.SetActivityStatusError(functionResult.Exception);
+                            }
                         }
-                        else
-                        {
-                            ActivityHelper.SetActivityStatus(false, functionResult.Exception);
-                        }
-                        ActivityHelper.StopCurrentActivity();
-
 
                         var offsetsToCommit = new Dictionary<int, TopicPartitionOffset>();
                         for (var i=itemsToExecute.Length - 1; i >= 0; i--)
