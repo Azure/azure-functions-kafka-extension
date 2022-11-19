@@ -20,10 +20,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.Diagnostics
 
         public void CreateAndStartActivity()
         {
-            KafkaEventInstrumentation.TryExtractTraceParentId(kafkaEvent, out string traceparent);
-            this.CreateActivity(SingleKafkaTriggerActivityName, ActivityKind.Consumer, traceparent);
-            this.AddActivityTags();
-            this.StartActivity();
+            if (ActivitySource.HasListeners())
+            {
+                KafkaEventInstrumentation.TryExtractTraceParentId(kafkaEvent, out string traceparent);
+                this.CreateActivity(SingleKafkaTriggerActivityName, ActivityKind.Consumer, traceparent);
+                this.AddActivityTags();
+                this.StartActivity();
+            }
         }
 
         private new void AddActivityTags()

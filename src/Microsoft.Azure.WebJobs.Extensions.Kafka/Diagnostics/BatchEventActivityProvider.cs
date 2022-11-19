@@ -11,7 +11,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.Diagnostics
     internal class BatchEventActivityProvider : ActivityProvider, IDisposable
     {
         private List<ActivityLink> activityLinks;
-        private IKafkaEventData[] kafkaEvents;
+        private readonly IKafkaEventData[] kafkaEvents;
         private static string KafkaBatchTriggerActivityName { get; } = "MultipleKafkaTrigger.Process";
 
         public BatchEventActivityProvider(IKafkaEventData[] kafkaEvents, string consumerGroup) : base(kafkaEvents[0].Topic, consumerGroup)
@@ -22,10 +22,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.Diagnostics
 
         public void CreateAndStartActivity()
         {
-            this.CreateActivityLinksForAllEvents();
-            this.CreateActivity(KafkaBatchTriggerActivityName, ActivityKind.Consumer, null, activityLinks);
-            this.AddActivityTags();
-            this.StartActivity();
+            if (ActivitySource.HasListeners())
+            {
+                this.CreateActivityLinksForAllEvents();
+                this.CreateActivity(KafkaBatchTriggerActivityName, ActivityKind.Consumer, null, activityLinks);
+                this.AddActivityTags();
+                this.StartActivity();
+            }
         }
 
         public void CreateActivityLink(string traceParentId)
@@ -54,7 +57,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.Diagnostics
 
         public void Dispose()
         {
-            this.Activity.Dispose();
+            this.Activity?.Dispose();
             this.activityLinks.Clear();
         }
     }

@@ -11,7 +11,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.Diagnostics
 {
     internal class ActivityProvider
     {
-        private static readonly ActivitySource activitySource = new ActivitySource("Microsoft.Azure.Webjobs.Extensions.Kafka");
+        public static readonly ActivitySource ActivitySource = new ActivitySource("Microsoft.Azure.Webjobs.Extensions.Kafka");
 
         public Activity Activity;
 
@@ -26,7 +26,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.Diagnostics
 
         protected void CreateActivity(string name, ActivityKind kind, string traceparentId=null, List<ActivityLink> activityLinks=null)
         {
-            this.Activity = activitySource.StartActivity(name, kind, traceparentId, null, activityLinks);
+            this.Activity = ActivitySource.StartActivity(name, kind, traceparentId, null, activityLinks);
         }
 
         protected void StartActivity()
