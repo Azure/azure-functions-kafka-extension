@@ -15,13 +15,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.Diagnostics
 
         public Activity Activity;
 
-        private string kafkaTopicName;
-        private string consumerGroup;
+        private readonly string kafkaTopicName;
+        private readonly string consumerGroup;
 
         protected ActivityProvider(string kafkaTopicName, string consumerGroup)
         {
-            kafkaTopicName = this.kafkaTopicName;
-            consumerGroup = this.consumerGroup;
+            this.kafkaTopicName = kafkaTopicName;
+            this.consumerGroup = consumerGroup;
         }
 
         protected void CreateActivity(string name, ActivityKind kind, string traceparentId=null, List<ActivityLink> activityLinks=null)
@@ -52,10 +52,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.Diagnostics
         protected void AddActivityTags()
         {
             this.Activity?.AddTag(ActivityTags.System, "kafka");
-            this.Activity?.AddTag(ActivityTags.DestinationName, kafkaTopicName);
+            this.Activity?.AddTag(ActivityTags.DestinationName, this.kafkaTopicName);
             this.Activity?.AddTag(ActivityTags.DestinationKind, "topic");
             this.Activity?.AddTag(ActivityTags.Operation, "process");
-            this.Activity?.AddTag(ActivityTags.KafkaConsumerGroup, consumerGroup);
+            this.Activity?.AddTag(ActivityTags.KafkaConsumerGroup, this.consumerGroup);
             //this.Activity?.AddTag(ActivityTags.KafkaClientId, kafkaClientId);
         }
     }
