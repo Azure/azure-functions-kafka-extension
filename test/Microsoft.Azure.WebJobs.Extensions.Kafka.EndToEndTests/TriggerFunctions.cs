@@ -25,7 +25,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
     }
 
     internal static class MultiItem_KafkaEventData_String_With_Ignore_Key_Trigger
-    { public static void Trigger(
+    { 
+        public static void Trigger(
                [KafkaTrigger("LocalBroker", Constants.StringTopicWithTenPartitionsName, ConsumerGroup = Constants.ConsumerGroupID)] KafkaEventData<Ignore, string>[] kafkaEvents,
                ILogger log)
         {
@@ -70,7 +71,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             }
         }
     }
-
 
     internal static class MultiItem_String_With_Long_Key_Trigger
     {
