@@ -1,10 +1,8 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-using Avro.IO;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.Diagnostics;
-using Moq;
-using System;
+using System.Collections;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -80,6 +78,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var activityLinks = activity.Links.ToArray<ActivityLink>();
 
             Assert.Equal(kafkaEvents.Length, activityLinks.Length);
+
+            for ( int i=0; i<kafkaEvents.Length; i++)
+            {
+                var kafkaEvent = kafkaEvents[i];
+                kafkaEvent.Headers.TryGetFirst("traceparent", out var traceparentInBytes);
+                var traceparent = Encoding.UTF8.GetString(traceparentInBytes);
+                var traceId = traceparent.Split('-')[1];
+                var spanId = traceparent.Split('-')[2];
+                Assert.Equal(traceId, activityLinks[i].Context.TraceId.ToString());
+                Assert.Equal(spanId, activityLinks[i].Context.SpanId.ToString());
+            }
+
             Assert.Equal(numActivityTags, activity.Tags.Count());
             Assert.Equal("kafka", activity.GetTagItem(ActivityTags.System));
             Assert.Equal(topicName, activity.GetTagItem(ActivityTags.DestinationName));
