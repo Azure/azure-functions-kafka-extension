@@ -70,6 +70,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             }
         }
     }
+    
 
     internal static class MultiItem_String_With_Long_Key_Trigger
     {
@@ -283,7 +284,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             throw new Exception("unhandled error");
         }
     }
-
+    
     internal static class SingleEventTrigger_With_Activity 
     {
         public static void Trigger(
