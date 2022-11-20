@@ -44,6 +44,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(kafkaEvent.Partition.ToString(), activity.GetTagItem(ActivityTags.KafkaPartition));
             var key = activity.GetTagItem(ActivityTags.KafkaMessageKey).ToString();
             Assert.Equal(kafkaEvent.Key, activity.GetTagItem(ActivityTags.KafkaMessageKey).ToString());
+            singleEventActivityProvider.Dispose();
+            activityListener.Dispose();
         }
 
         [Fact]
@@ -96,6 +98,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal("topic", activity.GetTagItem(ActivityTags.DestinationKind));
             Assert.Equal("process", activity.GetTagItem(ActivityTags.Operation));
             Assert.Equal(consumerGroup, activity.GetTagItem(ActivityTags.KafkaConsumerGroup));
+            batchEventActivityProvider.Dispose();
+            activityListener.Dispose();
         }
     }
 }
