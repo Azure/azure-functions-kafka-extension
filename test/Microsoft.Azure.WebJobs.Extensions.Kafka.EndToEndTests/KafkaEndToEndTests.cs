@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -15,6 +16,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.VisualStudio.TestPlatform.Utilities;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
@@ -507,6 +509,140 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             await producerTask;
             await producerHost?.StopAsync();
 
+        }
+
+        public List<KafkaEventData<string>> GetKafkaEventsWithTraceParentHeader(int numEvents)
+        {
+            var input = Enumerable.Range(1, numEvents)
+                .Select(x => {
+                    var eventData = new KafkaEventData<string>
+                    {
+                        Value = x.ToString()
+                    };
+
+                    for (var i = 0; i < x; i++)
+                    {
+                        var traceId = ActivityTraceId.CreateRandom();
+                        var spanId = ActivitySpanId.CreateRandom();
+                        string traceparent = "00-" + traceId + "-" + spanId + "-" + "01";
+                        eventData.Headers.Add("traceparent", Encoding.UTF8.GetBytes(traceparent));
+                    }
+                    return eventData;
+                });
+            return input.ToList();
+        }
+
+        [Fact]
+        public async Task Tracing_For_SingleEventTrigger()
+        {
+            var activityListener = new ActivityListener
+            {
+                ShouldListenTo = _ => true,
+                Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
+            };
+            ActivitySource.AddActivityListener(activityListener);
+
+            int producedMessagesCount = 10;
+
+
+            var loggerProvider = CreateTestLoggerProvider();
+
+            var eventList = GetKafkaEventsWithTraceParentHeader(producedMessagesCount);
+            foreach (var kafkaEvent in eventList)
+            {
+                kafkaEvent.Topic = Constants.StringTopicWithOnePartitionName;
+            }
+            var eventCount = eventList.Count;
+
+            using (var host = await StartHostAsync(new[] {typeof(SingleEventTrigger_With_Activity), typeof(KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>) }, loggerProvider,
+                serviceRegistrationCallback: s =>
+                {
+                    s.AddSingleton(eventList);
+                }))
+            {
+                var jobHost = host.GetJobHost();
+
+                await jobHost.CallAsync(
+                    typeof(KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>).GetMethod(nameof(KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>.Produce))
+                    );
+
+                await TestHelpers.Await(() =>
+                {
+                    var foundCount = loggerProvider.GetAllUserLogMessages().Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("TraceId:"));
+                    return foundCount == producedMessagesCount;
+                });
+
+                // Give time for the commit to be saved
+                await Task.Delay(1500);
+
+                await host.StopAsync();
+            }
+            
+            foreach(var kafkaEvent in eventList)
+            {
+                var traceparent = Encoding.ASCII.GetString(kafkaEvent.Headers.GetFirst("traceparent"));
+                var traceId = traceparent.Split('-')[1];
+                var message = "TraceId:" + traceId;
+                Assert.Single(loggerProvider.GetAllUserLogMessages().Where(p => p.FormattedMessage != null && p.FormattedMessage.Contains(message)));
+            }
+
+            activityListener.Dispose();
+        }
+
+        [Fact]
+        public async Task Tracing_For_BatchEventTrigger()
+        {
+            var activityListener = new ActivityListener
+            {
+                ShouldListenTo = _ => true,
+                Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
+            };
+            ActivitySource.AddActivityListener(activityListener);
+
+            int producedMessagesCount = 10;
+
+
+            var loggerProvider = CreateTestLoggerProvider();
+
+            var eventList = GetKafkaEventsWithTraceParentHeader(producedMessagesCount);
+            foreach (var kafkaEvent in eventList)
+            {
+                kafkaEvent.Topic = Constants.StringTopicWithOnePartitionName;
+            }
+            var eventCount = eventList.Count;
+
+            using (var host = await StartHostAsync(new[] { typeof(BatchEvenTrigger_With_Activity), typeof(KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>) }, loggerProvider,
+                serviceRegistrationCallback: s =>
+                {
+                    s.AddSingleton(eventList);
+                }))
+            {
+                var jobHost = host.GetJobHost();
+
+                await jobHost.CallAsync(
+                    typeof(KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>).GetMethod(nameof(KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>.Produce))
+                    );
+
+                await TestHelpers.Await(() =>
+                {
+                    var foundCount = loggerProvider.GetAllUserLogMessages().Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("TraceId:"));
+                    return foundCount == 1;
+                });
+
+                // Give time for the commit to be saved
+                await Task.Delay(1500);
+
+                await host.StopAsync();
+            }
+
+            foreach (var kafkaEvent in eventList)
+            {
+                var traceparent = Encoding.ASCII.GetString(kafkaEvent.Headers.GetFirst("traceparent"));
+                var message = "LinkedActivity: " + traceparent;
+                Assert.Single(loggerProvider.GetAllUserLogMessages().Where(p => p.FormattedMessage != null && p.FormattedMessage.Contains(message)));
+            }
+
+            activityListener.Dispose();
         }
 
 
