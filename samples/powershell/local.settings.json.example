@@ -1,8 +1,11 @@
 {
     "IsEncrypted": false,
     "Values": {
-    "BrokerList": "YOUR_BROKER_LIST_HERE",
-    "ConfluentCloudUsername": "YOUR_CONFLUENT_USER_NAME_HERE",
-    "ConfluentCloudPassword": "YOUR_CONFLUENT_PASSWORD_HERE"
+        "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+        "FUNCTIONS_WORKER_RUNTIME": "powershell",
+        "BrokerList": "{YOUR_CONFLUENT_CLOUD_BROKER}",
+        "ConfluentCloudUserName": "{YOUR_CONFLUENT_CLOUD_USERNAME}",
+        "ConfluentCloudPassword": "{YOUR_CONFLUENT_CLOUD_PASSWORD}",
+        "topic": "{YOUR_KAFKA_TOPIC_NAME}"
     }
 }

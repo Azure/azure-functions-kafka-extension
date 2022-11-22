@@ -19,10 +19,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly AdminClientConfig adminClientConfig;
         private readonly IConsumer<TKey, TValue> consumer;
         private readonly Lazy<List<TopicPartition>> topicPartitions;
+        private readonly long lagThreshold;
 
         public ScaleMonitorDescriptor Descriptor { get; }
 
-        public KafkaTopicScaler(string topic, string consumerGroup, string functionId, IConsumer<TKey, TValue> consumer, AdminClientConfig adminClientConfig, ILogger logger)
+        public KafkaTopicScaler(string topic, string consumerGroup, string functionId, IConsumer<TKey, TValue> consumer, AdminClientConfig adminClientConfig, long lagThreshold, ILogger logger)
         {
             if (string.IsNullOrWhiteSpace(topic))
             {
@@ -41,6 +42,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.Descriptor = new ScaleMonitorDescriptor($"{functionId}-kafkatrigger-{topicName}-{consumerGroup}".ToLower());
             this.topicPartitions = new Lazy<List<TopicPartition>>(LoadTopicPartitions);
             this.consumerGroup = consumerGroup;
+            this.lagThreshold = lagThreshold;
         }
 
         protected virtual List<TopicPartition> LoadTopicPartitions()
@@ -157,7 +159,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var lastMetrics = metrics.Last();
             long totalLag = lastMetrics.TotalLag;
             long partitionCount = lastMetrics.PartitionCount;
-            long lagThreshold = 1000L;
+            long lagThreshold = this.lagThreshold;
 
             // We shouldn't assign more workers than there are partitions
             // This check is first, because it is independent of load or number of samples.

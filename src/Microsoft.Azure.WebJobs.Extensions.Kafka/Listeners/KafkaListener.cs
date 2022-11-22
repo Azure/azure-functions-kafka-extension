@@ -114,7 +114,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         private KafkaTopicScaler<TKey, TValue> CreateTopicScaler()
         {
-            return new KafkaTopicScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.consumerGroup, this.functionId, this.consumer.Value, new AdminClientConfig(GetConsumerConfiguration()), this.logger);
+            return new KafkaTopicScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.consumerGroup, this.functionId, this.consumer.Value, new AdminClientConfig(GetConsumerConfiguration()), this.listenerConfiguration.LagThreshold, this.logger);
         }
 
         public void Cancel()
@@ -164,7 +164,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 Debug = this.options.LibkafkaDebug,
 
                 // start from earliest if no checkpoint has been committed
-                AutoOffsetReset = AutoOffsetReset.Earliest,
+                AutoOffsetReset = this.options.AutoOffsetReset,
 
                 // Secure communication/authentication
                 SaslMechanism = this.listenerConfiguration.SaslMechanism,

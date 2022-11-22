@@ -404,7 +404,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                     if (i == 0)
                     {
                         // wait until host2 has partitions assigned
-                        Assert.True(await host2HasPartitionsSemaphore.WaitAsync(TimeSpan.FromSeconds(30)), "Host2 has not been assigned any partition after waiting for 30 seconds");
+                        Assert.True(await host2HasPartitionsSemaphore.WaitAsync(TimeSpan.FromSeconds(50)), "Host2 has not been assigned any partition after waiting for 30 seconds");
                     }
 
                     await Task.Delay(100);
@@ -709,7 +709,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                 {
                     builder
                     .AddAzureStorage()
-                    .AddKafka();
+                    .AddKafka(kafkaoption =>
+                    {
+                        kafkaoption.SessionTimeoutMs = 10000;
+                    });
                 })
                 .ConfigureAppConfiguration(c =>
                 {
@@ -731,6 +734,41 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
             await host.StartAsync();
             return host;
+        }
+
+        [Fact]
+        public async Task StringValue_SingleTrigger_Retry()
+        {
+            const int producedMessagesCount = 1;
+            var messageMasterPrefix = Guid.NewGuid().ToString();
+            var messagePrefixBatch1 = messageMasterPrefix + ":1:";
+
+            var loggerProvider1 = CreateTestLoggerProvider();
+
+            using (var host = await StartHostAsync(new[] { typeof(SingleItem_Single_Partition_Raw_String_Without_Key_Trigger_Retry), typeof(KafkaOutputFunctions) }, loggerProvider1))
+            {
+                var jobHost = host.GetJobHost();
+
+                await jobHost.CallOutputTriggerStringAsync(
+                    GetStaticMethod(typeof(KafkaOutputFunctions), nameof(KafkaOutputFunctions.Produce_AsyncCollector_String_Without_Key)),
+                    endToEndTestFixture.StringTopicWithOnePartition.Name,
+                    Enumerable.Range(1, producedMessagesCount).Select(x => messagePrefixBatch1 + x));
+
+                await TestHelpers.Await(() =>
+                {
+                    Thread.Sleep(10000);
+                    foreach (LogMessage logMsg in loggerProvider1.GetAllLogMessages()) {
+                        if (logMsg.Exception != null)
+                        {
+                            Console.WriteLine(logMsg.Exception.InnerException.Message);
+                        }
+                    }
+                    var foundCount = loggerProvider1.GetAllLogMessages().Count(p => p.Exception != null && p.Exception.InnerException.Message.Contains("unhandled error") && !p.Category.StartsWith("Host.Results"));
+                    return foundCount == 6;
+                });
+
+                await Task.Delay(1500);
+            }
         }
     }
 }

@@ -5,9 +5,9 @@
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Confluent.Kafka" Version="1.6.0-PRE4" />
-    <PackageReference Include="Confluent.SchemaRegistry" Version="1.6.0-PRE4" />
-    <PackageReference Include="Confluent.SchemaRegistry.Serdes.Avro" Version="1.6.0-PRE4" />
+    <PackageReference Include="Confluent.Kafka" Version="1.9.0" />
+    <PackageReference Include="Confluent.SchemaRegistry" Version="1.9.0" />
+    <PackageReference Include="Confluent.SchemaRegistry.Serdes.Avro" Version="1.9.0" />
   </ItemGroup>
    <ItemGroup>
     <None Update="cacert.pem">

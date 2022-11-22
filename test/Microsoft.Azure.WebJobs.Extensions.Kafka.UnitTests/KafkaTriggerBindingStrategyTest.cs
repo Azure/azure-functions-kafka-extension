@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
@@ -15,12 +16,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var strategy = new KafkaTriggerBindingStrategy<string, string>();
             var contract = strategy.GetBindingContract();
 
-            Assert.Equal(5, contract.Count);
+            Assert.Equal(6, contract.Count);
             Assert.Equal(typeof(object), contract["Key"]);
             Assert.Equal(typeof(int), contract["Partition"]);
             Assert.Equal(typeof(string), contract["Topic"]);
             Assert.Equal(typeof(DateTime), contract["Timestamp"]);
             Assert.Equal(typeof(long), contract["Offset"]);
+            Assert.Equal(typeof(System.Array), contract["Headers"]);
         }
 
         [Fact]
@@ -29,12 +31,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var strategy = new KafkaTriggerBindingStrategy<string, string>();
             var contract = strategy.GetBindingContract(true);
 
-            Assert.Equal(5, contract.Count);
+            Assert.Equal(6, contract.Count);
             Assert.Equal(typeof(object), contract["Key"]);
             Assert.Equal(typeof(int), contract["Partition"]);
             Assert.Equal(typeof(string), contract["Topic"]);
             Assert.Equal(typeof(DateTime), contract["Timestamp"]);
             Assert.Equal(typeof(long), contract["Offset"]);
+            Assert.Equal(typeof(Array), contract["Headers"]);
         }
 
         [Fact]
@@ -47,8 +50,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 Partition = 2,
                 Timestamp = new DateTime(2019, 1, 10, 9, 21, 0, DateTimeKind.Utc),
                 Topic = "myTopic",
-                Value = "Nothing",
+                Value = "Nothing"
             };
+            kafkaEventData.Headers.Add("test", Encoding.UTF8.GetBytes("test"));
 
             var strategy = new KafkaTriggerBindingStrategy<string, string>();
             var binding = strategy.GetBindingData(KafkaTriggerInput.New(kafkaEventData));
@@ -57,6 +61,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(2, binding["Partition"]);
             Assert.Equal(new DateTime(2019, 1, 10, 9, 21, 0, DateTimeKind.Utc), binding["Timestamp"]);
             Assert.Equal("myTopic", binding["Topic"]);
+            // testing headers entry
+            Assert.NotNull(binding["Headers"]);
+            Assert.Equal(1, ((KafkaEventDataHeaders)binding["Headers"]).Count);
+            Assert.NotNull(((KafkaEventDataHeaders)binding["Headers"]).GetFirst("test"));
 
             // lower case too
             Assert.Equal("1", binding["key"]);
@@ -64,6 +72,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(2, binding["partition"]);
             Assert.Equal(new DateTime(2019, 1, 10, 9, 21, 0, DateTimeKind.Utc), binding["timestamp"]);
             Assert.Equal("myTopic", binding["topic"]);
+            // testing headers entry
+            Assert.NotNull(binding["Headers"]);
+            Assert.Equal(1, ((KafkaEventDataHeaders)binding["Headers"]).Count);
+            Assert.NotNull(((KafkaEventDataHeaders)binding["Headers"]).GetFirst("test"));
         }
 
         [Fact]
@@ -91,6 +103,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 },
             });
 
+            triggerInput.Events[0].Headers.Add("test", Encoding.UTF8.GetBytes("test"));
+            triggerInput.Events[1].Headers.Add("testNew", Encoding.UTF8.GetBytes("testNew"));
+
             var strategy = new KafkaTriggerBindingStrategy<string, string>();
             var binding = strategy.GetBindingData(triggerInput);
             Assert.Equal(new[] { "1", "2" }, binding["KeyArray"]);
@@ -98,6 +113,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(new[] { 2, 2 }, binding["PartitionArray"]);
             Assert.Equal(new[] { new DateTime(2019, 1, 10, 9, 21, 0, DateTimeKind.Utc), new DateTime(2019, 1, 10, 9, 21, 1, DateTimeKind.Utc) }, binding["TimestampArray"]);
             Assert.Equal(new[] { "myTopic", "myTopic" }, binding["TopicArray"]);
+            Assert.NotNull(binding["HeadersArray"]);
+            Assert.Equal(2, ((object[])binding["HeadersArray"]).Length);
+            Assert.NotNull(((KafkaEventDataHeaders)(((object[])binding["HeadersArray"])[0])).GetFirst("test"));
+            Assert.NotNull(((KafkaEventDataHeaders)(((object[])binding["HeadersArray"])[1])).GetFirst("testNew"));
 
             // lower case too
             Assert.Equal(new[] { "1", "2" }, binding["keyArray"]);
@@ -105,6 +124,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(new[] { 2, 2 }, binding["partitionArray"]);
             Assert.Equal(new[] { new DateTime(2019, 1, 10, 9, 21, 0, DateTimeKind.Utc), new DateTime(2019, 1, 10, 9, 21, 1, DateTimeKind.Utc) }, binding["timestampArray"]);
             Assert.Equal(new[] { "myTopic", "myTopic" }, binding["topicArray"]);
+            Assert.Equal(2, ((object[])binding["headersArray"]).Length);
+            Assert.NotNull(((KafkaEventDataHeaders)(((object[])binding["headersArray"])[0])).GetFirst("test"));
+            Assert.NotNull(((KafkaEventDataHeaders)(((object[])binding["headersArray"])[1])).GetFirst("testNew"));
         }
     }
 }
