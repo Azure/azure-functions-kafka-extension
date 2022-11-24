@@ -17,14 +17,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         {
             var consumerGroup = "my-consumer-group";
             var numActivityTags = 7;
-            var traceId = ActivityTraceId.CreateRandom();
-            var spanId = ActivitySpanId.CreateRandom();
-            string traceparent = "00-" + traceId + "-" + spanId + "-" + "01";
-            var kafkaEvent = new KafkaEventData<string, string>("key", "value");
-            kafkaEvent.Headers.Add("traceparent", Encoding.ASCII.GetBytes(traceparent));
-            kafkaEvent.Topic = "mytopic";
-            kafkaEvent.Partition = 1;
-
+            string topicName = "mytopic";
+            var kafkaEvent = CreateKafkaEventObjWithTraceParentHeader(topicName);
             var activityListener = new ActivityListener
             {
                 ShouldListenTo = _ => true,
@@ -34,7 +28,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var singleEventActivityProvider = new SingleEventActivityProvider(kafkaEvent, consumerGroup);
             Assert.NotNull(singleEventActivityProvider.Activity);
             var activity = singleEventActivityProvider.Activity;
-            Assert.Equal(traceId, activity.TraceId);
+            GetTraceIdAndSpanIdFromKafkaHeader(kafkaEvent, out var traceId, out var spanId);
+            Assert.Equal(traceId, activity.TraceId.ToString());
             Assert.Equal(numActivityTags, activity.Tags.Count());
             Assert.Equal("kafka", activity.GetTagItem(ActivityTags.System).ToString());
             Assert.Equal(kafkaEvent.Topic, activity.GetTagItem(ActivityTags.DestinationName).ToString());
@@ -58,14 +53,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var numActivityTags = 5;
             for (int i = 0; i< numkafkaEvents; i++)
             {
-                var traceId = ActivityTraceId.CreateRandom();
-                var spanId = ActivitySpanId.CreateRandom();
-                string traceparent = "00-" + traceId + "-" + spanId + "-" + "01";
-                var kafkaEvent = new KafkaEventData<string, string>("key" + i, "value" + i);
-                kafkaEvent.Headers.Add("traceparent", Encoding.ASCII.GetBytes(traceparent));
-                kafkaEvent.Topic = topicName;
-                kafkaEvent.Partition = 1;
-                kafkaEvents[i] = kafkaEvent;
+                kafkaEvents[i] = CreateKafkaEventObjWithTraceParentHeader(topicName);
             }
 
             var activityListener = new ActivityListener
@@ -84,10 +72,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             for ( int i=0; i<kafkaEvents.Length; i++)
             {
                 var kafkaEvent = kafkaEvents[i];
-                kafkaEvent.Headers.TryGetFirst("traceparent", out var traceparentInBytes);
-                var traceparent = Encoding.UTF8.GetString(traceparentInBytes);
-                var traceId = traceparent.Split('-')[1];
-                var spanId = traceparent.Split('-')[2];
+                GetTraceIdAndSpanIdFromKafkaHeader(kafkaEvent, out var traceId, out var spanId);
                 Assert.Equal(traceId, activityLinks[i].Context.TraceId.ToString());
                 Assert.Equal(spanId, activityLinks[i].Context.SpanId.ToString());
             }
@@ -101,5 +86,32 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             batchEventActivityProvider.Dispose();
             activityListener.Dispose();
         }
+
+        public string CreateRandomTraceParent()
+        {
+            var traceId = ActivityTraceId.CreateRandom();
+            var spanId = ActivitySpanId.CreateRandom();
+            string traceparent = "00-" + traceId + "-" + spanId + "-" + "01";
+            return traceparent;
+        }
+
+        public KafkaEventData<string, string> CreateKafkaEventObjWithTraceParentHeader(string topicName)
+        {
+            var kafkaEvent = new KafkaEventData<string, string>("key", "value");
+            var traceparent = CreateRandomTraceParent();
+            kafkaEvent.Headers.Add("traceparent", Encoding.ASCII.GetBytes(traceparent));
+            kafkaEvent.Topic = topicName;
+            kafkaEvent.Partition = 1;
+            return kafkaEvent;
+        }
+
+        public void GetTraceIdAndSpanIdFromKafkaHeader(KafkaEventData<string, string> kafkaEvent, out string traceId, out string spanId)
+        {
+            kafkaEvent.Headers.TryGetFirst("traceparent", out var traceparentInBytes);
+            var traceparent = Encoding.UTF8.GetString(traceparentInBytes);
+            var traceParentFields = traceparent.Split('-');
+            traceId = traceParentFields[1];
+            spanId = traceParentFields[2];
+        } 
     }
 }
