@@ -100,10 +100,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 consumerConfig.SaslPassword = this.config.ResolveSecureSetting(nameResolver, attribute.Password);
                 consumerConfig.SaslUsername = this.config.ResolveSecureSetting(nameResolver, attribute.Username);
-                consumerConfig.SslKeyLocation = this.config.ResolveSecureSetting(nameResolver, attribute.SslKeyLocation);
+                consumerConfig.SslKeyLocation = GetValidFilePath(attribute.SslKeyLocation);
                 consumerConfig.SslKeyPassword = this.config.ResolveSecureSetting(nameResolver, attribute.SslKeyPassword);
-                consumerConfig.SslCertificateLocation = this.config.ResolveSecureSetting(nameResolver, attribute.SslCertificateLocation);
-                consumerConfig.SslCaLocation = this.config.ResolveSecureSetting(nameResolver, attribute.SslCaLocation);
+                consumerConfig.SslCertificateLocation = GetValidFilePath(attribute.SslCertificateLocation);
+                consumerConfig.SslCaLocation = GetValidFilePath(attribute.SslCaLocation);
 
                 if (attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet)
                 {
@@ -117,6 +117,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
 
             return consumerConfig;
+        }
+
+        private string GetValidFilePath(string location)
+        {
+            if (string.IsNullOrWhiteSpace(location))
+            {
+                return null;
+            }
+            var resolvedLocation = this.config.ResolveSecureSetting(nameResolver, location);
+            if (!AzureFunctionsFileHelper.TryGetValidFilePath(resolvedLocation, out var validPath))
+            {
+                throw new Exception($"{location} is not a valid file location");
+            }
+            return validPath;
         }
     }
 }
