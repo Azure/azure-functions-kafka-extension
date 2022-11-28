@@ -22,5 +22,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                 await output.AddAsync(message);
             }
         }
+
+        public async Task ProduceWithMaxMessageBytes1000(
+            [Kafka(BrokerList = "LocalBroker", MaxMessageBytes = 1000)] IAsyncCollector<T> output)
+        {
+            foreach (var message in testData)
+            {
+                await output.AddAsync(message);
+            }
+        }
     }
 }
