@@ -13,13 +13,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.output
     public class CollectorValueProviderTest
     { 
         [Fact]
-        public void SetValueAsyncTest()
+        public void SetValueAsyncTest_Null()
         {
             var kafkaProducerEntity = new Mock<KafkaProducerEntity>();
             IAsyncCollector<string> asyncCollector = new KafkaProducerAsyncCollector<string>(kafkaProducerEntity.Object, Guid.NewGuid());
             CollectorValueProvider cvp = new CollectorValueProvider(kafkaProducerEntity.Object, asyncCollector, typeof(IAsyncCollector<string>));
             Task task = cvp.SetValueAsync(null, CancellationToken.None);
-            Assert.True(task.IsCompleted);
+            Assert.True(task.IsFaulted);
         }
     }
 }
