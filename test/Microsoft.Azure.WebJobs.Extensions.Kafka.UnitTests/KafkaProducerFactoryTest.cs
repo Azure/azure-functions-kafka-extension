@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 
 using Avro.Generic;
 using Confluent.Kafka;
@@ -15,7 +14,6 @@ using Confluent.SchemaRegistry.Serdes;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.Helpers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
-using Moq;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
@@ -171,7 +169,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         }
 
         [Fact]
-        public void GetProducerConfig_When_No_Auth_Defined_Should_Contain_Only_BrokerList()
+        public void GetProducerConfig_When_No_Auth_Defined_Should_Not_Contain_Auth_Settings()
         {
             var attribute = new KafkaAttribute("brokers:9092", "myTopic")
             {
@@ -185,7 +183,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerFactory.Instance);
             var config = factory.GetProducerConfig(entity);
-            Assert.Single(config);
+            Assert.Equal(0, config.Count(x=>x.Key.StartsWith("sasl.")));
+            Assert.Null(config.SaslMechanism);
+            Assert.Null(config.SaslPassword);
+            Assert.Null(config.SaslUsername);
             Assert.Equal("brokers:9092", config.BootstrapServers);
         }
 
@@ -208,7 +209,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerFactory.Instance);
             var config = factory.GetProducerConfig(entity);
-            Assert.Equal(5, config.Count());
+            Assert.Equal(11, config.Count());
             Assert.Equal("brokers:9092", config.BootstrapServers);
             Assert.Equal(SecurityProtocol.SaslSsl, config.SecurityProtocol);
             Assert.Equal(SaslMechanism.Plain, config.SaslMechanism);
@@ -236,7 +237,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerFactory.Instance);
             var config = factory.GetProducerConfig(entity);
-            Assert.Equal(6, config.Count());
+            Assert.Equal(12, config.Count());
             Assert.Equal("brokers:9092", config.BootstrapServers);
             Assert.Equal(SecurityProtocol.Ssl, config.SecurityProtocol);
             Assert.Equal("path/to/key", config.SslKeyLocation);
