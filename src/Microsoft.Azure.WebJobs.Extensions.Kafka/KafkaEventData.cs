@@ -9,13 +9,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
     public class KafkaEventData<TKey, TValue> : IKafkaEventData
     {
-        public TKey Key { get; set; }
-        public long Offset { get; set; }
-        public int Partition { get; set; }
-        public string Topic { get; set; }
+        public TKey Key { get; init; }
+        public long Offset { get; init; }
+        public int Partition { get; init; }
+        public string Topic { get; init; }
         public IKafkaEventDataHeaders Headers { get; }
-        public DateTime Timestamp { get; set; }
-        public TValue Value { get; set; }
+        public DateTime Timestamp { get; init; }
+        public TValue Value { get; init; }
 
         object IKafkaEventData.Value => this.Value;
 
@@ -53,11 +53,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
     public class KafkaEventData<TValue> : IKafkaEventData
     {
-        public long Offset { get; set; }
-        public int Partition { get; set; }
-        public string Topic { get; set; }
-        public DateTime Timestamp { get; set; }
-        public TValue Value { get; set; }
+        public long Offset { get; init; }
+        public int Partition { get; init; }
+        public string Topic { get; init; }
+        public DateTime Timestamp { get; init; }
+        public TValue Value { get; init; }
 
         public object Key { get; set; }
 

@@ -623,6 +623,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                 .Select(x => {
                     var eventData = new KafkaEventData<string>
                     {
+                        Topic = Constants.StringTopicWithTenPartitionsName,
                         Value = x.ToString()
                     };
 
@@ -652,6 +653,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             var input = Enumerable.Range(0, 10)
                 .Select(x => new KafkaEventData<string>
                 {
+                    Topic = Constants.StringTopicWithTenPartitionsName,
                     Value = x.ToString()
                 });
 
@@ -692,10 +694,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
         {
             var outputMethod = (outputFunction.Body as MethodCallExpression).Method;
             var eventList = events.ToList();
-            foreach (var kafkaEvent in eventList)
-            {
-                kafkaEvent.Topic = Constants.StringTopicWithTenPartitionsName;
-            }
             var eventCount = eventList.Count;
             var output = new ConcurrentBag<KafkaEventData<string>>();
             using (var host = await StartHostAsync(new[] { typeof(TOutputFunction), typeof(TTriggerFunction) },
