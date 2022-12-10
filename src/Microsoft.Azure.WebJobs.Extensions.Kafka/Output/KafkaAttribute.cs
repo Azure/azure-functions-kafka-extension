@@ -139,5 +139,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// ssl.key.password in librdkafka
         /// </summary>
         public string SslKeyPassword { get; set; }
+
+        /// <summary>
+        /// Linger.MS property provides the time between batches of messages
+        /// being sent to cluster. Larger value allows more batching results in high throughput.
+        /// </summary>
+        public int LingerMs { get; set; } = 0;
     }
 }
