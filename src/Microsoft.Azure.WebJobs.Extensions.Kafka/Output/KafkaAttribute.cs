@@ -144,6 +144,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// Linger.MS property provides the time between batches of messages
         /// being sent to cluster. Larger value allows more batching results in high throughput.
         /// </summary>
-        public int LingerMs { get; set; } = 0;
+        public int LingerMs { get; set; } = 5;
     }
 }
