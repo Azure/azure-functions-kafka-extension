@@ -1,10 +1,14 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
+using Confluent.Kafka;
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
@@ -22,19 +26,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public KafkaAttribute Attribute { get; set; }
 
-        internal async Task SendAndCreateEntityIfNotExistsAsync<T>(T item, Guid functionInstanceId, CancellationToken cancellationToken)
+        internal Task SendAndCreateEntityIfNotExistsAsync<T>(T item, Guid functionInstanceId, CancellationToken cancellationToken)
         {
             var kafkaProducer = this.KafkaProducerFactory.Create(this);
-            if (item is ICollection collection)
+
+            if (item is ICollection)
             {
-                foreach (var collectionItem in collection)
-                {
-                    await kafkaProducer.ProduceAsync(this.Topic, this.GetItemToProduce(collectionItem));
-                }
+                ProduceEvents((ICollection)item, kafkaProducer);
+                return Task.CompletedTask;
             }
-            else
+            //await kafkaProducer.ProduceAsync(this.Topic, this.GetItemToProduce(item));
+            kafkaProducer.Produce(this.Topic, this.GetItemToProduce(item));
+            return Task.CompletedTask;
+        }
+
+        private void ProduceEvents(ICollection collection, IKafkaProducer kafkaProducer)
+        {
+            foreach (var collectionItem in collection)
             {
-                await kafkaProducer.ProduceAsync(this.Topic, this.GetItemToProduce(item));
+                kafkaProducer.Produce(this.Topic, this.GetItemToProduce(collectionItem));
             }
         }
 
