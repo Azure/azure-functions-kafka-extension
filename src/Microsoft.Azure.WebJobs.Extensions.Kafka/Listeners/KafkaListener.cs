@@ -164,7 +164,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 Debug = this.options.LibkafkaDebug,
 
                 // start from earliest if no checkpoint has been committed
-                AutoOffsetReset = AutoOffsetReset.Earliest,
+                AutoOffsetReset = this.options.AutoOffsetReset,
 
                 // Secure communication/authentication
                 SaslMechanism = this.listenerConfiguration.SaslMechanism,

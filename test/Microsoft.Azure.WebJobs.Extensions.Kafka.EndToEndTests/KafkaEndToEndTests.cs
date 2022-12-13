@@ -5,12 +5,14 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Tests;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -404,7 +406,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                     if (i == 0)
                     {
                         // wait until host2 has partitions assigned
-                        Assert.True(await host2HasPartitionsSemaphore.WaitAsync(TimeSpan.FromSeconds(30)), "Host2 has not been assigned any partition after waiting for 30 seconds");
+                        Assert.True(await host2HasPartitionsSemaphore.WaitAsync(TimeSpan.FromSeconds(50)), "Host2 has not been assigned any partition after waiting for 30 seconds");
                     }
 
                     await Task.Delay(100);
@@ -631,7 +633,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                     return eventData;
                 });
 
-            var output = await ProduceAndConsumeAsync(input);
+            var output = await ProduceAndConsumeAsync<KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>, KafkaTriggerForProduceAndConsume<KafkaEventData<string>>>(x => x.Produce(default), input);
 
             foreach (var inputEvent in input)
             {
@@ -653,7 +655,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                     Value = x.ToString()
                 });
 
-            var output = await ProduceAndConsumeAsync(input.ToArray());
+            var output = await ProduceAndConsumeAsync<KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>, KafkaTriggerForProduceAndConsume<KafkaEventData<string>>>(x => x.Produce(default), input.ToArray());
 
             foreach (var inputEvent in input)
             {
@@ -669,8 +671,26 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             
         }
 
-        private async Task<List<KafkaEventData<string>>> ProduceAndConsumeAsync(IEnumerable<KafkaEventData<string>> events) 
+        [Fact]
+        public async Task Produce_With_MaxMessageBytes_Should_Throw_Error_When_Message_Is_Too_Large()
         {
+            var input = new[] {
+                    new KafkaEventData<string>
+                    {
+                        Value = new string('a', 1000)
+                    }
+                };
+
+            var ex = await Assert.ThrowsAsync<FunctionInvocationException>(async () => await ProduceAndConsumeAsync<KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>, KafkaTriggerForProduceAndConsume<KafkaEventData<string>>>(x => x.ProduceWithMaxMessageBytes1000(default), input));
+            Assert.NotNull(ex.InnerException);
+            Assert.Contains("too large", ex.InnerException.InnerException.Message);
+        }
+
+        private async Task<List<KafkaEventData<string>>> ProduceAndConsumeAsync<TOutputFunction, TTriggerFunction>(
+            Expression<Func<TOutputFunction,Task>> outputFunction,
+            IEnumerable<KafkaEventData<string>> events) 
+        {
+            var outputMethod = (outputFunction.Body as MethodCallExpression).Method;
             var eventList = events.ToList();
             foreach (var kafkaEvent in eventList)
             {
@@ -678,7 +698,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             }
             var eventCount = eventList.Count;
             var output = new ConcurrentBag<KafkaEventData<string>>();
-            using (var host = await StartHostAsync(new[] { typeof(KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>), typeof(KafkaTriggerForProduceAndConsume<KafkaEventData<string>>) },
+            using (var host = await StartHostAsync(new[] { typeof(TOutputFunction), typeof(TTriggerFunction) },
                 serviceRegistrationCallback: s =>
                 {
                     s.AddSingleton(eventList);
@@ -687,9 +707,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
              ))
             {
                 var jobHost = host.GetJobHost();
-                await jobHost.CallAsync(
-                    typeof(KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>).GetMethod(nameof(KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>.Produce))
-                    );
+                await jobHost.CallAsync(outputMethod);
 
                 await TestHelpers.Await(() =>
                 {
@@ -709,7 +727,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                 {
                     builder
                     .AddAzureStorage()
-                    .AddKafka();
+                    .AddKafka(kafkaoption =>
+                    {
+                        kafkaoption.SessionTimeoutMs = 10000;
+                    });
                 })
                 .ConfigureAppConfiguration(c =>
                 {
@@ -731,6 +752,41 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
             await host.StartAsync();
             return host;
+        }
+
+        [Fact]
+        public async Task StringValue_SingleTrigger_Retry()
+        {
+            const int producedMessagesCount = 1;
+            var messageMasterPrefix = Guid.NewGuid().ToString();
+            var messagePrefixBatch1 = messageMasterPrefix + ":1:";
+
+            var loggerProvider1 = CreateTestLoggerProvider();
+
+            using (var host = await StartHostAsync(new[] { typeof(SingleItem_Single_Partition_Raw_String_Without_Key_Trigger_Retry), typeof(KafkaOutputFunctions) }, loggerProvider1))
+            {
+                var jobHost = host.GetJobHost();
+
+                await jobHost.CallOutputTriggerStringAsync(
+                    GetStaticMethod(typeof(KafkaOutputFunctions), nameof(KafkaOutputFunctions.Produce_AsyncCollector_String_Without_Key)),
+                    endToEndTestFixture.StringTopicWithOnePartition.Name,
+                    Enumerable.Range(1, producedMessagesCount).Select(x => messagePrefixBatch1 + x));
+
+                await TestHelpers.Await(() =>
+                {
+                    Thread.Sleep(10000);
+                    foreach (LogMessage logMsg in loggerProvider1.GetAllLogMessages()) {
+                        if (logMsg.Exception != null)
+                        {
+                            Console.WriteLine(logMsg.Exception.InnerException.Message);
+                        }
+                    }
+                    var foundCount = loggerProvider1.GetAllLogMessages().Count(p => p.Exception != null && p.Exception.InnerException.Message.Contains("unhandled error") && !p.Category.StartsWith("Host.Results"));
+                    return foundCount == 6;
+                });
+
+                await Task.Delay(1500);
+            }
         }
     }
 }

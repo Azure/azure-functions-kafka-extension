@@ -24,22 +24,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     {
         private readonly IConfiguration config;
         private readonly INameResolver nameResolver;
-        private readonly ILoggerProvider loggerProvider;
+        private readonly ILoggerFactory loggerFactory;
         private readonly ConcurrentDictionary<string, IProducer<byte[], byte[]>> baseProducers = new ConcurrentDictionary<string, IProducer<byte[], byte[]>>();
 
         public KafkaProducerFactory(
             IConfiguration config,
             INameResolver nameResolver,
-            ILoggerProvider loggerProvider)
+            ILoggerFactory loggerFactory)
         {
             this.config = config;
             this.nameResolver = nameResolver;
-            this.loggerProvider = loggerProvider;
+            this.loggerFactory = loggerFactory;
         }
 
         public IKafkaProducer Create(KafkaProducerEntity entity)
         {
-            AzureFunctionsFileHelper.InitializeLibrdKafka(this.loggerProvider.CreateLogger(LogCategories.CreateTriggerCategory("Kafka")));
+            AzureFunctionsFileHelper.InitializeLibrdKafka(this.loggerFactory.CreateLogger(typeof(AzureFunctionsFileHelper)));
 
             // Goal is to create as less producers as possible
             // We can group producers based on following criterias
@@ -74,7 +74,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private IProducer<byte[], byte[]> CreateBaseProducer(ProducerConfig producerConfig)
         {
             var builder = new ProducerBuilder<byte[], byte[]>(producerConfig);
-            ILogger logger = this.loggerProvider.CreateLogger("Kafka");
+            ILogger logger = this.loggerFactory.CreateLogger("Kafka");
             builder.SetLogHandler((_, m) =>
             {
                 logger.Log((LogLevel)m.LevelAs(LogLevelType.MicrosoftExtensionsLogging), $"Libkafka: {m?.Message}");
@@ -94,7 +94,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 typeof(KafkaProducer<,>).MakeGenericType(keyType, valueType),
                 producerBaseHandle,
                 valueSerializer,
-                loggerProvider.CreateLogger(LogCategories.CreateTriggerCategory("Kafka")));
+                loggerFactory.CreateLogger(typeof(KafkaProducer<,>)));
         }
 
         public ProducerConfig GetProducerConfig(KafkaProducerEntity entity)
@@ -122,6 +122,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 MessageSendMaxRetries = entity.Attribute.MaxRetries,
                 MessageTimeoutMs = entity.Attribute.MessageTimeoutMs,
                 RequestTimeoutMs = entity.Attribute.RequestTimeoutMs,
+                MessageMaxBytes = entity.Attribute.MaxMessageBytes,
                 SaslPassword = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.Password),
                 SaslUsername = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.Username),
                 SslKeyLocation = resolvedSslKeyLocation,

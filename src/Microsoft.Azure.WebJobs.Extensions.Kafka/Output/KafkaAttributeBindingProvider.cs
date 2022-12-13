@@ -47,7 +47,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             
 
             var argumentBinding = InnerProvider.TryCreate(parameter);
-            var keyAndValueTypes = SerializationHelper.GetKeyAndValueTypes(attribute.AvroSchema, parameter.ParameterType, typeof(Null));
+            var keyAndValueTypes = SerializationHelper.GetKeyAndValueTypes(attribute.AvroSchema, parameter.ParameterType, typeof(string));
 
             IBinding binding = new KafkaAttributeBinding(
                 parameter.Name,
