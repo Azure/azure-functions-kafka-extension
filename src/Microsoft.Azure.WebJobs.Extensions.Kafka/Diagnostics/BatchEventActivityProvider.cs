@@ -42,7 +42,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public void CreateActivityLink(string traceParentId)
         {
-            var isParsedContext = ActivityContext.TryParse(traceParentId, out ActivityContext linkedContext);
+            var isParsedContext = ActivityContext.TryParse(traceParentId, null, out ActivityContext linkedContext);
             if (!isParsedContext)
             {
                 throw new Exception($"{traceParentId} is not a valid traceparent.");
