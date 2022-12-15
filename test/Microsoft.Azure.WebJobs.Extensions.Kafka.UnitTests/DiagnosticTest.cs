@@ -25,8 +25,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             };
             ActivitySource.AddActivityListener(activityListener);
             var singleEventActivityProvider = new SingleEventActivityProvider(kafkaEvent, consumerGroup);
-            Assert.NotNull(singleEventActivityProvider.Activity);
-            var activity = singleEventActivityProvider.Activity;
+            Assert.NotNull(Activity.Current);
+            var activity = Activity.Current;
             GetTraceIdAndSpanIdFromKafkaHeader(kafkaEvent, out var traceId, out var spanId);
             Assert.Equal(traceId, activity.TraceId.ToString());
             Assert.Equal(numActivityTags, activity.Tags.Count());
@@ -62,8 +62,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             };
             ActivitySource.AddActivityListener(activityListener);
             var batchEventActivityProvider = new BatchEventActivityProvider(kafkaEvents, consumerGroup);
-            Assert.NotNull(batchEventActivityProvider.Activity);
-            var activity = batchEventActivityProvider.Activity;
+            Assert.NotNull(Activity.Current);
+            var activity = Activity.Current;
             var activityLinks = activity.Links.ToArray<ActivityLink>();
 
             Assert.Equal(kafkaEvents.Length, activityLinks.Length);

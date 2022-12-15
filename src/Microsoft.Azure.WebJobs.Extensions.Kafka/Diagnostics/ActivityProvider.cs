@@ -11,9 +11,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
     internal class ActivityProvider
     {
-        private static readonly ActivitySource KafkaActivitySource = new ActivitySource("Microsoft.Azure.Webjobs.Extensions.Kafka");
+        protected static readonly ActivitySource KafkaActivitySource = new ActivitySource("Microsoft.Azure.Webjobs.Extensions.Kafka");
 
-        private Activity activity;
+        protected Activity activity;
 
         private readonly string kafkaTopicName;
         private readonly string consumerGroup;
