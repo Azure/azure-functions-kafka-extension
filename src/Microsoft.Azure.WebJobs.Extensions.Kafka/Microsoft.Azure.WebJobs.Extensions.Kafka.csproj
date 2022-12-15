@@ -33,7 +33,7 @@
     <WarningsAsErrors />
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="6.0.0" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="7.0.0" />
     <PackageReference Include="Confluent.Kafka" Version="1.9.0" />
     <PackageReference Include="Confluent.SchemaRegistry" Version="1.9.0" />
     <PackageReference Include="Confluent.SchemaRegistry.Serdes.Avro" Version="1.9.0" />

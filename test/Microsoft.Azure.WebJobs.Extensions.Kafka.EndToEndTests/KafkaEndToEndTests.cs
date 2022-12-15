@@ -510,7 +510,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
         }
 
-        public List<KafkaEventData<string>> GetKafkaEventsWithTraceParentHeader(int numEvents)
+        private List<KafkaEventData<string>> GetKafkaEventsWithTraceParentHeader(int numEvents)
         {
             var input = Enumerable.Range(1, numEvents)
                 .Select(x => {

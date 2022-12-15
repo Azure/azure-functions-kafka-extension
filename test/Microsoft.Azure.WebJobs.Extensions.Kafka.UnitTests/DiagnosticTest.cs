@@ -90,8 +90,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         {
             var traceId = ActivityTraceId.CreateRandom();
             var spanId = ActivitySpanId.CreateRandom();
-            string traceparent = "00-" + traceId + "-" + spanId + "-" + "01";
-            return traceparent;
+            return "00-" + traceId + "-" + spanId + "-" + "01";
         }
 
         public KafkaEventData<string, string> CreateKafkaEventObjWithTraceParentHeader(string topicName)
