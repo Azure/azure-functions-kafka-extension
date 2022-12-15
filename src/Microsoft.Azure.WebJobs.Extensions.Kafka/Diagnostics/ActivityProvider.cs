@@ -11,9 +11,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
     internal class ActivityProvider
     {
-        public static readonly ActivitySource KafkaActivitySource = new ActivitySource("Microsoft.Azure.Webjobs.Extensions.Kafka");
+        private static readonly ActivitySource KafkaActivitySource = new ActivitySource("Microsoft.Azure.Webjobs.Extensions.Kafka");
 
-        public Activity Activity;
+        private Activity activity;
 
         private readonly string kafkaTopicName;
         private readonly string consumerGroup;
@@ -26,36 +26,36 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         protected void CreateActivity(string name, ActivityKind kind, string traceparentId=null, List<ActivityLink> activityLinks=null)
         {
-            this.Activity = KafkaActivitySource.StartActivity(name, kind, traceparentId, null, activityLinks);
+            this.activity = KafkaActivitySource.StartActivity(name, kind, traceparentId, null, activityLinks);
         }
 
         protected void StartActivity()
         {
-            this.Activity?.Start();
+            this.activity?.Start();
         }
 
         public void SetActivityStatusSucceded()
         {
-            this.Activity?.SetStatus(ActivityStatusCode.Ok, "");
+            this.activity?.SetStatus(ActivityStatusCode.Ok, "");
         }
 
         public void SetActivityStatusError(Exception ex)
         {
-            this.Activity?.SetStatus(ActivityStatusCode.Error, ex.Message.ToString());
+            this.activity?.SetStatus(ActivityStatusCode.Error, ex.Message.ToString());
         }
 
         public void StopCurrentActivity()
         {
-           this.Activity?.Stop();
+           this.activity?.Stop();
         }
 
         protected void AddActivityTags()
         {
-            this.Activity?.AddTag(ActivityTags.System, "kafka");
-            this.Activity?.AddTag(ActivityTags.DestinationName, this.kafkaTopicName);
-            this.Activity?.AddTag(ActivityTags.DestinationKind, "topic");
-            this.Activity?.AddTag(ActivityTags.Operation, "process");
-            this.Activity?.AddTag(ActivityTags.KafkaConsumerGroup, this.consumerGroup);
+            this.activity?.AddTag(ActivityTags.System, "kafka");
+            this.activity?.AddTag(ActivityTags.DestinationName, this.kafkaTopicName);
+            this.activity?.AddTag(ActivityTags.DestinationKind, "topic");
+            this.activity?.AddTag(ActivityTags.Operation, "process");
+            this.activity?.AddTag(ActivityTags.KafkaConsumerGroup, this.consumerGroup);
             //this.Activity?.AddTag(ActivityTags.KafkaClientId, kafkaClientId);
         }
     }

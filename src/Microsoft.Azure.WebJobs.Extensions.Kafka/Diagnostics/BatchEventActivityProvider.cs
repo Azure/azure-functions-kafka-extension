@@ -58,7 +58,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public void Dispose()
         {
-            this.Activity?.Dispose();
+            this.activity?.Dispose();
             this.activityLinks.Clear();
         }
     }

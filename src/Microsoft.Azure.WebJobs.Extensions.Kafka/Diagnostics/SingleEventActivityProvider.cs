@@ -33,13 +33,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private new void AddActivityTags()
         {
             base.AddActivityTags();
-            this.Activity?.AddTag(ActivityTags.KafkaPartition, kafkaEvent.Partition.ToString());
-            this.Activity?.AddTag(ActivityTags.KafkaMessageKey, kafkaEvent.Key);
+            this.activity?.AddTag(ActivityTags.KafkaPartition, kafkaEvent.Partition.ToString());
+            this.activity?.AddTag(ActivityTags.KafkaMessageKey, kafkaEvent.Key);
         }
 
         public void Dispose()
         {
-            this.Activity?.Dispose();
+            this.activity?.Dispose();
         }
     }
 }
