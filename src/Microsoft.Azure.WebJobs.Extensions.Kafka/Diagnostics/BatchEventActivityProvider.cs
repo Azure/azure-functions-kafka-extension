@@ -42,15 +42,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public void CreateActivityLink(string traceParentId)
         {
-            var traceParentFields = traceParentId.Split('-');
-            if (traceParentFields.Length != 4)
+            var isParsedContext = ActivityContext.TryParse(traceParentId, out ActivityContext linkedContext);
+            if (!isParsedContext)
             {
-                //ERROR: Invalid traceparent Header
+                throw new Exception($"{traceParentId} is not a valid traceparent.");
             }
-
-            var traceId = ActivityTraceId.CreateFromString(traceParentFields[1].AsSpan());
-            var spanId = ActivitySpanId.CreateFromString(traceParentFields[2].AsSpan());
-            var linkedContext = new ActivityContext(traceId, spanId, ActivityTraceFlags.None);
             var link = new ActivityLink(linkedContext);
             activityLinks.Add(link);
         }
