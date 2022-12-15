@@ -8,7 +8,6 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Confluent.Kafka;
-using Microsoft.Azure.WebJobs.Extensions.Kafka.Diagnostics;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Extensions.Logging;
 
