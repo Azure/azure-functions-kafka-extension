@@ -7,6 +7,8 @@ using System.Text;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
+    // For more information related to activity tags for Kafka,
+    // please refer here - https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/messaging.md#apache-kafka
     internal class ActivityTags
     {
         // Required
