@@ -21,7 +21,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public void CreateAndStartActivity()
         {
-            if (ActivitySource.HasListeners())
+            if (KafkaActivitySource.HasListeners())
             {
                 KafkaEventInstrumentation.TryExtractTraceParentId(kafkaEvent, out string traceparent);
                 this.CreateActivity(SingleKafkaTriggerActivityName, ActivityKind.Consumer, traceparent);

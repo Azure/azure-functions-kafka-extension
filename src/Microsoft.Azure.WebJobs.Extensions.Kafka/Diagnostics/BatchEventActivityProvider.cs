@@ -23,7 +23,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public void CreateAndStartActivity()
         {
-            if (ActivitySource.HasListeners())
+            if (KafkaActivitySource.HasListeners())
             {
                 this.CreateActivityLinksForAllEvents();
                 this.CreateActivity(KafkaBatchTriggerActivityName, ActivityKind.Consumer, null, activityLinks);
