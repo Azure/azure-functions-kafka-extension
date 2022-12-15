@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Kafka.Diagnostics
+namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
     internal class ActivityTags
     {

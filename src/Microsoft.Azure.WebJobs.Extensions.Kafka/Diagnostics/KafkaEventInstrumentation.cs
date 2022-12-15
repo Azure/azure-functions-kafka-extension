@@ -7,7 +7,7 @@ using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Text;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Kafka.Diagnostics
+namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
     internal static class KafkaEventInstrumentation
     {
