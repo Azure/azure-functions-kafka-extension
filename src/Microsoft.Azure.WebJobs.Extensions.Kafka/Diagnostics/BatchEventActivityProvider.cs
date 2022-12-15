@@ -14,21 +14,29 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly IKafkaEventData[] kafkaEvents;
         private static string KafkaBatchTriggerActivityName { get; } = "MultipleKafkaTrigger.Process";
 
-        public BatchEventActivityProvider(IKafkaEventData[] kafkaEvents, string consumerGroup) : base(kafkaEvents[0].Topic, consumerGroup)
+        public BatchEventActivityProvider(IKafkaEventData[] kafkaEvents, string consumerGroup) : base(GetTopic(kafkaEvents), consumerGroup)
         {
             this.kafkaEvents = kafkaEvents;
             this.activityLinks = new List<ActivityLink>();
-            this.CreateAndStartActivity();
+            this.CreateActivity();
         }
 
-        public void CreateAndStartActivity()
+        private static string GetTopic(IKafkaEventData[] kafkaEvents)
+        {
+            if (kafkaEvents.Length == 0)
+            {
+                throw new Exception("KafkaEvents array is null");
+            }
+            return kafkaEvents[0].Topic;
+        }
+
+        public void CreateActivity()
         {
             if (KafkaActivitySource.HasListeners())
             {
                 this.CreateActivityLinksForAllEvents();
                 this.CreateActivity(KafkaBatchTriggerActivityName, ActivityKind.Consumer, null, activityLinks);
                 this.AddActivityTags();
-                this.StartActivity();
             }
         }
 

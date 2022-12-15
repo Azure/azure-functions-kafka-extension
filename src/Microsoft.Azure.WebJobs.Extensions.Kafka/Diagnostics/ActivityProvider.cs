@@ -24,29 +24,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.consumerGroup = consumerGroup;
         }
 
-        protected void CreateActivity(string name, ActivityKind kind, string traceparentId=null, List<ActivityLink> activityLinks=null)
+        protected void CreateActivity(string name, ActivityKind kind, string traceparentId = null, List<ActivityLink> activityLinks = null)
         {
             this.activity = KafkaActivitySource.StartActivity(name, kind, traceparentId, null, activityLinks);
         }
 
-        protected void StartActivity()
+        public void StartActivity()
         {
             this.activity?.Start();
         }
 
-        public void SetActivityStatusSucceded()
-        {
-            this.activity?.SetStatus(ActivityStatusCode.Ok, "");
-        }
-
-        public void SetActivityStatusError(Exception ex)
-        {
-            this.activity?.SetStatus(ActivityStatusCode.Error, ex.Message.ToString());
-        }
-
         public void StopCurrentActivity()
         {
-           this.activity?.Stop();
+            this.activity?.Stop();
         }
 
         protected void AddActivityTags()
@@ -56,7 +46,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.activity?.AddTag(ActivityTags.DestinationKind, "topic");
             this.activity?.AddTag(ActivityTags.Operation, "process");
             this.activity?.AddTag(ActivityTags.KafkaConsumerGroup, this.consumerGroup);
-            //this.Activity?.AddTag(ActivityTags.KafkaClientId, kafkaClientId);
+        }
+        public void SetActivityStatus(bool succeeded, Exception ex)
+        {
+            if (succeeded)
+            {
+                this.activity?.SetStatus(ActivityStatusCode.Ok, "");
+            }
+            else
+            {
+                this.activity?.SetStatus(ActivityStatusCode.Error, ex.Message.ToString());
+            }
         }
     }
 }

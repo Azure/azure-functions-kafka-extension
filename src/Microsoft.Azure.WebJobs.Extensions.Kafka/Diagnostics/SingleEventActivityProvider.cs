@@ -16,17 +16,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public SingleEventActivityProvider(IKafkaEventData kafkaEvent, string consumerGroup) : base(kafkaEvent.Topic, consumerGroup)
         {
             this.kafkaEvent = kafkaEvent;
-            this.CreateAndStartActivity();
+            this.CreateActivity();
         }
 
-        public void CreateAndStartActivity()
+        public void CreateActivity()
         {
             if (KafkaActivitySource.HasListeners())
             {
                 KafkaEventInstrumentation.TryExtractTraceParentId(kafkaEvent, out string traceparent);
                 this.CreateActivity(SingleKafkaTriggerActivityName, ActivityKind.Consumer, traceparent);
                 this.AddActivityTags();
-                this.StartActivity();
             }
         }
 
