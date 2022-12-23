@@ -2,11 +2,12 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Confluent.Kafka;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.Trigger;
-using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Triggers;
@@ -48,11 +49,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 return Task.FromResult<ITriggerBinding>(null);
             }
 
-            var consumerConfig = CreateConsumerConfiguration(attribute);
+            var schemaRegistryConfig =
+                parameter.GetCustomAttributes<SchemaRegistryConfigAttribute>(inherit: false)
+                    .Select(configAttribute => new KeyValuePair<string, string>(configAttribute.Key, configAttribute.Value));
 
             var keyAndValueTypes = SerializationHelper.GetKeyAndValueTypes(attribute.AvroSchema, parameter.ParameterType, typeof(string));
-            var valueDeserializer = SerializationHelper.ResolveValueDeserializer(keyAndValueTypes.ValueType, keyAndValueTypes.AvroSchema);            
+            var valueDeserializer = SerializationHelper.ResolveValueDeserializer(keyAndValueTypes.ValueType, keyAndValueTypes.AvroSchema, schemaRegistryConfig);
 
+            var consumerConfig = CreateConsumerConfiguration(attribute);
             var binding = CreateBindingStrategyFor(keyAndValueTypes.KeyType ?? typeof(Ignore), keyAndValueTypes.ValueType, keyAndValueTypes.RequiresKey, valueDeserializer, parameter, consumerConfig);
             return Task.FromResult<ITriggerBinding>(new KafkaTriggerBindingWrapper(binding));
         }

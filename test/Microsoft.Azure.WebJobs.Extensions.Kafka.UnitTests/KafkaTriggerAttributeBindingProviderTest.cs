@@ -20,6 +20,7 @@ using System.Threading.Tasks;
 using Xunit;
 using System.Collections.Generic;
 using System.IO;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.Trigger;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.Helpers;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
@@ -74,6 +75,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         static void GenericAvroWithoutKey_Fn([KafkaTrigger("brokers:9092", "myTopic", AvroSchema = "fake")] KafkaEventData<GenericRecord> genericRecord) { }
         static void GenericAvro_WithLongKey_Fn([KafkaTrigger("brokers:9092", "myTopic", AvroSchema = "fake")] KafkaEventData<long, GenericRecord> genericRecord) { }
         static void GenericAvro_WithStringKey_Fn([KafkaTrigger("brokers:9092", "myTopic", AvroSchema = "fake")] KafkaEventData<string, GenericRecord> genericRecord) { }
+        static void GenericWithSchemaRegistry_Fn([SchemaRegistryConfig("schema.registry.url", "localhost:8081")][KafkaTrigger("brokers:9092", "myTopic")] KafkaEventData<GenericRecord> genericRecord) { }
 
         static void RawSpecificAvro_Fn([KafkaTrigger("brokers:9092", "myTopic")] MyAvroRecord myAvroRecord) { }
         static void SpecificAvro_Fn([KafkaTrigger("brokers:9092", "myTopic")] KafkaEventData<Null, MyAvroRecord> myAvroRecord) { }
@@ -193,6 +195,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         [InlineData(nameof(GenericAvro_Fn), typeof(Null))]
         [InlineData(nameof(GenericAvroWithoutKey_Fn), typeof(string))]
         [InlineData(nameof(RawGenericAvro_Fn), typeof(string))]
+        [InlineData(nameof(GenericWithSchemaRegistry_Fn), typeof(string))]
         public async Task When_Avro_Schema_Is_Provided_Should_Create_GenericRecord_Listener(string functionName, Type expectedKeyType)
         {
             var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")

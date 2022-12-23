@@ -25,6 +25,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public string Topic { get; set; }
 
         public KafkaAttribute Attribute { get; set; }
+        
+        public IEnumerable<KeyValuePair<string, string>> SchemaRegistryConfig { get; set; }
 
         internal Task SendAndCreateEntityIfNotExistsAsync<T>(T item, Guid functionInstanceId, CancellationToken cancellationToken)
         {

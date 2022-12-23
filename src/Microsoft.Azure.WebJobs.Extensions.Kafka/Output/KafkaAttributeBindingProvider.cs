@@ -1,12 +1,14 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-using Confluent.Kafka;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Extensions.Configuration;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.Trigger;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
@@ -44,7 +46,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 return Task.FromResult<IBinding>(null);
             }
-            
+
+
+            IEnumerable<KeyValuePair<string, string>> schemaRegistryConfig = null;
+            if (parameter.GetCustomAttributes().Any())
+            {
+                schemaRegistryConfig = parameter.GetCustomAttributes<SchemaRegistryConfigAttribute>(inherit: false)
+                    .Select(configAttribute =>
+                        new KeyValuePair<string, string>(configAttribute.Key, configAttribute.Value));
+            }
 
             var argumentBinding = InnerProvider.TryCreate(parameter);
             var keyAndValueTypes = SerializationHelper.GetKeyAndValueTypes(attribute.AvroSchema, parameter.ParameterType, typeof(string));
@@ -58,7 +68,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 keyAndValueTypes.ValueType,
                 keyAndValueTypes.AvroSchema,
                 this.config,
-                this.nameResolver);
+                this.nameResolver,
+                schemaRegistryConfig);
             return Task.FromResult<IBinding>(binding);
         }
     }
