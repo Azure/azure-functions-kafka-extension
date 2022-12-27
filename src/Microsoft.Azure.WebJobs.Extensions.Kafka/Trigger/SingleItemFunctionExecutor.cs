@@ -89,7 +89,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 catch (Exception ex)
                 {
                     singleEventActivityProvider.SetActivityStatus(false, ex);
-                    throw ex;
+                    throw;
                 }
                 finally
                 {
