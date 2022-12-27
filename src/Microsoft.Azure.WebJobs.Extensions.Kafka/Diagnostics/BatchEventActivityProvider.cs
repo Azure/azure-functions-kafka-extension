@@ -29,15 +29,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
             return kafkaEvents[0].Topic;
         }
-
+        
+        // Create a activity if there are active listeners for Activity Source
         public void CreateActivity()
         {
-            if (KafkaActivitySource.HasListeners())
+            if (!KafkaActivitySource.HasListeners())
             {
-                this.CreateActivityLinksForAllEvents();
-                this.CreateActivity(KafkaBatchTriggerActivityName, ActivityKind.Consumer, null, activityLinks);
-                this.AddActivityTags();
+                return;
             }
+
+            this.CreateActivityLinksForAllEvents();
+            this.CreateActivity(KafkaBatchTriggerActivityName, ActivityKind.Consumer, null, activityLinks);
+            this.AddActivityTags();
         }
 
         public void CreateActivityLink(string traceParentId)
