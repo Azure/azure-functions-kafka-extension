@@ -43,6 +43,36 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         }
 
         [Fact]
+        public void SingleActivityProvider_Should_Create_Activity_With_New_Traceparent()
+        {
+            var consumerGroup = "my-consumer-group";
+            var numActivityTags = 7;
+            string topicName = "mytopic";
+            var kafkaEvent = CreateKafkaEventObjWithOutTraceParentHeader(topicName);
+            var activityListener = new ActivityListener
+            {
+                ShouldListenTo = _ => true,
+                Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
+            };
+            ActivitySource.AddActivityListener(activityListener);
+            var singleEventActivityProvider = new SingleEventActivityProvider(kafkaEvent, consumerGroup);
+            Assert.NotNull(Activity.Current);
+            var activity = Activity.Current;
+            Assert.NotNull(activity.TraceId.ToString());
+            Assert.Equal(numActivityTags, activity.Tags.Count());
+            Assert.Equal("kafka", activity.GetTagItem(ActivityTags.System).ToString());
+            Assert.Equal(kafkaEvent.Topic, activity.GetTagItem(ActivityTags.DestinationName).ToString());
+            Assert.Equal("topic", activity.GetTagItem(ActivityTags.DestinationKind).ToString());
+            Assert.Equal("process", activity.GetTagItem(ActivityTags.Operation).ToString());
+            Assert.Equal(consumerGroup, activity.GetTagItem(ActivityTags.KafkaConsumerGroup).ToString());
+            Assert.Equal(kafkaEvent.Partition.ToString(), activity.GetTagItem(ActivityTags.KafkaPartition));
+            var key = activity.GetTagItem(ActivityTags.KafkaMessageKey).ToString();
+            Assert.Equal(kafkaEvent.Key, activity.GetTagItem(ActivityTags.KafkaMessageKey).ToString());
+            singleEventActivityProvider.Dispose();
+            activityListener.Dispose();
+        }
+
+        [Fact]
         public void BatchActivityProvider_Should_Create_Activity_With_Links()
         {
             var consumerGroup = "my-consumer-group";
@@ -86,6 +116,41 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             activityListener.Dispose();
         }
 
+        [Fact]
+        public void BatchActivityProvider_Should_Create_Activity_Without_Links_If_Null_Traceparent()
+        {
+            var consumerGroup = "my-consumer-group";
+            int numkafkaEvents = 10;
+            var kafkaEvents = new KafkaEventData<string, string>[numkafkaEvents];
+            var topicName = "mytopic";
+            var numActivityTags = 5;
+            for (int i = 0; i < numkafkaEvents; i++)
+            {
+                kafkaEvents[i] = CreateKafkaEventObjWithOutTraceParentHeader(topicName);
+            }
+
+            var activityListener = new ActivityListener
+            {
+                ShouldListenTo = _ => true,
+                Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
+            };
+            ActivitySource.AddActivityListener(activityListener);
+            var batchEventActivityProvider = new BatchEventActivityProvider(kafkaEvents, consumerGroup);
+            Assert.NotNull(Activity.Current);
+            var activity = Activity.Current;
+            var activityLinks = activity.Links.ToArray<ActivityLink>();
+
+            Assert.Empty(activityLinks);
+            Assert.Equal(numActivityTags, activity.Tags.Count());
+            Assert.Equal("kafka", activity.GetTagItem(ActivityTags.System));
+            Assert.Equal(topicName, activity.GetTagItem(ActivityTags.DestinationName));
+            Assert.Equal("topic", activity.GetTagItem(ActivityTags.DestinationKind));
+            Assert.Equal("process", activity.GetTagItem(ActivityTags.Operation));
+            Assert.Equal(consumerGroup, activity.GetTagItem(ActivityTags.KafkaConsumerGroup));
+            batchEventActivityProvider.Dispose();
+            activityListener.Dispose();
+        }
+
         public string CreateRandomTraceParent()
         {
             var traceId = ActivityTraceId.CreateRandom();
@@ -98,6 +163,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var kafkaEvent = new KafkaEventData<string, string>("key", "value");
             var traceparent = CreateRandomTraceParent();
             kafkaEvent.Headers.Add("traceparent", Encoding.ASCII.GetBytes(traceparent));
+            kafkaEvent.Topic = topicName;
+            kafkaEvent.Partition = 1;
+            return kafkaEvent;
+        }
+
+        public KafkaEventData<string, string> CreateKafkaEventObjWithOutTraceParentHeader(string topicName)
+        {
+            var kafkaEvent = new KafkaEventData<string, string>("key", "value");
             kafkaEvent.Topic = topicName;
             kafkaEvent.Partition = 1;
             return kafkaEvent;
