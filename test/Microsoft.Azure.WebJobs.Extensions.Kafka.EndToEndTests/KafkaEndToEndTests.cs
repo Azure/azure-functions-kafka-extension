@@ -533,6 +533,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             return input.ToList();
         }
 
+        private List<KafkaEventData<string>> GetKafkaEventsWithoutTraceParentHeader(int numEvents)
+        {
+            var input = Enumerable.Range(1, numEvents)
+                .Select(x => {
+                    return new KafkaEventData<string>
+                    {
+                        Value = x.ToString()
+                    };
+                });
+            return input.ToList();
+        }
+
         [Fact]
         public async Task Tracing_For_SingleEventTrigger()
         {
@@ -591,6 +603,64 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
         }
 
         [Fact]
+        public async Task Tracing_SingleEventTrigger_With_No_Traceparent() 
+        {
+            var activityListener = new ActivityListener
+            {
+                ShouldListenTo = _ => true,
+                Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
+            };
+            ActivitySource.AddActivityListener(activityListener);
+
+            int producedMessagesCount = 10;
+
+
+            var loggerProvider = CreateTestLoggerProvider();
+
+            var eventList = GetKafkaEventsWithoutTraceParentHeader(producedMessagesCount);
+            foreach (var kafkaEvent in eventList)
+            {
+                kafkaEvent.Topic = Constants.StringTopicWithOnePartitionName;
+            }
+            var eventCount = eventList.Count;
+
+            using (var host = await StartHostAsync(new[] { typeof(SingleEventTrigger_With_Activity), typeof(KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>) }, loggerProvider,
+                serviceRegistrationCallback: s =>
+                {
+                    s.AddSingleton(eventList);
+                }))
+            {
+                var jobHost = host.GetJobHost();
+
+                await jobHost.CallAsync(
+                    typeof(KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>).GetMethod(nameof(KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>.Produce))
+                    );
+
+                await TestHelpers.Await(() =>
+                {
+                    var foundCount = loggerProvider.GetAllUserLogMessages().Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("TraceId:"));
+                    return foundCount == producedMessagesCount;
+                });
+
+                // Give time for the commit to be saved
+                await Task.Delay(1500);
+
+                await host.StopAsync();
+            }
+
+            var message = "TraceId:";
+            var loggedMessages = loggerProvider.GetAllUserLogMessages().Where(p => p.FormattedMessage != null && p.FormattedMessage.Contains(message));
+            Assert.Equal(loggedMessages.Count(), eventCount);
+            foreach ( var msg in loggedMessages)
+            {
+                var traceparent = msg.FormattedMessage.Split(":")[1];
+                Assert.NotNull(traceparent);
+            }
+
+            activityListener.Dispose();
+        }
+
+        [Fact]
         public async Task Tracing_For_BatchEventTrigger()
         {
             var activityListener = new ActivityListener
@@ -623,7 +693,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                 await jobHost.CallAsync(
                     typeof(KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>).GetMethod(nameof(KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>.Produce))
                     );
-
+                        
                 await TestHelpers.Await(() =>
                 {
                     var foundCount = loggerProvider.GetAllUserLogMessages().Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("TraceId:"));
@@ -643,6 +713,57 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                 Assert.Single(loggerProvider.GetAllUserLogMessages().Where(p => p.FormattedMessage != null && p.FormattedMessage.Contains(message)));
             }
 
+            activityListener.Dispose();
+        }
+
+        [Fact]
+        public async Task Tracing_For_BatchEventTrigger_Without_Traceparent()
+        {
+            var activityListener = new ActivityListener
+            {
+                ShouldListenTo = _ => true,
+                Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
+            };
+            ActivitySource.AddActivityListener(activityListener);
+
+            int producedMessagesCount = 10;
+
+
+            var loggerProvider = CreateTestLoggerProvider();
+
+            var eventList = GetKafkaEventsWithoutTraceParentHeader(producedMessagesCount);
+            foreach (var kafkaEvent in eventList)
+            {
+                kafkaEvent.Topic = Constants.StringTopicWithOnePartitionName;
+            }
+            var eventCount = eventList.Count;
+
+            using (var host = await StartHostAsync(new[] { typeof(BatchEvenTrigger_With_Activity), typeof(KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>) }, loggerProvider,
+                serviceRegistrationCallback: s =>
+                {
+                    s.AddSingleton(eventList);
+                }))
+            {
+                var jobHost = host.GetJobHost();
+
+                await jobHost.CallAsync(
+                    typeof(KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>).GetMethod(nameof(KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>.Produce))
+                    );
+
+                await TestHelpers.Await(() =>
+                {
+                    var foundCount = loggerProvider.GetAllUserLogMessages().Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("TraceId:"));
+                    return foundCount == 1;
+                });
+
+                // Give time for the commit to be saved
+                await Task.Delay(1500);
+
+                await host.StopAsync();
+            }
+
+            var message = "LinkedActivity: ";
+            Assert.Empty(loggerProvider.GetAllUserLogMessages().Where(p => p.FormattedMessage != null && p.FormattedMessage.Contains(message)));
             activityListener.Dispose();
         }
 
