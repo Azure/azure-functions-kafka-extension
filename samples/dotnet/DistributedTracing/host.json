@@ -1,0 +1,15 @@
+{
+  "version": "2.0",
+  "logging": {
+    "fileLoggingMode": "debugOnly",
+    "logLevel": {
+      "default": "Debug"
+    }
+  },
+  "extensions": {
+    "kafka": {
+      "maxBatchSize": "3",
+      "SubscriberIntervalInSeconds":  "100"
+    }
+  }
+}
