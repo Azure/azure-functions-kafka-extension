@@ -19,9 +19,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     /// </summary>
     public class MultipleItemFunctionExecutor<TKey, TValue> : FunctionExecutorBase<TKey, TValue>
     {
-        public MultipleItemFunctionExecutor(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, int channelCapacity, int channelFullRetryIntervalInMs, ICommitStrategy<TKey, TValue> commitStrategy, ILogger logger) 
+        private readonly string consumerGroup;
+
+        public MultipleItemFunctionExecutor(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer,  string consumerGroup, int channelCapacity, int channelFullRetryIntervalInMs, ICommitStrategy<TKey, TValue> commitStrategy, ILogger logger) 
             : base(executor, consumer, channelCapacity, channelFullRetryIntervalInMs, commitStrategy, logger)
         {
+            this.consumerGroup = consumerGroup;
             logger.LogInformation($"FunctionExecutor Loaded: {nameof(MultipleItemFunctionExecutor<TKey, TValue>)}");
         }
 
@@ -40,7 +43,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                             TriggerValue = triggerInput,
                         };
 
-                        var functionResult = await this.ExecuteFunctionAsync(triggerData, cancellationToken);
+                        // Create Batch Event Activity Provider and Start the activity 
+                        var batchEventActivityProvider = new BatchEventActivityProvider(itemsToExecute, consumerGroup);
+                        batchEventActivityProvider.StartActivity();
+
+                        FunctionResult functionResult = null;
+                        try
+                        {
+                            // Execute the function
+                            functionResult = await this.ExecuteFunctionAsync(triggerData, cancellationToken);
+                            // Set the status of activity.
+                            batchEventActivityProvider.SetActivityStatus(functionResult.Succeeded, functionResult.Exception);
+                        }
+                        catch (Exception ex)
+                        {
+                            batchEventActivityProvider.SetActivityStatus(false, ex);
+                            throw;
+                        }
+                        finally
+                        {
+                            // Stop the Activity
+                            batchEventActivityProvider.StopCurrentActivity();
+                        }
 
                         var offsetsToCommit = new Dictionary<int, TopicPartitionOffset>();
                         for (var i=itemsToExecute.Length - 1; i >= 0; i--)
