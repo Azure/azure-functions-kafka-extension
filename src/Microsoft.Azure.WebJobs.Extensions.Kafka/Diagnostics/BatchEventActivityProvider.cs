@@ -55,8 +55,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             foreach (var kafkaEvent in kafkaEvents)
             {
-                KafkaEventInstrumentation.TryExtractTraceParentId(kafkaEvent, out var traceParentId);
-                this.CreateActivityLink(traceParentId);
+                if (KafkaEventInstrumentation.TryExtractTraceParentId(kafkaEvent, out var traceParentId))
+                {
+                    this.CreateActivityLink(traceParentId);
+                }
             }
         }
 

@@ -13,7 +13,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     {
         // For Trigger
         // Try to extract traceparent header
-        public static void TryExtractTraceParentId(IKafkaEventData kafkaEvent, out string traceParentId)
+        public static bool TryExtractTraceParentId(IKafkaEventData kafkaEvent, out string traceParentId)
         {
             traceParentId = null;
 
@@ -21,6 +21,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 traceParentId = Encoding.ASCII.GetString(traceParentIdInBytes);
             }
+            return traceParentId != null;
         }
     }
 }
