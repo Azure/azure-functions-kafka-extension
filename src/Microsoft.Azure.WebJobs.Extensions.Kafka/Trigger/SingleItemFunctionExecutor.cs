@@ -78,13 +78,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 // Create Single Event Activity Provider and Start the activity
                 var singleEventActivityProvider = new SingleEventActivityProvider(kafkaEventData, consumerGroup);
                 singleEventActivityProvider.StartActivity();
-                
-                // Execute the Function
-                FunctionResult functionResult = await this.ExecuteFunctionAsync(triggerData, cancellationToken);
-
-                // Set the status of activity and stop the activity.
-                singleEventActivityProvider.SetActivityStatus(functionResult.Succeeded, functionResult.Exception);
-                singleEventActivityProvider.StopCurrentActivity();
+                FunctionResult functionResult = null;
+                try
+                {
+                    // Execute the Function
+                    functionResult = await this.ExecuteFunctionAsync(triggerData, cancellationToken);
+                    // Set the status of activity.
+                    singleEventActivityProvider.SetActivityStatus(functionResult.Succeeded, functionResult.Exception);
+                }
+                catch (Exception ex)
+                {
+                    singleEventActivityProvider.SetActivityStatus(false, ex);
+                    throw ex;
+                }
+                finally
+                {
+                    // Stop the activity
+                    singleEventActivityProvider.StopCurrentActivity();
+                }
 
                 if (topicPartition == null)
                 {

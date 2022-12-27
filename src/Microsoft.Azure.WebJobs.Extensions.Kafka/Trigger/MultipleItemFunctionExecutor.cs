@@ -46,13 +46,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                         // Create Batch Event Activity Provider and Start the activity 
                         var batchEventActivityProvider = new BatchEventActivityProvider(itemsToExecute, consumerGroup);
                         batchEventActivityProvider.StartActivity();
-                        
-                        // Execute the function
-                        var functionResult = await this.ExecuteFunctionAsync(triggerData, cancellationToken);
-                        
-                        // Set the status of activity and stop the activity.
-                        batchEventActivityProvider.SetActivityStatus(functionResult.Succeeded, functionResult.Exception);
-                        batchEventActivityProvider.StopCurrentActivity();
+
+                        FunctionResult functionResult = null;
+                        try
+                        {
+                            // Execute the function
+                            functionResult = await this.ExecuteFunctionAsync(triggerData, cancellationToken);
+                            // Set the status of activity.
+                            batchEventActivityProvider.SetActivityStatus(functionResult.Succeeded, functionResult.Exception);
+                        }
+                        catch (Exception ex)
+                        {
+                            batchEventActivityProvider.SetActivityStatus(false, ex);
+                            throw ex;
+                        }
+                        finally
+                        {
+                            // Stop the Activity
+                            batchEventActivityProvider.StopCurrentActivity();
+                        }
 
                         var offsetsToCommit = new Dictionary<int, TopicPartitionOffset>();
                         for (var i=itemsToExecute.Length - 1; i >= 0; i--)
