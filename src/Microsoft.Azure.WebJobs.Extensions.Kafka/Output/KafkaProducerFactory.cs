@@ -122,6 +122,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 MessageSendMaxRetries = entity.Attribute.MaxRetries,
                 MessageTimeoutMs = entity.Attribute.MessageTimeoutMs,
                 RequestTimeoutMs = entity.Attribute.RequestTimeoutMs,
+                MessageMaxBytes = entity.Attribute.MaxMessageBytes,
                 SaslPassword = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.Password),
                 SaslUsername = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.Username),
                 SslKeyLocation = resolvedSslKeyLocation,
@@ -130,7 +131,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 SslCaLocation = resolvedSslCaLocation,
                 Debug = kafkaOptions?.LibkafkaDebug,
                 MetadataMaxAgeMs = kafkaOptions?.MetadataMaxAgeMs,
-                SocketKeepaliveEnable = kafkaOptions?.SocketKeepaliveEnable
+                SocketKeepaliveEnable = kafkaOptions?.SocketKeepaliveEnable,
+                LingerMs = entity.Attribute.LingerMs
             };
 
             if (entity.Attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet)

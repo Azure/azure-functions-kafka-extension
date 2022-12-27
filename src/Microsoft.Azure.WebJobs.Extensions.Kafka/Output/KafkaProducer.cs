@@ -55,40 +55,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public async Task ProduceAsync(string topic, object item)
         {
-            if (item == null)
-            {
-                throw new ArgumentNullException(nameof(item));
-            }
-
-            var actualItem = (IKafkaEventData)item;
-            if (actualItem == null)
-            {
-                throw new ArgumentException($"Message value is not of the expected type. Expected: {typeof(KafkaEventData<TKey, TValue>).Name}. Actual: {item.GetType().Name}");
-            }
-
-            if (actualItem.Value == null)
-            {
-                throw new ArgumentException("Message value was not defined");
-            }
-
-            var msg = MessageBuilder.BuildFrom(actualItem);
-
-            var topicUsed = topic;
-            if (string.IsNullOrEmpty(topic))
-            {
-                topicUsed = actualItem.Topic;
-
-                if (string.IsNullOrEmpty(topicUsed))
-                {
-                    throw new ArgumentException("No topic was defined in Kafka attribute or in KafkaEventData");
-                }
-            }
+            ValidateItem(item);
+            IKafkaEventData actualItem = GetItem(item);
+            Message<TKey, TValue> msg = BuildMessage(item, actualItem);
+            string topicUsed = FindTopic(topic, actualItem);
 
             try
             {
                 var deliveryResult = await this.producer.ProduceAsync(topicUsed, msg);
 
-                this.logger.LogDebug("Message delivered on {topic} / {partition} / {offset}", deliveryResult.Topic, (int)deliveryResult.Partition, (long)deliveryResult.Offset);                
+                this.logger.LogDebug("Message delivered on {topic} / {partition} / {offset}", deliveryResult.Topic, (int)deliveryResult.Partition, (long)deliveryResult.Offset);
             }
             catch (ProduceException<TKey, TValue> produceException)
             {
@@ -102,8 +78,90 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
         }
 
+        public void Produce(string topic, object item)
+        {
+            ValidateItem(item);
+            IKafkaEventData actualItem = GetItem(item);
+            Message<TKey, TValue> msg = BuildMessage(item, actualItem);
+            string topicUsed = FindTopic(topic, actualItem);
+
+            try
+            {
+                logger.LogInformation("in Produce method");
+                this.producer.Produce(topicUsed, msg, 
+                    deliveryResult => {
+                        if (deliveryResult.Error.Code != ErrorCode.NoError)
+                        {
+                            this.logger.LogError("msg failed to deliver on topic :: ", topicUsed + " error :: " + deliveryResult.Error.ToString());
+                            return;
+                        }
+                        this.logger.LogDebug("Message delivered on {topic} / {partition} / {offset}", deliveryResult.Topic, (int)deliveryResult.Partition, (long)deliveryResult.Offset);
+                    });
+            }
+            catch (ProduceException<TKey, TValue> produceException)
+            {
+                logger.LogError("Failed to delivery message to {topic} / {partition} / {offset}. Reason: {reason}. Full Error: {error}", produceException.DeliveryResult?.Topic, (int)produceException.DeliveryResult?.Partition, (long)produceException.DeliveryResult?.Offset, produceException.Error.Reason, produceException.Error.ToString());
+                throw;
+            }
+            catch (Exception ex)
+            {
+                this.logger.LogError(ex, "Error producing into {topic}", topicUsed);
+                throw;
+            }
+        }
+
+        public void Flush()
+        {
+            this.producer.Flush();
+        }
+
+        private static IKafkaEventData GetItem(object item)
+        {
+            IKafkaEventData actualItem = (IKafkaEventData)item;
+            if (actualItem == null)
+            {
+                throw new ArgumentException($"Message value is not of the expected type. Expected: {typeof(KafkaEventData<TKey, TValue>).Name}. Actual: {item.GetType().Name}");
+            }
+
+            return actualItem;
+        }
+
+        private static string FindTopic(string topic, IKafkaEventData actualItem)
+        {
+            var topicUsed = topic;
+            if (string.IsNullOrEmpty(topic))
+            {
+                topicUsed = actualItem.Topic;
+
+                if (string.IsNullOrEmpty(topicUsed))
+                {
+                    throw new ArgumentException("No topic was defined in Kafka attribute or in KafkaEventData");
+                }
+            }
+
+            return topicUsed;
+        }
+
+        private Message<TKey, TValue> BuildMessage(object item, IKafkaEventData actualItem)
+        {
+            if (actualItem.Value == null)
+            {
+                throw new ArgumentException("Message value was not defined");
+            }
+            return MessageBuilder.BuildFrom(actualItem);
+        }
+
+        private static void ValidateItem(object item)
+        {
+            if (item == null)
+            {
+                throw new ArgumentNullException(nameof(item));
+            }
+        }
+
         public void Dispose()
         {
+            this.producer?.Flush();
             this.producer?.Dispose();
             this.producer = null;
             GC.SuppressFinalize(this);

@@ -7,6 +7,7 @@ using System.Text;
 using Xunit;
 using Moq;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.output
 {
@@ -77,6 +78,42 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.output
                 kafkaProducerEntity, Guid.NewGuid());
             Task task = asyncCollector.AddAsync(jsonStringValueHeader, default);
             Assert.True(task.IsCompleted);
+        }
+
+        [Fact]
+        public void AddAsync_Item_Is_Of_KafkaEventData_Json_String_Key_Types()
+        {
+            BuildMockData();
+            JObject dataObj = JObject.Parse(jsonStringValueHeader);
+            dataObj["Key"] = 1;
+            IAsyncCollector<string> asyncCollector = new KafkaProducerAsyncCollector<string>(
+                kafkaProducerEntity, Guid.NewGuid());
+
+            Task task = asyncCollector.AddAsync(dataObj.ToString(), default);
+            Assert.True(task.IsCompleted);
+        }
+
+        [Fact]
+        public void AddAsync_Item_Is_Of_KafkaEventData_Json_String_Key_Types_Flush()
+        {
+            BuildMockData();
+            List<JObject> jobjList = new List<JObject>();
+            for (int i=0; i<20; i++)
+            {
+                JObject dataObj = JObject.Parse(jsonStringValueHeader);
+                dataObj["Key"] = i % 2;
+                jobjList.Add(dataObj);
+            }
+            IAsyncCollector<string> asyncCollector = new KafkaProducerAsyncCollector<string>(
+                kafkaProducerEntity, Guid.NewGuid());
+
+            foreach (JObject dataObj in jobjList)
+            {
+                Task task = asyncCollector.AddAsync(dataObj.ToString(), default);
+                Assert.True(task.IsCompleted);
+            }
+            Task flushTask = asyncCollector.FlushAsync();
+            Assert.True(flushTask.IsCompleted);
         }
     }
 }

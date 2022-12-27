@@ -72,7 +72,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 }
 
                 var schemaRegistry = new LocalSchemaRegistry(specifiedAvroSchema);
-                return Activator.CreateInstance(typeof(AvroSerializer<>).MakeGenericType(valueType), schemaRegistry, null /* config */);
+                var serializer = Activator.CreateInstance(typeof(AvroSerializer<>).MakeGenericType(valueType), schemaRegistry, null /* config */);
+                return typeof(SyncOverAsyncSerializerExtensionMethods).GetMethod("AsSyncOverAsync").MakeGenericMethod(valueType).Invoke(null, new object[] { serializer });
             }
 
             return null;
