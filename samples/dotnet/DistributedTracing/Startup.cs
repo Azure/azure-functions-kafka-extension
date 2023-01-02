@@ -20,7 +20,7 @@ using System.Diagnostics;
 using OpenTelemetry.Exporter;
 using System.Net.Http;
 
-[assembly: FunctionsStartup(typeof(EventHub.Startup))]
+[assembly: FunctionsStartup(typeof(DistributedTracing.Startup))]
 namespace DistributedTracing
 {
     public class Startup : FunctionsStartup
