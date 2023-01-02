@@ -30,7 +30,7 @@ Put this connection string value in the Startup.cs file in this folder as below:
 ```cs
     .AddAzureMonitorTraceExporter(o =>
     {
-        o.ConnectionString = "<APP_INSIGHTS_CONNECTION-STRING>";
+        o.ConnectionString = "<APP_INSIGHTS_CONNECTION_STRING>";
     })
 ```
 **Note:** We do not recommend to hard code connection string in the code for production environment. 

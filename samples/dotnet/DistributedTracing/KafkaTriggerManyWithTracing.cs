@@ -9,9 +9,9 @@ using System.Text;
 
 namespace DistributedTracing
 {
-    public class KafkaTriggerManyWithHeaders
+    public class KafkaTriggerManyWithTracing
     {
-        [FunctionName("KafkaTriggerManyWithHeaders")]
+        [FunctionName("KafkaTriggerManyWithTracing")]
         public static void Run(
             [KafkaTrigger("BrokerList",
                           "topic",
@@ -24,11 +24,10 @@ namespace DistributedTracing
             foreach (KafkaEventData<string> eventData in events)
             {
                 log.LogInformation($"C# Kafka trigger function processed a message: {eventData.Value}");
-                log.LogInformation($"Headers: ");
-                var headers = eventData.Headers;
-                foreach (var header in headers)
-                {
-                    log.LogInformation($"Key = {header.Key} Value = {System.Text.Encoding.UTF8.GetString(header.Value)}");
+                var foundTraceParent = eventData.Headers.TryGetFirst("traceparent", out var traceparentInBytes);
+                if (foundTraceParent) {
+                    var traceparent = Encoding.UTF8.GetString(traceparentInBytes);
+                    log.LogInformation($"Traceparent Header for the event: {traceparent}");                    
                 }
             }
             var activity = Activity.Current;
