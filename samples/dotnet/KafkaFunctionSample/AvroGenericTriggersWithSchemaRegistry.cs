@@ -23,7 +23,7 @@ namespace KafkaFunctionSample
     /// 
     public class AvroGenericTriggersWithSchemaRegistry
     {
-        [FunctionName(nameof(PageViewsSchemaRegistry))]
+        // [FunctionName(nameof(PageViewsSchemaRegistry))]
         public static void PageViewsSchemaRegistry(
             [SchemaRegistryConfig("schema.registry.url", "localhost:8081")]
             [KafkaTrigger("LocalBroker", "pageviews", ConsumerGroup = "azfunc")]

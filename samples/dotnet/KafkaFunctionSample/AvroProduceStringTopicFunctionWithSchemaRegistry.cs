@@ -39,8 +39,7 @@ namespace KafkaFunctionSample
         /// curl -X POST http://localhost:7071/api/AvroProduceStringTopicSchemaRegistry
         ///
         /// To test this, install a schema registry locally with
-        /// <see href="https://docs.confluent.io/platform/current/platform-quickstart.html#cp-quick-start-docker">the tutorial from Confluent</see>
-        /// and uncomment the function name attribute in this file.
+        /// <see href="https://docs.confluent.io/platform/current/platform-quickstart.html#cp-quick-start-docker">the tutorial from Confluent</see>.
         /// You also have to create a topic called "avroTopic" and add a schema via the Confluent web UI.
         /// The schema that you have to add can be copied from <see cref="PageViewsSchema"/>.
         /// </summary>
