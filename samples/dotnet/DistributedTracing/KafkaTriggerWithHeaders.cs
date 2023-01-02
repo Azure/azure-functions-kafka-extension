@@ -28,8 +28,7 @@ namespace DistributedTracing
                 log.LogInformation($"Key = {header.Key} Value = {System.Text.Encoding.UTF8.GetString(header.Value)}");
             }
             var activity = Activity.Current;
-            Console.WriteLine("Activity Id: " + activity);
-            Console.WriteLine("Parent Activity Id:" + activity.ParentId);
+            Console.WriteLine("Activity Id: " + activity.TraceId);
         }
     }
 }

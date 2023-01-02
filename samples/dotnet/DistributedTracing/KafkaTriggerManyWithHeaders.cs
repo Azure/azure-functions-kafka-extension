@@ -32,7 +32,7 @@ namespace DistributedTracing
                 }
             }
             var activity = Activity.Current;
-            Console.WriteLine("Activity Id: " + activity);
+            Console.WriteLine("Activity Id: " + activity.TraceId);
             Console.WriteLine("Linked Activities:");
             foreach (var item in activity.Links)
             {
