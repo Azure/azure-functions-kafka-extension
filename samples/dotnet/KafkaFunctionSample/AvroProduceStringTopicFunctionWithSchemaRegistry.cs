@@ -36,7 +36,7 @@ namespace KafkaFunctionSample
 
         /// <summary>
         /// To execute posting an object, execute:
-        /// curl -X POST http://localhost:7071/api/AvroProduceStringTopicSchemaRegistry
+        /// curl http://localhost:7071/api/AvroProduceStringTopicSchemaRegistry
         ///
         /// To test this, install a schema registry locally with
         /// <see href="https://docs.confluent.io/platform/current/platform-quickstart.html#cp-quick-start-docker">the tutorial from Confluent</see>.
