@@ -1,6 +1,6 @@
 # Distributed Tracing Sample
 
-This folder contains sample for Distributed Tracing feature for dotnet in-proc Kafka trigger functions. In this sample, we are using Kafka Trigger Functions with EventHub as the source. 
+This folder contains sample for Distributed Tracing feature for **Dotnet in-proc** Kafka trigger functions. In this sample, we are using Kafka Trigger Functions with EventHub as the source. 
 
 ## Prereqs
 
