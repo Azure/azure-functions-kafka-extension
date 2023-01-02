@@ -6,7 +6,7 @@ using System;
 using System.Diagnostics;
 using System.Text;
 
-namespace Tracing
+namespace DistributedTracing
 {
     public class KafkaTriggerSingleWithHeaders
     {
