@@ -19,9 +19,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     /// </summary>
     public class SingleItemFunctionExecutor<TKey, TValue> : FunctionExecutorBase<TKey, TValue>
     {
-        public SingleItemFunctionExecutor(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, int channelCapacity, int channelFullRetryIntervalInMs, ICommitStrategy<TKey, TValue> commitStrategy, ILogger logger)
+        private readonly string consumerGroup;
+
+        public SingleItemFunctionExecutor(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, string consumerGroup, int channelCapacity, int channelFullRetryIntervalInMs, ICommitStrategy<TKey, TValue> commitStrategy, ILogger logger)
             : base(executor, consumer, channelCapacity, channelFullRetryIntervalInMs, commitStrategy, logger)
         {
+            this.consumerGroup = consumerGroup;
             logger.LogInformation($"FunctionExecutor Loaded: {nameof(SingleItemFunctionExecutor<TKey, TValue>)}");
         }
 
@@ -72,7 +75,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     TriggerValue = triggerInput,
                 };
 
-                await this.ExecuteFunctionAsync(triggerData, cancellationToken);
+                // Create Single Event Activity Provider and Start the activity
+                var singleEventActivityProvider = new SingleEventActivityProvider(kafkaEventData, consumerGroup);
+                singleEventActivityProvider.StartActivity();
+                FunctionResult functionResult = null;
+                try
+                {
+                    // Execute the Function
+                    functionResult = await this.ExecuteFunctionAsync(triggerData, cancellationToken);
+                    // Set the status of activity.
+                    singleEventActivityProvider.SetActivityStatus(functionResult.Succeeded, functionResult.Exception);
+                }
+                catch (Exception ex)
+                {
+                    singleEventActivityProvider.SetActivityStatus(false, ex);
+                    throw;
+                }
+                finally
+                {
+                    // Stop the activity
+                    singleEventActivityProvider.StopCurrentActivity();
+                }
 
                 if (topicPartition == null)
                 {
