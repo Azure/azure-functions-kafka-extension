@@ -13,16 +13,16 @@ namespace KafkaFunctionSample
     /// </summary>
     public static class AvroSpecificTriggers
     {
-        //[FunctionName(nameof(User))]
-        //public static void User(
-        //   [KafkaTrigger("LocalBroker", "users", ConsumerGroup = "azfunc")] KafkaEventData<string, UserRecord>[] kafkaEvents,
-        //   ILogger logger)
-        //{
-        //    foreach (var kafkaEvent in kafkaEvents)
-        //    {
-        //        logger.LogInformation($"{JsonConvert.SerializeObject(kafkaEvent.Value)}");
-        //    }
-        //}
+        [FunctionName(nameof(User))]
+        public static void User(
+           [KafkaTrigger("LocalBroker", "users", ConsumerGroup = "azfunc")] KafkaEventData<string, UserRecord>[] kafkaEvents,
+           ILogger logger)
+        {
+            foreach (var kafkaEvent in kafkaEvents)
+            {
+                logger.LogInformation($"{JsonConvert.SerializeObject(kafkaEvent.Value)}");
+            }
+        }
 
         // private static AvroDeserializer<UserRecord> myCustomDeserialiser = new AvroDeserializer<UserRecord>(new LocalSchemaRegistry(UserRecord.SchemaText));
 

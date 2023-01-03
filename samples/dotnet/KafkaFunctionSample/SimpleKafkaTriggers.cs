@@ -1,63 +1,49 @@
 ﻿using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Azure.WebJobs.Extensions.Kafka;
-//using Avro;
-//using Microsoft.AspNetCore.Mvc;
-//using Microsoft.Azure.WebJobs.Extensions.Http;
-//using Microsoft.AspNetCore.Http;
-//using System;
-//using System.IO;
-//using System.Text;
+using Avro;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.AspNetCore.Http;
+using System;
+using System.IO;
+using System.Text;
 
 namespace KafkaFunctionSample
 {
     public class SimpleKafkaTriggers
     {
-        [FunctionName("KafkaTrigger2")]
-        public static void Run(
-            [KafkaTrigger("BrokerList",
-                          "topic4",
-                          Username = "$ConnectionString",
-                          Password = "%test4ConnString%",
-                          //Password = "%EventHubConnectionString%",
-                          Protocol = BrokerProtocol.SaslSsl,
-                          AuthenticationMode = BrokerAuthenticationMode.Plain,
-                          ConsumerGroup = "testcg1",
-                          LagThreshold = 100)] KafkaEventData<string> kevent, ILogger log)
+        [FunctionName(nameof(ConsoleConsumer))]
+        public void ConsoleConsumer(
+        [KafkaTrigger(
+            "LocalBroker",
+            "stringTopicTenPartitions",
+            ConsumerGroup = "$Default",
+            AuthenticationMode = BrokerAuthenticationMode.Plain)] KafkaEventData<string>[] kafkaEvents,
+            ILogger logger)
         {
-            log.LogInformation($"C# Kafka trigger function processed a message: {kevent.Value}");
+            foreach(var kafkaEvent in kafkaEvents)
+                logger.LogInformation(kafkaEvent.Value.ToString());
         }
-        //[FunctionName(nameof(ConsoleConsumer))]
-        //public void ConsoleConsumer(
-        //[KafkaTrigger(
-        //    "LocalBroker",
-        //    "stringTopicTenPartitions",
-        //    ConsumerGroup = "$Default",
-        //    AuthenticationMode = BrokerAuthenticationMode.Plain)] KafkaEventData<string>[] kafkaEvents,
-        //    ILogger logger)
-        //{
-        //    foreach(var kafkaEvent in kafkaEvents)
-        //        logger.LogInformation(kafkaEvent.Value.ToString());
-        //}
 
-        //[FunctionName(nameof(ConsoleProducer))]
-        //public static IActionResult ConsoleProducer(
-        //[HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
-        //[Kafka("LocalBroker", "stringTopicTenPartitions")] out string kafkaEventData,
-        //ILogger log)
-        //{
-        //    try
-        //    {
-        //        var data = new StreamReader(req.Body).ReadToEnd();
-        //        kafkaEventData = data + ":1:" + DateTime.UtcNow.Ticks;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        throw new Exception("Are you sure the topic 'stringTopic' exists? To create using Confluent Docker quickstart run this command: 'docker-compose exec broker kafka-topics --create --zookeeper zookeeper:2181 --replication-factor 1 --partitions 10 --topic stringTopicTenPartitions'", ex);
-        //    }
+        [FunctionName(nameof(ConsoleProducer))]
+        public static IActionResult ConsoleProducer(
+        [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
+        [Kafka("LocalBroker", "stringTopicTenPartitions")] out string kafkaEventData,
+        ILogger log)
+        {
+            try
+            {
+                var data = new StreamReader(req.Body).ReadToEnd();
+                kafkaEventData = data + ":1:" + DateTime.UtcNow.Ticks;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Are you sure the topic 'stringTopic' exists? To create using Confluent Docker quickstart run this command: 'docker-compose exec broker kafka-topics --create --zookeeper zookeeper:2181 --replication-factor 1 --partitions 10 --topic stringTopicTenPartitions'", ex);
+            }
 
-        //    return new OkResult();
-        //}
+            return new OkResult();
+        }
 
         // EventHubs Configuration sample
         //
