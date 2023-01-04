@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using Avro.Generic;
 using Confluent.Kafka;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.Trigger;
 using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
@@ -316,6 +317,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                     log.LogInformation("LinkedActivity: 00-" + link.Context.TraceId + "-" + link.Context.SpanId + "-01");
                 }
             }
+        }
+    }
+    
+    internal static class SingleItem_With_Schema_Registry
+    {
+        public static void Trigger(
+            [SchemaRegistryConfig("schema.registry.url", Constants.SchemaRegistryUrl)]
+            [KafkaTrigger("LocalBroker", Constants.SchemaRegistryTopicName, ConsumerGroup = Constants.ConsumerGroupID)] KafkaEventData<string, GenericRecord> kafkaEvent,
+            ILogger log)
+        {
+            log.LogInformation(kafkaEvent.Value.ToString());
         }
     }
 }

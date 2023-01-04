@@ -5,6 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using Avro;
+using Avro.Generic;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.Trigger;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 {
@@ -244,6 +247,47 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                 await output.AddAsync(message);
                 i++;
             }
+        }
+
+        public static async Task Produce_AsyncCollector_PageView_With_String_Key(
+            string topic,
+            [SchemaRegistryConfig("schema.registry.url", Constants.SchemaRegistryUrl)] [Kafka(BrokerList = "LocalBroker")]
+            IAsyncCollector<KafkaEventData<string, GenericRecord>> output
+        )
+        {
+            const string pageViewsSchema = @"{
+  ""type"": ""record"",
+  ""name"": ""PageViews"",
+  ""namespace"": ""ksql"",
+  ""fields"": [
+    {
+      ""name"": ""ViewTime"",
+      ""type"": ""long""
+    },
+    {
+      ""name"": ""UserID"",
+      ""type"": ""string""
+    },
+    {
+      ""name"": ""PageID"",
+      ""type"": ""string""
+    }
+  ]
+}";
+            
+            var record = new GenericRecord((RecordSchema)Schema.Parse(pageViewsSchema));
+            record.Add("UserID", "4711");
+            record.Add("PageID", "4712");
+            record.Add("ViewTime", 4713L);
+            
+            var message = new KafkaEventData<string, GenericRecord>()
+            {
+                Key = "key",
+                Topic = topic,
+                Value = record
+            };
+
+            await output.AddAsync(message);
         }
     }
 }

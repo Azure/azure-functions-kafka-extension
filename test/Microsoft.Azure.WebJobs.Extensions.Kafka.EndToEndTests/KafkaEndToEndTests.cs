@@ -1044,5 +1044,41 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                 await Task.Delay(1500);
             }
         }
+
+        // <summary>
+        // This test expects a schema registry running at localhost:8081.
+        // <see cref="Constants.SchemaRegistryUrl"/>
+        // </summary>
+        [Fact]
+        public async Task SingleItem_With_Schema_Registry()
+        {
+            const int producedMessagesCount = 1;
+            
+            var loggerProvider1 = CreateTestLoggerProvider();
+
+            using (var host = await StartHostAsync(
+                       new[] { typeof(SingleItem_With_Schema_Registry), typeof(KafkaOutputFunctions) },
+                       loggerProvider1))
+            {
+                var jobHost = host.GetJobHost();
+
+                await jobHost.CallAsync(
+                    GetStaticMethod(typeof(KafkaOutputFunctions),
+                        nameof(KafkaOutputFunctions.Produce_AsyncCollector_PageView_With_String_Key)),
+                    new { topic = Constants.SchemaRegistryTopicName });
+
+                await TestHelpers.Await(() =>
+                {
+                    var foundCount = loggerProvider1.GetAllUserLogMessages().Count(p => p.FormattedMessage != null);
+                    return foundCount == producedMessagesCount;
+                });
+
+                // Give time for the commit to be saved
+                await Task.Delay(1500);
+
+                await host.StopAsync();
+            }
+
+        }
     }
 }
