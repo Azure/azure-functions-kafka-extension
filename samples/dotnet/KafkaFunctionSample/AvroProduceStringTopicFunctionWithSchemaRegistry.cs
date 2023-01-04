@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Azure.WebJobs.Extensions.Kafka;
 using Avro.Generic;
-using Microsoft.Azure.WebJobs.Extensions.Kafka.Trigger;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.Serialization;
 
 namespace KafkaFunctionSample
 {

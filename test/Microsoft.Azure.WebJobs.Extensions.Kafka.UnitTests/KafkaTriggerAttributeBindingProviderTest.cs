@@ -20,7 +20,7 @@ using System.Threading.Tasks;
 using Xunit;
 using System.Collections.Generic;
 using System.IO;
-using Microsoft.Azure.WebJobs.Extensions.Kafka.Trigger;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.Serialization;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.Helpers;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests

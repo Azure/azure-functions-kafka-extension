@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 using Microsoft.Azure.WebJobs.Extensions.Kafka;
 using Avro.Generic;
 using System.Collections.Generic;
-using Microsoft.Azure.WebJobs.Extensions.Kafka.Trigger;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.Serialization;
 
 
 namespace KafkaFunctionSample

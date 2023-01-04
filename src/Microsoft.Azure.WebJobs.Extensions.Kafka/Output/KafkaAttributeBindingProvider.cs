@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs.Extensions.Kafka.Trigger;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.Serialization;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {

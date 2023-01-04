@@ -4,7 +4,7 @@
 using System;
 using Microsoft.Azure.WebJobs.Description;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Kafka.Trigger
+namespace Microsoft.Azure.WebJobs.Extensions.Kafka.Serialization
 {
     /// <summary>
     /// Attribute to set properties for the Confluent schema registry configuration.

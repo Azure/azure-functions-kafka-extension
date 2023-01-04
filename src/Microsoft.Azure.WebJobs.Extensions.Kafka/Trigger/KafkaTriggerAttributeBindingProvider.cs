@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Confluent.Kafka;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.Serialization;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.Trigger;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Listeners;

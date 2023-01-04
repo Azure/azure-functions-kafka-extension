@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using Avro.Generic;
 using Confluent.Kafka;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.Serialization;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.Trigger;
 using Microsoft.Extensions.Logging;
 

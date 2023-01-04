@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Avro;
 using Avro.Generic;
-using Microsoft.Azure.WebJobs.Extensions.Kafka.Trigger;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.Serialization;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 {
