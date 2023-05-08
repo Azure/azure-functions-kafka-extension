@@ -17,11 +17,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     {
         private long? lagThreshold;
 
-        public KafkaTriggerAttribute(string brokerList, string topic)
+        public KafkaTriggerAttribute(string brokerList, string topic, bool commitTransaction)
         {
             this.BrokerList = brokerList;
             this.Topic = topic;
+            this.CommitTransaction = commitTransaction;
         }
+
+        public bool CommitTransaction { get; private set; }
 
         /// <summary>
         /// Gets or sets the topic
