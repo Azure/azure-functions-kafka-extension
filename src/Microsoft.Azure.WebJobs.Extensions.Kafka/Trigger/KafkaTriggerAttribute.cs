@@ -17,11 +17,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     {
         private long? lagThreshold;
 
-        public KafkaTriggerAttribute(string brokerList, string topic, bool commitTransaction)
+        public KafkaTriggerAttribute(string brokerList, string topic)
         {
             this.BrokerList = brokerList;
-            this.Topic = topic;
-            this.CommitTransaction = commitTransaction;
+            this.Topic = topic;            
         }
 
         public bool CommitTransaction { get; private set; }
@@ -110,6 +109,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// ssl.key.password in librdkafka
         /// </summary>
         public string SslKeyPassword { get; set; }
+
+        /// <summary>
+        /// Password for client's certificate.
+        /// ssl.key.password in librdkafka
+        /// </summary>
+        public bool TransactionCommit { get; set; }
 
         /// <summary>
         /// Lag threshold

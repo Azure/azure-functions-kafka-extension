@@ -19,6 +19,7 @@ namespace KafkaFunctionSample
             "LocalBroker",
             "stringTopicTenPartitions",
             ConsumerGroup = "$Default",
+            TransactionCommit =true,
             AuthenticationMode = BrokerAuthenticationMode.Plain)] KafkaEventData<string>[] kafkaEvents,
             ILogger logger)
         {

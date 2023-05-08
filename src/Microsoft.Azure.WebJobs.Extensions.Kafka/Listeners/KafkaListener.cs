@@ -175,6 +175,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 SslCertificateLocation = this.listenerConfiguration.SslCertificateLocation,
                 SslKeyLocation = this.listenerConfiguration.SslKeyLocation,
                 SslKeyPassword = this.listenerConfiguration.SslKeyPassword,
+                
 
                 // Values from host configuration
                 StatisticsIntervalMs = this.options.StatisticsIntervalMs,
