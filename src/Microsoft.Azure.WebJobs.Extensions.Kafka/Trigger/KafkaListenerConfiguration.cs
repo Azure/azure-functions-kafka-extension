@@ -100,6 +100,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// </summary>
         public long LagThreshold { get; set; }
 
+        /// <summary>
+        /// consumer transacition commit
+        /// Default: false
+        /// </summary>
+        public bool Commit { get; set; }
+
         internal void ApplyToConfig(ClientConfig conf)
         {
             if (this.SaslMechanism.HasValue)

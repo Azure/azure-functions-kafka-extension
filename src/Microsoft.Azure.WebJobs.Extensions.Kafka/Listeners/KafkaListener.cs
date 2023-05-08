@@ -306,6 +306,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                                 // TODO: maybe slow down if there isn't much incoming data
                                 break;
                             }
+                            if (this.listenerConfiguration.Commit)
+                            {
+                                localConsumer.Commit(consumeResult);
+                            }
                         }
                         catch (ConsumeException ex)
                         {
