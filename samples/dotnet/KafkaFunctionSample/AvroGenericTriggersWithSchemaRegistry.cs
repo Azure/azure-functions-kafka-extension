@@ -1,11 +1,9 @@
 using System;
-using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Microsoft.Azure.WebJobs.Extensions.Kafka;
 using Avro.Generic;
 using System.Collections.Generic;
-using Microsoft.Azure.WebJobs.Extensions.Kafka.Serialization;
 
 
 namespace KafkaFunctionSample
@@ -25,8 +23,7 @@ namespace KafkaFunctionSample
     {
         // [FunctionName(nameof(PageViewsSchemaRegistry))]
         public static void PageViewsSchemaRegistry(
-            [SchemaRegistryConfig("schema.registry.url", "localhost:8081")]
-            [KafkaTrigger("LocalBroker", "pageviews", ConsumerGroup = "azfunc")]
+            [KafkaTrigger("LocalBroker", "pageviews", ConsumerGroup = "azfunc", SchemaRegistryUrl = "localhost:8081")]
             KafkaEventData<string, GenericRecord>[] kafkaEvents,
             long[] offsetArray,
             int[] partitionArray,

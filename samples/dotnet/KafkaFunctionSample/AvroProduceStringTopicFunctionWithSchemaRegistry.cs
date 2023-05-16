@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Azure.WebJobs.Extensions.Kafka;
 using Avro.Generic;
-using Microsoft.Azure.WebJobs.Extensions.Kafka.Serialization;
 
 namespace KafkaFunctionSample
 {
@@ -51,8 +50,7 @@ namespace KafkaFunctionSample
         public static async Task<IActionResult> AvroProduceStringTopicSchemaRegistry(
             [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)]
             HttpRequest req,
-            [SchemaRegistryConfig("schema.registry.url", "localhost:8081")] 
-            [Kafka("LocalBroker", "avroTopic")]
+            [Kafka("LocalBroker", "avroTopic", SchemaRegistryUrl = "localhost:8081")]
             IAsyncCollector<KafkaEventData<GenericRecord>> events,
             ILogger log)
         {

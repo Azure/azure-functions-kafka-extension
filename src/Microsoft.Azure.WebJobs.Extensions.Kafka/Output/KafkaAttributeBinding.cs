@@ -6,7 +6,6 @@ using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Extensions.Configuration;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
@@ -23,10 +22,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly string avroSchema;
         private readonly IConfiguration config;
         private readonly INameResolver nameResolver;
-        private IEnumerable<KeyValuePair<string, string>> schemaRegistryConfig;
 
         public KafkaAttributeBinding(
-            string parameterName, 
+            string parameterName,
             KafkaAttribute attribute,
             IKafkaProducerFactory kafkaProducerFactory,
             IArgumentBinding<KafkaProducerEntity> argumentBinding,
@@ -34,8 +32,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             Type valueType,
             string avroSchema,
             IConfiguration config,
-            INameResolver nameResolver,
-            IEnumerable<KeyValuePair<string, string>> schemaRegistryConfig)
+            INameResolver nameResolver)
         {
             this.parameterName = parameterName;
             this.attribute = attribute ?? throw new ArgumentNullException(nameof(attribute));
@@ -46,7 +43,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.avroSchema = avroSchema;
             this.config = config;
             this.nameResolver = nameResolver;
-            this.schemaRegistryConfig = schemaRegistryConfig;
         }
 
         public bool FromAttribute => true;
@@ -63,7 +59,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 Topic = this.config.ResolveSecureSetting(this.nameResolver, this.attribute.Topic),
                 Attribute = this.attribute,
                 AvroSchema = this.avroSchema,
-                SchemaRegistryConfig = this.schemaRegistryConfig,
             };
 
             return await BindAsync(entity, context);
@@ -81,7 +76,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 Topic = this.config.ResolveSecureSetting(this.nameResolver, this.attribute.Topic),
                 Attribute = this.attribute,
                 AvroSchema = this.avroSchema,
-                SchemaRegistryConfig = this.schemaRegistryConfig,
             };
 
             return await BindAsync(entity, context.ValueContext);

@@ -7,7 +7,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Avro;
 using Avro.Generic;
-using Microsoft.Azure.WebJobs.Extensions.Kafka.Serialization;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 {
@@ -85,7 +84,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             return list.ToArray();
         }
 
-        
+
         [return: Kafka("LocalBroker", Constants.StringTopicWithTenPartitionsName)]
         public static string[] Produce_Return_Parameter_Raw_String_Array(
             string topic,
@@ -185,7 +184,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
         {
 
             foreach (var c in content)
-            {                
+            {
                 await output.AddAsync(new MyAvroRecord()
                 {
                     ID = c,
@@ -251,7 +250,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
         public static async Task Produce_AsyncCollector_PageView_With_String_Key(
             string topic,
-            [SchemaRegistryConfig("schema.registry.url", Constants.SchemaRegistryUrl)] [Kafka(BrokerList = "LocalBroker")]
+            [Kafka(BrokerList = "LocalBroker", SchemaRegistryUrl = Constants.SchemaRegistryUrl)]
             IAsyncCollector<KafkaEventData<string, GenericRecord>> output
         )
         {
@@ -274,12 +273,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
     }
   ]
 }";
-            
+
             var record = new GenericRecord((RecordSchema)Schema.Parse(pageViewsSchema));
             record.Add("UserID", "4711");
             record.Add("PageID", "4712");
             record.Add("ViewTime", 4713L);
-            
+
             var message = new KafkaEventData<string, GenericRecord>()
             {
                 Key = "key",

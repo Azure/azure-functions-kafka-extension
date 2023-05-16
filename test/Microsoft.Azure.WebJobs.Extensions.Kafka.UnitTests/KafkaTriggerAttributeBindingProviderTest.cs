@@ -4,7 +4,6 @@
 using Avro.Generic;
 using Confluent.Kafka;
 using Confluent.Kafka.SyncOverAsync;
-using Confluent.SchemaRegistry.Serdes;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Protocols;
@@ -20,7 +19,6 @@ using System.Threading.Tasks;
 using Xunit;
 using System.Collections.Generic;
 using System.IO;
-using Microsoft.Azure.WebJobs.Extensions.Kafka.Serialization;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.Helpers;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
@@ -75,7 +73,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         static void GenericAvroWithoutKey_Fn([KafkaTrigger("brokers:9092", "myTopic", AvroSchema = "fake")] KafkaEventData<GenericRecord> genericRecord) { }
         static void GenericAvro_WithLongKey_Fn([KafkaTrigger("brokers:9092", "myTopic", AvroSchema = "fake")] KafkaEventData<long, GenericRecord> genericRecord) { }
         static void GenericAvro_WithStringKey_Fn([KafkaTrigger("brokers:9092", "myTopic", AvroSchema = "fake")] KafkaEventData<string, GenericRecord> genericRecord) { }
-        static void GenericWithSchemaRegistry_Fn([SchemaRegistryConfig("schema.registry.url", "localhost:8081")][KafkaTrigger("brokers:9092", "myTopic")] KafkaEventData<GenericRecord> genericRecord) { }
+        static void GenericWithSchemaRegistry_Fn([KafkaTrigger("brokers:9092", "myTopic", SchemaRegistryUrl = "localhost:8081")] KafkaEventData<GenericRecord> genericRecord) { }
 
         static void RawSpecificAvro_Fn([KafkaTrigger("brokers:9092", "myTopic")] MyAvroRecord myAvroRecord) { }
         static void SpecificAvro_Fn([KafkaTrigger("brokers:9092", "myTopic")] KafkaEventData<Null, MyAvroRecord> myAvroRecord) { }
@@ -142,9 +140,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 config,
                 Options.Create(new KafkaOptions()),
                 new KafkaEventDataConvertManager(NullLogger.Instance),
-                new DefaultNameResolver(config),                
+                new DefaultNameResolver(config),
                 NullLoggerFactory.Instance);
-            
+
             var parameterInfo = new TriggerBindingProviderContext(this.GetParameterInfo(functionName), default);
 
             var triggerBinding = await bindingProvider.TryCreateAsync(parameterInfo);
@@ -226,8 +224,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
 
             Assert.NotNull(listener);
-            AssertIsCorrectKafkaListener(listener, expectedKeyType, typeof(GenericRecord), typeof(SyncOverAsyncDeserializer<GenericRecord>));            
-        }       
+            AssertIsCorrectKafkaListener(listener, expectedKeyType, typeof(GenericRecord), typeof(SyncOverAsyncDeserializer<GenericRecord>));
+        }
 
         [Theory]
         [InlineData(nameof(SpecificAvro_Fn), typeof(Null))]

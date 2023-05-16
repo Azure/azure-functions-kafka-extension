@@ -9,7 +9,6 @@ using System.Linq;
 using Avro.Generic;
 using Confluent.Kafka;
 using Confluent.Kafka.SyncOverAsync;
-using Confluent.SchemaRegistry.Serdes;
 
 using Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.Helpers;
 using Microsoft.Extensions.Configuration;
@@ -124,11 +123,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         {
             var attribute = new KafkaAttribute("brokers:9092", "myTopic");
 
+            attribute.SchemaRegistryUrl = "localhost";
+
             var entity = new KafkaProducerEntity()
             {
                 Attribute = attribute,
                 ValueType = typeof(GenericRecord),
-                SchemaRegistryConfig = new Dictionary<string, string> { {"schema.registry.url", "localhost"} },
             };
 
             var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerFactory.Instance);
@@ -204,7 +204,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerFactory.Instance);
             var config = factory.GetProducerConfig(entity);
-            Assert.Equal(0, config.Count(x=>x.Key.StartsWith("sasl.")));
+            Assert.Equal(0, config.Count(x => x.Key.StartsWith("sasl.")));
             Assert.Null(config.SaslMechanism);
             Assert.Null(config.SaslPassword);
             Assert.Null(config.SaslUsername);
@@ -306,7 +306,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             AzureEnvironment.SetEnvironmentVariable(AzureFunctionsFileHelper.AzureHomeEnvVarName, currentFolder);
 
             var sslCertificate = this.CreateFile(Path.Combine(currentFolder, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2, "sslCertificate.pfx"));
-            var sslCa = this.CreateFile(Path.Combine(currentFolder, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2, "sslCa.pem")); 
+            var sslCa = this.CreateFile(Path.Combine(currentFolder, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2, "sslCa.pem"));
             var sslKeyLocation = this.CreateFile(Path.Combine(currentFolder, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2, "sslKey.key"));
 
             var attribute = new KafkaAttribute("brokers:9092", "myTopic")

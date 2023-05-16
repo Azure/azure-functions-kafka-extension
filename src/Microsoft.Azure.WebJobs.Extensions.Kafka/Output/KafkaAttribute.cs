@@ -2,8 +2,6 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using Avro.Specific;
-using Confluent.Kafka;
 using Microsoft.Azure.WebJobs.Description;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
@@ -145,5 +143,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// being sent to cluster. Larger value allows more batching results in high throughput.
         /// </summary>
         public int LingerMs { get; set; } = 5;
+
+        /// <summary>
+        /// URL for the Avro Schema Registry
+        /// </summary>
+        public string SchemaRegistryUrl { get; set; }
     }
 }

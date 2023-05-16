@@ -17,7 +17,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
     internal static class SerializationHelper
     {
-        internal static object ResolveValueDeserializer(Type valueType, string specifiedAvroSchema, IEnumerable<KeyValuePair<string, string>> schemaRegistryConfig)
+        internal static object ResolveValueDeserializer(Type valueType, string specifiedAvroSchema, string schemaRegistryUrl)
         {
             if (typeof(IMessage).IsAssignableFrom(valueType))
             {
@@ -30,7 +30,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 return null;
             }
 
-            var schemaRegistry = CreateSchemaRegistry(valueType, specifiedAvroSchema, schemaRegistryConfig, isSpecificRecord);
+            var schemaRegistry = CreateSchemaRegistry(valueType, specifiedAvroSchema, schemaRegistryUrl, isSpecificRecord);
 
             var methodInfo = typeof(SerializationHelper).GetMethod(nameof(CreateAvroDeserializer), BindingFlags.Static | BindingFlags.NonPublic);
             var genericMethod = methodInfo.MakeGenericMethod(valueType);
@@ -43,7 +43,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return new AvroDeserializer<TValue>(schemaRegistry).AsSyncOverAsync();
         }
 
-        internal static object ResolveValueSerializer(Type valueType, string specifiedAvroSchema, IEnumerable<KeyValuePair<string, string>> schemaRegistryConfig)
+        internal static object ResolveValueSerializer(Type valueType, string specifiedAvroSchema, string schemaRegistryUrl)
         {
             if (typeof(IMessage).IsAssignableFrom(valueType))
             {
@@ -56,13 +56,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 return null;
             }
 
-            var schemaRegistry = CreateSchemaRegistry(valueType, specifiedAvroSchema, schemaRegistryConfig, isSpecificRecord);
+            var schemaRegistry = CreateSchemaRegistry(valueType, specifiedAvroSchema, schemaRegistryUrl, isSpecificRecord);
 
             var serializer = Activator.CreateInstance(typeof(AvroSerializer<>).MakeGenericType(valueType), schemaRegistry, null /* config */);
             return typeof(SyncOverAsyncSerializerExtensionMethods).GetMethod("AsSyncOverAsync").MakeGenericMethod(valueType).Invoke(null, new object[] { serializer });
         }
 
-        private static ISchemaRegistryClient CreateSchemaRegistry(Type valueType, string specifiedAvroSchema, IEnumerable<KeyValuePair<string, string>> schemaRegistryConfig, bool isSpecificRecord)
+        private static ISchemaRegistryClient CreateSchemaRegistry(Type valueType, string specifiedAvroSchema, string schemaRegistryUrl, bool isSpecificRecord)
         {
             if (string.IsNullOrWhiteSpace(specifiedAvroSchema) && isSpecificRecord)
             {
@@ -72,9 +72,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             if (!string.IsNullOrWhiteSpace(specifiedAvroSchema))
             {
                 return new LocalSchemaRegistry(specifiedAvroSchema);
-            } 
-            if (schemaRegistryConfig != null && schemaRegistryConfig.Any())
+            }
+            if (schemaRegistryUrl != null)
             {
+                var schemaRegistryConfig = new[] { new KeyValuePair<string, string>("schema.registry.url", schemaRegistryUrl) };
                 return new CachedSchemaRegistryClient(schemaRegistryConfig);
             }
             throw new ArgumentNullException(nameof(specifiedAvroSchema), $@"parameter is required when creating an generic avro serializer");
@@ -103,7 +104,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             while (valueType.HasElementType && valueType.GetElementType() != typeof(byte))
             {
                 valueType = valueType.GetElementType();
-            }            
+            }
 
             if (!valueType.IsPrimitive)
             {
