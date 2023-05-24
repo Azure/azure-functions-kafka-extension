@@ -99,20 +99,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public ProducerConfig GetProducerConfig(KafkaProducerEntity entity)
         {
-            if (!AzureFunctionsFileHelper.TryGetValidFilePath(entity.Attribute.SslCertificateLocation, out var resolvedSslCertificationLocation))
-            {
-                resolvedSslCertificationLocation = entity.Attribute.SslCertificateLocation;
-            }
-
-            if (!AzureFunctionsFileHelper.TryGetValidFilePath(entity.Attribute.SslCaLocation, out var resolvedSslCaLocation))
-            {
-                resolvedSslCaLocation = entity.Attribute.SslCaLocation;
-            }
-
-            if (!AzureFunctionsFileHelper.TryGetValidFilePath(entity.Attribute.SslKeyLocation, out var resolvedSslKeyLocation))
-            {
-                resolvedSslKeyLocation = entity.Attribute.SslKeyLocation;
-            }
             var kafkaOptions = this.config.Get<KafkaOptions>();
             var conf = new ProducerConfig()
             {
@@ -125,10 +111,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 MessageMaxBytes = entity.Attribute.MaxMessageBytes,
                 SaslPassword = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.Password),
                 SaslUsername = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.Username),
-                SslKeyLocation = resolvedSslKeyLocation,
-                SslKeyPassword = entity.Attribute.SslKeyPassword,
-                SslCertificateLocation = resolvedSslCertificationLocation,
-                SslCaLocation = resolvedSslCaLocation,
+                SslKeyLocation = GetValidFilePath(entity.Attribute.SslKeyLocation),
+                SslKeyPassword = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SslKeyPassword),
+                SslCertificateLocation = GetValidFilePath(entity.Attribute.SslCertificateLocation),
+                SslCaLocation = GetValidFilePath(entity.Attribute.SslCaLocation),
                 Debug = kafkaOptions?.LibkafkaDebug,
                 MetadataMaxAgeMs = kafkaOptions?.MetadataMaxAgeMs,
                 SocketKeepaliveEnable = kafkaOptions?.SocketKeepaliveEnable,
@@ -146,6 +132,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
 
             return conf;
+        }
+
+        private string GetValidFilePath(string location)
+        {
+            if (string.IsNullOrWhiteSpace(location))
+            {
+                return null;
+            }
+            var resolvedLocation = this.config.ResolveSecureSetting(nameResolver, location);
+            if (!AzureFunctionsFileHelper.TryGetValidFilePath(resolvedLocation, out var validPath))
+            {
+                throw new Exception($"{location} is not a valid file location");
+            }
+            return validPath;
         }
     }
 }
