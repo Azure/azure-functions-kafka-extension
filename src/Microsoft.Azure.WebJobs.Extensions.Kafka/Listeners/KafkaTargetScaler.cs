@@ -16,7 +16,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         // Initialise variables required
 
         // Defining constructor
-        public KafkaTargetScaler() { }
+        public KafkaTargetScaler()
+        {
+            this.TargetScalerDescriptor = new TargetScalerDescriptor("functionid");
+        }
 
         // first method in ITargetScaler
         public async Task<TargetScalerResult> GetScaleResultAsync(TargetScalerContext context)
