@@ -19,7 +19,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     /// Kafka listener.
     /// Connects a Kafka trigger function with a Kafka Consumer
     /// </summary>
-    internal class KafkaListener<TKey, TValue> : IListener, IScaleMonitorProvider
+    internal class KafkaListener<TKey, TValue> : IListener, IScaleMonitorProvider, ITargetScalerProvider
     {
         internal const string EventHubsBrokerVersionFallback = "1.0.0";
         internal const string EventHubsSaslUsername = "$ConnectionString";
@@ -48,6 +48,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly string functionId;
         //protected for the unit test
         protected Lazy<KafkaTopicScaler<TKey, TValue>> topicScaler;
+        protected KafkaTargetScaler targetScaler;
 
         /// <summary>
         /// Gets the value deserializer
@@ -78,6 +79,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.functionId = functionId;
             this.consumer = new Lazy<IConsumer<TKey, TValue>>(() => CreateConsumer());
             this.topicScaler = new Lazy<KafkaTopicScaler<TKey, TValue>>(() => CreateTopicScaler());
+            this.targetScaler = new KafkaTargetScaler();
         }
 
         private IConsumer<TKey, TValue> CreateConsumer()
@@ -115,6 +117,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private KafkaTopicScaler<TKey, TValue> CreateTopicScaler()
         {
             return new KafkaTopicScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.consumerGroup, this.functionId, this.consumer.Value, new AdminClientConfig(GetConsumerConfiguration()), this.listenerConfiguration.LagThreshold, this.logger);
+        }
+
+        private KafkaTargetScaler CreateTargetScaler()
+        {
+            // returns a KafkaTargetScaler class, implemented from ITargetScaler
+            // fill in the required parameters. 
+            return new KafkaTargetScaler();
         }
 
         public void Cancel()
@@ -401,6 +410,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public IScaleMonitor GetMonitor()
         {
             return topicScaler.Value;
+        }
+
+        public ITargetScaler GetTargetScaler()
+        {
+            return targetScaler;
         }
     }
 }

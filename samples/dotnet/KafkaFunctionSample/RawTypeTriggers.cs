@@ -11,20 +11,20 @@ namespace KafkaFunctionSample
 
     public static class RawTypeTriggers
     {
-        [FunctionName(nameof(StringTopic))]
-        public static void StringTopic(
-            [KafkaTrigger("LocalBroker", "stringTopic", ConsumerGroup = "azfunc")] KafkaEventData<string> kafkaEvent,
-            ILogger logger)
-        {
-            logger.LogInformation(kafkaEvent.Value.ToString());
-        }
+        //[FunctionName(nameof(StringTopic))]
+        //public static void StringTopic(
+        //    [KafkaTrigger("LocalBroker", "stringTopic", ConsumerGroup = "azfunc")] KafkaEventData<string> kafkaEvent,
+        //    ILogger logger)
+        //{
+        //    logger.LogInformation(kafkaEvent.Value.ToString());
+        //}
 
-        [FunctionName(nameof(ProtoUserBinary))]
-        public static void ProtoUserBinary(
-           [KafkaTrigger("LocalBroker", "protoUser", ConsumerGroup = "azfunc")] KafkaEventData<Confluent.Kafka.Ignore, ProtoUser> kafkaEvent,
-           ILogger logger)
-        {
-            logger.LogInformation(kafkaEvent.Value.ToString());
-        }
+        //[FunctionName(nameof(ProtoUserBinary))]
+        //public static void ProtoUserBinary(
+        //   [KafkaTrigger("LocalBroker", "protoUser", ConsumerGroup = "azfunc")] KafkaEventData<Confluent.Kafka.Ignore, ProtoUser> kafkaEvent,
+        //   ILogger logger)
+        //{
+        //    logger.LogInformation(kafkaEvent.Value.ToString());
+        //}
     }
 }
