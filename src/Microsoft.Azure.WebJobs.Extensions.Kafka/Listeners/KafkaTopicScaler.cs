@@ -20,6 +20,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly IConsumer<TKey, TValue> consumer;
         private readonly Lazy<List<TopicPartition>> topicPartitions;
         private readonly long lagThreshold;
+        private readonly KafkaMetricsProvider kafkaMetricsProvider;
 
         public ScaleMonitorDescriptor Descriptor { get; }
 
@@ -43,6 +44,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.topicPartitions = new Lazy<List<TopicPartition>>(LoadTopicPartitions);
             this.consumerGroup = consumerGroup;
             this.lagThreshold = lagThreshold;
+            this.kafkaMetricsProvider = new KafkaMetricsProvider(topicPartitions, topicName, logger);
         }
 
         protected virtual List<TopicPartition> LoadTopicPartitions()
@@ -83,54 +85,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public Task<KafkaTriggerMetrics> GetMetricsAsync()
         {
-            var operationTimeout = TimeSpan.FromSeconds(5);
-            var allPartitions = topicPartitions.Value;
-            if (allPartitions == null)
-            {
-                return Task.FromResult(new KafkaTriggerMetrics(0L, 0));
-            }
-
-            var ownedCommittedOffset = consumer.Committed(allPartitions, operationTimeout);
-            var partitionWithHighestLag = Partition.Any;
-            long highestPartitionLag = 0L;
-            long totalLag = 0L;
-            foreach (var topicPartition in allPartitions)
-            {
-                // This call goes to the server always which probably yields the most accurate results. It blocks.
-                // Alternatively we could use consumer.GetWatermarkOffsets() that returns cached values, without blocking.
-                var watermark = consumer.QueryWatermarkOffsets(topicPartition, operationTimeout);
-
-                var commited = ownedCommittedOffset.FirstOrDefault(x => x.Partition == topicPartition.Partition);
-                if (commited != null)
-                {
-                    long diff;
-                    if (commited.Offset == Offset.Unset)
-                    {
-                        diff = watermark.High.Value;
-                    }
-                    else
-                    {
-                        diff = watermark.High.Value - commited.Offset.Value;
-                    }
-
-                    totalLag += diff;
-
-                    if (diff > highestPartitionLag)
-                    {
-                        highestPartitionLag = diff;
-                        partitionWithHighestLag = topicPartition.Partition;
-                    }
-                }
-            }
-
-            if (partitionWithHighestLag != Partition.Any)
-            {
-                logger.LogInformation("Total lag in '{topic}' is {totalLag}, highest partition lag found in {partition} with value of {offsetDifference}", this.topicName, totalLag, partitionWithHighestLag.Value, highestPartitionLag);
-            }
-
-            return Task.FromResult(new KafkaTriggerMetrics(totalLag, allPartitions.Count));
+            // let this function stay because most tests refer to TopicScaler.GetMetricsAsync()
+            return kafkaMetricsProvider.GetMetricsAsync();
         }
-
         public ScaleStatus GetScaleStatus(ScaleStatusContext context)
         {
             return GetScaleStatusCore(context.WorkerCount, context.Metrics?.OfType<KafkaTriggerMetrics>().ToArray());
@@ -169,8 +126,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
                 if (this.logger.IsEnabled(LogLevel.Information))
                 {
-                    this.logger.LogInformation("WorkerCount ({workerCount}) > PartitionCount ({partitionCount}). For topic {topicName}, for consumer group {consumerGroup}.", workerCount, partitionCount, this.topicName, this.consumerGroup);
-                    this.logger.LogInformation("Number of instances ({workerCount}) is too high relative to number of partitions ({partitionCount}). For topic {topicName}, for consumer group {consumerGroup}.", workerCount, partitionCount, this.topicName, this.consumerGroup);
+                    this.logger.LogInformation($"WorkerCount ({workerCount}) > PartitionCount ({partitionCount}). For topic {this.topicName}, for consumer group {this.consumerGroup}.");
+                    this.logger.LogInformation($"Number of instances ({workerCount}) is too high relative to number of partitions ({partitionCount}). For topic {this.topicName}, for consumer group {this.consumerGroup}.");
                 }
 
                 return status;
@@ -184,7 +141,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 status.Vote = ScaleVote.ScaleIn;
                 if (this.logger.IsEnabled(LogLevel.Information))
                 {
-                    this.logger.LogInformation("Topic '{topicName}', for consumer group {consumerGroup}' is idle.", this.topicName, this.consumerGroup);
+                    this.logger.LogInformation($"Topic '{this.topicName}', for consumer group {this.consumerGroup}' is idle.");
                 }
 
                 return status;
@@ -199,7 +156,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
                     if (this.logger.IsEnabled(LogLevel.Information))
                     {
-                        this.logger.LogInformation("Total lag ({totalLag}) is less than the number of instances ({workerCount}). Scale out, for topic {topicName}, for consumer group {consumerGroup}.", totalLag, workerCount, topicName, consumerGroup);
+                        this.logger.LogInformation($"Total lag ({totalLag}) is less than the number of instances ({workerCount}). Scale out, for topic {this.topicName}, for consumer group {this.consumerGroup}.");
                     }
                 }
                 return status;
@@ -222,7 +179,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
                         if (this.logger.IsEnabled(LogLevel.Information))
                         {
-                            this.logger.LogInformation("Total lag ({totalLag}) is less than the number of instances ({workerCount}). Scale out, for topic {topicName}, for consumer group {consumerGroup}.", totalLag, workerCount, topicName, consumerGroup);
+                            this.logger.LogInformation($"Total lag ({totalLag}) is less than the number of instances ({workerCount}). Scale out, for topic {this.topicName}, for consumer group {this.consumerGroup}.");
                         }
                         return status;
                     }
@@ -248,7 +205,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
                         if (this.logger.IsEnabled(LogLevel.Information))
                         {
-                            this.logger.LogInformation("Total lag length is decreasing for topic {topicName}, for consumer group {consumerGroup}.", this.topicName, this.consumerGroup);
+                            this.logger.LogInformation($"Total lag length is decreasing for topic {this.topicName}, for consumer group {this.consumerGroup}.");
                         }                    
                     }                
                 }
@@ -274,6 +231,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
 
             return true;
+        }
+
+        Task<KafkaTriggerMetrics> IScaleMonitor<KafkaTriggerMetrics>.GetMetricsAsync()
+        {
+            throw new NotImplementedException();
         }
     }
 }

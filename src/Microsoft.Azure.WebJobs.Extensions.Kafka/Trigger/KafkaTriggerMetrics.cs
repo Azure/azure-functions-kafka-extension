@@ -21,15 +21,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// <summary>
         /// Total number of unprocessed events.
         /// </summary>
-        //public long EventCount { get; set; }
+        public long EventCount { get; set; }
 
-        //public KafkaTriggerMetrics(long eventcount) {
-        //    EventCount = eventcount;
-        //}
-        public KafkaTriggerMetrics(long totalLag, int partitionCount)
+        public KafkaTriggerMetrics(long totalLag, int partitionCount) {
+            TotalLag = totalLag;
+            PartitionCount = partitionCount;
+        }
+        public KafkaTriggerMetrics(long totalLag, int partitionCount, int eventCount)
         {
             TotalLag = totalLag;
             PartitionCount = partitionCount;
+            EventCount = eventCount;
         }
     }
 }
