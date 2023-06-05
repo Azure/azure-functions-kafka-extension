@@ -20,7 +20,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly IConsumer<TKey, TValue> consumer;
         private readonly Lazy<List<TopicPartition>> topicPartitions;
         private readonly long lagThreshold;
-        private readonly KafkaMetricsProvider kafkaMetricsProvider;
+        private readonly KafkaMetricsProvider<TKey, TValue> kafkaMetricsProvider;
 
         public ScaleMonitorDescriptor Descriptor { get; }
 
@@ -44,7 +44,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.topicPartitions = new Lazy<List<TopicPartition>>(LoadTopicPartitions);
             this.consumerGroup = consumerGroup;
             this.lagThreshold = lagThreshold;
-            this.kafkaMetricsProvider = new KafkaMetricsProvider(topicPartitions, topicName, logger);
+            this.kafkaMetricsProvider = new KafkaMetricsProvider<TKey, TValue>(topicPartitions, topicName, logger, consumer);
         }
 
         protected virtual List<TopicPartition> LoadTopicPartitions()
