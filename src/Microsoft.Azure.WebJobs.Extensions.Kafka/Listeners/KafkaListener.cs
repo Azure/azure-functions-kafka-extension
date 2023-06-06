@@ -48,7 +48,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly string functionId;
         //protected for the unit test
         protected Lazy<KafkaTopicScaler<TKey, TValue>> topicScaler;
-        protected KafkaTargetScaler targetScaler;
+        protected Lazy<KafkaTargetScaler<TKey, TValue>> targetScaler;
 
         /// <summary>
         /// Gets the value deserializer
@@ -79,7 +79,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.functionId = functionId;
             this.consumer = new Lazy<IConsumer<TKey, TValue>>(() => CreateConsumer());
             this.topicScaler = new Lazy<KafkaTopicScaler<TKey, TValue>>(() => CreateTopicScaler());
-            this.targetScaler = new KafkaTargetScaler();
+            this.targetScaler = new Lazy<KafkaTargetScaler<TKey, TValue>>(() => CreateTargetScaler());
         }
 
         private IConsumer<TKey, TValue> CreateConsumer()
@@ -119,11 +119,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return new KafkaTopicScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.consumerGroup, this.functionId, this.consumer.Value, new AdminClientConfig(GetConsumerConfiguration()), this.listenerConfiguration.LagThreshold, this.logger);
         }
 
-        private KafkaTargetScaler CreateTargetScaler()
+        private KafkaTargetScaler<TKey, TValue> CreateTargetScaler()
         {
             // returns a KafkaTargetScaler class, implemented from ITargetScaler
             // fill in the required parameters. 
-            return new KafkaTargetScaler();
+            // create a new adminclientconfig?? or create a variable and use?
+            return new KafkaTargetScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.consumerGroup, this.functionId, this.consumer.Value, new AdminClientConfig(GetConsumerConfiguration()), this.options.TargetUnprocessedEventThreshold, this.logger);
         }
 
         public void Cancel()
@@ -414,7 +415,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public ITargetScaler GetTargetScaler()
         {
-            return targetScaler;
+            return targetScaler.Value;
         }
     }
 }

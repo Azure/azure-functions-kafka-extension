@@ -17,53 +17,72 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
     internal class KafkaMetricsProvider<TKey, TValue>
     {
+        private readonly string topicName;
+        private readonly AdminClientConfig adminClientConfig;
+        private readonly IConsumer<TKey, TValue> consumer;
         private readonly ILogger logger;
         private readonly Lazy<List<TopicPartition>> topicPartitions;
-        // why doesnt iconsumer work LKjfdalksjf
-        private readonly IConsumer<TKey, TValue> consumer;
-        private readonly string topicName;
-
 
         //public KafkaMetricsProvider(Lazy<List<TopicPartition>> topicPartitions, string topicName, IConsumer<TKey, TValue> consumer)
-        public KafkaMetricsProvider(Lazy<List<TopicPartition>> topicPartitions, string topicName, ILogger logger, IConsumer<TKey, TValue> consumer)
+        public KafkaMetricsProvider(string topicName, AdminClientConfig adminClientConfig, IConsumer<TKey, TValue> consumer, ILogger logger)
         {
-            this.topicPartitions = topicPartitions;
             this.topicName = topicName;
+            this.adminClientConfig = adminClientConfig;
             this.logger = logger;
             this.consumer = consumer;
+            this.topicPartitions = new Lazy<List<TopicPartition>>(LoadTopicPartitions);
         }
-
-        // public KafkaMetricsProvider(string functionID, IEventHubConsumerClient client, ...)
-        //async Task<KafkaTriggerMetrics> IScaleMonitor.GetMetricsAsync()
-        //{
-        //    var res = await Task.Run(() => GetMetricsAsync());
-        //    return res;
-        //}
-
-        //private KafkaTriggerMetrics CreateKafkaTriggerMetrics()
-        //{
-        //    return new KafkaTriggerMetrics(1, 2, 3);
-        //    //return null;
-        //}
 
         public Task<KafkaTriggerMetrics> GetMetricsAsync()
         {
-            // get three parameters required for kafkatriggermetrics
-            var operationTimeout = TimeSpan.FromSeconds(5);
-
             var allPartitions = topicPartitions.Value;
             if (allPartitions == null)
             {
                 // returns null
-                return Task.FromResult(new KafkaTriggerMetrics(0L, 0, 0));
+                return Task.FromResult(new KafkaTriggerMetrics(0L, 0, 0L));
             }
 
+            var operationTimeout = TimeSpan.FromSeconds(5);
+
+            // get three parameters required for kafkatriggermetrics
             long totalLag = GetTotalLag(allPartitions, operationTimeout);
             int paritionCount = allPartitions.Count;
-            int eventCount = GetUnprocessedEventCount();
+            long eventCount = GetUnprocessedEventCount();
 
             return Task.FromResult(new KafkaTriggerMetrics(totalLag, paritionCount, eventCount));
         }
+
+        protected virtual List<TopicPartition> LoadTopicPartitions()
+        {
+            try
+            {
+                var timeout = TimeSpan.FromSeconds(5);
+                using var adminClient = new AdminClientBuilder(adminClientConfig).Build();
+                var metadata = adminClient.GetMetadata(this.topicName, timeout);
+                if (metadata.Topics == null || metadata.Topics.Count == 0)
+                {
+                    logger.LogError($"Could not load metadata information about topic '{this.topicName}'");
+                    return new List<TopicPartition>();
+                }
+
+                var topicMetadata = metadata.Topics[0];
+                var partitions = topicMetadata.Partitions;
+                if (partitions == null || partitions.Count == 0)
+                {
+                    logger.LogError($"Could not load partition information about topic '{this.topicName}'");
+                    return new List<TopicPartition>();
+                }
+
+                return partitions.Select(x => new TopicPartition(topicMetadata.Topic, new Partition(x.PartitionId))).ToList();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, $"Failed to load partition information from topic '{this.topicName}'");
+            }
+
+            return new List<TopicPartition>();
+        }
+
 
         private long GetTotalLag(List<TopicPartition> allPartitions, TimeSpan operationTimeout)
         {
@@ -109,10 +128,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return totalLag;
         }
     
-        private int GetUnprocessedEventCount()
+        private long GetUnprocessedEventCount()
         {
             // logic to get unprocessed event count
-            return 1;
+            return 1L;
         }
     }
 }

@@ -16,9 +16,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly string topicName;
         private readonly string consumerGroup;
         private readonly ILogger logger;
-        private readonly AdminClientConfig adminClientConfig;
-        private readonly IConsumer<TKey, TValue> consumer;
-        private readonly Lazy<List<TopicPartition>> topicPartitions;
+        //private readonly AdminClientConfig adminClientConfig;
+        //private readonly IConsumer<TKey, TValue> consumer;
+        //private readonly Lazy<List<TopicPartition>> topicPartitions;
         private readonly long lagThreshold;
         private readonly KafkaMetricsProvider<TKey, TValue> kafkaMetricsProvider;
 
@@ -37,45 +37,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
 
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            this.adminClientConfig = adminClientConfig ?? throw new ArgumentNullException(nameof(adminClientConfig));
-            this.consumer = consumer ?? throw new ArgumentNullException(nameof(consumer));
+            //this.adminClientConfig = adminClientConfig ?? throw new ArgumentNullException(nameof(adminClientConfig));
+            //this.consumer = consumer ?? throw new ArgumentNullException(nameof(consumer));
             this.topicName = topic;
             this.Descriptor = new ScaleMonitorDescriptor($"{functionId}-kafkatrigger-{topicName}-{consumerGroup}".ToLower());
-            this.topicPartitions = new Lazy<List<TopicPartition>>(LoadTopicPartitions);
             this.consumerGroup = consumerGroup;
             this.lagThreshold = lagThreshold;
-            this.kafkaMetricsProvider = new KafkaMetricsProvider<TKey, TValue>(topicPartitions, topicName, logger, consumer);
-        }
-
-        protected virtual List<TopicPartition> LoadTopicPartitions()
-        {
-            try
-            {
-                var timeout = TimeSpan.FromSeconds(5);
-                using var adminClient = new AdminClientBuilder(adminClientConfig).Build();
-                var metadata = adminClient.GetMetadata(this.topicName, timeout);
-                if (metadata.Topics == null || metadata.Topics.Count == 0)
-                {
-                    logger.LogError("Could not load metadata information about topic '{topic}'", this.topicName);
-                    return new List<TopicPartition>();
-                }
-
-                var topicMetadata = metadata.Topics[0];
-                var partitions = topicMetadata.Partitions;
-                if (partitions == null || partitions.Count == 0)
-                {
-                    logger.LogError("Could not load partition information about topic '{topic}'", this.topicName);
-                    return new List<TopicPartition>();
-                }
-
-                return partitions.Select(x => new TopicPartition(topicMetadata.Topic, new Partition(x.PartitionId))).ToList();
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Failed to load partition information from topic '{topic}'", this.topicName);
-            }
-
-            return new List<TopicPartition>();
+            this.kafkaMetricsProvider = new KafkaMetricsProvider<TKey, TValue>(topicName, adminClientConfig, consumer, logger);
         }
 
         async Task<ScaleMetrics> IScaleMonitor.GetMetricsAsync()
