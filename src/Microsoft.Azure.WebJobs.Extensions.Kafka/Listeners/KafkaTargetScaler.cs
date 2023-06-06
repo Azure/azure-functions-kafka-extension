@@ -49,8 +49,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         // defining ITargetScaler interface method - GetScaleResultAsync: returns TargetScalerResult {TargetWorkerCount;}.
         public async Task<TargetScalerResult> GetScaleResultAsync(TargetScalerContext context)
         {
-            var metrics = await kafkaMetricsProvider.GetMetricsAsync();
-            long eventCount = metrics.EventCount;
+            long eventCount = await kafkaMetricsProvider.GetUnprocessedEventCountAsync();
 
             return GetScaleResultInternal(context, eventCount);
         }

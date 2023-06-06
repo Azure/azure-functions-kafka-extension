@@ -39,7 +39,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             if (allPartitions == null)
             {
                 // returns null
-                return Task.FromResult(new KafkaTriggerMetrics(0L, 0, 0L));
+                return Task.FromResult(new KafkaTriggerMetrics(0L, 0));
             }
 
             var operationTimeout = TimeSpan.FromSeconds(5);
@@ -47,9 +47,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             // get three parameters required for kafkatriggermetrics
             long totalLag = GetTotalLag(allPartitions, operationTimeout);
             int paritionCount = allPartitions.Count;
-            long eventCount = GetUnprocessedEventCount();
 
-            return Task.FromResult(new KafkaTriggerMetrics(totalLag, paritionCount, eventCount));
+            return Task.FromResult(new KafkaTriggerMetrics(totalLag, paritionCount));
         }
 
         protected virtual List<TopicPartition> LoadTopicPartitions()
@@ -128,9 +127,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return totalLag;
         }
     
+        public async Task<long> GetUnprocessedEventCountAsync()
+        {
+            // some async function using adminClient. look into it.
+            var eventCount = await Task.Run(GetUnprocessedEventCount);
+            return eventCount;
+        }
+
         private long GetUnprocessedEventCount()
         {
-            // logic to get unprocessed event count
             return 1L;
         }
     }
