@@ -44,6 +44,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.consumerGroup = consumerGroup;
             this.lagThreshold = lagThreshold;
             this.kafkaMetricsProvider = new KafkaMetricsProvider<TKey, TValue>(topicName, adminClientConfig, consumer, logger);
+            this.logger.LogInformation($"Started Topic scaler - topic name: {topicName}, consumerGroup {consumerGroup}, functionID: {functionId}, lagThreshold: {lagThreshold}.");
         }
 
         async Task<ScaleMetrics> IScaleMonitor.GetMetricsAsync()

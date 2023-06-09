@@ -23,7 +23,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly ILogger logger;
         private readonly Lazy<List<TopicPartition>> topicPartitions;
 
-        //public KafkaMetricsProvider(Lazy<List<TopicPartition>> topicPartitions, string topicName, IConsumer<TKey, TValue> consumer)
         public KafkaMetricsProvider(string topicName, AdminClientConfig adminClientConfig, IConsumer<TKey, TValue> consumer, ILogger logger)
         {
             this.topicName = topicName;
@@ -44,9 +43,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             var operationTimeout = TimeSpan.FromSeconds(5);
 
-            // get three parameters required for kafkatriggermetrics
+            // get the parameters required for kafkatriggermetrics
             long totalLag = GetTotalLag(allPartitions, operationTimeout);
             int paritionCount = allPartitions.Count;
+            this.logger.LogInformation($"Calculated metrics partitionCount: {paritionCount} at time {DateTime.UtcNow}.");
 
             return Task.FromResult(new KafkaTriggerMetrics(totalLag, paritionCount));
         }
@@ -125,18 +125,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 logger.LogInformation($"Total lag in '{this.topicName}' is {totalLag}, highest partition lag found in {partitionWithHighestLag.Value} with value of {highestPartitionLag}.");
             }
             return totalLag;
-        }
-    
-        public async Task<long> GetUnprocessedEventCountAsync()
-        {
-            // some async function using adminClient. look into it.
-            var eventCount = await Task.Run(GetUnprocessedEventCount);
-            return eventCount;
-        }
-
-        private long GetUnprocessedEventCount()
-        {
-            return 1L;
         }
     }
 }

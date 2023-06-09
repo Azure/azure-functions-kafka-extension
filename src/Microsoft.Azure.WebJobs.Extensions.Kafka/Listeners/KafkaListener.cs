@@ -124,7 +124,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             // returns a KafkaTargetScaler class, implemented from ITargetScaler
             // fill in the required parameters. 
             // create a new adminclientconfig?? or create a variable and use?
-            return new KafkaTargetScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.consumerGroup, this.functionId, this.consumer.Value, new AdminClientConfig(GetConsumerConfiguration()), this.options.TargetUnprocessedEventThreshold, this.logger);
+            return new KafkaTargetScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.consumerGroup, this.functionId, this.consumer.Value, new AdminClientConfig(GetConsumerConfiguration()), this.listenerConfiguration.LagThreshold, this.options.MaxBatchSize, logger);
         }
 
         public void Cancel()
