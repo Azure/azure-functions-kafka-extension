@@ -34,7 +34,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public Task<KafkaTriggerMetrics> GetMetricsAsync()
         {
-            this.logger.LogInformation($"Getting metrics at time {DateTime.UtcNow}.");
+            var startTime = DateTime.UtcNow;
+            this.logger.LogInformation($"Getting metrics at time {startTime}:");
             var allPartitions = topicPartitions.Value;
             if (allPartitions == null)
             {
@@ -47,6 +48,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             // get the parameters required for kafkatriggermetrics
             long totalLag = GetTotalLag(allPartitions, operationTimeout);
             int paritionCount = allPartitions.Count;
+            
+            var endTime = DateTime.UtcNow;
+            this.logger.LogInformation($"Ended getting metrics at time {endTime}. Time taken: {endTime - startTime}.");
 
             return Task.FromResult(new KafkaTriggerMetrics(totalLag, paritionCount));
         }
@@ -104,12 +108,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     if (commited.Offset == Offset.Unset)
                     {
                         diff = watermark.High.Value;
-                        this.logger.LogInformation($"For the partition {topicPartition}, high watermark: ({watermark.High}), low watermark: ({watermark.Low}), committed offset: (unset), lag for partition: {diff}");
+                        // this.logger.LogInformation($"For the partition {topicPartition}, high watermark: ({watermark.High}), low watermark: ({watermark.Low}), committed offset: (unset), lag for partition: {diff}");
                     }
                     else
                     {
                         diff = watermark.High.Value - commited.Offset.Value;
-                        this.logger.LogInformation($"For the partition {topicPartition}, high watermark: ({watermark.High}), low watermark: ({watermark.Low}), committed offset: ({commited.Offset.Value}), lag for partition: {diff}", null);
+                        // this.logger.LogInformation($"For the partition {topicPartition}, high watermark: ({watermark.High}), low watermark: ({watermark.Low}), committed offset: ({commited.Offset.Value}), lag for partition: {diff}", null);
                     }
                     totalLag += diff;
 
