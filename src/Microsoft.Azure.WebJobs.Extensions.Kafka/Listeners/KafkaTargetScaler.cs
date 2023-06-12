@@ -81,7 +81,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 targetWorkerCount = (int) metrics.PartitionCount;
             }
 
-            this.logger.LogInformation($"TargetWorkerCount: {targetWorkerCount}. For the topic {this.topicName}, consumer group {consumerGroup}.");   
+            this.logger.LogInformation($"EventCount: {eventCount}, concurrency: {targetConcurrency} TargetWorkerCount: {targetWorkerCount}. For the topic {this.topicName}, consumer group {consumerGroup}.");   
 
             return new TargetScalerResult
             {
