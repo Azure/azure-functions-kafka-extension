@@ -61,6 +61,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             var eventCount = metrics.TotalLag;
             var targetConcurrency = context.InstanceConcurrency ?? this.lagThreshold;
+            if (eventCount == 0)
+            {
+                return new TargetScalerResult
+                {
+                    TargetWorkerCount = 1
+                };
+            }
+
             if (context.InstanceConcurrency.HasValue)
             {
                 this.logger.LogInformation($"Dynamic conurrency: {context.InstanceConcurrency}");

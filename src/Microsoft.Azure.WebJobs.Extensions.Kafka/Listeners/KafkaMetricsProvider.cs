@@ -57,6 +57,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         protected virtual List<TopicPartition> LoadTopicPartitions()
         {
+            var startTime = DateTime.UtcNow;
             try
             {
                 var timeout = TimeSpan.FromSeconds(5);
@@ -82,13 +83,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 logger.LogError(ex, $"Failed to load partition information from topic '{this.topicName}'");
             }
-
+            var endTime = DateTime.UtcNow;
+            logger.LogInformation($"AdminClient takes {endTime - startTime} to get paritions");
             return new List<TopicPartition>();
         }
 
 
         private long GetTotalLag(List<TopicPartition> allPartitions, TimeSpan operationTimeout)
         {
+            var startTime = DateTime.UtcNow;
             long totalLag = 0;
             var ownedCommittedOffset = consumer.Committed(allPartitions, operationTimeout);
             var partitionWithHighestLag = Partition.Any;
@@ -108,12 +111,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     if (commited.Offset == Offset.Unset)
                     {
                         diff = watermark.High.Value;
-                        // this.logger.LogInformation($"For the partition {topicPartition}, high watermark: ({watermark.High}), low watermark: ({watermark.Low}), committed offset: (unset), lag for partition: {diff}");
+                        this.logger.LogInformation($"For the partition {topicPartition}, high watermark: ({watermark.High}), low watermark: ({watermark.Low}), committed offset: (unset), lag for partition: {diff}");
                     }
                     else
                     {
                         diff = watermark.High.Value - commited.Offset.Value;
-                        // this.logger.LogInformation($"For the partition {topicPartition}, high watermark: ({watermark.High}), low watermark: ({watermark.Low}), committed offset: ({commited.Offset.Value}), lag for partition: {diff}", null);
+                        this.logger.LogInformation($"For the partition {topicPartition}, high watermark: ({watermark.High}), low watermark: ({watermark.Low}), committed offset: ({commited.Offset.Value}), lag for partition: {diff}", null);
                     }
                     totalLag += diff;
 
@@ -129,6 +132,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 // highestPartitionLag is the offsetDifference
                 logger.LogInformation($"Total lag in '{this.topicName}' is {totalLag}, highest partition lag found in {partitionWithHighestLag.Value} with value of {highestPartitionLag}.");
             }
+            var endTime = DateTime.UtcNow;
+            this.logger.LogInformation($"Consumer takes {endTime - startTime} for the watermark offset calls.");
             return totalLag;
         }
     }
