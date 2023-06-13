@@ -4,6 +4,7 @@
 using Avro.Specific;
 using Confluent.Kafka;
 using Microsoft.Azure.WebJobs.Description;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.Config;
 using System;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
@@ -113,6 +114,50 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// Default: 1000
         /// </summary>
         public long LagThreshold { get => lagThreshold.GetValueOrDefault(1000L); set => lagThreshold = value; }
+
+        /// <summary>
+        /// OAuth Bearer method.
+        /// Either 'default' or 'oidc'
+        /// sasl.oauthbearer in librdkafka
+        /// </summary>
+        public OAuthBearerMethod OAuthBearerMethod { get; set; }
+
+        /// <summary>
+        /// OAuth Bearer Client Id
+        /// Specify only when OAuthBearerMethod is 'oidc'
+        /// sasl.oauthbearer.client.id in librdkafka
+        /// </summary>
+        public string OAuthBearerClientId { get; set; }
+
+        /// <summary>
+        /// OAuth Bearer Client Secret
+        /// Specify only when OAuthBearerMethod is 'oidc'
+        /// sasl.oauthbearer.client.secret in librdkafka
+        /// </summary>
+        public string OAuthBearerClientSecret { get; set; }
+
+        /// <summary>
+        /// OAuth Bearer scope.
+        /// Client use this to specify the scope of the access request to the broker. 
+        /// Specify only when OAuthBearerMethod is 'oidc'
+        /// sasl.oauthbearer.extensions in librdkafka
+        /// </summary>
+        public string OAuthBearerScope { get; set; }
+
+        /// <summary>
+        /// OAuth Bearer token endpoint url.
+        /// Specify only when OAuthBearerMethod is 'oidc'
+        /// sasl.oauthbearer.token.endpoint.url in librdkafka
+        /// </summary>
+        public string OAuthBearerTokenEndpointUrl { get; set; }
+
+        /// <summary>
+        /// OAuth Bearer extensions.
+        /// Allow additional information to be provided to the broker.
+        /// Comma-separated list of key=value pairs. E.g., "supportFeatureX=true,organizationId=sales-emea"
+        /// sasl.oauthbearer.extensions in librdkafka
+        /// </summary>
+        public string OAuthBearerExtensions { get; set; }
 
         bool IsValidValueType(Type value)
         {

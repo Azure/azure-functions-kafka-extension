@@ -5,6 +5,7 @@ using System;
 using System.Reflection;
 using System.Threading.Tasks;
 using Confluent.Kafka;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.Config;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.Trigger;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
@@ -113,6 +114,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 if (attribute.Protocol != BrokerProtocol.NotSet)
                 {
                     consumerConfig.SecurityProtocol = (SecurityProtocol)attribute.Protocol;
+                }
+
+                if (attribute.AuthenticationMode == BrokerAuthenticationMode.OAuthBearer)
+                {
+                    consumerConfig.SaslOAuthBearerMethod = (SaslOauthbearerMethod) attribute.OAuthBearerMethod;
+                    consumerConfig.SaslOAuthBearerClientId = this.config.ResolveSecureSetting(nameResolver, attribute.OAuthBearerClientId);
+                    consumerConfig.SaslOAuthBearerClientSecret = this.config.ResolveSecureSetting(nameResolver, attribute.OAuthBearerClientSecret);
+                    consumerConfig.SaslOAuthBearerScope = this.config.ResolveSecureSetting(nameResolver, attribute.OAuthBearerScope);
+                    consumerConfig.SaslOAuthBearerTokenEndpointUrl = this.config.ResolveSecureSetting(nameResolver, attribute.OAuthBearerTokenEndpointUrl);
+                    consumerConfig.SaslOAuthBearerExtensions = this.config.ResolveSecureSetting(nameResolver, attribute.OAuthBearerExtensions);
                 }
             }
 

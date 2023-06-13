@@ -176,6 +176,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 SslKeyLocation = this.listenerConfiguration.SslKeyLocation,
                 SslKeyPassword = this.listenerConfiguration.SslKeyPassword,
 
+                // OAuthBearer config
+                SaslOauthbearerMethod = this.listenerConfiguration.SaslOAuthBearerMethod,
+                SaslOauthbearerClientId = this.listenerConfiguration.SaslOAuthBearerClientId,
+                SaslOauthbearerClientSecret = this.listenerConfiguration.SaslOAuthBearerClientSecret,
+                SaslOauthbearerScope = this.listenerConfiguration.SaslOAuthBearerScope,
+                SaslOauthbearerTokenEndpointUrl = this.listenerConfiguration.SaslOAuthBearerTokenEndpointUrl,
+                SaslOauthbearerExtensions = this.listenerConfiguration.SaslOAuthBearerExtensions,
+
                 // Values from host configuration
                 StatisticsIntervalMs = this.options.StatisticsIntervalMs,
                 ReconnectBackoffMs = this.options.ReconnectBackoffMs,
