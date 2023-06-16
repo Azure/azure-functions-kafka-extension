@@ -102,7 +102,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 // This call goes to the server always which probably yields the most accurate results. It blocks.
                 // Alternatively we could use consumer.GetWatermarkOffsets() that returns cached values, without blocking.
                 
-                var watermark = consumer.QueryWatermarkOffsets(topicPartition, operationTimeout);
+                var watermark = consumer.GetWatermarkOffsets(topicPartition);
 
                 var commited = ownedCommittedOffset.FirstOrDefault(x => x.Partition == topicPartition.Partition);
                 if (commited != null)
