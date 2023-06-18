@@ -104,27 +104,34 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 
                 var watermark = consumer.GetWatermarkOffsets(topicPartition);
 
-                var commited = ownedCommittedOffset.FirstOrDefault(x => x.Partition == topicPartition.Partition);
-                if (commited != null)
+                if (watermark.High != Offset.Unset && watermark.Low != Offset.Unset)
                 {
-                    long diff;
-                    if (commited.Offset == Offset.Unset)
+                    var commited = ownedCommittedOffset.FirstOrDefault(x => x.Partition == topicPartition.Partition);
+                    if (commited != null)
                     {
-                        diff = watermark.High.Value;
-                        this.logger.LogInformation($"For the partition {topicPartition}, high watermark: ({watermark.High}), low watermark: ({watermark.Low}), committed offset: (unset), lag for partition: {diff}");
-                    }
-                    else
-                    {
-                        diff = watermark.High.Value - commited.Offset.Value;
-                        this.logger.LogInformation($"For the partition {topicPartition}, high watermark: ({watermark.High}), low watermark: ({watermark.Low}), committed offset: ({commited.Offset.Value}), lag for partition: {diff}", null);
-                    }
-                    totalLag += diff;
+                        long diff;
+                        if (commited.Offset == Offset.Unset)
+                        {
+                            diff = watermark.High.Value;
+                            this.logger.LogInformation($"For the partition {topicPartition}, high watermark: ({watermark.High}), low watermark: ({watermark.Low}), committed offset: (unset), lag for partition: {diff}");
+                        }
+                        else
+                        {
+                            diff = watermark.High.Value - commited.Offset.Value;
+                            this.logger.LogInformation($"For the partition {topicPartition}, high watermark: ({watermark.High}), low watermark: ({watermark.Low}), committed offset: ({commited.Offset.Value}), lag for partition: {diff}", null);
+                        }
+                        totalLag += diff;
 
-                    if (diff > highestPartitionLag)
-                    {
-                        highestPartitionLag = diff;
-                        partitionWithHighestLag = topicPartition.Partition;
+                        if (diff > highestPartitionLag)
+                        {
+                            highestPartitionLag = diff;
+                            partitionWithHighestLag = topicPartition.Partition;
+                        }
                     }
+                }
+                else
+                {
+                    logger.LogInformation($"No cached offset found for partition {topicPartition}");
                 }
             }
             if (partitionWithHighestLag != Partition.Any)
