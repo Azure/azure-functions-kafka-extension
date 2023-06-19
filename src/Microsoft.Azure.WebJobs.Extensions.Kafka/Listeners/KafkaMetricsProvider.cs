@@ -112,7 +112,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                         long diff;
                         if (commited.Offset == Offset.Unset)
                         {
-                            diff = watermark.High.Value;
+                            diff = watermark.High.Value - watermark.Low.Value;
                             this.logger.LogInformation($"For the partition {topicPartition}, high watermark: ({watermark.High}), low watermark: ({watermark.Low}), committed offset: (unset), lag for partition: {diff}");
                         }
                         else
