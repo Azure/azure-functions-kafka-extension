@@ -48,7 +48,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
 
             var keyAndValueTypes = SerializationHelper.GetKeyAndValueTypes(attribute.AvroSchema, parameter.ParameterType, typeof(string));
-            var valueDeserializer = SerializationHelper.ResolveValueDeserializer(keyAndValueTypes.ValueType, keyAndValueTypes.AvroSchema, attribute.SchemaRegistryUrl);
+            var valueDeserializer = SerializationHelper.ResolveValueDeserializer(keyAndValueTypes.ValueType, keyAndValueTypes.AvroSchema, attribute.SchemaRegistryUrl, attribute.SchemaRegistryUsername, attribute.SchemaRegistryPassword);
 
             var consumerConfig = CreateConsumerConfiguration(attribute);
             var binding = CreateBindingStrategyFor(keyAndValueTypes.KeyType ?? typeof(Ignore), keyAndValueTypes.ValueType, keyAndValueTypes.RequiresKey, valueDeserializer, parameter, consumerConfig);

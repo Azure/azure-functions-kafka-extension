@@ -17,7 +17,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
     internal static class SerializationHelper
     {
-        internal static object ResolveValueDeserializer(Type valueType, string specifiedAvroSchema, string schemaRegistryUrl)
+        internal static object ResolveValueDeserializer(Type valueType, string specifiedAvroSchema, string schemaRegistryUrl, string schemaRegistryUsername, string schemaRegistryPassword)
         {
             if (typeof(IMessage).IsAssignableFrom(valueType))
             {
@@ -30,7 +30,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 return null;
             }
 
-            var schemaRegistry = CreateSchemaRegistry(valueType, specifiedAvroSchema, schemaRegistryUrl, isSpecificRecord);
+            var schemaRegistry = CreateSchemaRegistry(valueType, specifiedAvroSchema, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword, isSpecificRecord);
 
             var methodInfo = typeof(SerializationHelper).GetMethod(nameof(CreateAvroDeserializer), BindingFlags.Static | BindingFlags.NonPublic);
             var genericMethod = methodInfo.MakeGenericMethod(valueType);
@@ -43,7 +43,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return new AvroDeserializer<TValue>(schemaRegistry).AsSyncOverAsync();
         }
 
-        internal static object ResolveValueSerializer(Type valueType, string specifiedAvroSchema, string schemaRegistryUrl)
+        internal static object ResolveValueSerializer(Type valueType, string specifiedAvroSchema, string schemaRegistryUrl, string schemaRegistryUsername, string schemaRegistryPassword)
         {
             if (typeof(IMessage).IsAssignableFrom(valueType))
             {
@@ -56,13 +56,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 return null;
             }
 
-            var schemaRegistry = CreateSchemaRegistry(valueType, specifiedAvroSchema, schemaRegistryUrl, isSpecificRecord);
+            var schemaRegistry = CreateSchemaRegistry(valueType, specifiedAvroSchema, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword, isSpecificRecord);
 
             var serializer = Activator.CreateInstance(typeof(AvroSerializer<>).MakeGenericType(valueType), schemaRegistry, null /* config */);
             return typeof(SyncOverAsyncSerializerExtensionMethods).GetMethod("AsSyncOverAsync").MakeGenericMethod(valueType).Invoke(null, new object[] { serializer });
         }
 
-        private static ISchemaRegistryClient CreateSchemaRegistry(Type valueType, string specifiedAvroSchema, string schemaRegistryUrl, bool isSpecificRecord)
+        private static ISchemaRegistryClient CreateSchemaRegistry(Type valueType, string specifiedAvroSchema, string schemaRegistryUrl, string schemaRegistryUsername, string schemaRegistryPassword, bool isSpecificRecord)
         {
             if (string.IsNullOrWhiteSpace(specifiedAvroSchema) && isSpecificRecord)
             {
@@ -75,8 +75,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
             if (schemaRegistryUrl != null)
             {
-                var schemaRegistryConfig = new[] { new KeyValuePair<string, string>("schema.registry.url", schemaRegistryUrl) };
-                return new CachedSchemaRegistryClient(schemaRegistryConfig);
+                var schemaRegistryConfig = new List<KeyValuePair<string, string>>();
+                schemaRegistryConfig.Add(new KeyValuePair<string, string>("schema.registry.url", schemaRegistryUrl));
+                if (schemaRegistryUsername != null && schemaRegistryPassword != null) {
+                    var authString = schemaRegistryUsername + ":" + schemaRegistryPassword;
+                    schemaRegistryConfig.Add(new KeyValuePair<string, string>("schema.registry.basic.auth.user.info", authString));
+                }
+                return new CachedSchemaRegistryClient(schemaRegistryConfig.ToArray());
             }
             throw new ArgumentNullException(nameof(specifiedAvroSchema), $@"parameter is required when creating an generic avro serializer");
         }

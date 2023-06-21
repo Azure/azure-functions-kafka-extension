@@ -82,7 +82,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var valueType = entity.ValueType ?? typeof(byte[]);
             var keyType = entity.KeyType ?? typeof(Null);
 
-            var valueSerializer = SerializationHelper.ResolveValueSerializer(valueType, entity.AvroSchema, entity.Attribute.SchemaRegistryUrl);
+            var valueSerializer = SerializationHelper.ResolveValueSerializer(valueType, entity.AvroSchema, entity.Attribute.SchemaRegistryUrl, entity.Attribute.SchemaRegistryUsername, entity.Attribute.SchemaRegistryPassword);
 
             return (IKafkaProducer)Activator.CreateInstance(
                 typeof(KafkaProducer<,>).MakeGenericType(keyType, valueType),

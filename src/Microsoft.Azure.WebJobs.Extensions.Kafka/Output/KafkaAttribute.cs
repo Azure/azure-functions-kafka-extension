@@ -148,5 +148,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// URL for the Avro Schema Registry
         /// </summary>
         public string SchemaRegistryUrl { get; set; }
+
+        /// <summary>
+        /// Username for the Avro Schema Registry
+        /// </summary>
+        public string SchemaRegistryUsername { get; set; }
+
+        /// <summary>
+        /// Password for the Avro Schema Registry
+        /// </summary>
+        public string SchemaRegistryPassword { get; set; }
     }
 }
