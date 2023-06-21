@@ -14,18 +14,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         // Initialise variables required.
         private readonly string topicName;
         private readonly string consumerGroup;
-        //private readonly AdminClientConfig adminClientConfig;
-        //private readonly IConsumer<Tkey, TValue> consumer;
         private readonly long lagThreshold;
-        private readonly int maxBatchSize;
         private readonly ILogger logger;
-        private readonly KafkaMetricsProvider<Tkey, TValue> kafkaMetricsProvider;
+        private readonly KafkaMetricsProvider<Tkey, TValue> metricsProvider;
+
+        private DateTime lastScaleUpTime;
+        private TargetScalerResult lastTargetScalerResult;
 
         public TargetScalerDescriptor TargetScalerDescriptor { get; }
  
-        public KafkaTargetScaler(string topic, string consumerGroup, string functionID, IConsumer<Tkey, TValue> consumer, AdminClientConfig adminClientConfig, long lagThreshold, int maxBatchSize, ILogger logger)
+        internal KafkaTargetScaler(string topic, string consumerGroup, string functionID, IConsumer<Tkey, TValue> consumer, KafkaMetricsProvider<Tkey, TValue> metricsProvider, long lagThreshold, ILogger logger)
         {
-            // also get the target unprocessed event threshold per worker
             if (string.IsNullOrWhiteSpace(topic))
             {
                 throw new ArgumentException("Invalid topic: ", nameof(topic));
@@ -33,35 +32,39 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             if (string.IsNullOrWhiteSpace(consumerGroup))
             {
-                throw new ArgumentException("Invalid consumer group", nameof(consumerGroup));
+                throw new ArgumentException("Invalid consumer group: ", nameof(consumerGroup));
             }
 
             this.topicName = topic;
             this.consumerGroup = consumerGroup;
-            // ----> check the format of targetscalerdescriptor once.
             this.TargetScalerDescriptor = new TargetScalerDescriptor(functionID);
             this.lagThreshold = lagThreshold;
-            this.maxBatchSize = maxBatchSize;
-            //this.consumer = consumer;
-            //this.adminClientConfig = adminClientConfig ?? throw new ArgumentNullException(nameof(adminClientConfig));
             this.logger = logger;
-            this.kafkaMetricsProvider = new KafkaMetricsProvider<Tkey, TValue>(topicName, adminClientConfig, consumer, logger);
-            this.logger.LogInformation($"Started Target scaler - topic name: {topicName}, consumerGroup {consumerGroup}, functionID: {functionID}, lagThreshold: {lagThreshold}, maxBatchSize: {maxBatchSize}.");
+            this.metricsProvider = metricsProvider;
+
+            this.lastScaleUpTime = DateTime.MinValue;
+            this.lastTargetScalerResult = new TargetScalerResult();
+
+            this.logger.LogInformation($"Started Target Scaler - topic name: {topicName}, consumerGroup: {consumerGroup}, functionID: {functionID}, lagThreshold: {lagThreshold}.");
         }
 
         // defining ITargetScaler interface method - GetScaleResultAsync: returns TargetScalerResult {TargetWorkerCount;}.
         public async Task<TargetScalerResult> GetScaleResultAsync(TargetScalerContext context)
         {
-            KafkaTriggerMetrics metrics = await kafkaMetricsProvider.GetMetricsAsync();
+            KafkaTriggerMetrics metrics = await metricsProvider.GetMetricsAsync();
 
             return GetScaleResultInternal(context, metrics);
         }
 
         internal TargetScalerResult GetScaleResultInternal(TargetScalerContext context, KafkaTriggerMetrics metrics)
         {
-            var eventCount = metrics.TotalLag;
-            var targetConcurrency = context.InstanceConcurrency ?? this.lagThreshold;
-            if (eventCount == 0)
+            var totalLag = metrics.TotalLag;
+            var partitionCount = metrics.PartitionCount;
+
+            // Since Kafka Extension supports only Premium plan for run time based scaling,
+            // the targetWorkerCount is set to 1 even when the totalLag is 0.
+            // This can be changed to 0 when the extension supports all plans.
+            if (totalLag == 0)
             {
                 return new TargetScalerResult
                 {
@@ -69,32 +72,53 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 };
             }
 
-            if (context.InstanceConcurrency.HasValue)
-            {
-                this.logger.LogInformation($"Dynamic conurrency: {context.InstanceConcurrency}");
-            }  
-            else
-            {
-                this.logger.LogInformation($"Static concurrency: {this.lagThreshold}");
-            }
+            var targetConcurrency = context.InstanceConcurrency ?? this.lagThreshold;
 
             if (targetConcurrency < 1)
             {
                 throw new ArgumentException("Target concurrency must be larger than 0.");
             }
 
-            int targetWorkerCount = (int) Math.Ceiling(eventCount / (decimal) targetConcurrency);
-            if (targetWorkerCount > metrics.PartitionCount)
+            int targetWorkerCount = (int) Math.Ceiling(totalLag / (decimal) targetConcurrency);
+
+            targetWorkerCount = ValidateWithPartitionCount(targetWorkerCount, partitionCount);
+            targetWorkerCount = ThrottleResultIfNecessary(targetWorkerCount);
+            if (GetChangeInWorkerCount(targetWorkerCount) > 0)
             {
-                targetWorkerCount = (int) metrics.PartitionCount;
+                this.lastScaleUpTime = DateTime.UtcNow;
             }
 
-            this.logger.LogInformation($"EventCount: {eventCount}, concurrency: {targetConcurrency} TargetWorkerCount: {targetWorkerCount}. For the topic {this.topicName}, consumer group {consumerGroup}.");   
+            this.logger.LogInformation($"Total Lag: {totalLag}, concurrency: {targetConcurrency} TargetWorkerCount: {targetWorkerCount}. For the topic {this.topicName}, consumer group {consumerGroup}.");   
 
             return new TargetScalerResult
             {
                 TargetWorkerCount = targetWorkerCount
             };
+        }
+
+        internal int ValidateWithPartitionCount(int targetWorkerCount, long partitionCount)
+        {
+            if (targetWorkerCount > partitionCount)
+            {
+                targetWorkerCount = (int) partitionCount;
+            }
+
+            return targetWorkerCount;
+        }
+
+        internal int ThrottleResultIfNecessary(int targetWorkerCount)
+        {
+            if (GetChangeInWorkerCount(targetWorkerCount) < 0 && DateTime.UtcNow - this.lastScaleUpTime < TimeSpan.FromMinutes(1))
+            {
+                targetWorkerCount = this.lastTargetScalerResult.TargetWorkerCount;
+                this.logger.LogInformation("Throttling scale down as last scale up was less than 1 minute ago.");
+            }
+            return targetWorkerCount;
+        }
+
+        internal int GetChangeInWorkerCount(int targetWorkerCount)
+        {
+            return targetWorkerCount - lastTargetScalerResult.TargetWorkerCount;
         }
     }
 }

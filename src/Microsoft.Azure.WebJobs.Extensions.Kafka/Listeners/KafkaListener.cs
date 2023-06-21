@@ -46,6 +46,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly string consumerGroup;
         private readonly string topicName;
         private readonly string functionId;
+        protected Lazy<KafkaMetricsProvider<TKey, TValue>> metricsProvider;
         //protected for the unit test
         protected Lazy<KafkaTopicScaler<TKey, TValue>> topicScaler;
         protected Lazy<KafkaTargetScaler<TKey, TValue>> targetScaler;
@@ -78,8 +79,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.topicName = this.listenerConfiguration.Topic;
             this.functionId = functionId;
             this.consumer = new Lazy<IConsumer<TKey, TValue>>(() => CreateConsumer());
-            this.topicScaler = new Lazy<KafkaTopicScaler<TKey, TValue>>(() => CreateTopicScaler());
-            this.targetScaler = new Lazy<KafkaTargetScaler<TKey, TValue>>(() => CreateTargetScaler());
+            this.metricsProvider = new Lazy<KafkaMetricsProvider<TKey, TValue>>(CreateMetricsProvider);
+            this.topicScaler = new Lazy<KafkaTopicScaler<TKey, TValue>>(CreateTopicScaler);
+            this.targetScaler = new Lazy<KafkaTargetScaler<TKey, TValue>>(CreateTargetScaler);
         }
 
         private IConsumer<TKey, TValue> CreateConsumer()
@@ -114,17 +116,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return builder.Build();
         }
 
+        private KafkaMetricsProvider<TKey, TValue> CreateMetricsProvider()
+        {
+            return new KafkaMetricsProvider<TKey, TValue>(this.topicName, new AdminClientConfig(GetConsumerConfiguration()), consumer.Value, this.logger);
+        }
+
         private KafkaTopicScaler<TKey, TValue> CreateTopicScaler()
         {
-            return new KafkaTopicScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.consumerGroup, this.functionId, this.consumer.Value, new AdminClientConfig(GetConsumerConfiguration()), this.listenerConfiguration.LagThreshold, this.logger);
+            return new KafkaTopicScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.consumerGroup, this.functionId, this.consumer.Value, metricsProvider.Value, this.listenerConfiguration.LagThreshold, this.logger);
         }
 
         private KafkaTargetScaler<TKey, TValue> CreateTargetScaler()
         {
-            // returns a KafkaTargetScaler class, implemented from ITargetScaler
-            // fill in the required parameters. 
-            // create a new adminclientconfig?? or create a variable and use?
-            return new KafkaTargetScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.consumerGroup, this.functionId, this.consumer.Value, new AdminClientConfig(GetConsumerConfiguration()), this.listenerConfiguration.LagThreshold, this.options.MaxBatchSize, logger);
+            return new KafkaTargetScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.consumerGroup, this.functionId, this.consumer.Value, metricsProvider.Value, this.listenerConfiguration.LagThreshold, this.logger);
         }
 
         public void Cancel()

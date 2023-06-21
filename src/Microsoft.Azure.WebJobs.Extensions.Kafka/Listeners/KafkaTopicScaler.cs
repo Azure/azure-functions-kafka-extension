@@ -16,15 +16,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly string topicName;
         private readonly string consumerGroup;
         private readonly ILogger logger;
-        //private readonly AdminClientConfig adminClientConfig;
-        //private readonly IConsumer<TKey, TValue> consumer;
-        //private readonly Lazy<List<TopicPartition>> topicPartitions;
         private readonly long lagThreshold;
-        private readonly KafkaMetricsProvider<TKey, TValue> kafkaMetricsProvider;
+        private readonly KafkaMetricsProvider<TKey, TValue> metricsProvider;
 
         public ScaleMonitorDescriptor Descriptor { get; }
 
-        public KafkaTopicScaler(string topic, string consumerGroup, string functionId, IConsumer<TKey, TValue> consumer, AdminClientConfig adminClientConfig, long lagThreshold, ILogger logger)
+        internal KafkaTopicScaler(string topic, string consumerGroup, string functionId, IConsumer<TKey, TValue> consumer, KafkaMetricsProvider<TKey, TValue> metricsProvider, long lagThreshold, ILogger logger)
         {
             if (string.IsNullOrWhiteSpace(topic))
             {
@@ -37,26 +34,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
 
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            //this.adminClientConfig = adminClientConfig ?? throw new ArgumentNullException(nameof(adminClientConfig));
-            //this.consumer = consumer ?? throw new ArgumentNullException(nameof(consumer));
             this.topicName = topic;
             this.Descriptor = new ScaleMonitorDescriptor($"{functionId}-kafkatrigger-{topicName}-{consumerGroup}".ToLower());
             this.consumerGroup = consumerGroup;
             this.lagThreshold = lagThreshold;
-            this.kafkaMetricsProvider = new KafkaMetricsProvider<TKey, TValue>(topicName, adminClientConfig, consumer, logger);
+            this.metricsProvider = metricsProvider;
             this.logger.LogInformation($"Started Topic scaler - topic name: {topicName}, consumerGroup {consumerGroup}, functionID: {functionId}, lagThreshold: {lagThreshold}.");
         }
 
-        async Task<ScaleMetrics> IScaleMonitor.GetMetricsAsync()
+        public async Task<ScaleMetrics> GetMetricsAsync()
         {
-            return await GetMetricsAsync();
+            return await metricsProvider.GetMetricsAsync();
         }
 
-        public Task<KafkaTriggerMetrics> GetMetricsAsync()
-        {
-            // let this function stay because most tests refer to TopicScaler.GetMetricsAsync()
-            return kafkaMetricsProvider.GetMetricsAsync();
-        }
         public ScaleStatus GetScaleStatus(ScaleStatusContext context)
         {
             return GetScaleStatusCore(context.WorkerCount, context.Metrics?.OfType<KafkaTriggerMetrics>().ToArray());
@@ -95,7 +85,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
                 if (this.logger.IsEnabled(LogLevel.Information))
                 {
-                    this.logger.LogInformation($"WorkerCount ({workerCount}) > PartitionCount ({partitionCount}). For topic {this.topicName}, for consumer group {this.consumerGroup}.");
                     this.logger.LogInformation($"Number of instances ({workerCount}) is too high relative to number of partitions ({partitionCount}). For topic {this.topicName}, for consumer group {this.consumerGroup}.");
                 }
 
