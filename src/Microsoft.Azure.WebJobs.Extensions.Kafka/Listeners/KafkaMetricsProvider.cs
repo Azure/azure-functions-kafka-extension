@@ -133,8 +133,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 var watermark = consumer.GetWatermarkOffsets(topicPartition);
                 var committed = ownedCommittedOffset.FirstOrDefault(x => x.Partition == topicPartition.Partition);
                 bool bothWatermarksUnset = watermark.High == Offset.Unset && watermark.Low == Offset.Unset;
-                bool lowWatermarkZeroAndCommittedIsSet = watermark.Low == 0 && committed.Offset.Value == Offset.Unset;
-                if (bothWatermarksUnset || lowWatermarkZeroAndCommittedIsSet)
+                bool lowWatermarkZeroAndCommittedIsUnSet = watermark.Low == 0 && committed.Offset.Value == Offset.Unset;
+                if (bothWatermarksUnset || lowWatermarkZeroAndCommittedIsUnSet)
                 {
                     watermark = consumer.QueryWatermarkOffsets(topicPartition, operationTimeout);
                     this.logger.LogInformation($"Queried for partition: {topicPartition}");
