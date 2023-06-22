@@ -34,7 +34,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.consumer = consumer;
             this.topicPartitions = new Lazy<List<TopicPartition>>(LoadTopicPartitions);
             this.assignedPartitions = new Lazy<List<TopicPartition>>(LoadAssignedPartitions);
-            this.LastCalculatedMetrics = new KafkaTriggerMetrics(0L, 0);
+            this.LastCalculatedMetrics = new KafkaTriggerMetrics(-1L, -1);
         }
 
         public Task<KafkaTriggerMetrics> GetMetricsAsync()
@@ -58,7 +58,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.LastCalculatedMetrics = metrics;
 
             var endTime = DateTime.UtcNow;
-            this.logger.LogInformation($"Ended getting metrics at time {endTime}. Time taken: {endTime - startTime}.");
+            this.logger.LogInformation($"Ended getting metrics at time {endTime}. Time taken: {endTime - startTime}. Total lag: {metrics.TotalLag}, partition count: {metrics.PartitionCount}");
 
             return Task.FromResult(metrics);
         }
@@ -128,6 +128,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var currentPartitions = assignedPartitions.Value;
             var unassignedPartitions = allPartitions.Except(currentPartitions).ToList();
 
+            assignedPartitions.Value.ForEach(x => this.logger.LogInformation($"Assigned partition:{x}"));
+            unassignedPartitions.ForEach(x => this.logger.LogInformation($"Unassigned partition: {x}"));
             foreach (var topicPartition in currentPartitions)
             {
                 var watermark = consumer.GetWatermarkOffsets(topicPartition);

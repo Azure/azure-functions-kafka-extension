@@ -48,12 +48,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.logger.LogInformation($"Started Target Scaler - topic name: {topicName}, consumerGroup: {consumerGroup}, functionID: {functionID}, lagThreshold: {lagThreshold}.");
         }
 
-        // defining ITargetScaler interface method - GetScaleResultAsync: returns TargetScalerResult {TargetWorkerCount;}.
         public async Task<TargetScalerResult> GetScaleResultAsync(TargetScalerContext context)
         {
-            KafkaTriggerMetrics metrics = await metricsProvider.GetMetricsAsync();
+            var metrics = await Task.Run(ValidateAndGetMetrics);
+            TargetScalerResult targetScalerResult = GetScaleResultInternal(context, metrics);
+            return targetScalerResult;
+        }
 
-            return GetScaleResultInternal(context, metrics);
+        private async Task<KafkaTriggerMetrics> ValidateAndGetMetrics()
+        {
+            var metrics = this.metricsProvider.LastCalculatedMetrics;
+            TimeSpan timeOut = TimeSpan.FromMinutes(2);
+            if (metrics == null || (metrics.TotalLag == -1 && metrics.PartitionCount == -1)
+            {
+                metrics = await this.metricsProvider.GetMetricsAsync();
+                this.logger.LogInformation($"Recalculating metrics as last calculated and stored was 2 minutes ago.");
+            }
+            return metrics;
         }
 
         internal TargetScalerResult GetScaleResultInternal(TargetScalerContext context, KafkaTriggerMetrics metrics)
