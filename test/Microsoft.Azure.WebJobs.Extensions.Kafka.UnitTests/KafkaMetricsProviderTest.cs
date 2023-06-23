@@ -18,8 +18,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
     public class KafkaMetricsProviderTest
     {
         const string TopicName = "topicTest";
-        private List<TopicPartition> topicPartitions;
-        private List<TopicPartition> assignedPartitions;
+        readonly private List<TopicPartition> topicPartitions;
+        readonly private List<TopicPartition> assignedPartitions;
 
         private readonly TopicPartition partition0;
         private readonly TopicPartition partition1;
@@ -29,7 +29,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         private readonly Mock<IConsumer<string, byte[]>> consumer;
         private readonly KafkaMetricsProviderForTest<string, byte[]> metricsProvider;
 
-        private Offset ZeroOffset => new Offset(0L);
+        private Offset ZeroOffset => new (0L);
         private TimeSpan AnyTimeSpan => It.IsAny<TimeSpan>();
 
         public KafkaMetricsProviderTest()
@@ -81,6 +81,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         }
 
         [Fact]
+        public async Task When_No_Partitions_Exist_Should_Return_No_Lag()
+        {
+            // Arrange
+            var localMetricsProvider = new KafkaMetricsProviderForTest<string, byte[]>(TopicName, new AdminClientConfig(), consumer.Object, NullLogger.Instance, null, null);
+            // Act
+            var metrics = await localMetricsProvider.GetMetricsAsync();
+            // Assert
+            Assert.Equal(0, metrics.TotalLag);
+        }
+
+        [Fact]
         public async Task When_Committed_Is_Behind_Offset_Should_Return_Combined_Lag()
         {
             const long currentOffset = 100;
@@ -106,6 +117,29 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var diff1 = currentOffset - largestLagOffset;
             var diff2 = currentOffset - minimalLagOffset;
             Assert.Equal(diff1 + diff2, metrics.TotalLag);
+        }
+
+        [Fact]
+        public async Task When_Committed_Offset_And_Watermarks_Are_Set()
+        {
+            // Arrange
+            consumer.Setup(x => x.Committed(It.IsNotNull<IEnumerable<TopicPartition>>(), AnyTimeSpan))
+                .Returns(new List<TopicPartitionOffset>
+                {
+                    new TopicPartitionOffset(partition0, 100),
+                    new TopicPartitionOffset(partition1, 100),
+                    new TopicPartitionOffset(partition2, 100),
+                    new TopicPartitionOffset(partition3, 100),
+                });
+            consumer.Setup(x => x.GetWatermarkOffsets(It.IsIn(partition0, partition1)))
+                .Returns(new WatermarkOffsets(100, 100));
+            consumer.Setup(x => x.QueryWatermarkOffsets(It.IsIn(partition2, partition3), AnyTimeSpan))
+                .Returns(new WatermarkOffsets(100, 100));
+            // Act
+            var metrics = await metricsProvider.GetMetricsAsync();
+            // Assert
+            Assert.Equal(topicPartitions.Count, metrics.PartitionCount);
+            Assert.Equal(0, metrics.TotalLag);
         }
     }
 }
