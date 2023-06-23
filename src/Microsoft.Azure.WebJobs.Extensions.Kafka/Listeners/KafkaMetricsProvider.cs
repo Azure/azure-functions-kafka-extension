@@ -24,7 +24,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         protected Lazy<List<TopicPartition>> topicPartitions;
         protected Lazy<List<TopicPartition>> assignedPartitions;
 
-        internal KafkaTriggerMetrics LastCalculatedMetrics { get; set; }
+        virtual protected internal KafkaTriggerMetrics LastCalculatedMetrics { get; set; }
 
         public KafkaMetricsProvider(string topicName, AdminClientConfig adminClientConfig, IConsumer<TKey, TValue> consumer, ILogger logger)
         {
@@ -37,7 +37,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.LastCalculatedMetrics = new KafkaTriggerMetrics(-1L, -1);
         }
 
-        public Task<KafkaTriggerMetrics> GetMetricsAsync()
+        public virtual Task<KafkaTriggerMetrics> GetMetricsAsync()
         {
             var startTime = DateTime.UtcNow;
             this.logger.LogInformation($"Getting metrics at time {startTime}:");

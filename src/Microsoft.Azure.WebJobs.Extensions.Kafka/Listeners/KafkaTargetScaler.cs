@@ -43,7 +43,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.metricsProvider = metricsProvider;
 
             this.lastScaleUpTime = DateTime.MinValue;
-            this.lastTargetScalerResult = new TargetScalerResult();
+            this.lastTargetScalerResult = null;
 
             this.logger.LogInformation($"Started Target Scaler - topic name: {topicName}, consumerGroup: {consumerGroup}, functionID: {functionID}, lagThreshold: {lagThreshold}.");
         }
@@ -121,7 +121,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             if (GetChangeInWorkerCount(targetWorkerCount) < 0 && DateTime.UtcNow - this.lastScaleUpTime < TimeSpan.FromMinutes(1))
             {
-                targetWorkerCount = this.lastTargetScalerResult.TargetWorkerCount;
+                if (lastTargetScalerResult != null)
+                {
+                    targetWorkerCount = this.lastTargetScalerResult.TargetWorkerCount;
+                }
                 this.logger.LogInformation("Throttling scale down as last scale up was less than 1 minute ago.");
             }
             return targetWorkerCount;
@@ -129,6 +132,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         internal int GetChangeInWorkerCount(int targetWorkerCount)
         {
+            if (lastTargetScalerResult == null)
+            {
+                return 0;
+            }
             return targetWorkerCount - lastTargetScalerResult.TargetWorkerCount;
         }
     }
