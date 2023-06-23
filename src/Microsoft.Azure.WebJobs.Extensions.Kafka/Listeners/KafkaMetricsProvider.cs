@@ -21,8 +21,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly AdminClientConfig adminClientConfig;
         private readonly IConsumer<TKey, TValue> consumer;
         private readonly ILogger logger;
-        private readonly Lazy<List<TopicPartition>> topicPartitions;
-        private readonly Lazy<List<TopicPartition>> assignedPartitions;
+        protected Lazy<List<TopicPartition>> topicPartitions;
+        protected Lazy<List<TopicPartition>> assignedPartitions;
 
         internal KafkaTriggerMetrics LastCalculatedMetrics;
 
