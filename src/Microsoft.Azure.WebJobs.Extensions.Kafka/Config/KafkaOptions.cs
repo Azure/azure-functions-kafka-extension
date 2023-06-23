@@ -127,27 +127,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
         }
 
-        private int? targetUnprocessedEventThreshold = 5;
-        /// <summary>
-        /// Get or sets the target number of unprocessed events per worker for Kafka-triggered functions. This is used in target-based scaling to override the default scaling threshold inferred from the <see cref="MaxEventBatchSize" /> option.
-        ///
-        /// If TargetUnprocessedEventThreshold is set, the total unprocessed event count will be divided by this value to determine the number of worker instances, which will then be rounded up to a worker instance count that creates a balanced partition distribution.
-        /// </summary>
-        public int? TargetUnprocessedEventThreshold
-        {
-            get => targetUnprocessedEventThreshold;
-
-            set
-            {
-                if (value < 1)
-                {
-                    throw new ArgumentException("Unprocessed Event Threshold must be larger than 0.");
-                }
-                targetUnprocessedEventThreshold = value;
-            }
-        }
-
-
         /// <summary>
         /// Gets or sets the auto commit interval ms.
         /// Default = 200ms
