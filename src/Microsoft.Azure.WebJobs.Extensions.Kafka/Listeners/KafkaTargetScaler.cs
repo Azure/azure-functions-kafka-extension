@@ -18,8 +18,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly ILogger logger;
         private readonly KafkaMetricsProvider<Tkey, TValue> metricsProvider;
 
-        private DateTime lastScaleUpTime;
-        private TargetScalerResult lastTargetScalerResult;
+        protected DateTime lastScaleUpTime;
+        protected TargetScalerResult lastTargetScalerResult;
 
         public TargetScalerDescriptor TargetScalerDescriptor { get; }
  
