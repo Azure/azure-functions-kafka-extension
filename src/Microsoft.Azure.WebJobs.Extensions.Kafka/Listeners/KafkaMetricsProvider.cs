@@ -24,7 +24,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         protected Lazy<List<TopicPartition>> topicPartitions;
         protected Lazy<List<TopicPartition>> assignedPartitions;
 
-        internal KafkaTriggerMetrics LastCalculatedMetrics;
+        internal KafkaTriggerMetrics LastCalculatedMetrics { get; set; }
 
         public KafkaMetricsProvider(string topicName, AdminClientConfig adminClientConfig, IConsumer<TKey, TValue> consumer, ILogger logger)
         {
