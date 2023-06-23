@@ -8,10 +8,10 @@ using System.Collections.Generic;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 {
-    internal class KafkaMetricsProviderForTest<TKey, TValue> : KafkaMetricsProvider<TKey, TValue>
+    public class KafkaMetricsProviderForTest<TKey, TValue> : KafkaMetricsProvider<TKey, TValue>
     {
-        List<TopicPartition> allPartitions;
-        List<TopicPartition> onlyAssignedPartitions;
+        readonly List<TopicPartition> allPartitions;
+        readonly List<TopicPartition> onlyAssignedPartitions;
 
         public KafkaMetricsProviderForTest(string topicName, AdminClientConfig adminClientConfig, IConsumer<TKey, TValue> consumer, ILogger logger, List<TopicPartition> topicPartitions, List<TopicPartition> assignedPartitions) : base(topicName, adminClientConfig, consumer, logger)
         {
