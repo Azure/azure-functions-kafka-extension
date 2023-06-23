@@ -42,9 +42,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.logger.LogInformation($"Started Topic scaler - topic name: {topicName}, consumerGroup {consumerGroup}, functionID: {functionId}, lagThreshold: {lagThreshold}.");
         }
 
-        public async Task<ScaleMetrics> GetMetricsAsync()
+        async Task<ScaleMetrics> IScaleMonitor.GetMetricsAsync()
         {
-            return await metricsProvider.GetMetricsAsync();
+            return await this.metricsProvider.GetMetricsAsync();
+        }
+
+        public Task<KafkaTriggerMetrics> GetMetricsAsync()
+        {
+            return Task.Run(() => this.metricsProvider.GetMetricsAsync());
         }
 
         public ScaleStatus GetScaleStatus(ScaleStatusContext context)
@@ -189,11 +194,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
 
             return true;
-        }
-
-        Task<KafkaTriggerMetrics> IScaleMonitor<KafkaTriggerMetrics>.GetMetricsAsync()
-        {
-            throw new NotImplementedException();
         }
     }
 }

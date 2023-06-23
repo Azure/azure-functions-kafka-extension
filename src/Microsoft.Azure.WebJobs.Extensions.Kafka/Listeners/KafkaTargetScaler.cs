@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
-    class KafkaTargetScaler<Tkey, TValue> : ITargetScaler
+    public class KafkaTargetScaler<Tkey, TValue> : ITargetScaler
     {
         // Initialise variables required.
         private readonly string topicName;
@@ -59,7 +59,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             var metrics = this.metricsProvider.LastCalculatedMetrics;
             TimeSpan timeOut = TimeSpan.FromMinutes(2);
-            if (metrics == null || (metrics.TotalLag == -1 && metrics.PartitionCount == -1)
+            if (metrics == null || (metrics.TotalLag == -1 && metrics.PartitionCount == -1) || DateTime.UtcNow - metrics.Timestamp > timeOut)
             {
                 metrics = await this.metricsProvider.GetMetricsAsync();
                 this.logger.LogInformation($"Recalculating metrics as last calculated and stored was 2 minutes ago.");
