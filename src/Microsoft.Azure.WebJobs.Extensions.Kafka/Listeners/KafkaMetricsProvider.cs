@@ -15,7 +15,7 @@ using static Confluent.Kafka.ConfigPropertyNames;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
-    internal class KafkaMetricsProvider<TKey, TValue>
+    public class KafkaMetricsProvider<TKey, TValue>
     {
         private readonly string topicName;
         private readonly AdminClientConfig adminClientConfig;
