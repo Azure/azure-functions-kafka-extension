@@ -55,6 +55,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// <value>The value deserializer.</value>
         internal IDeserializer<TValue> ValueDeserializer { get; }
 
+        /// <summary>
+        /// Gets the Key deserializer
+        /// </summary>
+        /// <value>The key deserializer.</value>
+        internal IDeserializer<TKey> KeyDeserializer { get; }
+
         public KafkaListener(
             ITriggeredFunctionExecutor executor,
             bool singleDispatch,
@@ -63,9 +69,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             bool requiresKey,
             IDeserializer<TValue> valueDeserializer,
             ILogger logger,
-            string functionId)
+            string functionId,
+            IDeserializer<TKey> keyDeserializer)
         {
             this.ValueDeserializer = valueDeserializer;
+            this.KeyDeserializer = keyDeserializer;
             this.executor = executor;
             this.singleDispatch = singleDispatch;
             this.options = options;
@@ -102,6 +110,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             if (ValueDeserializer != null)
             {
                 builder.SetValueDeserializer(ValueDeserializer);
+                builder.SetKeyDeserializer(KeyDeserializer);
             }
 
             builder.SetLogHandler((_, m) =>

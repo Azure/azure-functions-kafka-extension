@@ -56,7 +56,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 argumentBinding,
                 keyAndValueTypes.KeyType,
                 keyAndValueTypes.ValueType,
-                keyAndValueTypes.AvroSchema,
+                keyAndValueTypes.ValueAvroSchema,
                 this.config,
                 this.nameResolver);
             return Task.FromResult<IBinding>(binding);
