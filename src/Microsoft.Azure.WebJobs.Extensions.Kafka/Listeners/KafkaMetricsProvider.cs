@@ -33,7 +33,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.logger = logger;
             this.consumer = consumer;
             this.topicPartitions = new Lazy<List<TopicPartition>>(LoadTopicPartitions);
-            this.assignedPartitions = new Lazy<List<TopicPartition>>(LoadAssignedPartitions);
             this.LastCalculatedMetrics = new KafkaTriggerMetrics(-1L, -1);
         }
 
@@ -113,7 +112,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var ownedCommittedOffset = consumer.Committed(allPartitions, operationTimeout);
             var partitionWithHighestLag = Partition.Any;
             long highestPartitionLag = 0L;
-            var currentPartitions = assignedPartitions.Value;
+            var currentPartitions = LoadAssignedPartitions();
             var unassignedPartitions = allPartitions.Except(currentPartitions).ToList();
 
             foreach (var topicPartition in currentPartitions)

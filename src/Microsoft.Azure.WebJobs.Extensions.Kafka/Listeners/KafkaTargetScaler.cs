@@ -11,7 +11,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
     public class KafkaTargetScaler<Tkey, TValue> : ITargetScaler
     {
-        // Initialise variables required.
         private readonly string topicName;
         private readonly string consumerGroup;
         private readonly long lagThreshold;
