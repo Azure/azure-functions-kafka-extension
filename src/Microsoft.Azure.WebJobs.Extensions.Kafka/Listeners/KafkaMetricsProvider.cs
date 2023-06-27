@@ -39,9 +39,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public virtual Task<KafkaTriggerMetrics> GetMetricsAsync()
         {
-            var startTime = DateTime.UtcNow;
-            this.logger.LogInformation($"Getting metrics at time {startTime}:");
-
             var allPartitions = topicPartitions.Value;
             if (allPartitions == null)
             {
@@ -57,15 +54,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             this.LastCalculatedMetrics = metrics;
 
-            var endTime = DateTime.UtcNow;
-            this.logger.LogInformation($"Ended getting metrics at time {endTime}. Time taken: {endTime - startTime}. Total lag: {metrics.TotalLag}, partition count: {metrics.PartitionCount}");
-
             return Task.FromResult(metrics);
         }
 
         protected virtual List<TopicPartition> LoadTopicPartitions()
         {
-            var startTime = DateTime.UtcNow;
             try
             {
                 var timeout = TimeSpan.FromSeconds(5);
@@ -91,14 +84,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 logger.LogError(ex, $"Failed to load partition information from topic '{this.topicName}'");
             }
-            var endTime = DateTime.UtcNow;
-            logger.LogInformation($"AdminClient takes {endTime - startTime} to get paritions");
             return new List<TopicPartition>();
         }
 
         protected virtual List<TopicPartition> LoadAssignedPartitions()
         {
-            var startTime = DateTime.UtcNow;
             try
             {
                 var partitions = consumer.Assignment;
@@ -114,8 +104,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 logger.LogError(ex, $"Failed to load assigned partition information from topic '{this.topicName}'");
             }
-            var endTime = DateTime.UtcNow;
-            logger.LogInformation($"Consumer takes {endTime - startTime} to get assigned paritions");
             return new List<TopicPartition>();
         }
 
@@ -128,8 +116,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var currentPartitions = assignedPartitions.Value;
             var unassignedPartitions = allPartitions.Except(currentPartitions).ToList();
 
-            assignedPartitions.Value.ForEach(x => this.logger.LogInformation($"Assigned partition:{x}"));
-            unassignedPartitions.ForEach(x => this.logger.LogInformation($"Unassigned partition: {x}"));
             foreach (var topicPartition in currentPartitions)
             {
                 var watermark = consumer.GetWatermarkOffsets(topicPartition);
@@ -139,7 +125,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 if (bothWatermarksUnset || lowWatermarkZeroAndCommittedIsUnSet)
                 {
                     watermark = consumer.QueryWatermarkOffsets(topicPartition, operationTimeout);
-                    this.logger.LogInformation($"Queried for partition: {topicPartition}");
                 }
 
                 UpdateTotalLag(watermark, committed, ref totalLag, ref partitionWithHighestLag, ref highestPartitionLag);
@@ -157,7 +142,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
             return totalLag;
         }
-        
+
+        private void UpdateTotalLag(WatermarkOffsets watermark, TopicPartitionOffset committed, ref long totalLag, ref Partition partitionWithHighestLag, ref long highestPartitionLag)
+        {
+            var diff = GetDiff(watermark, committed);
+            totalLag += diff;
+
+            if (diff > highestPartitionLag)
+            {
+                highestPartitionLag = diff;
+                partitionWithHighestLag = committed.Partition;
+            }
+        }
+
         private long GetDiff(WatermarkOffsets watermark, TopicPartitionOffset committed)
         {
             var diff = 0L;
@@ -170,19 +167,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 diff = watermark.High - watermark.Low;
             }
             return diff;
-        }
-
-        private void UpdateTotalLag(WatermarkOffsets watermark, TopicPartitionOffset committed, ref long totalLag, ref Partition partitionWithHighestLag, ref long highestPartitionLag)
-        {
-            var diff = GetDiff(watermark, committed);
-            totalLag += diff;
-            this.logger.LogInformation($"Lag for partition {committed.Partition} is {diff}. High watermark: {watermark.High}, Low watermark: {watermark.Low}, committed offset: {committed.Offset.Value}");
-
-            if (diff > highestPartitionLag)
-            {
-                highestPartitionLag = diff;
-                partitionWithHighestLag = committed.Partition;
-            }
         }
     }
 }
