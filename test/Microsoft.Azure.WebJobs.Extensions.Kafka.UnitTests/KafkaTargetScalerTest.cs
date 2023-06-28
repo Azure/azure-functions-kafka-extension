@@ -21,8 +21,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         private readonly Mock<IConsumer<string, byte[]>> consumer;
         private readonly Mock<KafkaMetricsProvider<string, byte[]>> metricsProvider;
 
-        private readonly int partitionCount = 5;
-
         public KafkaTargetScalerTest()
         {
             consumer = new Mock<IConsumer<string, byte[]>>();
@@ -31,147 +29,127 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             targetScaler = new KafkaTargetScalerForTest<string, byte[]>("topicTest", "consumerGroupTest", "functionIDTest", consumer.Object, metricsProvider.Object, 1000L, NullLogger.Instance);
         }
 
-        [Fact]
-        public async Task When_Last_Metrics_Dont_Exist_Should_Return_Setup_Metric_Result()
+        [Theory]
+        [InlineData(null, 3, 100, 3)] // When no last scale result exists, return the current target worker count
+        [InlineData(null, 3, 0, 3)]
+        [InlineData(null, 10, 100, 10)]
+        [InlineData(2, 3, 100, 3)] // Scaling up at any time returns the current target worker count
+        [InlineData(2, 3, 10, 3)]
+        [InlineData(2, 3, 0, 3)]
+        [InlineData(2, 1, 61, 1)] // Scaling down after 1 minute of scale up returns the current target worker count
+        [InlineData(2, 1, 180, 1)]
+        [InlineData(2, 1, 1000, 1)]
+        [InlineData(2, 1, 59, 2)] // Scaling down before 1 minute of scale up returns the last target worker count
+        [InlineData(2, 1, 40, 2)]
+        [InlineData(2, 1, 20, 2)]
+        [InlineData(2, 1, 0, 2)]
+        public void Throttle_As_Necessary(int? lastScaleResult, int currentTargetWorkerCount, int? lastScaleUpInSeconds, int expectedResult)
         {
-            // Assign
-            var lastMetrics = new KafkaTriggerMetrics(-1L, -1);
-            metricsProvider.SetupGet(x => x.LastCalculatedMetrics).Returns(lastMetrics);
-
-            var context = new TargetScalerContext{InstanceConcurrency = null};
-
-            var newMetrics = new KafkaTriggerMetrics(2000, partitionCount);
-            metricsProvider.Setup(x => x.GetMetricsAsync()).Returns(Task.FromResult(newMetrics));
-
-            // Act
-            var result = await targetScaler.GetScaleResultAsync(context);
-
-            // Assert
-            Assert.Equal(2, result.TargetWorkerCount);
+            if (lastScaleResult.HasValue)
+            {
+                targetScaler.SetLastScalerResult(lastScaleResult ?? default);
+            }
+            if (lastScaleUpInSeconds.HasValue)
+            {
+                targetScaler.SetLastScaleUpTime(DateTime.UtcNow - TimeSpan.FromSeconds(lastScaleUpInSeconds ?? default));
+            }
+            var actualResult = targetScaler.ThrottleResultIfNecessary(currentTargetWorkerCount);
+            Assert.Equal(expectedResult, actualResult);
         }
 
-        [Fact]
-        public async Task When_Last_Calculated_Metrics_Are_Older_Than_Minute_Should_Return_Setup_Metric_Result()
+        [Theory]
+        [InlineData(null, 3, 3)]
+        [InlineData(null, 5, 5)]
+        [InlineData(1, 2, 1)]
+        [InlineData(2, 2, 0)]
+        [InlineData(3, 2, -1)]
+        public void When_Last_Target_Exists_Get_Expected_Change(int? lastTargetScalerResult, int currentTargetWorkerCount, int expectedResult)
         {
             // Assign
-            var oldMetrics = new KafkaTriggerMetrics(2000L, partitionCount);
-            oldMetrics.Timestamp = DateTime.UtcNow.AddMinutes(-2);
-            metricsProvider.SetupGet(x => x.LastCalculatedMetrics).Returns(oldMetrics);
-
-            var context = new TargetScalerContext{InstanceConcurrency = null};
-
-            var newMetrics = new KafkaTriggerMetrics(4000L, partitionCount);
-            metricsProvider.Setup(x => x.GetMetricsAsync()).Returns(Task.FromResult(newMetrics));
-
-            // Act
-            var result = await targetScaler.GetScaleResultAsync(context);
-
-            // Assert
-            Assert.Equal(4, result.TargetWorkerCount);
+            if (lastTargetScalerResult.HasValue)
+            {
+                targetScaler.SetLastScalerResult(lastTargetScalerResult ?? default);
+            }
+            var actualResult = targetScaler.GetChangeInWorkerCount(currentTargetWorkerCount);
+            Assert.Equal(expectedResult, actualResult);
         }
 
-        [Fact]
-        public async Task When_Last_Calculated_Metrics_Are_Valid_Should_Return_Last_Metric_Result()
+        [Theory]
+        [InlineData(null, 1000, 1000)]
+        [InlineData(null, 100, 100)]
+        [InlineData(10, 1000, 10)]
+        public void When_DynamicConcurrency_Exists_Returns_DynamicConcurrency_Else_LagThreshold(int? dynamicConcurrency, long lagThreshold, int expectedResult)
         {
-            // Assign
-            var oldMetrics = new KafkaTriggerMetrics(3000L, partitionCount);
-            metricsProvider.SetupGet(x => x.LastCalculatedMetrics).Returns(oldMetrics);
+            // assign
+            var context = new TargetScalerContext { InstanceConcurrency = dynamicConcurrency};
 
-            var context = new TargetScalerContext{InstanceConcurrency = null};
+            // act
+            var actualResult = targetScaler.GetConcurrency(context, lagThreshold);
 
-            // Act
-            var result = await targetScaler.GetScaleResultAsync(context);
-
-            // Assert
-            Assert.Equal(3, result.TargetWorkerCount);
+            // assert
+            Assert.Equal(expectedResult, actualResult);
         }
 
-        [Fact]
-        public async Task When_Context_Not_Null_Should_Return_DividedByInstanceConcurrency()
+        [Theory]
+        [InlineData(2, 1, 1)]
+        [InlineData(20, 1, 1)]
+        [InlineData(10, 5, 5)]
+        [InlineData(201, 200, 200)]
+        [InlineData(2, 5, 2)]
+        [InlineData(10, 32, 10)]
+        [InlineData(20, 32, 20)]
+        [InlineData(201, 201, 201)]
+        public void When_Target_Exceeds_Partition_Count_Returns_Partition_Count_Else_Target_Count(int targetWorkerCount, long partitionCount, int expectedResult)
         {
-            // Assign
-            var oldMetrics = new KafkaTriggerMetrics(200L, partitionCount);
-            metricsProvider.SetupGet(x => x.LastCalculatedMetrics).Returns(oldMetrics);
+            var actualResult = targetScaler.ValidateWithPartitionCount(targetWorkerCount, partitionCount);
 
-            var context = new TargetScalerContext{InstanceConcurrency = 60};
-
-            // Act
-            var result = await targetScaler.GetScaleResultAsync(context);
-
-            // Assert
-            Assert.Equal(4, result.TargetWorkerCount);
+            Assert.Equal(expectedResult, actualResult);
         }
 
-        [Fact]
-        public async Task When_Target_Is_Above_ParitionCount_Should_Return_PartitionCount()
+        [Theory]
+        [InlineData(1L, 1, 2L, 2, 119)]
+        [InlineData(1L, 1, 2L, 2, 100)]
+        [InlineData(1L, 1, 2L, 2, 60)]
+        [InlineData(1L, 1, 2L, 2, 0)]
+        public async Task When_Last_Metrics_Are_Not_Old_Return_Calculated_Metrics(long lag1, int partitionCount1, long lag2, int partitionCount2, int timespanInSeconds)
         {
             // Assign
-            var oldMetrics = new KafkaTriggerMetrics(7000L, partitionCount);
+            var oldMetrics = new KafkaTriggerMetrics(lag1, partitionCount1);
+            oldMetrics.Timestamp = DateTime.UtcNow.AddSeconds(-timespanInSeconds);
             metricsProvider.SetupGet(x => x.LastCalculatedMetrics).Returns(oldMetrics);
-
-            var context = new TargetScalerContext{InstanceConcurrency = null};
+            var calculatedMetrics = new KafkaTriggerMetrics(lag2, partitionCount2);
+            metricsProvider.Setup(x => x.GetMetricsAsync()).Returns(Task.FromResult(calculatedMetrics));
+            var context = new TargetScalerContext { InstanceConcurrency = null };
+            var expectedMetrics = oldMetrics;
 
             // Act
-            var result = await targetScaler.GetScaleResultAsync(context);
+            var result = await targetScaler.ValidateAndGetMetrics();
 
             // Assert
-            Assert.Equal(partitionCount, result.TargetWorkerCount);
+            Assert.Equal(expectedMetrics, result);
         }
 
-        [Fact]
-        public async Task When_No_Last_ScaleUp_Time_Exists_For_Current_ScaleDown_Should_Return_Current_Target()
+        [Theory]
+        [InlineData(1L, 1, 2L, 2, 181)]
+        [InlineData(1L, 1, 2L, 2, 180)]
+        [InlineData(1L, 1, 2L, 2, 240)]
+        [InlineData(1L, 1, 2L, 2, 1000)]
+        public async Task When_Last_Metrics_Are_Old_Return_Calculated_Metrics(long lag1, int partitionCount1, long lag2, int partitionCount2, int timespanInSeconds )
         {
             // Assign
-            var oldMetrics = new KafkaTriggerMetrics(3000L, partitionCount);
+            var oldMetrics = new KafkaTriggerMetrics(lag1, partitionCount1);
+            oldMetrics.Timestamp = DateTime.UtcNow.AddSeconds(-timespanInSeconds);
             metricsProvider.SetupGet(x => x.LastCalculatedMetrics).Returns(oldMetrics);
-
-            var context = new TargetScalerContext{InstanceConcurrency = null};
-
-            targetScaler.SetLastScalerResult(4);
+            var calculatedMetrics = new KafkaTriggerMetrics(lag2, partitionCount2);
+            metricsProvider.Setup(x => x.GetMetricsAsync()).Returns(Task.FromResult(calculatedMetrics));
+            var context = new TargetScalerContext { InstanceConcurrency = null };
+            var expectedMetrics = calculatedMetrics;
 
             // Act
-            var result = await targetScaler.GetScaleResultAsync(context);
+            var result = await targetScaler.ValidateAndGetMetrics();
 
             // Assert
-            Assert.Equal(3, result.TargetWorkerCount);
-        }
-
-        [Fact]
-        public async Task When_LastScaleUpTime_More_Than_Threshold_For_ScaleDown_Should_Return_Current_Target()
-        {
-            // Assign
-            var oldMetrics = new KafkaTriggerMetrics(3000L, partitionCount);
-            metricsProvider.SetupGet(x => x.LastCalculatedMetrics).Returns(oldMetrics);
-
-            var context = new TargetScalerContext{InstanceConcurrency = null};
-
-            targetScaler.SetLastScaleUpTime( DateTime.UtcNow - TimeSpan.FromMinutes(2));
-            targetScaler.SetLastScalerResult(partitionCount);
-
-            // Act
-            var result = await targetScaler.GetScaleResultAsync(context);
-
-            // Assert
-            Assert.Equal(result.TargetWorkerCount, 3);
-        }
-
-        [Fact]
-        public async Task When_LastScaleUpTime_Less_Than_Threshold_For_ScaleDown_LastTarget_Exists_Should_Return_Last_Target()
-        {
-            // Assign
-            var oldMetrics = new KafkaTriggerMetrics(3000L, partitionCount);
-            metricsProvider.SetupGet(x => x.LastCalculatedMetrics).Returns(oldMetrics);
-
-            var context = new TargetScalerContext{InstanceConcurrency = null};
-
-            targetScaler.SetLastScaleUpTime( DateTime.UtcNow - TimeSpan.FromSeconds(30));
-            targetScaler.SetLastScalerResult(partitionCount);
-
-            // Act
-            var result = await targetScaler.GetScaleResultAsync(context);
-
-            // Assert
-            Assert.Equal(partitionCount, result.TargetWorkerCount);
+            Assert.Equal(expectedMetrics, result);
         }
     }
 }
