@@ -51,6 +51,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             var metrics = await Task.Run(ValidateAndGetMetrics);
             TargetScalerResult targetScalerResult = GetScaleResultInternal(context, metrics);
+            this.lastTargetScalerResult = targetScalerResult;
             return targetScalerResult;
         }
 
@@ -139,7 +140,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             if (lastTargetScalerResult == null)
             {
-                return 0;
+                return targetWorkerCount;
             }
             return targetWorkerCount - lastTargetScalerResult.TargetWorkerCount;
         }
