@@ -5,6 +5,8 @@ using Confluent.Kafka;
 using Microsoft.Azure.WebJobs.Host.Scale;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
@@ -54,7 +56,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return targetScalerResult;
         }
 
-        private async Task<KafkaTriggerMetrics> ValidateAndGetMetrics()
+        protected internal async Task<KafkaTriggerMetrics> ValidateAndGetMetrics()
         {
             var metrics = this.metricsProvider.LastCalculatedMetrics;
             TimeSpan timeOut = TimeSpan.FromMinutes(2);
@@ -66,7 +68,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return metrics;
         }
 
-        internal TargetScalerResult GetScaleResultInternal(TargetScalerContext context, KafkaTriggerMetrics metrics)
+        protected internal TargetScalerResult GetScaleResultInternal(TargetScalerContext context, KafkaTriggerMetrics metrics)
         {
             var totalLag = metrics.TotalLag;
             var partitionCount = metrics.PartitionCount;
@@ -82,17 +84,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 };
             }
 
-            var targetConcurrency = context.InstanceConcurrency ?? this.lagThreshold;
-
-            if (targetConcurrency < 1)
-            {
-                throw new ArgumentException("Target concurrency must be larger than 0.");
-            }
+            var targetConcurrency = GetConcurrency(context, this.lagThreshold);
 
             int targetWorkerCount = (int) Math.Ceiling(totalLag / (decimal) targetConcurrency);
 
             targetWorkerCount = ValidateWithPartitionCount(targetWorkerCount, partitionCount);
             targetWorkerCount = ThrottleResultIfNecessary(targetWorkerCount);
+            int[] validTargetWorkersList = GetSortedValidTargetValuesSorted((int) partitionCount);
+            targetWorkerCount = GetValidWorkerCount(targetWorkerCount, validTargetWorkersList);
+
             if (GetChangeInWorkerCount(targetWorkerCount) > 0)
             {
                 this.lastScaleUpTime = DateTime.UtcNow;
@@ -106,7 +106,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             };
         }
 
-        internal int ValidateWithPartitionCount(int targetWorkerCount, long partitionCount)
+        protected internal int GetConcurrency(TargetScalerContext context, long lagThreshold)
+        {
+            int targetConcurrency = context.InstanceConcurrency ?? (int) lagThreshold;
+
+            if (targetConcurrency < 1)
+            {
+                throw new ArgumentException("Target concurrency must be larger than 0.");
+            }
+
+            return targetConcurrency;
+        }
+
+        protected internal int ValidateWithPartitionCount(int targetWorkerCount, long partitionCount)
         {
             if (targetWorkerCount > partitionCount)
             {
@@ -116,7 +128,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return targetWorkerCount;
         }
 
-        internal int ThrottleResultIfNecessary(int targetWorkerCount)
+        protected internal int ThrottleResultIfNecessary(int targetWorkerCount)
         {
             if (GetChangeInWorkerCount(targetWorkerCount) < 0 && DateTime.UtcNow - this.lastScaleUpTime < TimeSpan.FromMinutes(1))
             {
@@ -129,13 +141,51 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return targetWorkerCount;
         }
 
-        internal int GetChangeInWorkerCount(int targetWorkerCount)
+        protected internal int GetChangeInWorkerCount(int targetWorkerCount)
         {
             if (lastTargetScalerResult == null)
             {
                 return 0;
             }
             return targetWorkerCount - lastTargetScalerResult.TargetWorkerCount;
+        }
+
+        protected internal int[] GetSortedValidTargetValuesSorted(long partitionCount)
+        {
+            // Increases the difference between consequent target values exponentially.
+            // This is to avoid frequent scaling up.
+            // For example, for a partition count of 8, possible values would be 0, 1, 2, 3, 4, 8.
+            List<int> list = Enumerable.Range(1, (int) partitionCount).
+                    Select(c => (double)partitionCount / (double)c).
+                    Select(d => (int)Math.Ceiling((double)d)).
+                     Distinct().
+                    OrderBy(e => e).
+                    ToList();
+            list.Insert(index: 0, item: 0);
+            return list.ToArray();
+        }
+
+        // Returns value that's closest and greater to the workerCount.
+        protected internal int GetValidWorkerCount(int workerCount, int[] validTargetValuesSorted)
+        {
+            var i = Array.BinarySearch(validTargetValuesSorted, workerCount);
+            if (i > 0)
+            {
+                return validTargetValuesSorted[i];
+            }
+            else
+            {
+                if (~i < validTargetValuesSorted.Length)
+                {
+                    // Returns value at insertion point + 1.
+                    return validTargetValuesSorted[~i];
+                }
+                else
+                {
+                    // Last element is the insertion point, hence return it.
+                    return validTargetValuesSorted[validTargetValuesSorted.Length - 1];
+                }
+            }
         }
     }
 }
