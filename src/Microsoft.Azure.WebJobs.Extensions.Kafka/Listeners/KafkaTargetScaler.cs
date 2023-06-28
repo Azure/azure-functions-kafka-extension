@@ -54,8 +54,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return targetScalerResult;
         }
 
-        private async Task<KafkaTriggerMetrics> ValidateAndGetMetrics()
+        internal async Task<KafkaTriggerMetrics> ValidateAndGetMetrics()
         {
+            // if the metrics are not calculated or the last calculated metrics are older than 2 minutes, recalculate the metrics
             var metrics = this.metricsProvider.LastCalculatedMetrics;
             TimeSpan timeOut = TimeSpan.FromMinutes(2);
             if (metrics == null || (metrics.TotalLag == -1 && metrics.PartitionCount == -1) || DateTime.UtcNow - metrics.Timestamp > timeOut)
@@ -82,12 +83,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 };
             }
 
-            var targetConcurrency = context.InstanceConcurrency ?? this.lagThreshold;
-
-            if (targetConcurrency < 1)
-            {
-                throw new ArgumentException("Target concurrency must be larger than 0.");
-            }
+            var targetConcurrency = GetConcurrency(context, this.lagThreshold);
 
             int targetWorkerCount = (int) Math.Ceiling(totalLag / (decimal) targetConcurrency);
 
@@ -104,6 +100,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 TargetWorkerCount = targetWorkerCount
             };
+        }
+
+        internal int GetConcurrency(TargetScalerContext context, long lagThreshold)
+        {
+            int targetConcurrency = context.InstanceConcurrency ?? (int) lagThreshold;
+            if (targetConcurrency < 1)
+            {
+                throw new ArgumentException("Target concurrency must be larger than 0.");
+            }
+            return targetConcurrency;
         }
 
         internal int ValidateWithPartitionCount(int targetWorkerCount, long partitionCount)
