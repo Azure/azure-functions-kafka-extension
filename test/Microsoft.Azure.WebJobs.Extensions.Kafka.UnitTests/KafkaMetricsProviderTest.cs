@@ -9,9 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 using Moq;
-//using Castle.Core.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using static Confluent.Kafka.ConfigPropertyNames;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 {
