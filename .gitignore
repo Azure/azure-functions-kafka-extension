@@ -289,4 +289,3 @@ samples/dotnet/KafkaFunctionSample/Properties/
 
 temp
 packages-microsoft-prod.deb
-/src/Microsoft.Azure.WebJobs.Extensions.Kafka/Properties/launchSettings.json
