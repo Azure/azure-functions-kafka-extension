@@ -58,6 +58,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             var metrics = new KafkaTriggerMetrics(totalLag, paritionCount);
 
+            // Storing the metrics along with TimeStamp.
             this.LastCalculatedMetrics = metrics;
 
             return Task.FromResult(metrics);
@@ -160,6 +161,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var diff = GetDiff(watermark, committed);
             totalLag += diff;
 
+            // Update highest partition lag for logging purposes.
             if (diff > highestPartitionLag)
             {
                 highestPartitionLag = diff;

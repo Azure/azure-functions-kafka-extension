@@ -57,13 +57,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         internal async Task<KafkaTriggerMetrics> ValidateAndGetMetrics()
         {
-            // if the metrics are not calculated or the last calculated metrics are older than 2 minutes, recalculate the metrics
+            // if the metrics don't exist or the last calculated metrics
+            // are older than 2 minutes, recalculate the metrics.
             var metrics = this.metricsProvider.LastCalculatedMetrics;
-            TimeSpan timeOut = TimeSpan.FromMinutes(2);
-            if (metrics == null || (metrics.TotalLag == -1 && metrics.PartitionCount == -1) || DateTime.UtcNow - metrics.Timestamp > timeOut)
+            TimeSpan metricsTimeOut = TimeSpan.FromMinutes(2);
+            if (metrics == null || DateTime.UtcNow - metrics.Timestamp > metricsTimeOut)
             {
                 metrics = await this.metricsProvider.GetMetricsAsync();
-                this.logger.LogInformation($"Recalculating metrics as last calculated and stored was 2 minutes ago.");
+                this.logger.LogInformation($"Calculating metrics as last calculated don't exist or were stored 2 minutes ago.");
             }
             return metrics;
         }
@@ -85,7 +86,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
 
             var targetConcurrency = GetConcurrency(context, this.lagThreshold);
-
+            
             int targetWorkerCount = (int) Math.Ceiling(totalLag / (decimal) targetConcurrency);
 
             targetWorkerCount = ValidateWithPartitionCount(targetWorkerCount, partitionCount);
@@ -105,6 +106,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         internal int GetConcurrency(TargetScalerContext context, long lagThreshold)
         {
+            // If dynamicConcurrencyEnabled is set to true, target concurrency is
+            // set to instanceConcurrency value, else it is set to lagThreshold
+            // (default value = 1000).
             int targetConcurrency = context.InstanceConcurrency ?? (int) lagThreshold;
             if (targetConcurrency < 1)
             {
@@ -115,6 +119,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         internal int ValidateWithPartitionCount(int targetWorkerCount, long partitionCount)
         {
+            // Limit targetWorkerCount to number of partitions.
             if (targetWorkerCount > partitionCount)
             {
                 targetWorkerCount = (int) partitionCount;
@@ -125,24 +130,29 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         internal int ThrottleResultIfNecessary(int targetWorkerCount)
         {
-            if (GetChangeInWorkerCount(targetWorkerCount) < 0 && DateTime.UtcNow - this.lastScaleUpTime < TimeSpan.FromMinutes(1))
+            // Throttle Scale Down if Scale Up has recently occurred.
+            if (GetChangeInWorkerCount(targetWorkerCount) < 0)
             {
-                if (lastTargetScalerResult != null)
+                var scaleDownThrottleTime = TimeSpan.FromMinutes(1);
+                if (lastScaleUpTime != DateTime.MinValue && DateTime.UtcNow - this.lastScaleUpTime < scaleDownThrottleTime)
                 {
-                    targetWorkerCount = this.lastTargetScalerResult.TargetWorkerCount;
+                    if (this.lastTargetScalerResult != null)
+                    {
+                        targetWorkerCount = this.lastTargetScalerResult.TargetWorkerCount;
+                        this.logger.LogInformation("Throttling scale down as last scale up was less than 1 minute ago.");
+                    }
                 }
-                this.logger.LogInformation("Throttling scale down as last scale up was less than 1 minute ago.");
             }
             return targetWorkerCount;
         }
 
         internal int GetChangeInWorkerCount(int targetWorkerCount)
         {
-            if (lastTargetScalerResult == null)
+            if (this.lastTargetScalerResult == null)
             {
                 return targetWorkerCount;
             }
-            return targetWorkerCount - lastTargetScalerResult.TargetWorkerCount;
+            return targetWorkerCount - this.lastTargetScalerResult.TargetWorkerCount;
         }
     }
 }
