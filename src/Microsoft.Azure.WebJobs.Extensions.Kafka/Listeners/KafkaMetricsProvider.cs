@@ -22,7 +22,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly IConsumer<TKey, TValue> consumer;
         private readonly ILogger logger;
         protected Lazy<List<TopicPartition>> topicPartitions;
-        protected Lazy<List<TopicPartition>> assignedPartitions;
 
         virtual protected internal KafkaTriggerMetrics LastCalculatedMetrics { get; set; }
 
@@ -33,7 +32,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.logger = logger;
             this.consumer = consumer;
             this.topicPartitions = new Lazy<List<TopicPartition>>(LoadTopicPartitions);
-            this.LastCalculatedMetrics = new KafkaTriggerMetrics(-1L, -1);
+            this.LastCalculatedMetrics = null;
         }
 
         public virtual Task<KafkaTriggerMetrics> GetMetricsAsync()
@@ -46,7 +45,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             var operationTimeout = TimeSpan.FromSeconds(5);
 
-            long totalLag = GetTotalLag(allPartitions, operationTimeout);
+            long totalLag = 0;
+            try
+            {
+                totalLag = GetTotalLag(allPartitions, operationTimeout);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, $"Failed to load retrieve lag from topic '{this.topicName}'");
+            }
             int paritionCount = allPartitions.Count;
 
             var metrics = new KafkaTriggerMetrics(totalLag, paritionCount);
@@ -112,15 +119,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var ownedCommittedOffset = consumer.Committed(allPartitions, operationTimeout);
             var partitionWithHighestLag = Partition.Any;
             long highestPartitionLag = 0L;
+            // List of partitions that the consumer is reading from.
             var currentPartitions = LoadAssignedPartitions();
+            // List of partitions that the consumer is not reading from.
             var unassignedPartitions = allPartitions.Except(currentPartitions).ToList();
 
             foreach (var topicPartition in currentPartitions)
             {
                 var watermark = consumer.GetWatermarkOffsets(topicPartition);
                 var committed = ownedCommittedOffset.FirstOrDefault(x => x.Partition == topicPartition.Partition);
+
                 bool bothWatermarksUnset = watermark.High == Offset.Unset && watermark.Low == Offset.Unset;
                 bool lowWatermarkZeroAndCommittedIsUnSet = watermark.Low == 0 && committed.Offset.Value == Offset.Unset;
+                // if GetWatermarkOffsets fails to return valid values, use QueryWatermarkOffsets.
                 if (bothWatermarksUnset || lowWatermarkZeroAndCommittedIsUnSet)
                 {
                     watermark = consumer.QueryWatermarkOffsets(topicPartition, operationTimeout);
@@ -135,6 +146,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
                 UpdateTotalLag(watermark, committed, ref totalLag, ref partitionWithHighestLag, ref highestPartitionLag);
             }
+
+            // This log is only for customer reference to show calculation of total lag.
             if (partitionWithHighestLag != Partition.Any)
             {
                 logger.LogInformation($"Total lag in '{this.topicName}' is {totalLag}, highest partition lag found in {partitionWithHighestLag.Value} with value of {highestPartitionLag}.");
@@ -156,14 +169,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         private long GetDiff(WatermarkOffsets watermark, TopicPartitionOffset committed)
         {
-            var diff = 0L;
+            long diff;
             if (committed != null && committed.Offset.Value != Offset.Unset)
             {
                 diff = watermark.High.Value - committed.Offset.Value;
             }
             else
             {
-                diff = watermark.High - watermark.Low;
+                diff = watermark.High.Value - watermark.Low.Value;
             }
             return diff;
         }
