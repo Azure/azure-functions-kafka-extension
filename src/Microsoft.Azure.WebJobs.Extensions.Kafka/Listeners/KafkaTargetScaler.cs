@@ -60,11 +60,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             // if the metrics don't exist or the last calculated metrics
             // are older than 2 minutes, recalculate the metrics.
             var metrics = this.metricsProvider.LastCalculatedMetrics;
-            TimeSpan metricsTimeOut = TimeSpan.FromMinutes(2);
+            TimeSpan metricsTimeOut = TimeSpan.FromMinutes(1);
             if (metrics == null || DateTime.UtcNow - metrics.Timestamp > metricsTimeOut)
             {
                 metrics = await this.metricsProvider.GetMetricsAsync();
-                this.logger.LogInformation($"Calculating metrics as last calculated don't exist or were stored 2 minutes ago.");
+                this.logger.LogInformation($"Calculating metrics as last calculated don't exist or were stored 1 minute ago.");
             }
             return metrics;
         }

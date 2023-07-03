@@ -114,6 +114,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return new List<TopicPartition>();
         }
 
+        // Returns the total number of unprocessed messages across all partitions.
         private long GetTotalLag(List<TopicPartition> allPartitions, TimeSpan operationTimeout)
         {
             long totalLag = 0;
@@ -130,8 +131,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 var watermark = consumer.GetWatermarkOffsets(topicPartition);
                 var committed = ownedCommittedOffset.FirstOrDefault(x => x.Partition == topicPartition.Partition);
 
-                bool bothWatermarksUnset = watermark.High == Offset.Unset && watermark.Low == Offset.Unset;
-                bool lowWatermarkZeroAndCommittedIsUnSet = watermark.Low == 0 && committed.Offset.Value == Offset.Unset;
+                bool bothWatermarksUnset = watermark.High.Value == Offset.Unset && watermark.Low.Value == Offset.Unset;
+                bool lowWatermarkZeroAndCommittedIsUnSet = watermark.Low.Value == 0 && committed.Offset.Value == Offset.Unset;
                 // if GetWatermarkOffsets fails to return valid values, use QueryWatermarkOffsets.
                 if (bothWatermarksUnset || lowWatermarkZeroAndCommittedIsUnSet)
                 {
