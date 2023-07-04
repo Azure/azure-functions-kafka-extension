@@ -52,7 +52,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"Failed to load retrieve lag from topic '{this.topicName}'");
+                logger.LogError(ex, $"Failed to retrieve lag from topic '{this.topicName}'");
             }
             int paritionCount = allPartitions.Count;
 
