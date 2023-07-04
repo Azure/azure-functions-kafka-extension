@@ -27,6 +27,11 @@ pool:
     - ImageOverride -equals MMSUbuntu20.04TLS
 
 steps:
+  - task: UseDotNet@2
+    displayName: 'Install .NET Core SDK'
+    inputs:
+      version: 3.1
+
   - task: DotNetCoreCLI@2
     displayName: Build project
     inputs:
