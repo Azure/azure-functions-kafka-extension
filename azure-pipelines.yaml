@@ -27,7 +27,6 @@ pool:
     - ImageOverride -equals MMSUbuntu20.04TLS
 
 steps:
-
   - task: DotNetCoreCLI@2
     displayName: Build project
     inputs:
