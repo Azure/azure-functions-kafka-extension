@@ -49,7 +49,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public async Task<TargetScalerResult> GetScaleResultAsync(TargetScalerContext context)
         {
-            var metrics = await Task.Run(ValidateAndGetMetrics);
+            var metrics = await ValidateAndGetMetrics();
             TargetScalerResult targetScalerResult = GetScaleResultInternal(context, metrics);
             this.lastTargetScalerResult = targetScalerResult;
             return targetScalerResult;
