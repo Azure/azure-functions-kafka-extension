@@ -139,7 +139,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     if (this.lastTargetScalerResult != null)
                     {
                         targetWorkerCount = this.lastTargetScalerResult.TargetWorkerCount;
-                        this.logger.LogInformation("Throttling scale down as last scale up was less than 1 minute ago.");
+                        this.logger.LogInformation($"Throttling scale down as last scale up was less than 1 minute ago. Returning last target worker count: {lastTargetScalerResult.TargetWorkerCount}");
                     }
                 }
             }
