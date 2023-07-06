@@ -16,7 +16,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
     internal static class SerializationHelper
     {
-        internal static object ResolveValueDeserializer(Type valueType, string specifiedAvroSchema)
+        internal static object ResolveDeserializer(Type valueType, string specifiedAvroSchema)
         {
             if (typeof(Google.Protobuf.IMessage).IsAssignableFrom(valueType))
             {
@@ -84,7 +84,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             public Type KeyType { get; set; }
             public bool RequiresKey { get; set; }
             public Type ValueType { get; set; }
-            public string AvroSchema { get; set; }
+            public string KeyAvroSchema { get; set; }
+            public string ValueAvroSchema { get; set; }
         }
 
         /// <summary>
@@ -94,6 +95,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         internal static GetKeyAndValueTypesResult GetKeyAndValueTypes(string avroSchemaFromAttribute, Type parameterType, Type defaultKeyType)
         {
             string avroSchema = null;
+            string keyAvroSchema = null;
             var requiresKey = false;
 
             var valueType = parameterType;
@@ -128,6 +130,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     }
                 }
 
+                if (typeof(ISpecificRecord).IsAssignableFrom(keyType))
+                {
+                    var specificRecord = (ISpecificRecord)Activator.CreateInstance(keyType);
+                    keyAvroSchema = specificRecord.Schema.ToString();
+                }
+
                 if (typeof(ISpecificRecord).IsAssignableFrom(valueType))
                 {
                     var specificRecord = (ISpecificRecord)Activator.CreateInstance(valueType);
@@ -144,8 +152,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 KeyType = keyType,
                 ValueType = valueType,
-                AvroSchema = avroSchema,
+                ValueAvroSchema = avroSchema,
                 RequiresKey = requiresKey,
+                KeyAvroSchema = keyAvroSchema
             };
         }
 
