@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
-    public class KafkaTopicScaler<TKey, TValue> : IScaleMonitor<KafkaTriggerMetrics>
+    internal class KafkaTopicScaler<TKey, TValue> : IScaleMonitor<KafkaTriggerMetrics>
     {
         private readonly string topicName;
         private readonly string consumerGroup;

@@ -107,9 +107,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         }
 
         [Theory]
-        [InlineData(1L, 1, 2L, 2, 119)]
-        [InlineData(1L, 1, 2L, 2, 100)]
-        [InlineData(1L, 1, 2L, 2, 60)]
+        [InlineData(1L, 1, 2L, 2, 59)]
+        [InlineData(1L, 1, 2L, 2, 30)]
+        [InlineData(1L, 1, 2L, 2, 25)]
         [InlineData(1L, 1, 2L, 2, 0)]
         public async Task When_Last_Metrics_Are_Not_Old_Return_Calculated_Metrics(long lag1, int partitionCount1, long lag2, int partitionCount2, int timespanInSeconds)
         {

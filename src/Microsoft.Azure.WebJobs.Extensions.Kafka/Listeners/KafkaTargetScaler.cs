@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
-    public class KafkaTargetScaler<Tkey, TValue> : ITargetScaler
+    internal class KafkaTargetScaler<Tkey, TValue> : ITargetScaler
     {
         private readonly string topicName;
         private readonly string consumerGroup;

@@ -15,7 +15,7 @@ using static Confluent.Kafka.ConfigPropertyNames;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
-    public class KafkaMetricsProvider<TKey, TValue>
+    internal class KafkaMetricsProvider<TKey, TValue>
     {
         private readonly string topicName;
         private readonly AdminClientConfig adminClientConfig;
@@ -25,7 +25,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         virtual protected internal KafkaTriggerMetrics LastCalculatedMetrics { get; set; }
 
-        public KafkaMetricsProvider(string topicName, AdminClientConfig adminClientConfig, IConsumer<TKey, TValue> consumer, ILogger logger)
+        internal KafkaMetricsProvider(string topicName, AdminClientConfig adminClientConfig, IConsumer<TKey, TValue> consumer, ILogger logger)
         {
             this.topicName = topicName;
             this.adminClientConfig = adminClientConfig;
