@@ -24,7 +24,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly INameResolver nameResolver;
 
         public KafkaAttributeBinding(
-            string parameterName, 
+            string parameterName,
             KafkaAttribute attribute,
             IKafkaProducerFactory kafkaProducerFactory,
             IArgumentBinding<KafkaProducerEntity> argumentBinding,
