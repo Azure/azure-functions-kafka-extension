@@ -1037,12 +1037,48 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                             Console.WriteLine(logMsg.Exception.InnerException.Message);
                         }
                     }
-                    var foundCount = loggerProvider1.GetAllLogMessages().Count(p => p.Exception != null && p.Exception.InnerException.Message.Contains("unhandled error") && !p.Category.StartsWith("Host.Results"));
-                    return foundCount == 6;
+                    var foundCount = loggerProvider1.GetAllLogMessages().Count(p => p.FormattedMessage != null &&  p.FormattedMessage.Contains($"Executed '{nameof(SingleItem_Single_Partition_Raw_String_Without_Key_Trigger_Retry)}.Trigger'"));
+					return foundCount == 6;
                 });
 
                 await Task.Delay(1500);
             }
+        }
+
+        // <summary>
+        // This test expects a schema registry running at localhost:8081.
+        // <see cref="Constants.SchemaRegistryUrl"/>
+        // </summary>
+        [Fact]
+        public async Task SingleItem_With_Schema_Registry()
+        {
+            const int producedMessagesCount = 1;
+            
+            var loggerProvider1 = CreateTestLoggerProvider();
+
+            using (var host = await StartHostAsync(
+                       new[] { typeof(SingleItem_With_Schema_Registry), typeof(KafkaOutputFunctions) },
+                       loggerProvider1))
+            {
+                var jobHost = host.GetJobHost();
+
+                await jobHost.CallAsync(
+                    GetStaticMethod(typeof(KafkaOutputFunctions),
+                        nameof(KafkaOutputFunctions.Produce_AsyncCollector_PageView_With_String_Key)),
+                    new { topic = Constants.SchemaRegistryTopicName });
+
+                await TestHelpers.Await(() =>
+                {
+                    var foundCount = loggerProvider1.GetAllUserLogMessages().Count(p => p.FormattedMessage != null);
+                    return foundCount == producedMessagesCount;
+                });
+
+                // Give time for the commit to be saved
+                await Task.Delay(1500);
+
+                await host.StopAsync();
+            }
+
         }
     }
 }

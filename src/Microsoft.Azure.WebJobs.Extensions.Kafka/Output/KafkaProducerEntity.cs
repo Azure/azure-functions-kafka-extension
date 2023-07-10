@@ -1,14 +1,10 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-using Confluent.Kafka;
 using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
