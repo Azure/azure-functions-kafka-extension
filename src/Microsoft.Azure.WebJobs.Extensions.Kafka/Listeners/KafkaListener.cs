@@ -175,6 +175,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 SslCertificateLocation = this.listenerConfiguration.SslCertificateLocation,
                 SslKeyLocation = this.listenerConfiguration.SslKeyLocation,
                 SslKeyPassword = this.listenerConfiguration.SslKeyPassword,
+                
 
                 // Values from host configuration
                 StatisticsIntervalMs = this.options.StatisticsIntervalMs,
@@ -305,6 +306,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                             {
                                 // TODO: maybe slow down if there isn't much incoming data
                                 break;
+                            }
+                            if (this.listenerConfiguration.Commit)
+                            {
+                                localConsumer.Commit(consumeResult);
                             }
                         }
                         catch (ConsumeException ex)

@@ -106,6 +106,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 consumerConfig.SslCertificateLocation = GetValidFilePath(attribute.SslCertificateLocation);
                 consumerConfig.SslCaLocation = GetValidFilePath(attribute.SslCaLocation);
 
+                consumerConfig.Commit = attribute.TransactionCommit;
+
                 if (attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet)
                 {
                     consumerConfig.SaslMechanism = (SaslMechanism)attribute.AuthenticationMode;
