@@ -3,16 +3,10 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Reflection;
 using System.Text;
-using Avro.Generic;
-using Avro.Specific;
 using Confluent.Kafka;
-using Microsoft.Azure.WebJobs.Host;
-using Microsoft.Azure.WebJobs.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
@@ -88,7 +82,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var valueType = entity.ValueType ?? typeof(byte[]);
             var keyType = entity.KeyType ?? typeof(Null);
 
-            var valueSerializer = SerializationHelper.ResolveValueSerializer(valueType, entity.AvroSchema);
+            var avroSchema = this.config.ResolveSecureSetting(nameResolver, entity.AvroSchema);
+            var schemaRegistryUrl = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SchemaRegistryUrl);
+            var schemaRegistryUsername = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SchemaRegistryUsername);
+            var schemaRegistryPassword = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SchemaRegistryPassword);
+
+            var valueSerializer = SerializationHelper.ResolveValueSerializer(valueType, avroSchema, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword);
 
             return (IKafkaProducer)Activator.CreateInstance(
                 typeof(KafkaProducer<,>).MakeGenericType(keyType, valueType),
