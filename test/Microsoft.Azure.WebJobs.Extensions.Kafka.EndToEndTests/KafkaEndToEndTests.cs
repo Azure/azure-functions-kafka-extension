@@ -1037,8 +1037,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                             Console.WriteLine(logMsg.Exception.InnerException.Message);
                         }
                     }
-                    var foundCount = loggerProvider1.GetAllLogMessages().Count(p => p.Exception != null && p.Exception.InnerException.Message.Contains("unhandled error") && !p.Category.StartsWith("Host.Results"));
-                    return foundCount == 6;
+                    var foundCount = loggerProvider1.GetAllLogMessages().Count(p => p.FormattedMessage != null &&  p.FormattedMessage.Contains($"Executed '{nameof(SingleItem_Single_Partition_Raw_String_Without_Key_Trigger_Retry)}.Trigger'"));
+					return foundCount == 6;
                 });
 
                 await Task.Delay(1500);
