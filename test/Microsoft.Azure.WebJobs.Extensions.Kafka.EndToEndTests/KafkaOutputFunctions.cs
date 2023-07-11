@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using Avro;
+using Avro.Generic;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 {
@@ -82,7 +84,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             return list.ToArray();
         }
 
-        
+
         [return: Kafka("LocalBroker", Constants.StringTopicWithTenPartitionsName)]
         public static string[] Produce_Return_Parameter_Raw_String_Array(
             string topic,
@@ -182,7 +184,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
         {
 
             foreach (var c in content)
-            {                
+            {
                 await output.AddAsync(new MyAvroRecord()
                 {
                     ID = c,
@@ -244,6 +246,47 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                 await output.AddAsync(message);
                 i++;
             }
+        }
+
+        public static async Task Produce_AsyncCollector_PageView_With_String_Key(
+            string topic,
+            [Kafka(BrokerList = "LocalBroker", SchemaRegistryUrl = Constants.SchemaRegistryUrl)]
+            IAsyncCollector<KafkaEventData<string, GenericRecord>> output
+        )
+        {
+            const string pageViewsSchema = @"{
+  ""type"": ""record"",
+  ""name"": ""PageViews"",
+  ""namespace"": ""ksql"",
+  ""fields"": [
+    {
+      ""name"": ""ViewTime"",
+      ""type"": ""long""
+    },
+    {
+      ""name"": ""UserID"",
+      ""type"": ""string""
+    },
+    {
+      ""name"": ""PageID"",
+      ""type"": ""string""
+    }
+  ]
+}";
+
+            var record = new GenericRecord((RecordSchema)Schema.Parse(pageViewsSchema));
+            record.Add("UserID", "4711");
+            record.Add("PageID", "4712");
+            record.Add("ViewTime", 4713L);
+
+            var message = new KafkaEventData<string, GenericRecord>()
+            {
+                Key = "key",
+                Topic = topic,
+                Value = record
+            };
+
+            await output.AddAsync(message);
         }
     }
 }
