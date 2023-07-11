@@ -17,7 +17,7 @@ public class PythonConfluentAppTest : BaseE2E, IClassFixture<PythonConfluentE2EF
 		_output = output;
 	}
 
-	[Fact]
+	[IgnoreOnDisableConfluentTestsFlagFact]
 	public async Task Python_App_Test_Single_Event_Confluent()
 	{
 		//Generate Random Guids
@@ -31,7 +31,7 @@ public class PythonConfluentAppTest : BaseE2E, IClassFixture<PythonConfluentE2EF
 		await Test(AppType.SINGLE_EVENT, InvokeType.HTTP, httpRequestEntity, null, reqMsgs);
 	}
 
-	[Fact]
+	[IgnoreOnDisableConfluentTestsFlagFact]
 	public async Task Python_App_Test_Multi_Event_Confluent()
 	{
 		//Generate Random Guids
