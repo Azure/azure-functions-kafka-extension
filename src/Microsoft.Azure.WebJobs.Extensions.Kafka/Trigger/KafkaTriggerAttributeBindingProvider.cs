@@ -6,7 +6,6 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Confluent.Kafka;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.Trigger;
-using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Triggers;
@@ -37,7 +36,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.nameResolver = nameResolver;
             this.options = options;
             this.logger = loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("Kafka"));
-        }   
+        }
 
         public Task<ITriggerBinding> TryCreateAsync(TriggerBindingProviderContext context)
         {
@@ -48,11 +47,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 return Task.FromResult<ITriggerBinding>(null);
             }
 
-            var consumerConfig = CreateConsumerConfiguration(attribute);
-
             var keyAndValueTypes = SerializationHelper.GetKeyAndValueTypes(attribute.AvroSchema, parameter.ParameterType, typeof(string));
-            var valueDeserializer = SerializationHelper.ResolveValueDeserializer(keyAndValueTypes.ValueType, keyAndValueTypes.AvroSchema);            
+            var schemaRegistryUrl = this.config.ResolveSecureSetting(nameResolver, attribute.SchemaRegistryUrl);
+            var schemaRegistryUsername = this.config.ResolveSecureSetting(nameResolver, attribute.SchemaRegistryUsername);
+            var schemaRegistryPassword = this.config.ResolveSecureSetting(nameResolver, attribute.SchemaRegistryPassword);
+            var valueDeserializer = SerializationHelper.ResolveValueDeserializer(keyAndValueTypes.ValueType, keyAndValueTypes.AvroSchema, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword);
 
+            var consumerConfig = CreateConsumerConfiguration(attribute);
             var binding = CreateBindingStrategyFor(keyAndValueTypes.KeyType ?? typeof(Ignore), keyAndValueTypes.ValueType, keyAndValueTypes.RequiresKey, valueDeserializer, parameter, consumerConfig);
             return Task.FromResult<ITriggerBinding>(new KafkaTriggerBindingWrapper(binding));
         }
@@ -77,7 +78,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     valueDeserializer,
                     this.logger,
                     factoryContext.Descriptor.Id);
-                
+
                 return Task.FromResult<IListener>(listener);
             }
 
@@ -95,7 +96,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 LagThreshold = attribute.LagThreshold
             };
 
-            if (attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet || 
+            if (attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet ||
                 attribute.Protocol != BrokerProtocol.NotSet)
             {
                 consumerConfig.SaslPassword = this.config.ResolveSecureSetting(nameResolver, attribute.Password);
