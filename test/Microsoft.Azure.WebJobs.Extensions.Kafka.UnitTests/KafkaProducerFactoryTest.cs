@@ -328,5 +328,49 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(sslCa.FullName, config.SslCaLocation);
             Assert.Equal(sslKeyLocation.FullName, config.SslKeyLocation);
         }
+
+        [Fact(Skip = "This scenario will be enabled in the future")]
+        public void GetProducerConfig_When_Ssl_Locations_Resolve_From_AppSetting_InAzure_Should_Contain_Full_Path()
+        {
+            AzureEnvironment.SetRunningInAzureEnvVars();
+
+            var currentFolder = Directory.GetCurrentDirectory();
+            var folder1 = Directory.CreateDirectory(Path.Combine(currentFolder, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1));
+            Directory.CreateDirectory(Path.Combine(folder1.FullName, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2));
+
+            AzureEnvironment.SetEnvironmentVariable(AzureFunctionsFileHelper.AzureHomeEnvVarName, currentFolder);
+
+            var sslCertificate = this.CreateFile(Path.Combine(currentFolder, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2, "sslCertificate.pfx"));
+            var sslCa = this.CreateFile(Path.Combine(currentFolder, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2, "sslCa.pem"));
+            var sslKeyLocation = this.CreateFile(Path.Combine(currentFolder, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2, "sslKey.key"));
+
+            var attribute = new KafkaAttribute("brokers:9092", "myTopic")
+            {
+                SslCertificateLocation = "%SslCertificateLocation%",
+                SslCaLocation = "%SslCaLocation%",
+                SslKeyLocation = "%SslKeyLocation%"
+            };
+
+            var entity = new KafkaProducerEntity
+            {
+                Attribute = attribute,
+                ValueType = typeof(ProtoUser)
+            };
+
+            var configSslLocations = new Dictionary<string, string>
+            {
+                {"SslCertificateLocation", "sslCertificate.pfx"},
+                {"SslCaLocation", "sslCa.pem"},
+                {"SslKeyLocation", "sslKey.key"}
+            };
+
+            var configuration = new ConfigurationBuilder().AddInMemoryCollection(configSslLocations).Build();
+
+            var factory = new KafkaProducerFactory(configuration, new DefaultNameResolver(configuration), NullLoggerFactory.Instance);
+            var config = factory.GetProducerConfig(entity);
+            Assert.Equal(sslCertificate.FullName, config.SslCertificateLocation);
+            Assert.Equal(sslCa.FullName, config.SslCaLocation);
+            Assert.Equal(sslKeyLocation.FullName, config.SslKeyLocation);
+        }
     }
 }
