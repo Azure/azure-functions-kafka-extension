@@ -31,8 +31,8 @@
 	  <PackageReference Include="Azure.ResourceManager.EventHubs" Version="1.0.0" />
 	  <PackageReference Include="Azure.Identity" Version="1.6.0" />
 	  <PackageReference Include="Azure.Storage.Queues" Version="12.11.0" />
-	  <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
-	  <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="6.0.0" />
+	  <PackageReference Include="Microsoft.Extensions.Logging" Version="3.1.32" />
+	  <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="3.1.32" />
   </ItemGroup>
   
   <ItemGroup>
