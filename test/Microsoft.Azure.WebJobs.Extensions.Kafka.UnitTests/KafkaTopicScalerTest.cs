@@ -17,99 +17,31 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
     {
         const string TopicName = "topicTest";
 
-        private readonly TopicPartition partition0;
-        private readonly TopicPartition partition1;
-        private readonly TopicPartition partition2;
-        private readonly TopicPartition partition3;
-        private readonly List<TopicPartition> partitions;
-        private readonly KafkaTopicScalerForTest<string, byte[]> topicScaler;
+        private readonly int topicPartitionCount;
+        private readonly KafkaTopicScaler<string, byte[]> topicScaler;
         private readonly Mock<IConsumer<string, byte[]>> consumer;
-
-        private Offset ZeroOffset => new Offset(0L);
-        private TimeSpan AnyTimeSpan => It.IsAny<TimeSpan>();
-
+        private readonly Mock<KafkaMetricsProvider<string, byte[]>> metricsProvider;
 
         public KafkaTopicScalerTest()
         {
             consumer = new Mock<IConsumer<string, byte[]>>();
+            metricsProvider = new Mock<KafkaMetricsProvider<string, byte[]>>(TopicName, new AdminClientConfig(), consumer.Object, NullLogger.Instance);
 
-            partition0 = new TopicPartition(TopicName, new Partition(0));
-            partition1 = new TopicPartition(TopicName, new Partition(1));
-            partition2 = new TopicPartition(TopicName, new Partition(2));
-            partition3 = new TopicPartition(TopicName, new Partition(3));
-
-            partitions = new List<TopicPartition>
-            { 
-                partition0,
-                partition1,
-                partition2,
-                partition3
-            };
-
-            topicScaler = new KafkaTopicScalerForTest<string, byte[]>(
+            topicScaler = new KafkaTopicScaler<string, byte[]>(
                 TopicName,
                 "consumer-group-test",
                 "testfunction",
-                consumer.Object, new AdminClientConfig(),
+                consumer.Object, metricsProvider.Object,
                 1000L,
                 NullLogger.Instance);
 
-            topicScaler.WithPartitions(partitions);    
+            this.topicPartitionCount = 4; 
         }
 
-        
         [Fact]
         public void ScaleMonitor_Id_ReturnsExpectedValue()
         {
             Assert.Equal("testfunction-kafkatrigger-topictest-consumer-group-test", topicScaler.Descriptor.Id);
-        }
-
-        [Fact]
-        public async Task When_Offset_Is_Zero_Should_Return_No_Lag()
-        {
-            consumer.Setup(x => x.Committed(It.IsNotNull<IEnumerable<TopicPartition>>(), AnyTimeSpan))
-                .Returns(new List<TopicPartitionOffset>
-                {
-                    new TopicPartitionOffset(partition0, ZeroOffset),
-                    new TopicPartitionOffset(partition1, ZeroOffset),
-                    new TopicPartitionOffset(partition2, ZeroOffset),
-                    new TopicPartitionOffset(partition3, ZeroOffset),
-                });
-
-            consumer.Setup(x => x.QueryWatermarkOffsets(It.IsAny<TopicPartition>(), AnyTimeSpan))
-                .Returns(new WatermarkOffsets(ZeroOffset, ZeroOffset));
-            
-
-            var metrics = await topicScaler.GetMetricsAsync();
-            Assert.Equal(partitions.Count, metrics.PartitionCount);
-            Assert.Equal(0, metrics.TotalLag);
-        }
-
-
-        [Fact]
-        public async Task When_Committed_Is_Behind_Offset_Should_Return_Combined_Lag()
-        {
-            const long currentOffset = 100;
-            const long largestLagOffset = currentOffset - 50;
-            const long minimalLagOffset = currentOffset - 1;
-
-            consumer.Setup(x => x.Committed(It.IsNotNull<IEnumerable<TopicPartition>>(), AnyTimeSpan))
-                .Returns(new List<TopicPartitionOffset>
-                {
-                    new TopicPartitionOffset(partition0, minimalLagOffset),
-                    new TopicPartitionOffset(partition1, currentOffset),
-                    new TopicPartitionOffset(partition2, largestLagOffset),
-                    new TopicPartitionOffset(partition3, currentOffset),
-                });
-
-            consumer.Setup(x => x.QueryWatermarkOffsets(It.IsAny<TopicPartition>(), AnyTimeSpan))
-                .Returns(new WatermarkOffsets(currentOffset, currentOffset));
-
-            var metrics = await topicScaler.GetMetricsAsync();
-            Assert.Equal(partitions.Count, metrics.PartitionCount);
-            var diff1 = currentOffset - largestLagOffset;
-            var diff2 = currentOffset - minimalLagOffset;
-            Assert.Equal(diff1 + diff2, metrics.TotalLag);
         }
 
         [Fact]
@@ -119,11 +51,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             {
                 Metrics = new KafkaTriggerMetrics[]
                 {
-                    new KafkaTriggerMetrics(0, partitions.Count),
-                    new KafkaTriggerMetrics(0, partitions.Count),
-                    new KafkaTriggerMetrics(0, partitions.Count),
-                    new KafkaTriggerMetrics(0, partitions.Count),
-                    new KafkaTriggerMetrics(0, partitions.Count),
+                    new KafkaTriggerMetrics(0, topicPartitionCount),
+                    new KafkaTriggerMetrics(0, topicPartitionCount),
+                    new KafkaTriggerMetrics(0, topicPartitionCount),
+                    new KafkaTriggerMetrics(0, topicPartitionCount),
+                    new KafkaTriggerMetrics(0, topicPartitionCount),
                 },
                 WorkerCount = 1,
             };
@@ -132,7 +64,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.NotNull(result);
             Assert.Equal(ScaleVote.ScaleIn, result.Vote);
         }
-
 
         [Theory]
         [InlineData(0)]
@@ -145,7 +76,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var metrics = new List<KafkaTriggerMetrics>();
             for (int i = 0; i < metricCount; i++)
             {
-                metrics.Add(new KafkaTriggerMetrics(i, partitions.Count));
+                metrics.Add(new KafkaTriggerMetrics(i, topicPartitionCount));
             }
 
             var context = new ScaleStatusContext<KafkaTriggerMetrics>()
@@ -159,7 +90,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(ScaleVote.None, result.Vote);
         }
 
-
         [Fact]
         public void When_WorkerCount_More_PartitionCount_Should_Vote_Scale_Down()
         {
@@ -167,13 +97,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             {
                 Metrics = new KafkaTriggerMetrics[]
                 {
-                    new KafkaTriggerMetrics(5, partitions.Count),
-                    new KafkaTriggerMetrics(6, partitions.Count),
-                    new KafkaTriggerMetrics(76, partitions.Count),
-                    new KafkaTriggerMetrics(22, partitions.Count),
-                    new KafkaTriggerMetrics(11, partitions.Count),
+                    new KafkaTriggerMetrics(5, topicPartitionCount),
+                    new KafkaTriggerMetrics(6, topicPartitionCount),
+                    new KafkaTriggerMetrics(76, topicPartitionCount),
+                    new KafkaTriggerMetrics(22, topicPartitionCount),
+                    new KafkaTriggerMetrics(11, topicPartitionCount),
                 },
-                WorkerCount = partitions.Count + 1,
+                WorkerCount = topicPartitionCount + 1,
             };
 
             var result = topicScaler.GetScaleStatus(context);
@@ -188,11 +118,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             {
                 Metrics = new KafkaTriggerMetrics[]
                 {
-                    new KafkaTriggerMetrics(10, partitions.Count),
-                    new KafkaTriggerMetrics(212, partitions.Count),
-                    new KafkaTriggerMetrics(32323, partitions.Count),
-                    new KafkaTriggerMetrics(121222, partitions.Count),
-                    new KafkaTriggerMetrics(123456, partitions.Count),
+                    new KafkaTriggerMetrics(10, topicPartitionCount),
+                    new KafkaTriggerMetrics(212, topicPartitionCount),
+                    new KafkaTriggerMetrics(32323, topicPartitionCount),
+                    new KafkaTriggerMetrics(121222, topicPartitionCount),
+                    new KafkaTriggerMetrics(123456, topicPartitionCount),
                 },
                 WorkerCount = 1,
             };
@@ -209,13 +139,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             {
                 Metrics = new KafkaTriggerMetrics[]
                 {
-                    new KafkaTriggerMetrics(10_005, partitions.Count),
-                    new KafkaTriggerMetrics(10_004, partitions.Count),
-                    new KafkaTriggerMetrics(10_003, partitions.Count),
-                    new KafkaTriggerMetrics(10_002, partitions.Count),
-                    new KafkaTriggerMetrics(10_001, partitions.Count),
+                    new KafkaTriggerMetrics(10_005, topicPartitionCount),
+                    new KafkaTriggerMetrics(10_004, topicPartitionCount),
+                    new KafkaTriggerMetrics(10_003, topicPartitionCount),
+                    new KafkaTriggerMetrics(10_002, topicPartitionCount),
+                    new KafkaTriggerMetrics(10_001, topicPartitionCount),
                 },
-                WorkerCount = partitions.Count,
+                WorkerCount = topicPartitionCount,
             };
 
             var result = topicScaler.GetScaleStatus(context);
@@ -230,13 +160,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             {
                 Metrics = new KafkaTriggerMetrics[]
                 {
-                    new KafkaTriggerMetrics(4_000, partitions.Count),
-                    new KafkaTriggerMetrics(3_999, partitions.Count),
-                    new KafkaTriggerMetrics(3_998, partitions.Count),
-                    new KafkaTriggerMetrics(3_997, partitions.Count),
-                    new KafkaTriggerMetrics(3_996, partitions.Count),
+                    new KafkaTriggerMetrics(4_000, topicPartitionCount),
+                    new KafkaTriggerMetrics(3_999, topicPartitionCount),
+                    new KafkaTriggerMetrics(3_998, topicPartitionCount),
+                    new KafkaTriggerMetrics(3_997, topicPartitionCount),
+                    new KafkaTriggerMetrics(3_996, topicPartitionCount),
                 },
-                WorkerCount = partitions.Count,
+                WorkerCount = topicPartitionCount,
             };
 
             var result = topicScaler.GetScaleStatus(context);
@@ -251,13 +181,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             {
                 Metrics = new KafkaTriggerMetrics[]
                 {
-                    new KafkaTriggerMetrics(4_000, partitions.Count),
-                    new KafkaTriggerMetrics(3_999, partitions.Count),
-                    new KafkaTriggerMetrics(3_998, partitions.Count),
-                    new KafkaTriggerMetrics(3_997, partitions.Count),
-                    new KafkaTriggerMetrics(2_999, partitions.Count),
+                    new KafkaTriggerMetrics(4_000, topicPartitionCount),
+                    new KafkaTriggerMetrics(3_999, topicPartitionCount),
+                    new KafkaTriggerMetrics(3_998, topicPartitionCount),
+                    new KafkaTriggerMetrics(3_997, topicPartitionCount),
+                    new KafkaTriggerMetrics(2_999, topicPartitionCount),
                 },
-                WorkerCount = partitions.Count,
+                WorkerCount = topicPartitionCount,
             };
 
             var result = topicScaler.GetScaleStatus(context);
@@ -272,11 +202,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             {
                 Metrics = new KafkaTriggerMetrics[]
                 {
-                    new KafkaTriggerMetrics(10, partitions.Count),
-                    new KafkaTriggerMetrics(212, partitions.Count),
-                    new KafkaTriggerMetrics(333, partitions.Count),
-                    new KafkaTriggerMetrics(1122, partitions.Count),
-                    new KafkaTriggerMetrics(1356, partitions.Count),
+                    new KafkaTriggerMetrics(10, topicPartitionCount),
+                    new KafkaTriggerMetrics(212, topicPartitionCount),
+                    new KafkaTriggerMetrics(333, topicPartitionCount),
+                    new KafkaTriggerMetrics(1122, topicPartitionCount),
+                    new KafkaTriggerMetrics(1356, topicPartitionCount),
                 },
                 WorkerCount = 1,
             };
@@ -293,13 +223,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             {
                 Metrics = new KafkaTriggerMetrics[]
                 {
-                    new KafkaTriggerMetrics(10, partitions.Count),
-                    new KafkaTriggerMetrics(212, partitions.Count),
-                    new KafkaTriggerMetrics(32323, partitions.Count),
-                    new KafkaTriggerMetrics(121222, partitions.Count),
-                    new KafkaTriggerMetrics(123456, partitions.Count),
+                    new KafkaTriggerMetrics(10, topicPartitionCount),
+                    new KafkaTriggerMetrics(212, topicPartitionCount),
+                    new KafkaTriggerMetrics(32323, topicPartitionCount),
+                    new KafkaTriggerMetrics(121222, topicPartitionCount),
+                    new KafkaTriggerMetrics(123456, topicPartitionCount),
                 },
-                WorkerCount = partitions.Count,
+                WorkerCount = topicPartitionCount,
             };
 
             var result = topicScaler.GetScaleStatus(context);
@@ -314,13 +244,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             {
                 Metrics = new KafkaTriggerMetrics[]
                 {
-                    new KafkaTriggerMetrics(10, partitions.Count),
-                    new KafkaTriggerMetrics(9, partitions.Count),
-                    new KafkaTriggerMetrics(8, partitions.Count),
-                    new KafkaTriggerMetrics(7, partitions.Count),
-                    new KafkaTriggerMetrics(6, partitions.Count),
+                    new KafkaTriggerMetrics(10, topicPartitionCount),
+                    new KafkaTriggerMetrics(9, topicPartitionCount),
+                    new KafkaTriggerMetrics(8, topicPartitionCount),
+                    new KafkaTriggerMetrics(7, topicPartitionCount),
+                    new KafkaTriggerMetrics(6, topicPartitionCount),
                 },
-                WorkerCount = partitions.Count,
+                WorkerCount = topicPartitionCount,
             };
 
             var result = topicScaler.GetScaleStatus(context);

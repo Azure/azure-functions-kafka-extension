@@ -19,7 +19,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     /// Kafka listener.
     /// Connects a Kafka trigger function with a Kafka Consumer
     /// </summary>
-    internal class KafkaListener<TKey, TValue> : IListener, IScaleMonitorProvider
+    internal class KafkaListener<TKey, TValue> : IListener, IScaleMonitorProvider, ITargetScalerProvider
     {
         internal const string EventHubsBrokerVersionFallback = "1.0.0";
         internal const string EventHubsSaslUsername = "$ConnectionString";
@@ -46,8 +46,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly string consumerGroup;
         private readonly string topicName;
         private readonly string functionId;
+        protected Lazy<KafkaMetricsProvider<TKey, TValue>> metricsProvider;
         //protected for the unit test
         protected Lazy<KafkaTopicScaler<TKey, TValue>> topicScaler;
+        protected Lazy<KafkaTargetScaler<TKey, TValue>> targetScaler;
 
         /// <summary>
         /// Gets the value deserializer
@@ -77,7 +79,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.topicName = this.listenerConfiguration.Topic;
             this.functionId = functionId;
             this.consumer = new Lazy<IConsumer<TKey, TValue>>(() => CreateConsumer());
-            this.topicScaler = new Lazy<KafkaTopicScaler<TKey, TValue>>(() => CreateTopicScaler());
+            this.metricsProvider = new Lazy<KafkaMetricsProvider<TKey, TValue>>(CreateMetricsProvider);
+            this.topicScaler = new Lazy<KafkaTopicScaler<TKey, TValue>>(CreateTopicScaler);
+            this.targetScaler = new Lazy<KafkaTargetScaler<TKey, TValue>>(CreateTargetScaler);
         }
 
         private IConsumer<TKey, TValue> CreateConsumer()
@@ -112,9 +116,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return builder.Build();
         }
 
+        private KafkaMetricsProvider<TKey, TValue> CreateMetricsProvider()
+        {
+            return new KafkaMetricsProvider<TKey, TValue>(this.topicName, new AdminClientConfig(GetConsumerConfiguration()), consumer.Value, this.logger);
+        }
+
         private KafkaTopicScaler<TKey, TValue> CreateTopicScaler()
         {
-            return new KafkaTopicScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.consumerGroup, this.functionId, this.consumer.Value, new AdminClientConfig(GetConsumerConfiguration()), this.listenerConfiguration.LagThreshold, this.logger);
+            return new KafkaTopicScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.consumerGroup, this.functionId, this.consumer.Value, metricsProvider.Value, this.listenerConfiguration.LagThreshold, this.logger);
+        }
+
+        private KafkaTargetScaler<TKey, TValue> CreateTargetScaler()
+        {
+            return new KafkaTargetScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.consumerGroup, this.functionId, this.consumer.Value, metricsProvider.Value, this.listenerConfiguration.LagThreshold, this.logger);
         }
 
         public void Cancel()
@@ -401,6 +415,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public IScaleMonitor GetMonitor()
         {
             return topicScaler.Value;
+        }
+
+        public ITargetScaler GetTargetScaler()
+        {
+            return targetScaler.Value;
         }
     }
 }
