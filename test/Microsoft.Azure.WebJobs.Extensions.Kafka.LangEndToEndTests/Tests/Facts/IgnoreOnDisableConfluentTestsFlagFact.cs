@@ -16,6 +16,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests
         }
 
         private static bool IgnoreOnDisableConfluentFlag() =>
-            Environment.GetEnvironmentVariable("DisableConfluentTestsFlag") != null;
-    }
+            Environment.GetEnvironmentVariable("DisableConfluentTestsFlag") == "true";
+        }
 }
