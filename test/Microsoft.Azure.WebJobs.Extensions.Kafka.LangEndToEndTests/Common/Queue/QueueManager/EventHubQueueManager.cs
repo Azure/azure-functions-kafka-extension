@@ -83,6 +83,10 @@ public class EventHubQueueManager : IQueueManager<QueueRequest, QueueResponse>
 				await eventhub.DeleteAsync(WaitUntil.Completed);
 				return;
 			}
+			catch (RequestFailedException ex) when (ex.Status == 404) 
+			{ 
+				_logger.LogInformation($"Unable to find resources to delete for Eventhub delete Operation with exception {ex.Message}");
+			}
 			catch (Exception ex)
 			{
 				if (count >= _MAX_RETRY_COUNT)
