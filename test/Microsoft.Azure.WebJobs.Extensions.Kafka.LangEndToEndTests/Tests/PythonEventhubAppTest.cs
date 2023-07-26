@@ -17,7 +17,7 @@ public class PythonEventhubAppTest : BaseE2E, IClassFixture<PythonEventhubE2EFix
 		_output = output;
 	}
 
-	[Fact]
+	[IgnoreOnDisableEventHubsTestsFlagFact]
 	public async Task Python_App_Test_Single_Event_Eventhub()
 	{
 		//Generate Random Guids
@@ -32,7 +32,7 @@ public class PythonEventhubAppTest : BaseE2E, IClassFixture<PythonEventhubE2EFix
 	}
 
 
-	[Fact]
+	[IgnoreOnDisableEventHubsTestsFlagFact]
 	public async Task Python_App_Test_Multi_Event_Confluent()
 	{
 		//Generate Random Guids
