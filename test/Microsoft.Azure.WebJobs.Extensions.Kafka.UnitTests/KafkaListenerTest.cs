@@ -342,7 +342,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             await target.StartAsync(default);
 
-            Assert.Equal(12, target.ConsumerConfig.Count());
+            Assert.Equal(13, target.ConsumerConfig.Count());
             Assert.Equal("testBroker", target.ConsumerConfig.BootstrapServers);
             Assert.Equal("group1", target.ConsumerConfig.GroupId);
             Assert.Equal("password1", target.ConsumerConfig.SslKeyPassword);
@@ -396,7 +396,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             await target.StartAsync(default);
 
-            Assert.Equal(12, target.ConsumerConfig.Count());
+            Assert.Equal(13, target.ConsumerConfig.Count());
             Assert.Equal("testBroker", target.ConsumerConfig.BootstrapServers);
             Assert.Equal("group1", target.ConsumerConfig.GroupId);
             Assert.Equal("password1", target.ConsumerConfig.SslKeyPassword);
@@ -446,7 +446,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             await target.StartAsync(default);
 
-            Assert.Equal(12, target.ConsumerConfig.Count());
+            Assert.Equal(13, target.ConsumerConfig.Count());
             Assert.Equal("testBroker", target.ConsumerConfig.BootstrapServers);
             Assert.Equal("group1", target.ConsumerConfig.GroupId);
             Assert.Equal(kafkaOptions.AutoCommitIntervalMs, target.ConsumerConfig.AutoCommitIntervalMs);
