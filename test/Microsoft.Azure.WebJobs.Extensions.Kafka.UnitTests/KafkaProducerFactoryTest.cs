@@ -329,7 +329,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(sslKeyLocation.FullName, config.SslKeyLocation);
         }
 
-        [Fact(Skip = "This scenario will be enabled in the future")]
+        [Fact]
         public void GetProducerConfig_When_Ssl_Locations_Resolve_From_AppSetting_InAzure_Should_Contain_Full_Path()
         {
             AzureEnvironment.SetRunningInAzureEnvVars();
