@@ -17,7 +17,7 @@ public class JavaEventhubAppTest : BaseE2E, IClassFixture<JavaEventhubE2EFixture
 		_output = output;
 	}
 
-	[Fact]
+	[IgnoreOnDisableEventHubsTestsFlagFact]
 	public async Task Java_App_Test_Single_Event_Eventhub()
 	{
 		//Generate Random Guids
@@ -33,7 +33,7 @@ public class JavaEventhubAppTest : BaseE2E, IClassFixture<JavaEventhubE2EFixture
 	}
 
 
-	[Fact]
+	[IgnoreOnDisableEventHubsTestsFlagFact]
 	public async Task Java_App_Test_Multi_Event_Eventhub()
 	{
 		//Generate Random Guids
