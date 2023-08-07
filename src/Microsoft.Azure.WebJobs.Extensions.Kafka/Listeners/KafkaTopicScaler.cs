@@ -35,7 +35,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.topicName = topic;
-            this.Descriptor = new ScaleMonitorDescriptor($"{functionId}-kafkatrigger-{topicName}-{consumerGroup}".ToLower());
+            this.Descriptor = new ScaleMonitorDescriptor($"{functionId}-kafkatrigger-{topicName}-{consumerGroup}".ToLower(), functionId);
             this.consumerGroup = consumerGroup;
             this.lagThreshold = lagThreshold;
             this.metricsProvider = metricsProvider;
