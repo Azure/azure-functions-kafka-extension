@@ -207,6 +207,11 @@ namespace Confluent
 |MessageTimeoutMs|Local message timeout. This value is only enforced locally and limits the time a produced message waits for successful delivery. A time of 0 is infinite. This is the maximum time used to deliver a message (including retries). Delivery error occurs when either the retry count or the message timeout are exceeded. default: 300000|
 |RequestTimeoutMs|The acknowledgement timeout of the producer request in milliseconds. default: 5000|
 |MaxRetries|How many times to retry sending a failing Message. **Note:** default: 2. <remarks>Retrying may cause reordering unless <c>EnableIdempotence</c> is set to <c>true</c>.</remarks>|
+|SchemaRegistryUrl|URL for the schema registry|
+|SchemaRegistryUsername|Username for the schema registry|
+|SchemaRegistryPassword|Password for the schema registry|
+
+Confluent Schema Registry is supported as External Schema Registry for both Confluent and EventHub output bindings.
 
 For connection to a secure Kafka Broker -
 
