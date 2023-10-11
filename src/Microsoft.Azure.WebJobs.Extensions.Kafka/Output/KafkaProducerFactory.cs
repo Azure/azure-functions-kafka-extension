@@ -3,17 +3,10 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Reflection;
 using System.Text;
-using Avro.Generic;
-using Avro.Specific;
 using Confluent.Kafka;
-using Microsoft.Azure.WebJobs.Extensions.Kafka.Config;
-using Microsoft.Azure.WebJobs.Host;
-using Microsoft.Azure.WebJobs.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
@@ -89,7 +82,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var valueType = entity.ValueType ?? typeof(byte[]);
             var keyType = entity.KeyType ?? typeof(Null);
 
-            var valueSerializer = SerializationHelper.ResolveValueSerializer(valueType, entity.AvroSchema);
+            var avroSchema = this.config.ResolveSecureSetting(nameResolver, entity.AvroSchema);
+            var schemaRegistryUrl = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SchemaRegistryUrl);
+            var schemaRegistryUsername = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SchemaRegistryUsername);
+            var schemaRegistryPassword = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SchemaRegistryPassword);
+
+            var valueSerializer = SerializationHelper.ResolveValueSerializer(valueType, avroSchema, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword);
 
             return (IKafkaProducer)Activator.CreateInstance(
                 typeof(KafkaProducer<,>).MakeGenericType(keyType, valueType),
@@ -100,19 +98,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public ProducerConfig GetProducerConfig(KafkaProducerEntity entity)
         {
-            if (!AzureFunctionsFileHelper.TryGetValidFilePath(entity.Attribute.SslCertificateLocation, out var resolvedSslCertificationLocation))
+            var sslCertificateLocation = config.ResolveSecureSetting(nameResolver, entity.Attribute.SslCertificateLocation);
+            if (!AzureFunctionsFileHelper.TryGetValidFilePath(sslCertificateLocation, out var resolvedSslCertificationLocation))
             {
-                resolvedSslCertificationLocation = entity.Attribute.SslCertificateLocation;
+                resolvedSslCertificationLocation = sslCertificateLocation;
             }
-
-            if (!AzureFunctionsFileHelper.TryGetValidFilePath(entity.Attribute.SslCaLocation, out var resolvedSslCaLocation))
+            
+            var sslCaLocation = config.ResolveSecureSetting(nameResolver, entity.Attribute.SslCaLocation);
+            if (!AzureFunctionsFileHelper.TryGetValidFilePath(sslCaLocation, out var resolvedSslCaLocation))
             {
-                resolvedSslCaLocation = entity.Attribute.SslCaLocation;
+                resolvedSslCaLocation = sslCaLocation;
             }
-
-            if (!AzureFunctionsFileHelper.TryGetValidFilePath(entity.Attribute.SslKeyLocation, out var resolvedSslKeyLocation))
+            
+            var sslKeyLocation = config.ResolveSecureSetting(nameResolver, entity.Attribute.SslKeyLocation);
+            if (!AzureFunctionsFileHelper.TryGetValidFilePath(sslKeyLocation, out var resolvedSslKeyLocation))
             {
-                resolvedSslKeyLocation = entity.Attribute.SslKeyLocation;
+                resolvedSslKeyLocation = sslKeyLocation;
             }
             var kafkaOptions = this.config.Get<KafkaOptions>();
             var conf = new ProducerConfig()

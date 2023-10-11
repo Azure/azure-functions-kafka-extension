@@ -17,7 +17,7 @@ public class JavaConfluentAppTest : BaseE2E, IClassFixture<JavaConfluentE2EFixtu
 		_output = output;
 	}
 
-	[Fact]
+	[IgnoreOnDisableConfluentTestsFlagFact]
 	public async Task Java_App_Test_Single_Event_Confluent()
 	{
 		//Generate Random Guids
@@ -31,7 +31,7 @@ public class JavaConfluentAppTest : BaseE2E, IClassFixture<JavaConfluentE2EFixtu
 		await Test(AppType.SINGLE_EVENT, InvokeType.HTTP, httpRequestEntity, null, reqMsgs);
 	}
 
-	[Fact]
+	[IgnoreOnDisableConfluentTestsFlagFact]
 	public async Task Java_App_Test_Multi_Event_Confluent()
 	{
 		//Generate Random Guids

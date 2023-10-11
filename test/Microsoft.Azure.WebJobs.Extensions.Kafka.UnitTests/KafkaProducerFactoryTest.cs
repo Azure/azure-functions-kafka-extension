@@ -9,7 +9,6 @@ using System.Linq;
 using Avro.Generic;
 using Confluent.Kafka;
 using Confluent.Kafka.SyncOverAsync;
-using Confluent.SchemaRegistry.Serdes;
 
 using Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.Helpers;
 using Microsoft.Extensions.Configuration;
@@ -119,6 +118,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.IsType<SyncOverAsyncSerializer<GenericRecord>>(typedProducer.ValueSerializer);
         }
 
+        [Fact]
+        public void When_Schema_Registry_Is_Provided_Should_Create_GenericRecord_Listener()
+        {
+            var attribute = new KafkaAttribute("brokers:9092", "myTopic");
+
+            attribute.SchemaRegistryUrl = "localhost";
+
+            var entity = new KafkaProducerEntity()
+            {
+                Attribute = attribute,
+                ValueType = typeof(GenericRecord),
+            };
+
+            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerFactory.Instance);
+            var producer = factory.Create(entity);
+
+            Assert.NotNull(producer);
+            Assert.IsType<KafkaProducer<Null, GenericRecord>>(producer);
+            var typedProducer = (KafkaProducer<Null, GenericRecord>)producer;
+            Assert.NotNull(typedProducer.ValueSerializer);
+            Assert.IsType<SyncOverAsyncSerializer<GenericRecord>>(typedProducer.ValueSerializer);
+        }
 
         [Fact]
         public void When_Value_Type_Is_Specific_Record_Should_Create_SpecificRecord_Listener()
@@ -183,7 +204,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerFactory.Instance);
             var config = factory.GetProducerConfig(entity);
-            Assert.Equal(0, config.Count(x=>x.Key.StartsWith("sasl.")));
+            Assert.Equal(0, config.Count(x => x.Key.StartsWith("sasl.")));
             Assert.Null(config.SaslMechanism);
             Assert.Null(config.SaslPassword);
             Assert.Null(config.SaslUsername);
@@ -285,7 +306,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             AzureEnvironment.SetEnvironmentVariable(AzureFunctionsFileHelper.AzureHomeEnvVarName, currentFolder);
 
             var sslCertificate = this.CreateFile(Path.Combine(currentFolder, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2, "sslCertificate.pfx"));
-            var sslCa = this.CreateFile(Path.Combine(currentFolder, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2, "sslCa.pem")); 
+            var sslCa = this.CreateFile(Path.Combine(currentFolder, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2, "sslCa.pem"));
             var sslKeyLocation = this.CreateFile(Path.Combine(currentFolder, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2, "sslKey.key"));
 
             var attribute = new KafkaAttribute("brokers:9092", "myTopic")
@@ -302,6 +323,50 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             };
 
             var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerFactory.Instance);
+            var config = factory.GetProducerConfig(entity);
+            Assert.Equal(sslCertificate.FullName, config.SslCertificateLocation);
+            Assert.Equal(sslCa.FullName, config.SslCaLocation);
+            Assert.Equal(sslKeyLocation.FullName, config.SslKeyLocation);
+        }
+
+        [Fact]
+        public void GetProducerConfig_When_Ssl_Locations_Resolve_From_AppSetting_InAzure_Should_Contain_Full_Path()
+        {
+            AzureEnvironment.SetRunningInAzureEnvVars();
+
+            var currentFolder = Directory.GetCurrentDirectory();
+            var folder1 = Directory.CreateDirectory(Path.Combine(currentFolder, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1));
+            Directory.CreateDirectory(Path.Combine(folder1.FullName, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2));
+
+            AzureEnvironment.SetEnvironmentVariable(AzureFunctionsFileHelper.AzureHomeEnvVarName, currentFolder);
+
+            var sslCertificate = this.CreateFile(Path.Combine(currentFolder, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2, "sslCertificate.pfx"));
+            var sslCa = this.CreateFile(Path.Combine(currentFolder, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2, "sslCa.pem"));
+            var sslKeyLocation = this.CreateFile(Path.Combine(currentFolder, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2, "sslKey.key"));
+
+            var attribute = new KafkaAttribute("brokers:9092", "myTopic")
+            {
+                SslCertificateLocation = "%SslCertificateLocation%",
+                SslCaLocation = "%SslCaLocation%",
+                SslKeyLocation = "%SslKeyLocation%"
+            };
+
+            var entity = new KafkaProducerEntity
+            {
+                Attribute = attribute,
+                ValueType = typeof(ProtoUser)
+            };
+
+            var configSslLocations = new Dictionary<string, string>
+            {
+                {"SslCertificateLocation", "sslCertificate.pfx"},
+                {"SslCaLocation", "sslCa.pem"},
+                {"SslKeyLocation", "sslKey.key"}
+            };
+
+            var configuration = new ConfigurationBuilder().AddInMemoryCollection(configSslLocations).Build();
+
+            var factory = new KafkaProducerFactory(configuration, new DefaultNameResolver(configuration), NullLoggerFactory.Instance);
             var config = factory.GetProducerConfig(entity);
             Assert.Equal(sslCertificate.FullName, config.SslCertificateLocation);
             Assert.Equal(sslCa.FullName, config.SslCaLocation);

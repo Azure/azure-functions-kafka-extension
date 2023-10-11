@@ -25,7 +25,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
     }
 
     internal static class MultiItem_KafkaEventData_String_With_Ignore_Key_Trigger
-    {        public static void Trigger(
+    {
+        public static void Trigger(
                [KafkaTrigger("LocalBroker", Constants.StringTopicWithTenPartitionsName, ConsumerGroup = Constants.ConsumerGroupID)] KafkaEventData<Ignore, string>[] kafkaEvents,
                ILogger log)
         {
@@ -70,7 +71,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             }
         }
     }
-    
+
 
     internal static class MultiItem_String_With_Long_Key_Trigger
     {
@@ -284,8 +285,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             throw new Exception("unhandled error");
         }
     }
-    
-    internal static class SingleEventTrigger_With_Activity 
+
+    internal static class SingleEventTrigger_With_Activity
     {
         public static void Trigger(
             [KafkaTrigger("LocalBroker", Constants.StringTopicWithOnePartitionName, ConsumerGroup = Constants.ConsumerGroupID)] KafkaEventData<string> kafkaEvent,
@@ -316,6 +317,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                     log.LogInformation("LinkedActivity: 00-" + link.Context.TraceId + "-" + link.Context.SpanId + "-01");
                 }
             }
+        }
+    }
+
+    internal static class SingleItem_With_Schema_Registry
+    {
+        public static void Trigger(
+            [KafkaTrigger("LocalBroker", Constants.SchemaRegistryTopicName, ConsumerGroup = Constants.ConsumerGroupID, SchemaRegistryUrl = Constants.SchemaRegistryUrl)] KafkaEventData<string, GenericRecord> kafkaEvent,
+            ILogger log)
+        {
+            log.LogInformation(kafkaEvent.Value.ToString());
         }
     }
 }

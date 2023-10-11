@@ -4,7 +4,6 @@
 using Avro.Generic;
 using Confluent.Kafka;
 using Confluent.Kafka.SyncOverAsync;
-using Confluent.SchemaRegistry.Serdes;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Protocols;
@@ -74,6 +73,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         static void GenericAvroWithoutKey_Fn([KafkaTrigger("brokers:9092", "myTopic", AvroSchema = "fake")] KafkaEventData<GenericRecord> genericRecord) { }
         static void GenericAvro_WithLongKey_Fn([KafkaTrigger("brokers:9092", "myTopic", AvroSchema = "fake")] KafkaEventData<long, GenericRecord> genericRecord) { }
         static void GenericAvro_WithStringKey_Fn([KafkaTrigger("brokers:9092", "myTopic", AvroSchema = "fake")] KafkaEventData<string, GenericRecord> genericRecord) { }
+        static void GenericWithSchemaRegistry_Fn([KafkaTrigger("brokers:9092", "myTopic", SchemaRegistryUrl = "localhost:8081")] KafkaEventData<GenericRecord> genericRecord) { }
 
         static void RawSpecificAvro_Fn([KafkaTrigger("brokers:9092", "myTopic")] MyAvroRecord myAvroRecord) { }
         static void SpecificAvro_Fn([KafkaTrigger("brokers:9092", "myTopic")] KafkaEventData<Null, MyAvroRecord> myAvroRecord) { }
@@ -140,9 +140,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 config,
                 Options.Create(new KafkaOptions()),
                 new KafkaEventDataConvertManager(NullLogger.Instance),
-                new DefaultNameResolver(config),                
+                new DefaultNameResolver(config),
                 NullLoggerFactory.Instance);
-            
+
             var parameterInfo = new TriggerBindingProviderContext(this.GetParameterInfo(functionName), default);
 
             var triggerBinding = await bindingProvider.TryCreateAsync(parameterInfo);
@@ -193,6 +193,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         [InlineData(nameof(GenericAvro_Fn), typeof(Null))]
         [InlineData(nameof(GenericAvroWithoutKey_Fn), typeof(string))]
         [InlineData(nameof(RawGenericAvro_Fn), typeof(string))]
+        [InlineData(nameof(GenericWithSchemaRegistry_Fn), typeof(string))]
         public async Task When_Avro_Schema_Is_Provided_Should_Create_GenericRecord_Listener(string functionName, Type expectedKeyType)
         {
             var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")
@@ -223,8 +224,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
 
             Assert.NotNull(listener);
-            AssertIsCorrectKafkaListener(listener, expectedKeyType, typeof(GenericRecord), typeof(SyncOverAsyncDeserializer<GenericRecord>));            
-        }       
+            AssertIsCorrectKafkaListener(listener, expectedKeyType, typeof(GenericRecord), typeof(SyncOverAsyncDeserializer<GenericRecord>));
+        }
 
         [Theory]
         [InlineData(nameof(SpecificAvro_Fn), typeof(Null))]
@@ -429,6 +430,57 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(sslCa.FullName, result.SslCaLocation);
             Assert.Equal(sslKeyLocation.FullName, result.SslKeyLocation);
         }
+
+        [Fact]
+        public void GetConsumerConfig_When_Ssl_Locations_Resolve_From_AppSetting_InAzure_Should_Contain_Full_Path()
+        {
+            AzureEnvironment.SetRunningInAzureEnvVars();
+
+            var currentFolder = Directory.GetCurrentDirectory();
+            var folder1 = Directory.CreateDirectory(Path.Combine(currentFolder, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1));
+            Directory.CreateDirectory(Path.Combine(folder1.FullName, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2));
+
+            AzureEnvironment.SetEnvironmentVariable(AzureFunctionsFileHelper.AzureHomeEnvVarName, currentFolder);
+
+            var sslCertificate = this.CreateFile(Path.Combine(currentFolder, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2, "sslCertificate.pem"));
+            var sslCa = this.CreateFile(Path.Combine(currentFolder, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2, "sslCa.pem"));
+            var sslKeyLocation = this.CreateFile(Path.Combine(currentFolder, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2, "sslKey.pem"));
+
+            var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")
+            {
+                Protocol = BrokerProtocol.Ssl,
+                SslKeyPassword = "password1",
+                SslCertificateLocation = "%SslCertificateLocation%",
+                SslCaLocation = "%SslCaLocation%",
+                SslKeyLocation = "%SslKeyLocation%"
+            };
+
+            var configSslLocations = new Dictionary<string, string>
+            {
+                {"SslCertificateLocation", "sslCertificate.pem"},
+                {"SslCaLocation", "sslCa.pem"},
+                {"SslKeyLocation", "sslKey.pem"}
+            };
+
+            var config = new ConfigurationBuilder().AddInMemoryCollection(configSslLocations).Build();
+
+            var bindingProvider = new KafkaTriggerAttributeBindingProvider(
+                config,
+                Options.Create(new KafkaOptions()),
+                new KafkaEventDataConvertManager(NullLogger.Instance),
+                new DefaultNameResolver(config),
+                NullLoggerFactory.Instance);
+
+            MethodInfo consumerConfigMethod = typeof(KafkaTriggerAttributeBindingProvider).GetMethod("CreateConsumerConfiguration", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            KafkaListenerConfiguration result = (KafkaListenerConfiguration)consumerConfigMethod.Invoke(bindingProvider, new object[] { attribute });
+
+            Assert.Equal("password1", result.SslKeyPassword);
+            Assert.Equal(sslCertificate.FullName, result.SslCertificateLocation);
+            Assert.Equal(sslCa.FullName, result.SslCaLocation);
+            Assert.Equal(sslKeyLocation.FullName, result.SslKeyLocation);
+        }
+
 
         [Fact]
         public void GetConsumerConfig_When_Protocol_is_Not_SSL()

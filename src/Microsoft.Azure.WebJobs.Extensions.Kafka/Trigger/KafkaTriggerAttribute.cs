@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using Avro.Specific;
-using Confluent.Kafka;
 using Microsoft.Azure.WebJobs.Description;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.Config;
 using System;
@@ -43,7 +42,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// Gets or sets the consumer group
         /// </summary>
         public string ConsumerGroup { get; set; }
-        
+
 
         /// <summary>
         /// Gets or sets the Avro schema.
@@ -110,10 +109,26 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public string SslKeyPassword { get; set; }
 
         /// <summary>
-        /// Lag threshold
+        /// Maximum number of unprocessed messages a worker is expected to have at an instance.
+        /// When target-based scaling is not disabled, this is used to divide total unprocessed event count  to determine the number of worker instances, which will then be rounded up to a worker instance count that creates a balanced partition distribution.
         /// Default: 1000
         /// </summary>
         public long LagThreshold { get => lagThreshold.GetValueOrDefault(1000L); set => lagThreshold = value; }
+
+        /// <summary>
+        /// URL for the Avro Schema Registry
+        /// </summary>
+        public string SchemaRegistryUrl { get; set; }
+
+        /// <summary>
+        /// Username for the Avro Schema Registry
+        /// </summary>
+        public string SchemaRegistryUsername { get; set; }
+
+        /// <summary>
+        /// Password for the Avro Schema Registry
+        /// </summary>
+        public string SchemaRegistryPassword { get; set; }
 
         /// <summary>
         /// OAuth Bearer method.
