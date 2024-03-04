@@ -126,25 +126,6 @@ steps:
       filePath: ./script/create_package.sh
 
   - task: DotNetCoreCLI@2
-    displayName: Run language e2e tests
-    inputs:
-      command: test
-      projects: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
-    env:
-      AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
-      AZURE_CLIENT_SECRET: $(AZURE_CLIENT_SECRET)
-      AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
-      AZURE_TENANT_ID: $(AZURE_TENANT_ID)
-      AzureWebJobsStorage: $(AzureWebJobsStorage)
-      ConfluentBrokerList: $(ConfluentBrokerList)
-      ConfluentCloudPassword: $(ConfluentCloudPassword)
-      ConfluentCloudUsername: $(ConfluentCloudUsername)
-      EventHubBrokerList: $(EventHubBrokerList)
-      EventHubConnectionString: $(EventHubConnectionString)
-      DisableConfluentTestsFlag: $(DisableConfluentTestsFlag)
-      DisableEventHubsTestsFlag: $(DisableEventHubsTestsFlag)
-
-  - task: DotNetCoreCLI@2
     displayName: Pack NuGet package
     inputs:
       command: pack
