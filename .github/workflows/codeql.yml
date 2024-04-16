@@ -15,10 +15,8 @@ on:
   workflow_dispatch:
   push:
     branches: [ "dev" ]
-  pull_request:
-    branches: [ "dev" ]
   schedule:
-    - cron: '19 5 * * 3'
+    - cron: '18 12 1 * *'
 
 jobs:
   analyze:
