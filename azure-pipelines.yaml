@@ -3,7 +3,7 @@ variables:
   buildConfiguration: Release
   majorVersion: 0.0.0
   isReleaseTriggered: $[startsWith(variables['Build.SourceBranch'], 'refs/heads/action/release')]
-  isDevTriggered: $[startsWith(variables['Build.SourceBranch'], 'refs/heads/dev')]
+  isMasterTriggered: $[startsWith(variables['Build.SourceBranch'], 'refs/heads/master')]
   Codeql.Enabled: true
 
 # Enable PR validation on branches master and dev
@@ -137,7 +137,7 @@ steps:
 
   - task: DotNetCoreCLI@2
     displayName: Run language e2e tests
-    condition: and(succeeded(), eq(variables.isDevTriggered, 'True')) # Skip in dev until we fix the connections
+    condition: and(succeeded(), eq(variables.isMasterTriggered, 'True')) # Skip in dev until we fix the connections
     inputs:
       command: test
       projects: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
