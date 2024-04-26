@@ -4,6 +4,7 @@ variables:
   majorVersion: 0.0.0
   isReleaseTriggered: $[startsWith(variables['Build.SourceBranch'], 'refs/heads/action/release')]
   isDevTriggered: $[startsWith(variables['Build.SourceBranch'], 'refs/heads/dev')]
+  Codeql.Enabled: true
 
 # Enable PR validation on branches master and dev
 pr:
