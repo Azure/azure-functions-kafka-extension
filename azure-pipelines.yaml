@@ -19,6 +19,15 @@ trigger:
     include:
       - dev
       - master
+      
+schedules:
+  - cron: '0 12 * * 0'
+    displayName: Weekly Sunday build
+    branches:
+      include:
+        - dev
+        - master
+    always: true
 
 continueOnError: false
 pool:
