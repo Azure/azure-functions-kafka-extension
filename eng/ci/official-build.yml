@@ -119,12 +119,6 @@ extends:
                     }
                   ]
           
-          - task: Bash@3
-            displayName: Package current source as NuGet package and pack it in Docker
-            inputs:
-              targetType: filePath
-              filePath: ./script/create_package.sh
-
           - task: DotNetCoreCLI@2
             displayName: Pack NuGet package
             inputs:
