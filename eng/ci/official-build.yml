@@ -1,0 +1,168 @@
+variables:
+  Codeql.Enabled: true
+
+# Enable CI on branches master and dev
+# Batch builds
+trigger:
+  batch: true
+  branches:
+    include:
+      - dev
+      - master
+      
+schedules:
+  - cron: '0 12 * * 0'
+    displayName: Weekly Sunday build
+    branches:
+      include:
+        - master
+    always: true
+
+resources:
+  repositories:
+  - repository: 1ESPipelineTemplates
+    type: git
+    name: 1ESPipelineTemplates/1ESPipelineTemplates
+    ref: refs/tags/release
+
+extends:
+  template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
+  parameters:
+    pool:
+      name: 1es-pool-azfunc
+      image: 1es-ubuntu-22.04
+      os: linux
+    sdl:
+      sourceAnalysisPool:
+        name: 1es-pool-azfunc
+        image: 1es-windows-2022
+        os: windows
+    stages:
+    - stage: stage1
+      displayName: Build in Linux VM
+      jobs:
+      - job: job1
+        displayName: Build Kafka Extension
+        templateContext:
+          outputs:
+          - output: pipelineArtifact
+            targetPath: $(Build.ArtifactStagingDirectory)
+            artifactName: drop
+        steps:
+          - task: UseDotNet@2
+            displayName: 'Install .NET Core SDK'
+            inputs:
+              version: 3.1.x
+              packageType: sdk
+          
+          - task: UseDotNet@2
+            displayName: 'Install .NET 6.0'
+            inputs:
+              version: 6.x
+              packageType: sdk
+
+          - task: DotNetCoreCLI@2
+            displayName: Build project
+            inputs:
+              command: 'build'
+              arguments: '--configuration Release -p:IsLocalBuild=False'
+              projects: src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
+
+          - task: DotNetCoreCLI@2
+            displayName: Build test projects
+            inputs:
+              command: 'build'
+              arguments: '--configuration Release -p:IsLocalBuild=False'
+              projects: |
+                test/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.csproj
+                test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests.csproj
+                test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.csproj
+
+          - task: DotNetCoreCLI@2
+            displayName: Run unit tests
+            inputs:
+              command: test
+              projects: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
+
+          - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
+            displayName: Component Detection
+
+          - task: EsrpCodeSigning@1
+            displayName: Sign extension assembly
+            condition: succeeded()
+            inputs:
+              connectedServiceName: ESRP Service-internal
+              folderPath: src/Microsoft.Azure.WebJobs.Extensions.Kafka/bin/Debug/netstandard2.0/
+              pattern: Microsoft.Azure.WebJobs.Extensions.Kafka.dll
+              signConfigType: inlineSignParams
+              inlineOperation: |
+                  [
+                    {
+                      "KeyCode": "CP-230012",
+                      "OperationCode": "SigntoolSign",
+                      "Parameters": {
+                        "OpusName": "Microsoft",
+                        "OpusInfo": "http://www.microsoft.com",
+                        "FileDigest": "/fd \"SHA256\"",
+                        "PageHash": "/NPH",
+                        "TimeStamp": "/tr \"http://rfc3161.gtm.corp.microsoft.com/TSS/HttpTspServer\" /td sha256"
+                      },
+                      "ToolName": "sign",
+                      "ToolVersion": "1.0"
+                    },
+                    {
+                      "KeyCode": "CP-230012",
+                      "OperationCode": "SigntoolVerify",
+                      "Parameters": {},
+                      "ToolName": "sign",
+                      "ToolVersion": "1.0"
+                    }
+                  ]
+          
+          - task: Bash@3
+            displayName: Package current source as NuGet package and pack it in Docker
+            inputs:
+              targetType: filePath
+              filePath: ./script/create_package.sh
+
+          - task: DotNetCoreCLI@2
+            displayName: Pack NuGet package
+            inputs:
+              command: pack
+              packDirectory: '$(Build.ArtifactStagingDirectory)'
+              searchPatternPack: src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
+              configurationToPack: Release
+              includesymbols: true
+
+          - task: EsrpCodeSigning@1
+            displayName: Sign extension package
+            condition: succeeded()
+            inputs:
+              connectedServiceName: ESRP Service-internal
+              folderPath: $(Build.ArtifactStagingDirectory)
+              pattern: Microsoft.Azure.WebJobs.Extensions.Kafka.*.nupkg
+              signConfigType: inlineSignParams
+              inlineOperation: |
+                    [
+                        {
+                          "KeyCode": "CP-230012",
+                          "OperationCode": "NuGetSign",
+                          "Parameters": {},
+                          "ToolName": "sign",
+                          "ToolVersion": "1.0"
+                        },
+                        {
+                          "KeyCode": "CP-230012",
+                          "OperationCode": "NuGetVerify",
+                          "Parameters": {},
+                          "ToolName": "sign",
+                          "ToolVersion": "1.0"
+                        }
+                    ]
+
+          - task: ManifestGeneratorTask@0
+            displayName: SBOM Generation Task
+            inputs:
+              BuildDropPath: $(Build.ArtifactStagingDirectory)
+              PackageName: Microsoft.Azure.WebJobs.Extensions.Kafka
+              Verbosity: Information
