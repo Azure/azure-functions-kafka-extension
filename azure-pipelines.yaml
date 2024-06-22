@@ -38,7 +38,7 @@ pool:
 
 steps:
   - task: UseDotNet@2
-    displayName: 'Install .NET 6.0'
+    displayName: 'Install .NET 8.0'
     inputs:
       version: 8.x
       packageType: sdk
