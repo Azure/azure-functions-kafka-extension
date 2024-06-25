@@ -1,9 +1,5 @@
 name: $(Build.SourceBranchName)_$(Build.Reason)_$(majorVersion).$(Build.BuildId)$(Rev:.r)
 variables:
-  buildConfiguration: Release
-  majorVersion: 0.0.0
-  isReleaseTriggered: $[startsWith(variables['Build.SourceBranch'], 'refs/heads/action/release')]
-  isMasterTriggered: $[startsWith(variables['Build.SourceBranch'], 'refs/heads/master')]
   Codeql.Enabled: true
 
 # Enable PR validation on branches master and dev
@@ -12,15 +8,6 @@ pr:
     include:
       - master
       - dev
-
-# Enable CI on branches master and dev
-# Batch builds
-trigger:
-  batch: true
-  branches:
-    include:
-      - dev
-      - master
       
 schedules:
   - cron: '0 12 * * 0'
@@ -30,174 +17,97 @@ schedules:
         - master
     always: true
 
-continueOnError: false
-pool:
-  name: 1ES-Hosted-Azfunc
-  demands:
-    - ImageOverride -equals MMSUbuntu20.04TLS
+resources:
+  repositories:
+  - repository: 1es
+    type: git
+    name: 1ESPipelineTemplates/1ESPipelineTemplates
+    ref: refs/tags/release
 
-steps:
-  - task: UseDotNet@2
-    displayName: 'Install .NET Core SDK'
-    inputs:
-      version: 3.1.x
-      packageType: sdk
-  
-  - task: UseDotNet@2
-    displayName: 'Install .NET 6.0'
-    inputs:
-      version: 6.x
-      packageType: sdk
+extends:
+  template: v1/1ES.Unofficial.PipelineTemplate.yml@1es
+  parameters:
+    sdl:
+      sourceAnalysisPool:
+        name: 1es-pool-azfunc-public
+        image: 1es-windows-2022
+        os: windows
+      codeql:
+        compiled:
+          enabled: true
+        runSourceLanguagesInSourceAnalysis: true
 
-  - task: DotNetCoreCLI@2
-    displayName: Build project
-    inputs:
-      command: 'build'
-      arguments: '--configuration Release -p:IsLocalBuild=False'
-      projects: src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
+    stages:
+    - stage: Build
+      jobs:
+      - job: buildExtension
+        steps:
+          - task: UseDotNet@2
+            displayName: 'Install .NET Core SDK'
+            inputs:
+              version: 3.1.x
+              packageType: sdk
+          
+          - task: UseDotNet@2
+            displayName: 'Install .NET 6.0'
+            inputs:
+              version: 6.x
+              packageType: sdk
 
-  - task: DotNetCoreCLI@2
-    displayName: Build test projects
-    inputs:
-      command: 'build'
-      arguments: '--configuration Release -p:IsLocalBuild=False'
-      projects: |
-        test/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.csproj
-        test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests.csproj
-        test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.csproj
+          - task: DotNetCoreCLI@2
+            displayName: Build project
+            inputs:
+              command: 'build'
+              arguments: '--configuration Release -p:IsLocalBuild=False'
+              projects: src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
 
-  - task: DotNetCoreCLI@2
-    displayName: Run unit tests
-    inputs:
-      command: test
-      projects: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
+          - task: DotNetCoreCLI@2
+            displayName: Build test projects
+            inputs:
+              command: 'build'
+              arguments: '--configuration Release -p:IsLocalBuild=False'
+              projects: |
+                test/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.csproj
+                test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests.csproj
+                test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.csproj
 
-  - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
-    displayName: Component Detection
+          - task: DotNetCoreCLI@2
+            displayName: Run unit tests
+            inputs:
+              command: test
+              projects: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
-  - task: Bash@3
-    displayName: Start Kafka in single node
-    inputs:
-      targetType: filePath
-      filePath: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/start-kafka-test-environment.sh
-      workingDirectory: test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
+          - task: Bash@3
+            displayName: Start Kafka in single node
+            inputs:
+              targetType: filePath
+              filePath: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/start-kafka-test-environment.sh
+              workingDirectory: test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
-  - task: DotNetCoreCLI@2
-    displayName: Run e2e tests
-    inputs:
-      command: test
-      projects: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
+          - task: DotNetCoreCLI@2
+            displayName: Run e2e tests
+            inputs:
+              command: test
+              projects: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
-  - task: Bash@3
-    displayName: Stop Kafka in single node
-    inputs:
-      targetType: filePath
-      filePath: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/stop-kafka-test-environment.sh
-      workingDirectory: test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
+          - task: Bash@3
+            displayName: Stop Kafka in single node
+            inputs:
+              targetType: filePath
+              filePath: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/stop-kafka-test-environment.sh
+              workingDirectory: test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
-  - task: EsrpCodeSigning@1
-    displayName: Sign extension assembly
-    condition: and(succeeded(), eq(variables.isReleaseTriggered, 'True'))
-    inputs:
-      connectedServiceName: ESRP Service
-      folderPath: src/Microsoft.Azure.WebJobs.Extensions.Kafka/bin/Debug/netstandard2.0/
-      pattern: Microsoft.Azure.WebJobs.Extensions.Kafka.dll
-      signConfigType: inlineSignParams
-      inlineOperation: |
-          [
-            {
-              "KeyCode": "CP-230012",
-              "OperationCode": "SigntoolSign",
-              "Parameters": {
-                "OpusName": "Microsoft",
-                "OpusInfo": "http://www.microsoft.com",
-                "FileDigest": "/fd \"SHA256\"",
-                "PageHash": "/NPH",
-                "TimeStamp": "/tr \"http://rfc3161.gtm.corp.microsoft.com/TSS/HttpTspServer\" /td sha256"
-              },
-              "ToolName": "sign",
-              "ToolVersion": "1.0"
-            },
-            {
-              "KeyCode": "CP-230012",
-              "OperationCode": "SigntoolVerify",
-              "Parameters": {},
-              "ToolName": "sign",
-              "ToolVersion": "1.0"
-            }
-          ]
-  
+          - task: DotNetCoreCLI@2
+            displayName: Pack NuGet package
+            inputs:
+              command: pack
+              packDirectory: '$(Build.ArtifactStagingDirectory)'
+              searchPatternPack: src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
+              configurationToPack: Release
+              includesymbols: true
 
-  - task: Bash@3
-    displayName: Package current source as NuGet package and pack it in Docker
-    inputs:
-      targetType: filePath
-      filePath: ./script/create_package.sh
-
-#  - task: DotNetCoreCLI@2
-#    displayName: Run language e2e tests
-#    condition: and(succeeded(), eq(variables.isMasterTriggered, 'False')) # Skip in master until we fix the connections
-#    inputs:
-#      command: test
-#      projects: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
-#    env:
-#      AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
-#      AZURE_CLIENT_SECRET: $(AZURE_CLIENT_SECRET)
-#      AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
-#      AZURE_TENANT_ID: $(AZURE_TENANT_ID)
-#      AzureWebJobsStorage: $(AzureWebJobsStorage)
-#      ConfluentBrokerList: $(ConfluentBrokerList)
-#      ConfluentCloudPassword: $(ConfluentCloudPassword)
-#      ConfluentCloudUsername: $(ConfluentCloudUsername)
-#      EventHubBrokerList: $(EventHubBrokerList)
-#      EventHubConnectionString: $(EventHubConnectionString)
-#      DisableConfluentTestsFlag: $(DisableConfluentTestsFlag)
-#      DisableEventHubsTestsFlag: $(DisableEventHubsTestsFlag)
-
-  - task: DotNetCoreCLI@2
-    displayName: Pack NuGet package
-    inputs:
-      command: pack
-      packDirectory: '$(Build.ArtifactStagingDirectory)'
-      searchPatternPack: src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
-      configurationToPack: Release
-      includesymbols: true
-
-  - task: EsrpCodeSigning@1
-    displayName: Sign extension package
-    condition: and(succeeded(), eq(variables.isReleaseTriggered, 'True'))
-    inputs:
-      connectedServiceName: ESRP Service
-      folderPath: $(Build.ArtifactStagingDirectory)
-      pattern: Microsoft.Azure.WebJobs.Extensions.Kafka.*.nupkg
-      signConfigType: inlineSignParams
-      inlineOperation: |
-            [
-                {
-                  "KeyCode": "CP-230012",
-                  "OperationCode": "NuGetSign",
-                  "Parameters": {},
-                  "ToolName": "sign",
-                  "ToolVersion": "1.0"
-                },
-                {
-                  "KeyCode": "CP-230012",
-                  "OperationCode": "NuGetVerify",
-                  "Parameters": {},
-                  "ToolName": "sign",
-                  "ToolVersion": "1.0"
-                }
-            ]
-
-  - task: ManifestGeneratorTask@0
-    displayName: SBOM Generation Task
-    inputs:
-      BuildDropPath: $(Build.ArtifactStagingDirectory)
-      PackageName: Microsoft.Azure.WebJobs.Extensions.Kafka
-      Verbosity: Information
-
-  - task: PublishBuildArtifacts@1
-    inputs:
-      pathToPublish: $(Build.ArtifactStagingDirectory)
-      artifactName: drop
-      publishLocation: Container
+          - task: PublishBuildArtifacts@1
+            inputs:
+              pathToPublish: $(Build.ArtifactStagingDirectory)
+              artifactName: drop
+              publishLocation: Container
