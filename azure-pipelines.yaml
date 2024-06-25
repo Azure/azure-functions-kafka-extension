@@ -41,6 +41,11 @@ extends:
     - stage: Build
       jobs:
       - job: buildExtension
+        templateContext:
+          outputs:
+          - output: pipelineArtifact
+            targetPath: $(Build.ArtifactStagingDirectory)
+            artifactName: drop
         steps:
           - task: UseDotNet@2
             displayName: 'Install .NET Core SDK'
@@ -105,9 +110,3 @@ extends:
               searchPatternPack: src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
               configurationToPack: Release
               includesymbols: true
-
-          - task: PublishBuildArtifacts@1
-            inputs:
-              pathToPublish: $(Build.ArtifactStagingDirectory)
-              artifactName: drop
-              publishLocation: Container
