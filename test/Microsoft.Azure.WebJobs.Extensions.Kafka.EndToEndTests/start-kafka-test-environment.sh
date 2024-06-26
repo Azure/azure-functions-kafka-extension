@@ -7,4 +7,5 @@ docker-compose -f ./kafka-singlenode-compose.yaml  up --build -d
 
 # wait until kafka is ready to create topic
 # need to improve, adding a retry instead of a static sleep
-sleep 30
+#sleep 30
+sleep 60
