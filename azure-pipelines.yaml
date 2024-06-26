@@ -29,7 +29,7 @@ extends:
   parameters:
     pool:
       name: 1es-pool-azfunc-public
-      image: 1es-windows-2022
+      image: 1es-ubuntu-22.04
     sdl:
       sourceAnalysisPool:
         name: 1es-pool-azfunc-public
