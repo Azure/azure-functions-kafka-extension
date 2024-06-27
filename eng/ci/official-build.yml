@@ -84,9 +84,6 @@ extends:
               command: test
               projects: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
-          - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
-            displayName: Component Detection
-
           - task: EsrpCodeSigning@1
             displayName: Sign extension assembly
             condition: succeeded()
