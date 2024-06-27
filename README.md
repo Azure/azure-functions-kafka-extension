@@ -344,6 +344,12 @@ Both, trigger and output, can connect to a secure Kafka broker. The following at
 |SslKeyPassword|ssl.key.password|Password for client's certificate|
 |SslCertificateLocation|ssl.certificate.location|Path to client's certificate|
 |SslCaLocation|ssl.ca.location|Path to CA certificate file for verifying the broker's certificate|
+|OAuthBearerMethod|sasl.oauthbearer|OAuth bearer method. Only 'default' or 'oidc'. AuthenticationMode must be set to OAuthBearer
+|OAuthBearerClientId|sasl.oauthbearer.client.id|OIDC ClientId
+|OAuthBearerClientSecret|sasl.oauthbearer.client.secret|OIDC ClientSecret
+|OAuthBearerScope|sasl.oauthbearer.scope|OIDC Scope
+|OAuthBearerTokenEndpointUrl|sasl.oauthbearer.token.endpoint.url|Token endpoint URL
+|OAuthBearerExtensions|sasl.oauthbearer.extensions|Comma separated key/value pair required by Confluent Kafka
 
 Username and password should reference a Azure function configuration variable and not be hardcoded.
 
