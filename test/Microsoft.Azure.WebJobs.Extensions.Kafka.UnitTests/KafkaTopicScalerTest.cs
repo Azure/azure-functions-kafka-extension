@@ -45,6 +45,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         }
 
         [Fact]
+        public void ScaleMonitor_FunctionId_ReturnsExpectedValue()
+        {
+            Assert.Equal("testfunction", topicScaler.Descriptor.FunctionId);
+        }
+
+        [Fact]
         public void When_No_Lag_Is_Found_Should_Vote_Scale_Down()
         {
             var context = new ScaleStatusContext<KafkaTriggerMetrics>()
