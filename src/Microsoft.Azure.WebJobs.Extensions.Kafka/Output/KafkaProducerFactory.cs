@@ -128,7 +128,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 SaslPassword = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.Password),
                 SaslUsername = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.Username),
                 SslKeyLocation = resolvedSslKeyLocation,
-                SslKeyPassword = entity.Attribute.SslKeyPassword,
+                SslKeyPassword = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SslKeyPassword),
                 SslCertificateLocation = resolvedSslCertificationLocation,
                 SslCaLocation = resolvedSslCaLocation,
                 Debug = kafkaOptions?.LibkafkaDebug,
