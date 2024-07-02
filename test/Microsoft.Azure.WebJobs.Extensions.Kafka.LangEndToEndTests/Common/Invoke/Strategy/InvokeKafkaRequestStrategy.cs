@@ -9,13 +9,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common;
 // Placeholder class for Kafka requests
 public class InvokeKafkaRequestStrategy : IInvokeRequestStrategy<string>
 {
-	private readonly IExecutor<IExecutableCommand<string>, string> _kafkaCommandExecutor;
-
 	public InvokeKafkaRequestStrategy(string kafkaProducerRequestEntity)
 	{
 	}
 
-	public async Task<string> InvokeRequestAsync()
+	public Task<string> InvokeRequestAsync()
 	{
 		throw new NotImplementedException();
 	}

@@ -1,7 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <LangVersion>latest</LangVersion>
     <IsPackable>false</IsPackable>
@@ -23,15 +23,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.5.0" />
-    <PackageReference Include="xunit" Version="2.4.0" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.0" />
-    <PackageReference Include="Microsoft.Azure.WebJobs.Logging" Version="3.0.5" />
-    <PackageReference Include="Confluent.Kafka" Version="1.9.0" />
-    <PackageReference Include="Confluent.SchemaRegistry" Version="1.9.0" />
-    <PackageReference Include="Confluent.SchemaRegistry.Serdes.Avro" Version="1.9.0" />
-    <PackageReference Include="Confluent.SchemaRegistry.Serdes.Protobuf" Version="1.9.0" />
-    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="1.5.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
+    <PackageReference Include="xunit" Version="2.8.1" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Azure.WebJobs.Logging" Version="4.0.3" />
+    <PackageReference Include="Confluent.Kafka" Version="2.4.0" />
+    <PackageReference Include="Confluent.SchemaRegistry" Version="2.4.0" />
+    <PackageReference Include="Confluent.SchemaRegistry.Serdes.Avro" Version="2.4.0" />
+    <PackageReference Include="Confluent.SchemaRegistry.Serdes.Protobuf" Version="2.4.0" />
+    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="5.3.0" />
   </ItemGroup>
 
   <ItemGroup>

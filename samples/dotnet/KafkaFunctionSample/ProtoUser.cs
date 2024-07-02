@@ -5,10 +5,8 @@
 #pragma warning disable 1591, 0612, 3021
 #region Designer generated code
 
-using pb = global::Google.Protobuf;
-using pbc = global::Google.Protobuf.Collections;
-using pbr = global::Google.Protobuf.Reflection;
-using scg = global::System.Collections.Generic;
+using PB = global::Google.Protobuf;
+using PBR = global::Google.Protobuf.Reflection;
 
 namespace KafkaFunctionSample
 {
@@ -19,11 +17,11 @@ namespace KafkaFunctionSample
 
         #region Descriptor
         /// <summary>File descriptor for user.proto</summary>
-        public static pbr::FileDescriptor Descriptor
+        public static PBR::FileDescriptor Descriptor
         {
             get { return descriptor; }
         }
-        private static pbr::FileDescriptor descriptor;
+        private static PBR::FileDescriptor descriptor;
 
         static ProtoUserReflection()
         {
@@ -32,31 +30,31 @@ namespace KafkaFunctionSample
                   "Cgp1c2VyLnByb3RvEiFjb25mbHVlbnQua2Fma2EuZXhhbXBsZXMucHJvdG9i",
                   "dWYiQwoEVXNlchIMCgROYW1lGAEgASgJEhYKDkZhdm9yaXRlTnVtYmVyGAIg",
                   "ASgFEhUKDUZhdm9yaXRlQ29sb3IYAyABKAliBnByb3RvMw=="));
-            descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
-                new pbr::FileDescriptor[] { },
-                new pbr::GeneratedClrTypeInfo(null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::KafkaFunctionSample.ProtoUser), global::KafkaFunctionSample.ProtoUser.Parser, new[]{ "Name", "FavoriteNumber", "FavoriteColor" }, null, null, null)
+            descriptor = PBR::FileDescriptor.FromGeneratedCode(descriptorData,
+                new PBR::FileDescriptor[] { },
+                new PBR::GeneratedClrTypeInfo(null, new PBR::GeneratedClrTypeInfo[] {
+            new PBR::GeneratedClrTypeInfo(typeof(global::KafkaFunctionSample.ProtoUser), global::KafkaFunctionSample.ProtoUser.Parser, new[]{ "Name", "FavoriteNumber", "FavoriteColor" }, null, null, null)
                 }));
         }
         #endregion
 
     }
     #region Messages
-    public sealed partial class ProtoUser : pb::IMessage<ProtoUser>
+    public sealed partial class ProtoUser : PB::IMessage<ProtoUser>
     {
-        private static readonly pb::MessageParser<ProtoUser> _parser = new pb::MessageParser<ProtoUser>(() => new ProtoUser());
-        private pb::UnknownFieldSet _unknownFields;
+        private static readonly PB::MessageParser<ProtoUser> _parser = new PB::MessageParser<ProtoUser>(() => new ProtoUser());
+        private PB::UnknownFieldSet _unknownFields;
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        public static pb::MessageParser<ProtoUser> Parser { get { return _parser; } }
+        public static PB::MessageParser<ProtoUser> Parser { get { return _parser; } }
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        public static pbr::MessageDescriptor Descriptor
+        public static PBR::MessageDescriptor Descriptor
         {
             get { return global::KafkaFunctionSample.ProtoUserReflection.Descriptor.MessageTypes[0]; }
         }
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        pbr::MessageDescriptor pb::IMessage.Descriptor
+        PBR::MessageDescriptor PB::IMessage.Descriptor
         {
             get { return Descriptor; }
         }
@@ -75,7 +73,7 @@ namespace KafkaFunctionSample
             name_ = other.name_;
             favoriteNumber_ = other.favoriteNumber_;
             favoriteColor_ = other.favoriteColor_;
-            _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+            _unknownFields = PB::UnknownFieldSet.Clone(other._unknownFields);
         }
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -93,7 +91,7 @@ namespace KafkaFunctionSample
             get { return name_; }
             set
             {
-                name_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+                name_ = PB::ProtoPreconditions.CheckNotNull(value, "value");
             }
         }
 
@@ -119,7 +117,7 @@ namespace KafkaFunctionSample
             get { return favoriteColor_; }
             set
             {
-                favoriteColor_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+                favoriteColor_ = PB::ProtoPreconditions.CheckNotNull(value, "value");
             }
         }
 
@@ -163,11 +161,11 @@ namespace KafkaFunctionSample
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         public override string ToString()
         {
-            return pb::JsonFormatter.ToDiagnosticString(this);
+            return PB::JsonFormatter.ToDiagnosticString(this);
         }
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        public void WriteTo(pb::CodedOutputStream output)
+        public void WriteTo(PB::CodedOutputStream output)
         {
             if (Name.Length != 0)
             {
@@ -196,15 +194,15 @@ namespace KafkaFunctionSample
             int size = 0;
             if (Name.Length != 0)
             {
-                size += 1 + pb::CodedOutputStream.ComputeStringSize(Name);
+                size += 1 + PB::CodedOutputStream.ComputeStringSize(Name);
             }
             if (FavoriteNumber != 0)
             {
-                size += 1 + pb::CodedOutputStream.ComputeInt32Size(FavoriteNumber);
+                size += 1 + PB::CodedOutputStream.ComputeInt32Size(FavoriteNumber);
             }
             if (FavoriteColor.Length != 0)
             {
-                size += 1 + pb::CodedOutputStream.ComputeStringSize(FavoriteColor);
+                size += 1 + PB::CodedOutputStream.ComputeStringSize(FavoriteColor);
             }
             if (_unknownFields != null)
             {
@@ -232,11 +230,11 @@ namespace KafkaFunctionSample
             {
                 FavoriteColor = other.FavoriteColor;
             }
-            _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+            _unknownFields = PB::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
         }
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        public void MergeFrom(pb::CodedInputStream input)
+        public void MergeFrom(PB::CodedInputStream input)
         {
             uint tag;
             while ((tag = input.ReadTag()) != 0)
@@ -244,7 +242,7 @@ namespace KafkaFunctionSample
                 switch (tag)
                 {
                     default:
-                        _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                        _unknownFields = PB::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
                         break;
                     case 10:
                         {

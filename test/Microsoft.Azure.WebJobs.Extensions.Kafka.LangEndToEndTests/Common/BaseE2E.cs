@@ -80,7 +80,7 @@ public class BaseE2E
 			{
 				_logger.LogError(
 					$"Unable to invoke functions for language:{_language} broker:{_brokerType} with exception {ex}");
-				throw ex;
+				throw;
 			}
 		}
 		else

@@ -147,7 +147,7 @@ _extensions.csproj_
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
   <WarningsAsErrors></WarningsAsErrors>
   <DefaultItemExcludes>**</DefaultItemExcludes>
   </PropertyGroup>

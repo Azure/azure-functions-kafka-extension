@@ -50,7 +50,6 @@ public class EventHubQueueManager : IQueueManager<QueueRequest, QueueResponse>
 				var eventHub = (await eventhubCollection.CreateOrUpdateAsync(WaitUntil.Completed, queueName,
 					new EventHubData
 					{
-						MessageRetentionInDays = 1,
 						PartitionCount = 4
 					}
 				)).Value;
@@ -61,7 +60,7 @@ public class EventHubQueueManager : IQueueManager<QueueRequest, QueueResponse>
 			{
 				_logger.LogError($"Exception occured while creating Eventhub {ex}");
 				if (count >= _MAX_RETRY_COUNT)
-					throw ex;
+					throw;
 			}
 			finally
 			{
@@ -87,10 +86,10 @@ public class EventHubQueueManager : IQueueManager<QueueRequest, QueueResponse>
 			{ 
 				_logger.LogInformation($"Unable to find resources to delete for Eventhub delete Operation with exception {ex.Message}");
 			}
-			catch (Exception ex)
+			catch
 			{
 				if (count >= _MAX_RETRY_COUNT)
-					throw ex;
+					throw;
 			}
 			finally
 			{

@@ -982,7 +982,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                 .ConfigureWebJobs(builder =>
                 {
                     builder
-                    .AddAzureStorage()
+                    .AddAzureStorageBlobs()
+                    .AddAzureStorageQueues()
                     .AddKafka(kafkaoption =>
                     {
                         kafkaoption.SessionTimeoutMs = 10000;
