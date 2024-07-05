@@ -24,6 +24,10 @@ resources:
     type: git
     name: 1ESPipelineTemplates/1ESPipelineTemplates
     ref: refs/tags/release
+  - repository: eng
+    type: git
+    name: engineering
+    ref: refs/tags/release
 
 extends:
   template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
@@ -77,44 +81,33 @@ extends:
                 test/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.csproj
                 test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests.csproj
                 test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.csproj
-
+          
+          - task: Bash@3
+            displayName: 'Installing Core tools'
+            inputs:
+              targetType: inline
+              script:
+                sudo apt-get install azure-functions-core-tools-4
+              
+          - pwsh: |
+              cd ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/java/Confluent
+              mvn clean package `-Dmaven`.javadoc`.skip=true `-Dmaven`.test`.skip `-Dorg`.slf4j`.simpleLogger`.log`.org`.apache`.maven`.cli`.transfer`.Slf4jMavenTransferListener=warn `-B
+              cd ../EventHub
+              mvn clean package `-Dmaven`.javadoc`.skip=true `-Dmaven`.test`.skip `-Dorg`.slf4j`.simpleLogger`.log`.org`.apache`.maven`.cli`.transfer`.Slf4jMavenTransferListener=warn `-B
+            displayName: 'Package Java Functions for Codeql'
+          
           - task: DotNetCoreCLI@2
             displayName: Run unit tests
             inputs:
               command: test
               projects: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
-
-          - task: EsrpCodeSigning@1
-            displayName: Sign extension assembly
-            condition: succeeded()
-            inputs:
-              connectedServiceName: ESRP Service-internal
-              folderPath: src/Microsoft.Azure.WebJobs.Extensions.Kafka/bin/Debug/netstandard2.0/
-              pattern: Microsoft.Azure.WebJobs.Extensions.Kafka.dll
-              signConfigType: inlineSignParams
-              inlineOperation: |
-                  [
-                    {
-                      "KeyCode": "CP-230012",
-                      "OperationCode": "SigntoolSign",
-                      "Parameters": {
-                        "OpusName": "Microsoft",
-                        "OpusInfo": "http://www.microsoft.com",
-                        "FileDigest": "/fd \"SHA256\"",
-                        "PageHash": "/NPH",
-                        "TimeStamp": "/tr \"http://rfc3161.gtm.corp.microsoft.com/TSS/HttpTspServer\" /td sha256"
-                      },
-                      "ToolName": "sign",
-                      "ToolVersion": "1.0"
-                    },
-                    {
-                      "KeyCode": "CP-230012",
-                      "OperationCode": "SigntoolVerify",
-                      "Parameters": {},
-                      "ToolName": "sign",
-                      "ToolVersion": "1.0"
-                    }
-                  ]
+          
+          - template: ci/sign-files.yml@eng
+            parameters:
+                displayName: Sign extension assembly
+                folderPath: src/Microsoft.Azure.WebJobs.Extensions.Kafka/bin/Debug/netstandard2.0/
+                pattern: Microsoft.Azure.WebJobs.Extensions.Kafka.dll
+                signType: dll
           
           - task: DotNetCoreCLI@2
             displayName: Pack NuGet package
@@ -125,31 +118,12 @@ extends:
               configurationToPack: Release
               includesymbols: true
 
-          - task: EsrpCodeSigning@1
-            displayName: Sign extension package
-            condition: succeeded()
-            inputs:
-              connectedServiceName: ESRP Service-internal
-              folderPath: $(Build.ArtifactStagingDirectory)
-              pattern: Microsoft.Azure.WebJobs.Extensions.Kafka.*.nupkg
-              signConfigType: inlineSignParams
-              inlineOperation: |
-                    [
-                        {
-                          "KeyCode": "CP-230012",
-                          "OperationCode": "NuGetSign",
-                          "Parameters": {},
-                          "ToolName": "sign",
-                          "ToolVersion": "1.0"
-                        },
-                        {
-                          "KeyCode": "CP-230012",
-                          "OperationCode": "NuGetVerify",
-                          "Parameters": {},
-                          "ToolName": "sign",
-                          "ToolVersion": "1.0"
-                        }
-                    ]
+          - template: ci/sign-files.yml@eng
+            parameters:
+                displayName: Sign extension package
+                folderPath: $(Build.ArtifactStagingDirectory)
+                pattern: Microsoft.Azure.WebJobs.Extensions.Kafka.*.nupkg
+                signType: nuget
 
           - task: ManifestGeneratorTask@0
             displayName: SBOM Generation Task
