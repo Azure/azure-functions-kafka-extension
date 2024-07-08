@@ -33,7 +33,7 @@
     <WarningsAsErrors />
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="8.0.1" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="6.0.0" />
     <PackageReference Include="Confluent.Kafka" Version="2.4.0" />
     <PackageReference Include="Confluent.SchemaRegistry" Version="2.4.0" />
     <PackageReference Include="Confluent.SchemaRegistry.Serdes.Avro" Version="2.4.0" />
@@ -42,7 +42,7 @@
     <PackageReference Include="StyleCop.Analyzers" Version="1.1.118">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="System.Threading.Channels" Version="8.0.0" />
+    <PackageReference Include="System.Threading.Channels" Version="4.5.0" />
   </ItemGroup>
 
   <ItemGroup>
