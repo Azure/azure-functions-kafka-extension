@@ -70,6 +70,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return Task.FromResult(schema);
         }
 
+        public Task<int> GetSchemaIdAsync(string subject, string schema)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public Task<int> GetSchemaIdAsync(string subject, Schema schema)
+        {
+            throw new System.NotImplementedException();
+        }
+
         public Task<int> GetSchemaIdAsync(string subject, string avroSchema, bool normalize = false)
         {
             throw new System.NotImplementedException();
@@ -93,6 +103,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public Task<bool> IsCompatibleAsync(string subject, Schema schema)
         {
             throw new System.NotImplementedException();
+        }
+
+        public Task<RegisteredSchema> LookupSchemaAsync(string subject, Schema schema, bool ignoreDeletedSchemas)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public Task<int> RegisterSchemaAsync(string subject, string schema)
+        {
+            subjects.Add(subject);
+            return Task.FromResult(1);
+        }
+        public Task<int> RegisterSchemaAsync(string subject, Schema schema)
+        {
+            subjects.Add(subject);
+            return Task.FromResult(1);
         }
 
         public Task<RegisteredSchema> LookupSchemaAsync(string subject, Schema schema, bool ignoreDeletedSchemas, bool normalize = false)
