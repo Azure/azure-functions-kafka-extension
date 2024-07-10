@@ -16,9 +16,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Confluent.Kafka" Version="2.4.0">
-      <NoWarn>NU1605</NoWarn>
-    </PackageReference>
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Http" Version="3.2.0" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="5.3.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
