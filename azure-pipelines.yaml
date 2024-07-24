@@ -42,7 +42,7 @@ steps:
     inputs:
       version: 3.1.x
       packageType: sdk
-  
+
   - task: UseDotNet@2
     displayName: 'Install .NET 6.0'
     inputs:
