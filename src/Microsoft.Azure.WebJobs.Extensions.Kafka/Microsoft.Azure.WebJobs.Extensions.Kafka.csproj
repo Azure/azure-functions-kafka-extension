@@ -12,7 +12,7 @@
     <InformationalVersion>$(Version) Commit hash: $(CommitHash)</InformationalVersion>
     <Authors>Microsoft</Authors>
     <Company>Microsoft</Company>
-    <Copyright>&#169; Microsoft Corporation. All rights reserved.</Copyright>
+    <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
     <PackageProjectUrl>http://go.microsoft.com/fwlink/?LinkID=320972</PackageProjectUrl>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/Azure/azure-functions-kafka-extension</RepositoryUrl>

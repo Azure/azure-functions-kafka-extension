@@ -9,33 +9,31 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common;
 // TODO for future refernce
 public class KafkaQueueManager : IQueueManager<string, string>
 {
-	private static readonly int _MAX_RETRY_COUNT = 3;
-
 	//private readonly string username;
 	//private readonly string apiKey;
 	private static readonly KafkaQueueManager instance = new();
 
-	public async Task CreateAsync(string queueName)
+	public Task CreateAsync(string queueName)
 	{
 		throw new NotImplementedException();
 	}
 
-	public async Task ClearAsync(string queueName)
+	public Task ClearAsync(string queueName)
 	{
 		throw new NotImplementedException();
 	}
 
-	public async Task DeleteAsync(string queueName)
+	public Task DeleteAsync(string queueName)
 	{
 		throw new NotImplementedException();
 	}
 
-	public async Task<string> ReadAsync(int batchSize, string queueName)
+	public Task<string> ReadAsync(int batchSize, string queueName)
 	{
 		throw new NotImplementedException();
 	}
 
-	public async Task<string> WriteAsync(string messageEntity, string queueName)
+	public Task<string> WriteAsync(string messageEntity, string queueName)
 	{
 		throw new NotImplementedException();
 	}
