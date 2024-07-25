@@ -134,7 +134,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 Debug = kafkaOptions?.LibkafkaDebug,
                 MetadataMaxAgeMs = kafkaOptions?.MetadataMaxAgeMs,
                 SocketKeepaliveEnable = kafkaOptions?.SocketKeepaliveEnable,
-                LingerMs = entity.Attribute.LingerMs
+                LingerMs = entity.Attribute.LingerMs,
             };
 
             if (entity.Attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet)
@@ -145,6 +145,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             if (entity.Attribute.Protocol != BrokerProtocol.NotSet)
             {
                 conf.SecurityProtocol = (SecurityProtocol)entity.Attribute.Protocol;
+            }
+
+            if (entity.Attribute.AuthenticationMode == BrokerAuthenticationMode.OAuthBearer)
+            {
+                conf.SaslOauthbearerMethod = (SaslOauthbearerMethod)entity.Attribute.OAuthBearerMethod;
+                conf.SaslOauthbearerClientId = entity.Attribute.OAuthBearerClientId;
+                conf.SaslOauthbearerClientSecret = entity.Attribute.OAuthBearerClientSecret;
+                conf.SaslOauthbearerScope = entity.Attribute.OAuthBearerScope;
+                conf.SaslOauthbearerTokenEndpointUrl = entity.Attribute.OAuthBearerTokenEndpointUrl;
+                conf.SaslOauthbearerExtensions = entity.Attribute.OAuthBearerExtensions;
             }
 
             return conf;
