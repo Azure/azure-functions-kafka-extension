@@ -15,7 +15,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
     /// <summary>
     /// Executes the functions for an specific partition
-    /// Used for functions that are expecting a single item
+    /// Used for functions that are expecting a single item.
     /// </summary>
     public class SingleItemFunctionExecutor<TKey, TValue> : FunctionExecutorBase<TKey, TValue>
     {
@@ -106,7 +106,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 // When processing a large batch of events where the execution of each event takes time
                 // it would take Events_In_Batch_For_Partition * Event_Processing_Time to update the current offset.
                 // Doing it after each event minimizes the delay
-                this.Commit(new[] { new TopicPartitionOffset(topicPartition, kafkaEventData.Offset + 1) });  // offset is inclusive when resuming
+                if (!cancellationToken.IsCancellationRequested)
+                {
+                    this.Commit(new[] { new TopicPartitionOffset(topicPartition, kafkaEventData.Offset + 1) });  // offset is inclusive when resuming
+                }
             }
         }
     }
