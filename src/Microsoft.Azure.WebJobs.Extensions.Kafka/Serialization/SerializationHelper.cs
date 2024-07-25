@@ -25,6 +25,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
 
             var isSpecificRecord = typeof(ISpecificRecord).IsAssignableFrom(valueType);
+            if (!isSpecificRecord && !typeof(GenericRecord).IsAssignableFrom(valueType) && schemaRegistryUrl == null)
+            {
+                return null;
+            }
 
             var schemaRegistry = CreateSchemaRegistry(valueType, specifiedAvroSchema, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword, isSpecificRecord);
 
@@ -47,6 +51,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
 
             var isSpecificRecord = typeof(ISpecificRecord).IsAssignableFrom(valueType);
+            if (!isSpecificRecord && !typeof(GenericRecord).IsAssignableFrom(valueType) && schemaRegistryUrl == null)
+            {
+                return null;
+            }
 
             var schemaRegistry = CreateSchemaRegistry(valueType, specifiedAvroSchema, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword, isSpecificRecord);
 
