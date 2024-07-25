@@ -67,7 +67,7 @@ public class HttpCommand : IExecutableCommand<HttpResponseMessage>
 		catch (Exception ex)
 		{
 			_logger.LogError($"{ex}");
-			throw ex;
+			throw;
 		}
 
 		return response;

@@ -17,7 +17,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
     /// <summary>
     /// Kafka listener.
-    /// Connects a Kafka trigger function with a Kafka Consumer
+    /// Connects a Kafka trigger function with a Kafka Consumer.
     /// </summary>
     internal class KafkaListener<TKey, TValue> : IListener, IScaleMonitorProvider, ITargetScalerProvider
     {
@@ -52,7 +52,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         protected Lazy<KafkaTargetScaler<TKey, TValue>> targetScaler;
 
         /// <summary>
-        /// Gets the value deserializer
+        /// Gets the value deserializer.
         /// </summary>
         /// <value>The value deserializer.</value>
         internal IDeserializer<TValue> ValueDeserializer { get; }
@@ -157,7 +157,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         }
 
         /// <summary>
-        /// Creates the ConsumerBuilder. Overriding in unit tests
+        /// Creates the ConsumerBuilder. Overriding in unit tests.
         /// </summary>
         protected virtual ConsumerBuilder<TKey, TValue> CreateConsumerBuilder(ConsumerConfig config) => new ConsumerBuilder<TKey, TValue>(config);
 
