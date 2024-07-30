@@ -511,6 +511,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(result.SslCertificateLocation, null);
         }
 
+        [Fact]
         public void GetConsumerConfig_When_OAuthBearer_Auth_Defined_Should_Contain_Them()
         {
             var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")
