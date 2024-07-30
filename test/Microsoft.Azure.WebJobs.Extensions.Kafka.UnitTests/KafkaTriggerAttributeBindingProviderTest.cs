@@ -510,5 +510,42 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(result.SslCaLocation, null);
             Assert.Equal(result.SslCertificateLocation, null);
         }
+
+        public void GetConsumerConfig_When_OAuthBearer_Auth_Defined_Should_Contain_Them()
+        {
+            var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")
+            {
+                AuthenticationMode = BrokerAuthenticationMode.OAuthBearer,
+                Protocol = BrokerProtocol.SaslSsl,
+                OAuthBearerClientId = "clientId",
+                OAuthBearerClientSecret = "secret",
+                OAuthBearerMethod = Config.OAuthBearerMethod.Oidc,
+                OAuthBearerScope = "scope",
+                OAuthBearerExtensions = "key=value",
+                OAuthBearerTokenEndpointUrl = "endpointUrl",
+            };
+
+            var config = this.emptyConfiguration;
+
+            var bindingProvider = new KafkaTriggerAttributeBindingProvider(
+                config,
+                Options.Create(new KafkaOptions()),
+                new KafkaEventDataConvertManager(NullLogger.Instance),
+                new DefaultNameResolver(config),
+                NullLoggerFactory.Instance);
+
+            MethodInfo consumerConfigMethod = typeof(KafkaTriggerAttributeBindingProvider).GetMethod("CreateConsumerConfiguration", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            KafkaListenerConfiguration result = (KafkaListenerConfiguration)consumerConfigMethod.Invoke(bindingProvider, new object[] { attribute });
+            Assert.Equal("brokers:9092", result.BrokerList);
+            Assert.Equal(SecurityProtocol.SaslSsl, result.SecurityProtocol);
+            Assert.Equal(SaslMechanism.OAuthBearer, result.SaslMechanism);
+            Assert.Equal("secret", result.SaslOAuthBearerClientSecret);
+            Assert.Equal("clientId", result.SaslOAuthBearerClientId);
+            Assert.Equal(SaslOauthbearerMethod.Oidc, result.SaslOAuthBearerMethod);
+            Assert.Equal("scope", result.SaslOAuthBearerScope);
+            Assert.Equal("key=value", result.SaslOAuthBearerScope);
+            Assert.Equal("endpointUrl", result.SaslOAuthBearerScope);
+        }
     }
 }
