@@ -545,8 +545,58 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal("clientId", result.SaslOAuthBearerClientId);
             Assert.Equal(SaslOauthbearerMethod.Oidc, result.SaslOAuthBearerMethod);
             Assert.Equal("scope", result.SaslOAuthBearerScope);
-            Assert.Equal("key=value", result.SaslOAuthBearerScope);
-            Assert.Equal("endpointUrl", result.SaslOAuthBearerScope);
+            Assert.Equal("key=value", result.SaslOAuthBearerExtensions);
+            Assert.Equal("endpointUrl", result.SaslOAuthBearerTokenEndpointUrl);
+        }
+
+        [Fact]
+        public void GetConsumerConfig_When_OauthBearer_Settings_Resolve_From_AppSetting_InAzure()
+        {
+            AzureEnvironment.SetRunningInAzureEnvVars();
+
+            var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")
+            {
+                AuthenticationMode = BrokerAuthenticationMode.OAuthBearer,
+                Protocol = BrokerProtocol.SaslSsl,
+                OAuthBearerClientId = "OAuthBearerClientId",
+                OAuthBearerClientSecret = "OAuthBearerClientSecret",
+                OAuthBearerMethod = Config.OAuthBearerMethod.Oidc,
+                OAuthBearerScope = "OAuthBearerScope",
+                OAuthBearerExtensions = "OAuthBearerExtensions",
+                OAuthBearerTokenEndpointUrl = "OAuthBearerTokenEndpointUrl",
+            };
+
+            var configSslLocations = new Dictionary<string, string>
+            {
+                {"OAuthBearerClientId", "clientId"},
+                {"OAuthBearerClientSecret", "secret"},
+                {"OAuthBearerScope", "scope"},
+                {"OAuthBearerExtensions", "key=value"},
+                {"OAuthBearerTokenEndpointUrl", "endpointUrl"},
+            };
+
+            var config = new ConfigurationBuilder().AddInMemoryCollection(configSslLocations).Build();
+
+            var bindingProvider = new KafkaTriggerAttributeBindingProvider(
+                config,
+                Options.Create(new KafkaOptions()),
+                new KafkaEventDataConvertManager(NullLogger.Instance),
+                new DefaultNameResolver(config),
+                NullLoggerFactory.Instance);
+
+            MethodInfo consumerConfigMethod = typeof(KafkaTriggerAttributeBindingProvider).GetMethod("CreateConsumerConfiguration", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            KafkaListenerConfiguration result = (KafkaListenerConfiguration)consumerConfigMethod.Invoke(bindingProvider, new object[] { attribute });
+
+            Assert.Equal("brokers:9092", result.BrokerList);
+            Assert.Equal(SecurityProtocol.SaslSsl, result.SecurityProtocol);
+            Assert.Equal(SaslMechanism.OAuthBearer, result.SaslMechanism);
+            Assert.Equal("secret", result.SaslOAuthBearerClientSecret);
+            Assert.Equal("clientId", result.SaslOAuthBearerClientId);
+            Assert.Equal(SaslOauthbearerMethod.Oidc, result.SaslOAuthBearerMethod);
+            Assert.Equal("scope", result.SaslOAuthBearerScope);
+            Assert.Equal("key=value", result.SaslOAuthBearerExtensions);
+            Assert.Equal("endpointUrl", result.SaslOAuthBearerTokenEndpointUrl);
         }
     }
 }
