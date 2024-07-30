@@ -240,7 +240,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                                 break;
 
                             default:
-                                Assert.True(false, "Unknown partition");
+                                Assert.Fail("Unknown partition");
                                 break;
                         }
                     }
@@ -342,7 +342,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             await target.StartAsync(default);
 
-            Assert.Equal(13, target.ConsumerConfig.Count());
+            Assert.Equal(14, target.ConsumerConfig.Count());
             Assert.Equal("testBroker", target.ConsumerConfig.BootstrapServers);
             Assert.Equal("group1", target.ConsumerConfig.GroupId);
             Assert.Equal("password1", target.ConsumerConfig.SslKeyPassword);
@@ -396,7 +396,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             await target.StartAsync(default);
 
-            Assert.Equal(13, target.ConsumerConfig.Count());
+            Assert.Equal(14, target.ConsumerConfig.Count());
             Assert.Equal("testBroker", target.ConsumerConfig.BootstrapServers);
             Assert.Equal("group1", target.ConsumerConfig.GroupId);
             Assert.Equal("password1", target.ConsumerConfig.SslKeyPassword);
@@ -446,7 +446,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             await target.StartAsync(default);
 
-            Assert.Equal(13, target.ConsumerConfig.Count());
+            Assert.Equal(14, target.ConsumerConfig.Count());
             Assert.Equal("testBroker", target.ConsumerConfig.BootstrapServers);
             Assert.Equal("group1", target.ConsumerConfig.GroupId);
             Assert.Equal(kafkaOptions.AutoCommitIntervalMs, target.ConsumerConfig.AutoCommitIntervalMs);
@@ -545,7 +545,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         /// - Processing partition 0 is slow
         /// - Processing partition 1 is fast
         /// 
-        /// Expected result is that partition 1 offset is commit without waiting for partition 0 to be finished
+        /// Expected result is that partition 1 offset is commit without waiting for partition 0 to be finished.
         /// </summary>
         [Fact]
         public async Task When_Using_Single_Dispatcher_Slow_Partition_Processing_Should_Not_Delay_Other_Partitions()

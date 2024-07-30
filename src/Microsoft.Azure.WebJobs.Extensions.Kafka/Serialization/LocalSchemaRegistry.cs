@@ -8,7 +8,7 @@ using Confluent.SchemaRegistry;
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
     /// <summary>
-    /// Schema registry client for offline, where only available schema is the one provider by function contract
+    /// Schema registry client for offline, where only available schema is the one provider by function contract.
     /// </summary>
     public class LocalSchemaRegistry : ISchemaRegistryClient
     {
@@ -44,6 +44,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return Task.FromResult(this.subjects);
         }
 
+        public Task<Compatibility> GetCompatibilityAsync(string subject = null)
+        {
+            throw new System.NotImplementedException();
+        }
+
         public Task<RegisteredSchema> GetLatestSchemaAsync(string subject)
         {
             throw new System.NotImplementedException();
@@ -71,6 +76,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         }
 
         public Task<int> GetSchemaIdAsync(string subject, Schema schema)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public Task<int> GetSchemaIdAsync(string subject, string avroSchema, bool normalize = false)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public Task<int> GetSchemaIdAsync(string subject, Schema schema, bool normalize = false)
         {
             throw new System.NotImplementedException();
         }
@@ -104,6 +119,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             subjects.Add(subject);
             return Task.FromResult(1);
+        }
+
+        public Task<RegisteredSchema> LookupSchemaAsync(string subject, Schema schema, bool ignoreDeletedSchemas, bool normalize = false)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public Task<int> RegisterSchemaAsync(string subject, string schema, bool normalize = false)
+        {
+            subjects.Add(subject);
+            return Task.FromResult(1);
+        }
+
+        public Task<int> RegisterSchemaAsync(string subject, Schema schema, bool normalize = false)
+        {
+            subjects.Add(subject);
+            return Task.FromResult(1);
+        }
+
+        public Task<Compatibility> UpdateCompatibilityAsync(Compatibility compatibility, string subject = null)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

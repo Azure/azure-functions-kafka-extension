@@ -128,13 +128,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 SaslPassword = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.Password),
                 SaslUsername = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.Username),
                 SslKeyLocation = resolvedSslKeyLocation,
-                SslKeyPassword = entity.Attribute.SslKeyPassword,
+                SslKeyPassword = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SslKeyPassword),
                 SslCertificateLocation = resolvedSslCertificationLocation,
                 SslCaLocation = resolvedSslCaLocation,
                 Debug = kafkaOptions?.LibkafkaDebug,
                 MetadataMaxAgeMs = kafkaOptions?.MetadataMaxAgeMs,
                 SocketKeepaliveEnable = kafkaOptions?.SocketKeepaliveEnable,
-                LingerMs = entity.Attribute.LingerMs
+                LingerMs = entity.Attribute.LingerMs,
             };
 
             if (entity.Attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet)
@@ -145,6 +145,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             if (entity.Attribute.Protocol != BrokerProtocol.NotSet)
             {
                 conf.SecurityProtocol = (SecurityProtocol)entity.Attribute.Protocol;
+            }
+
+            if (entity.Attribute.AuthenticationMode == BrokerAuthenticationMode.OAuthBearer)
+            {
+                conf.SaslOauthbearerMethod = (SaslOauthbearerMethod)entity.Attribute.OAuthBearerMethod;
+                conf.SaslOauthbearerClientId = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerClientId);
+                conf.SaslOauthbearerClientSecret = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerClientSecret);
+                conf.SaslOauthbearerScope = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerScope);
+                conf.SaslOauthbearerTokenEndpointUrl = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerTokenEndpointUrl);
+                conf.SaslOauthbearerExtensions = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerExtensions);
             }
 
             return conf;

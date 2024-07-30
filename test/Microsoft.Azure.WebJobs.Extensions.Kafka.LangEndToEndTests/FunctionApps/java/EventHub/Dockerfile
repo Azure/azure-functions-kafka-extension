@@ -1,5 +1,7 @@
-FROM mcr.microsoft.com/azure-functions/java:4-java8-core-tools
+FROM mcr.microsoft.com/dotnet/sdk:8.0-bookworm-slim-amd64 AS dn8-sdk-image
+FROM mcr.microsoft.com/azure-functions/java:4-java21-core-tools
 
+COPY --from=dn8-sdk-image [ "/usr/share/dotnet", "/usr/share/dotnet" ]
 ARG WORK_DIR=/workspace/test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/java/EventHub
 ARG TARGET_DIR=${WORK_DIR}/target/azure-functions/KafkaEventHubE2E
 # Copy Local File
