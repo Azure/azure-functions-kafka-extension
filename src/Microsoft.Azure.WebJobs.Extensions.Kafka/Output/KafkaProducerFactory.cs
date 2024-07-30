@@ -150,11 +150,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             if (entity.Attribute.AuthenticationMode == BrokerAuthenticationMode.OAuthBearer)
             {
                 conf.SaslOauthbearerMethod = (SaslOauthbearerMethod)entity.Attribute.OAuthBearerMethod;
-                conf.SaslOauthbearerClientId = entity.Attribute.OAuthBearerClientId;
-                conf.SaslOauthbearerClientSecret = entity.Attribute.OAuthBearerClientSecret;
-                conf.SaslOauthbearerScope = entity.Attribute.OAuthBearerScope;
-                conf.SaslOauthbearerTokenEndpointUrl = entity.Attribute.OAuthBearerTokenEndpointUrl;
-                conf.SaslOauthbearerExtensions = entity.Attribute.OAuthBearerExtensions;
+                conf.SaslOauthbearerClientId = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerClientId);
+                conf.SaslOauthbearerClientSecret = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerClientSecret);
+                conf.SaslOauthbearerScope = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerScope);
+                conf.SaslOauthbearerTokenEndpointUrl = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerTokenEndpointUrl);
+                conf.SaslOauthbearerExtensions = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerExtensions);
             }
 
             return conf;
