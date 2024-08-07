@@ -597,6 +597,11 @@ export default kafkaTrigger;
 |ConsumerGroup|Name for the Consumer Group|
 |AvroSchema|Should be used only if a generic record should be generated|
 |LagThreshold|Threshold for lag(Default 1000)|
+|SchemaRegistryUrl|URL for the schema registry|
+|SchemaRegistryUsername|Username for the schema registry|
+|SchemaRegistryPassword|Password for the schema registry|
+
+Confluent Schema Registry is supported as External Schema Registry for both Confluent and EventHub trigger.
 
 For connection to a secure Kafka Broker -
 
@@ -695,6 +700,8 @@ The settings exposed here are to customize how librdkafka works. [Librdkafka Doc
 |LibkafkaDebug|debug|
 |MetadataMaxAgeMs|metadata.max.age.ms|
 |SocketKeepaliveEnable|socket.keepalive.enable|
+
+SessionTimeoutMs is defaulted to 10000ms. This is to ensure that the Kafka broker does not close the connection before the function can process the message. If you are using a Kafka broker that has a lower session timeout, you can set this value to a lower value.
 
 # Enable Runtime Scaling
 In order for the Kafka trigger to scale out to multiple instances, the Runtime Scale Monitoring setting must be enabled.
