@@ -2,7 +2,7 @@
 
 export COMPOSE_INTERACTIVE_NO_CLI=1
 
-apt install -y docker-compose
+sudo apt install -y docker-compose
 
 # start docker compose
 ./docker-compose -f ./kafka-singlenode-compose.yaml  up --build -d
