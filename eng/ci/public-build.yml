@@ -105,13 +105,20 @@ extends:
           #     filePath: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/start-kafka-test-environment.sh
           #     workingDirectory: test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
           
-          - task: DockerCompose@1
+          # - task: DockerCompose@1
+          #   displayName: Start Kafka in single node
+          #   inputs:
+          #     containerType: 'inline'
+          #     inlineScript: |
+          #       docker-compose -f test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/docker-compose.yml up -d
+          
+          - task: PowerShell@2
             displayName: Start Kafka in single node
             inputs:
-              containerType: 'inline'
-              inlineScript: |
+              targetType: 'inline'
+              script: |
                 docker-compose -f test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/docker-compose.yml up -d
-          
+
           - task: DotNetCoreCLI@2
             displayName: Run e2e tests
             inputs:
@@ -125,11 +132,18 @@ extends:
           #     filePath: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/stop-kafka-test-environment.sh
           #     workingDirectory: test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
-          - task: DockerCompose@1
+          # - task: DockerCompose@1
+          #   displayName: Stop Kafka in single node
+          #   inputs:
+          #     containerType: 'inline'
+          #     inlineScript: |
+          #       docker-compose -f test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/docker-compose.yml down
+
+          - task: PowerShell@2
             displayName: Stop Kafka in single node
             inputs:
-              containerType: 'inline'
-              inlineScript: |
+              targetType: 'inline'
+              script: |
                 docker-compose -f test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/docker-compose.yml down
           
           - task: DotNetCoreCLI@2
