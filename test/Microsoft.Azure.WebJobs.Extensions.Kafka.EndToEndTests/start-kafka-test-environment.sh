@@ -5,7 +5,7 @@ export COMPOSE_INTERACTIVE_NO_CLI=1
 apt install -y docker-compose
 
 # start docker compose
-docker-compose -f ./kafka-singlenode-compose.yaml  up --build -d
+./docker-compose -f ./kafka-singlenode-compose.yaml  up --build -d
 
 # wait until kafka is ready to create topic
 # need to improve, adding a retry instead of a static sleep
