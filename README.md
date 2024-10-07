@@ -309,7 +309,7 @@ The settings exposed here are targeted to more advanced users that want to custo
 
 |Setting|librdkafka property|Trigger or Output|
 |-|-|-|
-|ReconnectBackoffMs|reconnect.backoff.max.ms|Trigger
+|ReconnectBackoffMs|reconnect.backoff.ms|Trigger
 |ReconnectBackoffMaxMs|reconnect.backoff.max.ms|Trigger
 |StatisticsIntervalMs|statistics.interval.ms|Trigger
 |SessionTimeoutMs|session.timeout.ms|Trigger
