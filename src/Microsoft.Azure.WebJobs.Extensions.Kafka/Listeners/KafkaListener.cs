@@ -190,6 +190,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 SslCertificateLocation = this.listenerConfiguration.SslCertificateLocation,
                 SslKeyLocation = this.listenerConfiguration.SslKeyLocation,
                 SslKeyPassword = this.listenerConfiguration.SslKeyPassword,
+                SslCaPem = this.listenerConfiguration.SslCaPEM,
+                SslCertificatePem = this.listenerConfiguration.SslCertificatePEM,
+                SslKeyPem = this.listenerConfiguration.SslKeyPEM,
 
                 // OAuthBearer config
                 SaslOauthbearerMethod = this.listenerConfiguration.SaslOAuthBearerMethod,

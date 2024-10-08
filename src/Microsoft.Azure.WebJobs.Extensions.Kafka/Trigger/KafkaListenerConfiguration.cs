@@ -96,6 +96,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public string SslKeyPassword { get; set; }
 
         /// <summary>
+        /// Client certificate in PEM format.
+        /// ssl.certificate.pem in librdkafka
+        /// </summary>
+        public string SslCertificatePEM { get; set; }
+
+        /// <summary>
+        /// Client Private Key in PEM format.
+        /// ssl.key.pem in librdkafka
+        /// </summary>
+        public string SslKeyPEM { get; set; }
+
+        /// <summary>
+        /// Client certificate for verifying the broker's certificate in PEM format.
+        /// ssl.ca.pem in librdkafka.
+        /// </summary>
+        public string SslCaPEM { get; set; }
+
+        /// <summary>
+        /// Client certificate and key in PEM format.
+        /// Additional Configuration for extension as KeyVault supports uploading certificate only with private key.
+        /// </summary>
+        public string SslCertificateandKeyPEM { get; set; }
+
+        /// <summary>
         /// Lag threshold
         /// Default: 1000
         /// </summary>

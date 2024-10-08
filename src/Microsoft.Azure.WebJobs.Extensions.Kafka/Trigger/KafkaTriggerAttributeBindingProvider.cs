@@ -3,6 +3,10 @@
 
 using System;
 using System.Reflection;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Confluent.Kafka;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.Config;
@@ -106,6 +110,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 consumerConfig.SslKeyPassword = this.config.ResolveSecureSetting(nameResolver, attribute.SslKeyPassword);
                 consumerConfig.SslCertificateLocation = GetValidFilePath(attribute.SslCertificateLocation);
                 consumerConfig.SslCaLocation = GetValidFilePath(attribute.SslCaLocation);
+                consumerConfig.SslCaPEM = ExtractCertificate(this.config.ResolveSecureSetting(nameResolver, attribute.SslCaPEM));
+                consumerConfig.SslCertificatePEM = this.config.ResolveSecureSetting(nameResolver, attribute.SslCertificatePEM);
+                consumerConfig.SslCertificateandKeyPEM = this.config.ResolveSecureSetting(nameResolver, attribute.SslCertificateandKeyPEM);
+
+                if (!string.IsNullOrEmpty(consumerConfig.SslCertificateandKeyPEM)) {
+                    consumerConfig.SslCertificatePEM = ExtractCertificate(consumerConfig.SslCertificateandKeyPEM);
+                    consumerConfig.SslKeyPEM = ExtractPrivateKey(consumerConfig.SslCertificateandKeyPEM);
+                }
+
+                consumerConfig.SslCaPEM = this.config.ResolveSecureSetting(nameResolver, attribute.SslCaPEM);
+                consumerConfig.SslKeyPEM = this.config.ResolveSecureSetting(nameResolver, attribute.SslKeyPEM);
 
                 if (attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet)
                 {
@@ -119,7 +134,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
                 if (attribute.AuthenticationMode == BrokerAuthenticationMode.OAuthBearer)
                 {
-                    consumerConfig.SaslOAuthBearerMethod = (SaslOauthbearerMethod) attribute.OAuthBearerMethod;
+                    consumerConfig.SaslOAuthBearerMethod = (SaslOauthbearerMethod)attribute.OAuthBearerMethod;
                     consumerConfig.SaslOAuthBearerClientId = this.config.ResolveSecureSetting(nameResolver, attribute.OAuthBearerClientId);
                     consumerConfig.SaslOAuthBearerClientSecret = this.config.ResolveSecureSetting(nameResolver, attribute.OAuthBearerClientSecret);
                     consumerConfig.SaslOAuthBearerScope = this.config.ResolveSecureSetting(nameResolver, attribute.OAuthBearerScope);
@@ -143,6 +158,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 throw new Exception($"{location} is not a valid file location");
             }
             return validPath;
+        }
+
+        private string ExtractSection(string pemString, string sectionName)
+        {
+            var regex = new Regex($"-----BEGIN {sectionName}-----(.*?)-----END {sectionName}-----", RegexOptions.Singleline);
+            var match = regex.Match(pemString);
+            if (match.Success)
+            {
+                return match.Value;
+            }
+            return null;
+        }
+
+        private string ExtractCertificate(string pemString)
+        {
+            return ExtractSection(pemString, "CERTIFICATE");
+        }
+
+        private string ExtractPrivateKey(string pemString)
+        {
+            return ExtractSection(pemString, "PRIVATE KEY");
         }
     }
 }
