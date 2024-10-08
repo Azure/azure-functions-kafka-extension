@@ -162,11 +162,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         private string ExtractSection(string pemString, string sectionName)
         {
-            var regex = new Regex($"-----BEGIN {sectionName}-----(.*?)-----END {sectionName}-----", RegexOptions.Singleline);
-            var match = regex.Match(pemString);
-            if (match.Success)
+            if (!string.IsNullOrEmpty(pemString))
             {
-                return match.Value;
+                var regex = new Regex($"-----BEGIN {sectionName}-----(.*?)-----END {sectionName}-----", RegexOptions.Singleline);
+                var match = regex.Match(pemString);
+                if (match.Success)
+                {
+                    return match.Value;
+                }
             }
             return null;
         }
