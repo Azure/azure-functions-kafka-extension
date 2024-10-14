@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Text;
+using System.Text.RegularExpressions;
 using Confluent.Kafka;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -96,6 +97,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 loggerFactory.CreateLogger(typeof(KafkaProducer<,>)));
         }
 
+        private string ExtractSection(string pemString, string sectionName)
+        {
+            if (!string.IsNullOrEmpty(pemString))
+            {
+                var regex = new Regex($"-----BEGIN {sectionName}-----(.*?)-----END {sectionName}-----", RegexOptions.Singleline);
+                var match = regex.Match(pemString);
+                if (match.Success)
+                {
+                    return match.Value;
+                }
+            }
+            return null;
+        }
+
+        private string ExtractCertificate(string pemString)
+        {
+            return ExtractSection(pemString, "CERTIFICATE");
+        }
+
+        private string ExtractPrivateKey(string pemString)
+        {
+            return ExtractSection(pemString, "PRIVATE KEY");
+        }
+
         public ProducerConfig GetProducerConfig(KafkaProducerEntity entity)
         {
             var sslCertificateLocation = config.ResolveSecureSetting(nameResolver, entity.Attribute.SslCertificateLocation);
@@ -131,11 +156,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 SslKeyPassword = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SslKeyPassword),
                 SslCertificateLocation = resolvedSslCertificationLocation,
                 SslCaLocation = resolvedSslCaLocation,
+                SslCaPem = ExtractCertificate(this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SslCaPEM)),
+                SslCertificatePem = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SslCertificatePEM),
+                SslKeyPem = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SslKeyPEM),
                 Debug = kafkaOptions?.LibkafkaDebug,
                 MetadataMaxAgeMs = kafkaOptions?.MetadataMaxAgeMs,
                 SocketKeepaliveEnable = kafkaOptions?.SocketKeepaliveEnable,
                 LingerMs = entity.Attribute.LingerMs,
             };
+
+            if (!string.IsNullOrEmpty(entity.Attribute.SslCertificateandKeyPEM))
+            {
+                var sslCertificateandKeyPEM = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SslCertificateandKeyPEM);
+                conf.SslCertificatePem = ExtractCertificate(sslCertificateandKeyPEM);
+                conf.SslKeyPem = ExtractPrivateKey(sslCertificateandKeyPEM);
+            }
 
             if (entity.Attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet)
             {

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
-    internal class KafkaTargetScaler<Tkey, TValue> : ITargetScaler
+    internal class KafkaGenericTargetScaler<Tkey, TValue> : ITargetScaler
     {
         private readonly string topicName;
         private readonly string consumerGroup;
@@ -21,28 +21,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         protected TargetScalerResult lastTargetScalerResult;
 
         public TargetScalerDescriptor TargetScalerDescriptor { get; }
- 
-        internal KafkaTargetScaler(string topic, string consumerGroup, string functionID, IConsumer<Tkey, TValue> consumer, KafkaMetricsProvider<Tkey, TValue> metricsProvider, long lagThreshold, ILogger logger)
+
+        internal KafkaGenericTargetScaler(string topic, string consumerGroup, string functionID, IConsumer<Tkey, TValue> consumer, KafkaMetricsProvider<Tkey, TValue> metricsProvider, long lagThreshold, ILogger logger)
         {
             if (string.IsNullOrWhiteSpace(topic))
             {
                 throw new ArgumentException("Invalid topic: ", nameof(topic));
-            } 
+            }
 
             if (string.IsNullOrWhiteSpace(consumerGroup))
             {
                 throw new ArgumentException("Invalid consumer group: ", nameof(consumerGroup));
             }
 
-            this.topicName = topic;
+            topicName = topic;
             this.consumerGroup = consumerGroup;
-            this.TargetScalerDescriptor = new TargetScalerDescriptor(functionID);
+            TargetScalerDescriptor = new TargetScalerDescriptor(functionID);
             this.lagThreshold = lagThreshold;
             this.logger = logger;
             this.metricsProvider = metricsProvider;
 
-            this.lastScaleUpTime = DateTime.MinValue;
-            this.lastTargetScalerResult = null;
+            lastScaleUpTime = DateTime.MinValue;
+            lastTargetScalerResult = null;
 
             this.logger.LogInformation($"Started Target Scaler - topic name: {topicName}, consumerGroup: {consumerGroup}, functionID: {functionID}, lagThreshold: {lagThreshold}.");
         }
@@ -51,7 +51,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             var metrics = await ValidateAndGetMetrics();
             TargetScalerResult targetScalerResult = GetScaleResultInternal(context, metrics);
-            this.lastTargetScalerResult = targetScalerResult;
+            lastTargetScalerResult = targetScalerResult;
             return targetScalerResult;
         }
 
@@ -59,12 +59,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             // if the metrics don't exist or the last calculated metrics
             // are older than 2 minutes, recalculate the metrics.
-            var metrics = this.metricsProvider.LastCalculatedMetrics;
+            var metrics = metricsProvider.LastCalculatedMetrics;
             TimeSpan metricsTimeOut = TimeSpan.FromMinutes(1);
             if (metrics == null || DateTime.UtcNow - metrics.Timestamp > metricsTimeOut)
             {
-                metrics = await this.metricsProvider.GetMetricsAsync();
-                this.logger.LogInformation($"Calculating metrics as last calculated don't exist or were stored 1 minute ago.");
+                metrics = await metricsProvider.GetMetricsAsync();
+                logger.LogInformation($"Calculating metrics as last calculated don't exist or were stored 1 minute ago.");
             }
             return metrics;
         }
@@ -85,18 +85,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 };
             }
 
-            var targetConcurrency = GetConcurrency(context, this.lagThreshold);
-            
-            int targetWorkerCount = (int) Math.Ceiling(totalLag / (decimal) targetConcurrency);
+            var targetConcurrency = GetConcurrency(context, lagThreshold);
+
+            int targetWorkerCount = (int)Math.Ceiling(totalLag / (decimal)targetConcurrency);
 
             targetWorkerCount = ValidateWithPartitionCount(targetWorkerCount, partitionCount);
             targetWorkerCount = ThrottleResultIfNecessary(targetWorkerCount);
             if (GetChangeInWorkerCount(targetWorkerCount) > 0)
             {
-                this.lastScaleUpTime = DateTime.UtcNow;
+                lastScaleUpTime = DateTime.UtcNow;
             }
 
-            this.logger.LogInformation($"Total Lag: {totalLag}, concurrency: {targetConcurrency} TargetWorkerCount: {targetWorkerCount}. For the topic {this.topicName}, consumer group {consumerGroup}.");   
+            logger.LogInformation($"Total Lag: {totalLag}, concurrency: {targetConcurrency} TargetWorkerCount: {targetWorkerCount}. For the topic {topicName}, consumer group {consumerGroup}.");
 
             return new TargetScalerResult
             {
@@ -109,7 +109,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             // If dynamicConcurrencyEnabled is set to true, target concurrency is
             // set to instanceConcurrency value, else it is set to lagThreshold
             // (default value = 1000).
-            int targetConcurrency = context.InstanceConcurrency ?? (int) lagThreshold;
+            int targetConcurrency = context.InstanceConcurrency ?? (int)lagThreshold;
             if (targetConcurrency < 1)
             {
                 throw new ArgumentException("Target concurrency must be larger than 0.");
@@ -122,7 +122,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             // Limit targetWorkerCount to number of partitions.
             if (targetWorkerCount > partitionCount)
             {
-                targetWorkerCount = (int) partitionCount;
+                targetWorkerCount = (int)partitionCount;
             }
 
             return targetWorkerCount;
@@ -134,12 +134,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             if (GetChangeInWorkerCount(targetWorkerCount) < 0)
             {
                 var scaleDownThrottleTime = TimeSpan.FromMinutes(1);
-                if (lastScaleUpTime != DateTime.MinValue && DateTime.UtcNow - this.lastScaleUpTime < scaleDownThrottleTime)
+                if (lastScaleUpTime != DateTime.MinValue && DateTime.UtcNow - lastScaleUpTime < scaleDownThrottleTime)
                 {
-                    if (this.lastTargetScalerResult != null)
+                    if (lastTargetScalerResult != null)
                     {
-                        targetWorkerCount = this.lastTargetScalerResult.TargetWorkerCount;
-                        this.logger.LogInformation($"Throttling scale down as last scale up was less than 1 minute ago. Returning last target worker count: {lastTargetScalerResult.TargetWorkerCount}");
+                        targetWorkerCount = lastTargetScalerResult.TargetWorkerCount;
+                        logger.LogInformation($"Throttling scale down as last scale up was less than 1 minute ago. Returning last target worker count: {lastTargetScalerResult.TargetWorkerCount}");
                     }
                 }
             }
@@ -148,11 +148,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         internal int GetChangeInWorkerCount(int targetWorkerCount)
         {
-            if (this.lastTargetScalerResult == null)
+            if (lastTargetScalerResult == null)
             {
                 return targetWorkerCount;
             }
-            return targetWorkerCount - this.lastTargetScalerResult.TargetWorkerCount;
+            return targetWorkerCount - lastTargetScalerResult.TargetWorkerCount;
         }
     }
 }
