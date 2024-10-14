@@ -8,7 +8,7 @@ using System.Collections.Generic;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 {
-    internal class KafkaTargetScalerForTest<TKey, TValue> : KafkaTargetScaler<TKey, TValue>
+    internal class KafkaTargetScalerForTest<TKey, TValue> : KafkaGenericTargetScaler<TKey, TValue>
     {
         public KafkaTargetScalerForTest(string topic, string consumerGroup, string functionID, IConsumer<TKey, TValue> consumer, KafkaMetricsProvider<TKey, TValue> metricsProvider, long lagThreshold, ILogger logger) : base(topic, consumerGroup, functionID, consumer, metricsProvider, lagThreshold, logger)
         {

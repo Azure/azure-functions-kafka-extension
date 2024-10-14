@@ -109,6 +109,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public string SslKeyPassword { get; set; }
 
         /// <summary>
+        /// Client certificate in PEM format.
+        /// ssl.certificate.pem in librdkafka
+        /// </summary>
+        public string SslCertificatePEM { get; set; }
+
+        /// <summary>
+        /// Client Private Key in PEM format.
+        /// ssl.key.pem in librdkafka
+        /// </summary>
+        public string SslKeyPEM { get; set; }
+
+        /// <summary>
+        /// CA certificate for verifying the broker's certificate in PEM format
+        /// ssl.ca.pem in librdkafka
+        /// </summary>
+        public string SslCaPEM { get; set; }
+
+        /// <summary>
+        /// Client certificate and key in PEM format.
+        /// Additional Configuration for extension as KeyVault supports uploading certificate only with private key. 
+        /// </summary>
+        public string SslCertificateandKeyPEM { get; set; }
+
+        /// <summary>
         /// Maximum number of unprocessed messages a worker is expected to have at an instance.
         /// When target-based scaling is not disabled, this is used to divide total unprocessed event count  to determine the number of worker instances, which will then be rounded up to a worker instance count that creates a balanced partition distribution.
         /// Default: 1000
