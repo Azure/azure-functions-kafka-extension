@@ -140,6 +140,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public string SslKeyPassword { get; set; }
 
         /// <summary>
+        /// Client certificate in PEM format.
+        /// ssl.certificate.pem in librdkafka
+        /// </summary>
+        public string SslCertificatePEM { get; set; }
+
+        /// <summary>
+        /// Client Private Key in PEM format.
+        /// ssl.key.pem in librdkafka
+        /// </summary>
+        public string SslKeyPEM { get; set; }
+
+        /// <summary>
+        /// CA certificate for verifying the broker's certificate in PEM format
+        /// ssl.ca.pem in librdkafka
+        /// </summary>
+        public string SslCaPEM { get; set; }
+
+        /// <summary>
+        /// Client certificate and key in PEM format.
+        /// Additional Configuration for extension as KeyVault supports uploading certificate only with private key. 
+        /// </summary>
+        public string SslCertificateandKeyPEM { get; set; }
+
+        /// <summary>
         /// Linger.MS property provides the time between batches of messages
         /// being sent to cluster. Larger value allows more batching results in high throughput.
         /// </summary>

@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Confluent.Kafka;
+using Microsoft.Azure.WebJobs.Extensions.Kafka;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Protocols;
@@ -48,8 +49,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly string functionId;
         protected Lazy<KafkaMetricsProvider<TKey, TValue>> metricsProvider;
         //protected for the unit test
-        protected Lazy<KafkaTopicScaler<TKey, TValue>> topicScaler;
-        protected Lazy<KafkaTargetScaler<TKey, TValue>> targetScaler;
+        protected Lazy<KafkaGenericTopicScaler<TKey, TValue>> topicScaler;
+        protected Lazy<KafkaGenericTargetScaler<TKey, TValue>> targetScaler;
 
         /// <summary>
         /// Gets the value deserializer.
@@ -80,8 +81,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.functionId = functionId;
             this.consumer = new Lazy<IConsumer<TKey, TValue>>(() => CreateConsumer());
             this.metricsProvider = new Lazy<KafkaMetricsProvider<TKey, TValue>>(CreateMetricsProvider);
-            this.topicScaler = new Lazy<KafkaTopicScaler<TKey, TValue>>(CreateTopicScaler);
-            this.targetScaler = new Lazy<KafkaTargetScaler<TKey, TValue>>(CreateTargetScaler);
+            this.topicScaler = new Lazy<KafkaGenericTopicScaler<TKey, TValue>>(CreateTopicScaler);
+            this.targetScaler = new Lazy<KafkaGenericTargetScaler<TKey, TValue>>(CreateTargetScaler);
         }
 
         private IConsumer<TKey, TValue> CreateConsumer()
@@ -121,14 +122,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return new KafkaMetricsProvider<TKey, TValue>(this.topicName, new AdminClientConfig(GetConsumerConfiguration()), consumer.Value, this.logger);
         }
 
-        private KafkaTopicScaler<TKey, TValue> CreateTopicScaler()
+        private KafkaGenericTopicScaler<TKey, TValue> CreateTopicScaler()
         {
-            return new KafkaTopicScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.consumerGroup, this.functionId, this.consumer.Value, metricsProvider.Value, this.listenerConfiguration.LagThreshold, this.logger);
+            return new KafkaGenericTopicScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.consumerGroup, this.functionId, this.consumer.Value, metricsProvider.Value, this.listenerConfiguration.LagThreshold, this.logger);
         }
 
-        private KafkaTargetScaler<TKey, TValue> CreateTargetScaler()
+        private KafkaGenericTargetScaler<TKey, TValue> CreateTargetScaler()
         {
-            return new KafkaTargetScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.consumerGroup, this.functionId, this.consumer.Value, metricsProvider.Value, this.listenerConfiguration.LagThreshold, this.logger);
+            return new KafkaGenericTargetScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.consumerGroup, this.functionId, this.consumer.Value, metricsProvider.Value, this.listenerConfiguration.LagThreshold, this.logger);
         }
 
         public void Cancel()
@@ -189,6 +190,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 SslCertificateLocation = this.listenerConfiguration.SslCertificateLocation,
                 SslKeyLocation = this.listenerConfiguration.SslKeyLocation,
                 SslKeyPassword = this.listenerConfiguration.SslKeyPassword,
+                SslCaPem = this.listenerConfiguration.SslCaPEM,
+                SslCertificatePem = this.listenerConfiguration.SslCertificatePEM,
+                SslKeyPem = this.listenerConfiguration.SslKeyPEM,
 
                 // OAuthBearer config
                 SaslOauthbearerMethod = this.listenerConfiguration.SaslOAuthBearerMethod,
