@@ -106,9 +106,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 });
 
             consumer.Setup(x => x.GetWatermarkOffsets(It.IsIn(partition0, partition1)))
-                .Returns(new WatermarkOffsets(currentOffset, currentOffset));
+                .Returns(new WatermarkOffsets(0, currentOffset));
             consumer.Setup(x => x.QueryWatermarkOffsets(It.IsIn(partition2, partition3), AnyTimeSpan))
-                .Returns(new WatermarkOffsets(currentOffset, currentOffset));
+                .Returns(new WatermarkOffsets(0, currentOffset));
 
             var metrics = await metricsProvider.GetMetricsAsync();
             Assert.Equal(topicPartitions.Count, metrics.PartitionCount);

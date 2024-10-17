@@ -179,14 +179,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         private long GetDiff(WatermarkOffsets watermark, TopicPartitionOffset committed)
         {
-            long diff;
+            long diff = watermark.High.Value - watermark.Low.Value;
             if (committed != null && committed.Offset.Value != Offset.Unset)
             {
-                diff = watermark.High.Value - committed.Offset.Value;
-            }
-            else
-            {
-                diff = watermark.High.Value - watermark.Low.Value;
+                diff = Math.Min(watermark.High.Value - committed.Offset.Value, diff);
             }
             return diff;
         }

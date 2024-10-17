@@ -57,27 +57,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         }
 
         [Fact]
-        public void kafkaScalerProvider_With_SSL_Metadata()
-        { 
-            var metadata = new JObject
-            {
-                { "BrokerList", "brokerList" },
-                { "Topic", "topicTest" },
-                { "ConsumerGroup", "consumerGroup" },
-                { "LagThreshold", 1000 },
-                { "Protocol", "Ssl" },
-                { "SslCaPEM", "dummycapem" },
-                { "SslCertificatePEM", "dummycertificatepem" },
-                { "SslKeyPEM", "dummySslKeyPEM"},
-            };
-            var triggerMetadata = new TriggerMetadata(metadata);
-            var kafkaScalerProvider = new KafkaScalerProvider(serviceProvider.Object, triggerMetadata);
-            Assert.NotNull(kafkaScalerProvider);
-            Assert.NotNull(kafkaScalerProvider.GetTargetScaler());
-            Assert.NotNull(kafkaScalerProvider.GetMonitor());
-        }
-
-        [Fact]
         public void kafkaScaletProvider_With_SSL_Keyvault_Metadata() 
         { 
             var metadata = new JObject

@@ -37,15 +37,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             long lagThreshold = kafkaMetadata.LagThreshold;
             ILoggerFactory loggerFactory = serviceProvider.GetService<ILoggerFactory>();
             ILogger logger = loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("Kafka"));
-            var metricsProvider = new KafkaMetricsProvider<Object, Object>(topicName, new AdminClientConfig(GetAdminConfiguration(kafkaMetadata, config, nameResolver)), logger);
 
-            _scaleMonitor = new KafkaObjectTopicScaler(topicName, consumerGroup, metricsProvider, lagThreshold, logger);
-            _targetScaler = new KafkaObjectTargetScaler(topicName, consumerGroup, metricsProvider, lagThreshold, logger);
+            var consumerConfig = GetConsumerConfiguration(kafkaMetadata, config, nameResolver);
+            var consumer = new ConsumerBuilder<string, string>(consumerConfig).Build();
+            var metricsProvider = new KafkaMetricsProvider<string, string>(topicName, new AdminClientConfig(consumerConfig), consumer, logger);
+
+            _scaleMonitor = new KafkaObjectTopicScaler(topicName, consumerGroup, metricsProvider, triggerMetadata.FunctionName, lagThreshold, logger);
+            _targetScaler = new KafkaObjectTargetScaler(topicName, consumerGroup, metricsProvider, triggerMetadata.FunctionName, lagThreshold, logger);
         }
 
-        private ConsumerConfig GetAdminConfiguration(KafkaMetaData kafkaMetaData, IConfiguration config, INameResolver nameResolver)
+        private ConsumerConfig GetConsumerConfiguration(KafkaMetaData kafkaMetaData, IConfiguration config, INameResolver nameResolver)
         {
-
             var adminConfig = new ConsumerConfig() {
                 GroupId = config.ResolveSecureSetting(nameResolver, kafkaMetaData.ConsumerGroup),
                 BootstrapServers = config.ResolveSecureSetting(nameResolver, kafkaMetaData.BrokerList),
@@ -137,7 +139,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             public string ConsumerGroup { get; set; }
 
             [JsonProperty]
-            public long LagThreshold { get; set; }
+            public long LagThreshold { get; set; } = 1000; 
 
             [JsonProperty]
             public string Username { get; set; }
