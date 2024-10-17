@@ -9,11 +9,11 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
-    internal class KafkaObjectTargetScaler : KafkaGenericTargetScaler<Object, Object>
+    internal class KafkaObjectTargetScaler : KafkaGenericTargetScaler<string, string>
     {
-       internal KafkaObjectTargetScaler(string topic, string consumerGroup, 
-           KafkaMetricsProvider<Object, Object> metricsProvider, long lagThreshold, ILogger logger) 
-            : base(topic, consumerGroup, functionID: null, consumer: null, metricsProvider, lagThreshold, logger)
+       internal KafkaObjectTargetScaler(string topic, string consumerGroup,
+           KafkaMetricsProvider<string, string> metricsProvider, string functionId, long lagThreshold, ILogger logger) 
+            : base(topic, consumerGroup, functionId, consumer: null, metricsProvider, lagThreshold, logger)
        { 
        }
     }
