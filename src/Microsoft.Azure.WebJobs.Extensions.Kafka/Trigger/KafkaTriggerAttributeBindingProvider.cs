@@ -112,15 +112,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 consumerConfig.SslCaLocation = GetValidFilePath(attribute.SslCaLocation);
                 consumerConfig.SslCaPEM = ExtractCertificate(this.config.ResolveSecureSetting(nameResolver, attribute.SslCaPEM));
                 consumerConfig.SslCertificatePEM = this.config.ResolveSecureSetting(nameResolver, attribute.SslCertificatePEM);
+                consumerConfig.SslKeyPEM = this.config.ResolveSecureSetting(nameResolver, attribute.SslKeyPEM);
                 consumerConfig.SslCertificateandKeyPEM = this.config.ResolveSecureSetting(nameResolver, attribute.SslCertificateandKeyPEM);
 
                 if (!string.IsNullOrEmpty(consumerConfig.SslCertificateandKeyPEM)) {
                     consumerConfig.SslCertificatePEM = ExtractCertificate(consumerConfig.SslCertificateandKeyPEM);
                     consumerConfig.SslKeyPEM = ExtractPrivateKey(consumerConfig.SslCertificateandKeyPEM);
                 }
-
-                consumerConfig.SslCaPEM = this.config.ResolveSecureSetting(nameResolver, attribute.SslCaPEM);
-                consumerConfig.SslKeyPEM = this.config.ResolveSecureSetting(nameResolver, attribute.SslKeyPEM);
 
                 if (attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet)
                 {

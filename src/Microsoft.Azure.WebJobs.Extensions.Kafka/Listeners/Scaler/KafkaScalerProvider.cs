@@ -60,7 +60,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 adminConfig.SslCertificatePem = config.ResolveSecureSetting(nameResolver, kafkaMetaData.SslCertificatePEM);
                 adminConfig.SslCaPem = ExtractCertificate(config.ResolveSecureSetting(nameResolver, kafkaMetaData.SslCaPEM));
                 adminConfig.SslKeyPem = config.ResolveSecureSetting(nameResolver, kafkaMetaData.SslKeyPEM);
-                adminConfig.SslCaPem = config.ResolveSecureSetting(nameResolver, kafkaMetaData.SslCaPEM);
 
                 if (!string.IsNullOrEmpty(kafkaMetaData.SslCertificateandKeyPEM))
                 {
@@ -104,18 +103,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         private string ExtractSection(string pemString, string sectionName)
         {
-            var regex = new Regex($"-----BEGIN {sectionName}-----(.*?)-----END {sectionName}-----", RegexOptions.Singleline);
-            var match = regex.Match(pemString);
-            if (match.Success)
+            if (!string.IsNullOrEmpty(pemString))
             {
-                return match.Value;
+                var regex = new Regex($"-----BEGIN {sectionName}-----(.*?)-----END {sectionName}-----", RegexOptions.Singleline);
+                var match = regex.Match(pemString);
+                if (match.Success)
+                {
+                    return match.Value;
+                }
             }
             return null;
         }
 
         private string ExtractCertificate(string pemString)
         {
-            return ExtractSection(pemString, "CERTIFICATE");
+             return ExtractSection(pemString, "CERTIFICATE");
         }
 
         private string ExtractPrivateKey(string pemString)
