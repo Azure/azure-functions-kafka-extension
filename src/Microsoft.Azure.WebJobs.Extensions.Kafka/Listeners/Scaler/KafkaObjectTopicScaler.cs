@@ -12,11 +12,11 @@ using static Confluent.Kafka.ConfigPropertyNames;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
-    internal class KafkaObjectTopicScaler : KafkaGenericTopicScaler<Object, Object>
+    internal class KafkaObjectTopicScaler : KafkaGenericTopicScaler<string, string>
     {
         internal KafkaObjectTopicScaler(string topic, string consumerGroup, 
-            KafkaMetricsProvider<Object, Object> metricsProvider, long lagThreshold, ILogger logger) 
-            : base(topic, consumerGroup, functionId: null, consumer: null, metricsProvider, lagThreshold, logger) 
+            KafkaMetricsProvider<string, string> metricsProvider, string functionId, long lagThreshold, ILogger logger) 
+            : base(topic, consumerGroup, functionId, consumer: null, metricsProvider, lagThreshold, logger) 
         { 
         }
     }
