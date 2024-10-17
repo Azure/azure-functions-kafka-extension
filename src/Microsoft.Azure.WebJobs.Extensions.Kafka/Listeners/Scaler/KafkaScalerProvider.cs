@@ -37,15 +37,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             long lagThreshold = kafkaMetadata.LagThreshold;
             ILoggerFactory loggerFactory = serviceProvider.GetService<ILoggerFactory>();
             ILogger logger = loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("Kafka"));
-            var metricsProvider = new KafkaMetricsProvider<Object, Object>(topicName, new AdminClientConfig(GetAdminConfiguration(kafkaMetadata, config, nameResolver)), logger);
 
-            _scaleMonitor = new KafkaObjectTopicScaler(topicName, consumerGroup, metricsProvider, lagThreshold, logger);
-            _targetScaler = new KafkaObjectTargetScaler(topicName, consumerGroup, metricsProvider, lagThreshold, logger);
+            var consumerConfig = GetConsumerConfiguration(kafkaMetadata, config, nameResolver);
+            var consumer = new ConsumerBuilder<string, string>(consumerConfig).Build();
+            var metricsProvider = new KafkaMetricsProvider<string, string>(topicName, new AdminClientConfig(consumerConfig), consumer, logger);
+
+            _scaleMonitor = new KafkaObjectTopicScaler(topicName, consumerGroup, metricsProvider, triggerMetadata.FunctionName, lagThreshold, logger);
+            _targetScaler = new KafkaObjectTargetScaler(topicName, consumerGroup, metricsProvider, triggerMetadata.FunctionName, lagThreshold, logger);
         }
 
-        private ConsumerConfig GetAdminConfiguration(KafkaMetaData kafkaMetaData, IConfiguration config, INameResolver nameResolver)
+        private ConsumerConfig GetConsumerConfiguration(KafkaMetaData kafkaMetaData, IConfiguration config, INameResolver nameResolver)
         {
-
             var adminConfig = new ConsumerConfig() {
                 GroupId = config.ResolveSecureSetting(nameResolver, kafkaMetaData.ConsumerGroup),
                 BootstrapServers = config.ResolveSecureSetting(nameResolver, kafkaMetaData.BrokerList),
@@ -60,7 +62,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 adminConfig.SslCertificatePem = config.ResolveSecureSetting(nameResolver, kafkaMetaData.SslCertificatePEM);
                 adminConfig.SslCaPem = ExtractCertificate(config.ResolveSecureSetting(nameResolver, kafkaMetaData.SslCaPEM));
                 adminConfig.SslKeyPem = config.ResolveSecureSetting(nameResolver, kafkaMetaData.SslKeyPEM);
-                adminConfig.SslCaPem = config.ResolveSecureSetting(nameResolver, kafkaMetaData.SslCaPEM);
 
                 if (!string.IsNullOrEmpty(kafkaMetaData.SslCertificateandKeyPEM))
                 {
@@ -104,18 +105,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         private string ExtractSection(string pemString, string sectionName)
         {
-            var regex = new Regex($"-----BEGIN {sectionName}-----(.*?)-----END {sectionName}-----", RegexOptions.Singleline);
-            var match = regex.Match(pemString);
-            if (match.Success)
+            if (!string.IsNullOrEmpty(pemString))
             {
-                return match.Value;
+                var regex = new Regex($"-----BEGIN {sectionName}-----(.*?)-----END {sectionName}-----", RegexOptions.Singleline);
+                var match = regex.Match(pemString);
+                if (match.Success)
+                {
+                    return match.Value;
+                }
             }
             return null;
         }
 
         private string ExtractCertificate(string pemString)
         {
-            return ExtractSection(pemString, "CERTIFICATE");
+             return ExtractSection(pemString, "CERTIFICATE");
         }
 
         private string ExtractPrivateKey(string pemString)
@@ -135,7 +139,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             public string ConsumerGroup { get; set; }
 
             [JsonProperty]
-            public long LagThreshold { get; set; }
+            public long LagThreshold { get; set; } = 1000; 
 
             [JsonProperty]
             public string Username { get; set; }

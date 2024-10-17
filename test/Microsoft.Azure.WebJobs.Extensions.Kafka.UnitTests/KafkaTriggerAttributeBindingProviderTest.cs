@@ -512,6 +512,44 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         }
 
         [Fact]
+        public void GetConsumerConfig_When_Protocol_is_SSL_With_Certificate()
+        {
+            var dummySslCaCert = "-----BEGIN CERTIFICATE-----\n" +
+                "dummycacert\n" +
+                "-----END CERTIFICATE-----";
+            var dummySslCert = "-----BEGIN CERTIFICATE-----\n" +
+                "dummyclientcert\n" +
+                "-----END CERTIFICATE-----";
+            var dummySslKey = "-----BEGIN PRIVATE KEY-----\n" +
+                "dummyclientkey\n" +
+                "-----END PRIVATE KEY-----";
+
+            var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")
+            {
+                Protocol = BrokerProtocol.Ssl,
+                SslCaPEM = dummySslCaCert,
+                SslCertificateandKeyPEM = dummySslCert + "\n" + dummySslKey,
+                SslKeyPEM = dummySslKey,
+            };
+
+            var config = this.emptyConfiguration;
+
+            var bindingProvider = new KafkaTriggerAttributeBindingProvider(
+                config,
+                Options.Create(new KafkaOptions()),
+                new KafkaEventDataConvertManager(NullLogger.Instance),
+                new DefaultNameResolver(config),
+                NullLoggerFactory.Instance);
+
+            MethodInfo consumerConfigMethod = typeof(KafkaTriggerAttributeBindingProvider).GetMethod("CreateConsumerConfiguration", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            KafkaListenerConfiguration result = (KafkaListenerConfiguration)consumerConfigMethod.Invoke(bindingProvider, new object[] { attribute });
+            Assert.Equal(result.SslCaPEM, dummySslCaCert);
+            Assert.Equal(result.SslCertificatePEM, dummySslCert);
+            Assert.Equal(result.SslKeyPEM, dummySslKey);
+        }
+
+        [Fact]
         public void GetConsumerConfig_When_OAuthBearer_Auth_Defined_Should_Contain_Them()
         {
             var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")
