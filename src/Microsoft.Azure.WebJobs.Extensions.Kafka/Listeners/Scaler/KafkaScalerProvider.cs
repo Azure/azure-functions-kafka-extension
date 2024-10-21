@@ -111,7 +111,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 var match = regex.Match(pemString);
                 if (match.Success)
                 {
-                    return match.Value;
+                    return match.Value.Replace("\\n", "\n");
                 }
             }
             return null;
