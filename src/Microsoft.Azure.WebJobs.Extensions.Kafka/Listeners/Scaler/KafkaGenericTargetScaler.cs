@@ -81,7 +81,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 return new TargetScalerResult
                 {
-                    TargetWorkerCount = 1
+                    TargetWorkerCount = 0
                 };
             }
 
