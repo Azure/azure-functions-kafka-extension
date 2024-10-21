@@ -96,7 +96,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 lastScaleUpTime = DateTime.UtcNow;
             }
 
-            logger.LogInformation($"Total Lag: {totalLag}, concurrency: {targetConcurrency} TargetWorkerCount: {targetWorkerCount}. For the topic {topicName}, consumer group {consumerGroup}.");
+            logger.LogInformation($"Target worker count for function '{TargetScalerDescriptor.FunctionId}' is '{targetWorkerCount}' (Topic='{topicName}', Total Lag ='{totalLag}', Concurrency='{targetConcurrency}', Consumer Group='{consumerGroup}', Partition Count='{partitionCount}').");
 
             return new TargetScalerResult
             {
