@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
-    internal class KafkaTopicScaler<TKey, TValue> : IScaleMonitor<KafkaTriggerMetrics>
+    internal class KafkaGenericTopicScaler<TKey, TValue> : IScaleMonitor<KafkaTriggerMetrics>
     {
         private readonly string topicName;
         private readonly string consumerGroup;
@@ -21,7 +21,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public ScaleMonitorDescriptor Descriptor { get; }
 
-        internal KafkaTopicScaler(string topic, string consumerGroup, string functionId, IConsumer<TKey, TValue> consumer, KafkaMetricsProvider<TKey, TValue> metricsProvider, long lagThreshold, ILogger logger)
+        internal KafkaGenericTopicScaler(string topic, string consumerGroup, string functionId, IConsumer<TKey, TValue> consumer, KafkaMetricsProvider<TKey, TValue> metricsProvider, long lagThreshold, ILogger logger)
         {
             if (string.IsNullOrWhiteSpace(topic))
             {
@@ -34,8 +34,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
 
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            this.topicName = topic;
-            this.Descriptor = new ScaleMonitorDescriptor($"{functionId}-kafkatrigger-{topicName}-{consumerGroup}".ToLower(), functionId);
+            topicName = topic;
+            Descriptor = new ScaleMonitorDescriptor($"{functionId}-kafkatrigger-{topicName}-{consumerGroup}".ToLower(), functionId);
             this.consumerGroup = consumerGroup;
             this.lagThreshold = lagThreshold;
             this.metricsProvider = metricsProvider;
@@ -44,12 +44,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         async Task<ScaleMetrics> IScaleMonitor.GetMetricsAsync()
         {
-            return await this.metricsProvider.GetMetricsAsync();
+            return await metricsProvider.GetMetricsAsync();
         }
 
         public Task<KafkaTriggerMetrics> GetMetricsAsync()
         {
-            return Task.Run(() => this.metricsProvider.GetMetricsAsync());
+            return Task.Run(() => metricsProvider.GetMetricsAsync());
         }
 
         public ScaleStatus GetScaleStatus(ScaleStatusContext context)
@@ -88,9 +88,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 status.Vote = ScaleVote.ScaleIn;
 
-                if (this.logger.IsEnabled(LogLevel.Information))
+                if (logger.IsEnabled(LogLevel.Information))
                 {
-                    this.logger.LogInformation($"Number of instances ({workerCount}) is too high relative to number of partitions ({partitionCount}). For topic {this.topicName}, for consumer group {this.consumerGroup}.");
+                    logger.LogInformation($"Number of instances ({workerCount}) is too high relative to number of partitions ({partitionCount}). For topic {topicName}, for consumer group {consumerGroup}.");
                 }
 
                 return status;
@@ -102,9 +102,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             if (partitionIsIdle)
             {
                 status.Vote = ScaleVote.ScaleIn;
-                if (this.logger.IsEnabled(LogLevel.Information))
+                if (logger.IsEnabled(LogLevel.Information))
                 {
-                    this.logger.LogInformation($"Topic '{this.topicName}', for consumer group {this.consumerGroup}' is idle.");
+                    logger.LogInformation($"Topic '{topicName}', for consumer group {consumerGroup}' is idle.");
                 }
 
                 return status;
@@ -114,17 +114,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             if (totalLag > workerCount * lagThreshold)
             {
                 if (workerCount < partitionCount)
-                { 
+                {
                     status.Vote = ScaleVote.ScaleOut;
 
-                    if (this.logger.IsEnabled(LogLevel.Information))
+                    if (logger.IsEnabled(LogLevel.Information))
                     {
-                        this.logger.LogInformation($"Total lag ({totalLag}) is less than the number of instances ({workerCount}). Scale out, for topic {this.topicName}, for consumer group {this.consumerGroup}.");
+                        logger.LogInformation($"Total lag ({totalLag}) is less than the number of instances ({workerCount}). Scale out, for topic {topicName}, for consumer group {consumerGroup}.");
                     }
                 }
                 return status;
             }
-            
+
             // Samples are in chronological order. Check for a continuous increase in unprocessed message count.
             // If detected, this results in an automatic scale out for the site container.
             if (metrics[0].TotalLag > 0)
@@ -140,15 +140,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     {
                         status.Vote = ScaleVote.ScaleOut;
 
-                        if (this.logger.IsEnabled(LogLevel.Information))
+                        if (logger.IsEnabled(LogLevel.Information))
                         {
-                            this.logger.LogInformation($"Total lag ({totalLag}) is less than the number of instances ({workerCount}). Scale out, for topic {this.topicName}, for consumer group {this.consumerGroup}.");
+                            logger.LogInformation($"Total lag ({totalLag}) is less than the number of instances ({workerCount}). Scale out, for topic {topicName}, for consumer group {consumerGroup}.");
                         }
                         return status;
                     }
                 }
             }
-            
+
             if (workerCount > 1)
             {
                 bool queueLengthDecreasing = IsTrueForLast(
@@ -166,14 +166,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     {
                         status.Vote = ScaleVote.ScaleIn;
 
-                        if (this.logger.IsEnabled(LogLevel.Information))
+                        if (logger.IsEnabled(LogLevel.Information))
                         {
-                            this.logger.LogInformation($"Total lag length is decreasing for topic {this.topicName}, for consumer group {this.consumerGroup}.");
-                        }                    
-                    }                
+                            logger.LogInformation($"Total lag length is decreasing for topic {topicName}, for consumer group {consumerGroup}.");
+                        }
+                    }
                 }
             }
-              
+
             return status;
         }
 

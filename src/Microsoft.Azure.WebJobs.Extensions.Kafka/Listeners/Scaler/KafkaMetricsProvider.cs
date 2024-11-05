@@ -25,12 +25,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         virtual protected internal KafkaTriggerMetrics LastCalculatedMetrics { get; set; }
 
-        internal KafkaMetricsProvider(string topicName, AdminClientConfig adminClientConfig, IConsumer<TKey, TValue> consumer, ILogger logger)
+        internal KafkaMetricsProvider(string topicName, AdminClientConfig adminClientConfig, IConsumer<TKey, TValue> consumer, ILogger logger) : this(topicName, adminClientConfig, logger)
+        {
+            this.consumer = consumer;
+        }
+
+        internal KafkaMetricsProvider(string topicName, AdminClientConfig adminClientConfig, ILogger logger)
         {
             this.topicName = topicName;
             this.adminClientConfig = adminClientConfig;
             this.logger = logger;
-            this.consumer = consumer;
             this.topicPartitions = new Lazy<List<TopicPartition>>(LoadTopicPartitions);
             this.LastCalculatedMetrics = null;
         }
@@ -96,20 +100,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         protected virtual List<TopicPartition> LoadAssignedPartitions()
         {
-            try
+            if (this.consumer != null)
             {
-                var partitions = consumer.Assignment;
-                if (partitions == null || partitions.Count == 0)
+                try
                 {
-                    logger.LogError($"Could not load assigned partition information about topic '{this.topicName}'");
-                    return new List<TopicPartition>();
-                }
+                    var partitions = consumer?.Assignment;
+                    if (partitions == null || partitions.Count == 0)
+                    {
+                        logger.LogError($"Could not load assigned partition information about topic '{this.topicName}'");
+                        return new List<TopicPartition>();
+                    }
 
-                return partitions.ToList();
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, $"Failed to load assigned partition information from topic '{this.topicName}'");
+                    return partitions.ToList();
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, $"Failed to load assigned partition information from topic '{this.topicName}'");
+                }
             }
             return new List<TopicPartition>();
         }
@@ -172,14 +179,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         private long GetDiff(WatermarkOffsets watermark, TopicPartitionOffset committed)
         {
-            long diff;
+            long diff = watermark.High.Value - watermark.Low.Value;
             if (committed != null && committed.Offset.Value != Offset.Unset)
             {
-                diff = watermark.High.Value - committed.Offset.Value;
-            }
-            else
-            {
-                diff = watermark.High.Value - watermark.Low.Value;
+                diff = Math.Min(watermark.High.Value - committed.Offset.Value, diff);
             }
             return diff;
         }
