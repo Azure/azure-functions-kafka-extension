@@ -5,7 +5,6 @@ using Confluent.Kafka;
 
 namespace ConsoleProducer
 {
-
     public class ProtobufTopicProducer : ITopicProducer
     {
         private readonly string brokerList;
