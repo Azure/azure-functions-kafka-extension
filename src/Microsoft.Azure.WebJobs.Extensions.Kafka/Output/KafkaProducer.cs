@@ -15,6 +15,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     {
         internal object ValueSerializer { get; }
 
+        internal object KeySerializer { get; }
+
         private readonly ILogger logger;
 
         internal KafkaMessageBuilder<TKey, TValue> MessageBuilder { get; }
@@ -27,6 +29,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public KafkaProducer(
             Handle producerHandle,
             object valueSerializer,
+            object keySerializer,
             ILogger logger)
         {
             this.ValueSerializer = valueSerializer;
@@ -47,6 +50,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 else
                 {
                     throw new ArgumentException($"Value serializer must implement either IAsyncSerializer or ISerializer. Type {valueSerializer.GetType().Name} does not", nameof(valueSerializer));
+                }
+            }
+
+            if (keySerializer != null)
+            {
+                if (keySerializer is IAsyncSerializer<TKey> asyncSerializer)
+                {
+                    builder.SetKeySerializer(asyncSerializer);
+                }
+                else if (keySerializer is ISerializer<TKey> syncSerializer)
+                {
+                    builder.SetKeySerializer(syncSerializer);
+                }
+                else
+                {
+                    throw new ArgumentException($"Key serializer must implement either IAsyncSerializer or ISerializer. Type {valueSerializer.GetType().Name} does not", nameof(valueSerializer));
                 }
             }
 

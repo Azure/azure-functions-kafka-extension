@@ -45,10 +45,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public string BrokerList { get; set; }
 
         /// <summary>
-        /// Gets or sets the Avro schema.
+        /// Gets or sets the Avro schema of message value.
         /// Should be used only if a generic record should be generated
         /// </summary>
         public string AvroSchema { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Avro schema of key.
+        /// Should be used only if a generic record should be generated
+        /// </summary>
+        public string KeyAvroSchema { get; set; }
 
         /// <summary>
         /// Gets or sets the Maximum transmit message size. Default: 1MB
