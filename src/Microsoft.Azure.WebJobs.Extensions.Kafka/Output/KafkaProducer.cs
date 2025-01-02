@@ -33,6 +33,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             ILogger logger)
         {
             this.ValueSerializer = valueSerializer;
+            this.KeySerializer = keySerializer;
             this.logger = logger;
             this.MessageBuilder = new KafkaMessageBuilder<TKey, TValue>();
             var builder = new DependentProducerBuilder<TKey, TValue>(producerHandle);
