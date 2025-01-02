@@ -46,13 +46,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         /// <summary>
         /// Gets or sets the Avro schema of message value.
-        /// Should be used only if a generic record should be generated
+        /// Should be used only if a generic record should be generated.
         /// </summary>
         public string AvroSchema { get; set; }
 
         /// <summary>
-        /// Gets or sets the Avro schema of key.
-        /// Should be used only if a generic record should be generated
+        /// Gets or sets the Avro schema of message key.
+        /// Should be used only if a generic record should be generated.
         /// </summary>
         public string KeyAvroSchema { get; set; }
 

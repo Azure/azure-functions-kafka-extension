@@ -103,8 +103,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// <summary>
         /// Gets the type of the key and value.
         /// </summary>
-        /// <param name="avroSchemaFromAttribute">Avro schema from attribute.</param>
-        internal static GetKeyAndValueTypesResult GetKeyAndValueTypes(string avroSchemaFromAttribute, string keyAvroSchemaFromAttribute, Type parameterType, Type defaultKeyType)
+        /// <param name="valueAvroSchemaFromAttribute">Avro schema of message value from attribute.</param>
+        /// <param name="keyAvroSchemaFromAttribute">Avro schema of message key from attribute.</param>
+        internal static GetKeyAndValueTypesResult GetKeyAndValueTypes(string valueAvroSchemaFromAttribute, string keyAvroSchemaFromAttribute, Type parameterType, Type defaultKeyType)
         {
             string valueAvroSchema = null;
             string keyAvroSchema = null;
@@ -152,9 +153,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     var specificRecord = (ISpecificRecord)Activator.CreateInstance(valueType);
                     valueAvroSchema = specificRecord.Schema.ToString();
                 }
-                else if (!string.IsNullOrEmpty(avroSchemaFromAttribute))
+                else if (!string.IsNullOrEmpty(valueAvroSchemaFromAttribute))
                 {
-                    valueAvroSchema = avroSchemaFromAttribute;
+                    valueAvroSchema = valueAvroSchemaFromAttribute;
                     valueType = typeof(Avro.Generic.GenericRecord);
                 }
             }
@@ -188,7 +189,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     var specificRecord = (ISpecificRecord)Activator.CreateInstance(keyType);
                     keyAvroSchema = specificRecord.Schema.ToString();
                 }
-                else if (!string.IsNullOrEmpty(avroSchemaFromAttribute))
+                else if (!string.IsNullOrEmpty(keyAvroSchemaFromAttribute))
                 {
                     keyAvroSchema = keyAvroSchemaFromAttribute;
                     keyType = typeof(Avro.Generic.GenericRecord);
