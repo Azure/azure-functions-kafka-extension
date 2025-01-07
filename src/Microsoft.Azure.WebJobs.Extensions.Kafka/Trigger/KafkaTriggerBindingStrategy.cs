@@ -133,10 +133,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     eventDataKey = string.Empty;
                 }
             }
-            else
-            {
-                eventDataKey = JsonConvert.SerializeObject(eventDataKey);
-            }
             bindingData.Add(nameof(IKafkaEventData.Key), eventDataKey);
             bindingData.Add(nameof(IKafkaEventData.Partition), eventData.Partition);
             bindingData.Add(nameof(IKafkaEventData.Topic), eventData.Topic);

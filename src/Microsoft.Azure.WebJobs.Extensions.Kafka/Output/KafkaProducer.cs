@@ -66,7 +66,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 }
                 else
                 {
-                    throw new ArgumentException($"Key serializer must implement either IAsyncSerializer or ISerializer. Type {valueSerializer.GetType().Name} does not", nameof(valueSerializer));
+                    throw new ArgumentException($"Key serializer must implement either IAsyncSerializer or ISerializer. Type {keySerializer.GetType().Name} does not", nameof(keySerializer));
                 }
             }
 
