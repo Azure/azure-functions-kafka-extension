@@ -119,10 +119,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 valueType = valueType.GetElementType();
             }
 
-            while (keyType.HasElementType && keyType.GetElementType() != typeof(byte))
-            {
-                keyType = keyType.GetElementType();
-            }
+            // skipping pre-checks for keyType since the default value is always set to System.String
 
             if (!valueType.IsPrimitive)
             {
@@ -130,7 +127,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 if (valueType.IsGenericType)
                 {
                     Type genericTypeDefinition = valueType.GetGenericTypeDefinition();
-
+            
                     if (genericTypeDefinition == typeof(IAsyncCollector<>))
                     {
                         valueType = valueType.GetGenericArguments()[0];
@@ -148,53 +145,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     }
                 }
 
-                if (typeof(ISpecificRecord).IsAssignableFrom(valueType))
-                {
-                    var specificRecord = (ISpecificRecord)Activator.CreateInstance(valueType);
-                    valueAvroSchema = specificRecord.Schema.ToString();
-                }
-                else if (!string.IsNullOrEmpty(valueAvroSchemaFromAttribute))
-                {
-                    valueAvroSchema = valueAvroSchemaFromAttribute;
-                    valueType = typeof(Avro.Generic.GenericRecord);
-                }
+                (valueType, valueAvroSchema) = GetTypeAndSchema(valueType, valueAvroSchemaFromAttribute);
             }
 
-            if (!keyType.IsPrimitive)
+            if (requiresKey)
             {
-                // todo: handle List<T>, arrays, etc
-                if (keyType.IsGenericType)
-                {
-                    Type genericTypeDefinition = keyType.GetGenericTypeDefinition();
-
-                    if (genericTypeDefinition == typeof(IAsyncCollector<>))
-                    {
-                        keyType = keyType.GetGenericArguments()[0];
-                    }
-
-                    if (keyType.IsGenericType)
-                    {
-                        var genericArgs = valueType.GetGenericArguments();
-                        keyType = genericArgs.Last();
-                        if (genericArgs.Length > 1)
-                        {
-                            requiresKey = true;
-                            keyType = genericArgs[0];
-                        }
-                    }
-                }
-
-                if (typeof(ISpecificRecord).IsAssignableFrom(keyType))
-                {
-                    var specificRecord = (ISpecificRecord)Activator.CreateInstance(keyType);
-                    keyAvroSchema = specificRecord.Schema.ToString();
-                }
-                else if (!string.IsNullOrEmpty(keyAvroSchemaFromAttribute))
-                {
-                    keyAvroSchema = keyAvroSchemaFromAttribute;
-                    keyType = typeof(Avro.Generic.GenericRecord);
-                }
+                (keyType, keyAvroSchema) = GetTypeAndSchema(keyType, keyAvroSchemaFromAttribute);
             }
+
+            var res = GetTypeAndSchema(keyType, keyAvroSchemaFromAttribute);
 
             return new GetKeyAndValueTypesResult
             {
@@ -204,6 +163,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 KeyAvroSchema = keyAvroSchema,
                 RequiresKey = requiresKey,
             };
+        }
+
+        private static (Type type, string avroSchema) GetTypeAndSchema(Type type, string avroSchemaFromAttributte)
+        {
+            string avroSchema = null;
+            if (typeof(ISpecificRecord).IsAssignableFrom(type))
+            {
+                var specificRecord = (ISpecificRecord)Activator.CreateInstance(type);
+                avroSchema = specificRecord.Schema.ToString();
+            }
+            else if (!string.IsNullOrEmpty(avroSchemaFromAttributte))
+            {
+                avroSchema = avroSchemaFromAttributte;
+                type = typeof(Avro.Generic.GenericRecord);
+            }
+            return (type, avroSchema);
         }
 
 
