@@ -127,7 +127,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 if (valueType.IsGenericType)
                 {
                     Type genericTypeDefinition = valueType.GetGenericTypeDefinition();
-            
+
                     if (genericTypeDefinition == typeof(IAsyncCollector<>))
                     {
                         valueType = valueType.GetGenericArguments()[0];
@@ -148,10 +148,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 (valueType, valueAvroSchema) = GetTypeAndSchema(valueType, valueAvroSchemaFromAttribute);
             }
 
-            if (requiresKey)
-            {
-                (keyType, keyAvroSchema) = GetTypeAndSchema(keyType, keyAvroSchemaFromAttribute);
-            }
+            (keyType, keyAvroSchema) = GetTypeAndSchema(keyType, keyAvroSchemaFromAttribute);
 
             var res = GetTypeAndSchema(keyType, keyAvroSchemaFromAttribute);
 
