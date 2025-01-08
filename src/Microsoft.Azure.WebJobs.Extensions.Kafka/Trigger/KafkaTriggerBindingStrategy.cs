@@ -108,7 +108,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 partitions[i] = events[i].Partition;
                 offsets[i] = events[i].Offset;
                 timestamps[i] = events[i].Timestamp;
-                keys[i] = events[i].Key;
+                keys[i] = HandleKeyDataConversion(events[i].Key);
                 topics[i] = events[i].Topic;
                 headers[i] = events[i].Headers;
             }
@@ -116,7 +116,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         private static void AddBindingData(Dictionary<string, object> bindingData, IKafkaEventData eventData)
         {
-            var eventDataKey = eventData.Key;
+            bindingData.Add(nameof(IKafkaEventData.Key), HandleKeyDataConversion(eventData.Key));
+            bindingData.Add(nameof(IKafkaEventData.Partition), eventData.Partition);
+            bindingData.Add(nameof(IKafkaEventData.Topic), eventData.Topic);
+            bindingData.Add(nameof(IKafkaEventData.Timestamp), eventData.Timestamp);
+            bindingData.Add(nameof(IKafkaEventData.Offset), eventData.Offset);
+            bindingData.Add(nameof(IKafkaEventData.Headers), eventData.Headers);
+        }
+
+        private static object HandleKeyDataConversion(object eventDataKey)
+        {
             // making the value of "Key" accessible in Binding information
             if (eventDataKey is GenericRecord genericRecord)
             {
@@ -133,12 +142,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     eventDataKey = string.Empty;
                 }
             }
-            bindingData.Add(nameof(IKafkaEventData.Key), eventDataKey);
-            bindingData.Add(nameof(IKafkaEventData.Partition), eventData.Partition);
-            bindingData.Add(nameof(IKafkaEventData.Topic), eventData.Topic);
-            bindingData.Add(nameof(IKafkaEventData.Timestamp), eventData.Timestamp);
-            bindingData.Add(nameof(IKafkaEventData.Offset), eventData.Offset);
-            bindingData.Add(nameof(IKafkaEventData.Headers), eventData.Headers);
+            return eventDataKey;
         }
 
         private static object GenericRecordToObject(GenericRecord record)
