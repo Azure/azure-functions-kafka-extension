@@ -131,17 +131,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 eventDataKey = GenericRecordToObject(genericRecord);
             }
-            else if (eventDataKey is byte[] binaryContent)
-            {
-                if (binaryContent != null)
-                {
-                    eventDataKey = Encoding.UTF8.GetString(binaryContent);
-                }
-                else
-                {
-                    eventDataKey = string.Empty;
-                }
-            }
             return eventDataKey;
         }
 

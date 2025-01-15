@@ -119,7 +119,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 valueType = valueType.GetElementType();
             }
 
-            // skipping pre-checks for keyType since the default value is always set to System.String
+            if (valueType.HasElementType && valueType.GetElementType() == typeof(byte))
+            {
+                keyType = typeof(byte[]);
+            }
 
             if (!valueType.IsPrimitive)
             {
