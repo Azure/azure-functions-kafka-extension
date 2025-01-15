@@ -150,8 +150,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             (keyType, keyAvroSchema) = GetTypeAndSchema(keyType, keyAvroSchemaFromAttribute);
 
-            var res = GetTypeAndSchema(keyType, keyAvroSchemaFromAttribute);
-
             return new GetKeyAndValueTypesResult
             {
                 KeyType = keyType,
