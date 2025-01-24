@@ -1,6 +1,7 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
+using Microsoft.Azure.WebJobs.Extensions.Kafka.Extensions;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Extensions.Configuration;
 using System;
@@ -45,7 +46,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
 
             var argumentBinding = InnerProvider.TryCreate(parameter);
-            var keyAndValueTypes = SerializationHelper.GetKeyAndValueTypes(attribute.AvroSchema, attribute.KeyAvroSchema, parameter.ParameterType, typeof(string));
+            var keyAndValueTypes = SerializationHelper.GetKeyAndValueTypes(attribute.AvroSchema, attribute.KeyAvroSchema, parameter.ParameterType, attribute.KeyDataType.GetKeyDataType());
 
             IBinding binding = new KafkaAttributeBinding(
                 parameter.Name,

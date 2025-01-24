@@ -57,6 +57,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public string KeyAvroSchema { get; set; }
 
         /// <summary>
+        /// Specifies the data type of the message key that will be deserialized from the Kafka topic.
+        /// If KeyAvroSchema is set, this value is ignored and the key will be generated as a generic record.
+        /// The default type is System.String.
+        /// </summary>
+        public KafkaMessageKeyDataType KeyDataType { get; set; } = KafkaMessageKeyDataType.String;
+
+        /// <summary>
         /// SASL mechanism to use for authentication. 
         /// Allowed values: Gssapi, Plain, ScramSha256, ScramSha512
         /// Default: Plain

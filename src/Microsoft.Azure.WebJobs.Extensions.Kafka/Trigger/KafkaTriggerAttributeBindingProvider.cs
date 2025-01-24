@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Confluent.Kafka;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.Config;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.Extensions;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.Trigger;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Listeners;
@@ -52,7 +53,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 return Task.FromResult<ITriggerBinding>(null);
             }
 
-            var keyAndValueTypes = SerializationHelper.GetKeyAndValueTypes(attribute.AvroSchema, attribute.KeyAvroSchema, parameter.ParameterType, typeof(string));
+            var keyAndValueTypes = SerializationHelper.GetKeyAndValueTypes(attribute.AvroSchema, attribute.KeyAvroSchema, parameter.ParameterType, attribute.KeyDataType.GetKeyDataType());
             var schemaRegistryUrl = this.config.ResolveSecureSetting(nameResolver, attribute.SchemaRegistryUrl);
             var schemaRegistryUsername = this.config.ResolveSecureSetting(nameResolver, attribute.SchemaRegistryUsername);
             var schemaRegistryPassword = this.config.ResolveSecureSetting(nameResolver, attribute.SchemaRegistryPassword);
