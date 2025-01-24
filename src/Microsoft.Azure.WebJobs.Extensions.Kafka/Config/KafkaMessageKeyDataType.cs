@@ -10,7 +10,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     /// </summary>
     public enum KafkaMessageKeyDataType
     {
-        String = 0,
+        Int = 0,
+        Long,
+        String,
+        Float,
+        Double,
         Binary
     }
 }
