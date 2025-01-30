@@ -6,9 +6,9 @@ using System;
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
     /// <summary>
-    /// Defines the data type as enum.
+    /// Defines the data type used in kafka extension as enum.
     /// </summary>
-    public enum DataType
+    public enum KafkaDataType
     {
         Int = 0,
         Long,

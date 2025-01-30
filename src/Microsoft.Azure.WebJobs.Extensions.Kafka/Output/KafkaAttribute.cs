@@ -62,7 +62,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// If KeyAvroSchema is set, this value is ignored and the key will be serialized using Avro.
         /// The default type is System.String.
         /// </summary>
-        public DataType KeyDataType { get; set; } = DataType.String;
+        public KafkaDataType KeyDataType { get; set; } = KafkaDataType.String;
 
         /// <summary>
         /// Gets or sets the Maximum transmit message size. Default: 1MB
