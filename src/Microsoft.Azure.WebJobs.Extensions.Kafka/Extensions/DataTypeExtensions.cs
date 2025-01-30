@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Kafka.Extensions
+namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
     internal static class DataTypeExtensions
     {
