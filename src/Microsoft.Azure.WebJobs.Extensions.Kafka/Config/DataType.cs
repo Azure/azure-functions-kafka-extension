@@ -6,9 +6,9 @@ using System;
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
     /// <summary>
-    /// Defines the data type for message key as enum.
+    /// Defines the data type as enum.
     /// </summary>
-    public enum KafkaMessageKeyDataType
+    public enum DataType
     {
         Int = 0,
         Long,
