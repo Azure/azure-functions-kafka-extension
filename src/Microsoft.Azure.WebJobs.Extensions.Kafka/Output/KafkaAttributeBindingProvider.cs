@@ -45,7 +45,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
 
             var argumentBinding = InnerProvider.TryCreate(parameter);
-            var keyAndValueTypes = SerializationHelper.GetKeyAndValueTypes(attribute.AvroSchema, parameter.ParameterType, typeof(string));
+            var keyAndValueTypes = SerializationHelper.GetKeyAndValueTypes(attribute.AvroSchema, attribute.KeyAvroSchema, parameter.ParameterType, attribute.KeyDataType.GetDataType());
 
             IBinding binding = new KafkaAttributeBinding(
                 parameter.Name,
@@ -54,7 +54,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 argumentBinding,
                 keyAndValueTypes.KeyType,
                 keyAndValueTypes.ValueType,
-                keyAndValueTypes.AvroSchema,
+                keyAndValueTypes.ValueAvroSchema,
+                keyAndValueTypes.KeyAvroSchema,
                 this.config,
                 this.nameResolver);
             return Task.FromResult<IBinding>(binding);

@@ -81,6 +81,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
+                keyDeserializer: null,
                 logger: NullLogger.Instance,
                 functionId: "testId"
                 );
@@ -144,6 +145,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
+                keyDeserializer: null,
                 logger: NullLogger.Instance,
                 functionId: "testId"
                 );
@@ -266,6 +268,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
+                keyDeserializer: null,
                 NullLogger.Instance,
                 functionId: "testId"
                 );
@@ -334,6 +337,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
+                keyDeserializer: null,
                 NullLogger.Instance,
                 functionId: "testId"
                 );
@@ -388,6 +392,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
+                keyDeserializer: null,
                 NullLogger.Instance,
                 functionId: "testId"
                 );
@@ -438,6 +443,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
+                keyDeserializer: null,
                 NullLogger.Instance,
                 functionId: "testId"
                 );
@@ -484,6 +490,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
+                keyDeserializer: null,
                 NullLogger.Instance,
                 functionId: "testId"
                 );
@@ -517,6 +524,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
+                keyDeserializer: null,
                 NullLogger.Instance,
                 functionId: "testId"
                 );
@@ -621,6 +629,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
+                keyDeserializer: null,
                 NullLogger.Instance,
                 functionId: "testId"
                 );

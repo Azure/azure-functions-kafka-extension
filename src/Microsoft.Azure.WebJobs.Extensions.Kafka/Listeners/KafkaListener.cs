@@ -2,15 +2,11 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Confluent.Kafka;
-using Microsoft.Azure.WebJobs.Extensions.Kafka;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
-using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Azure.WebJobs.Host.Scale;
 using Microsoft.Extensions.Logging;
 
@@ -58,6 +54,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// <value>The value deserializer.</value>
         internal IDeserializer<TValue> ValueDeserializer { get; }
 
+        /// <summary>
+        /// Gets the Key deserializer
+        /// </summary>
+        /// <value>The key deserializer.</value>
+        internal IDeserializer<TKey> KeyDeserializer { get; }
+
         public KafkaListener(
             ITriggeredFunctionExecutor executor,
             bool singleDispatch,
@@ -65,10 +67,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             KafkaListenerConfiguration kafkaListenerConfiguration,
             bool requiresKey,
             IDeserializer<TValue> valueDeserializer,
+            IDeserializer<TKey> keyDeserializer,
             ILogger logger,
             string functionId)
         {
             this.ValueDeserializer = valueDeserializer;
+            this.KeyDeserializer = keyDeserializer;
             this.executor = executor;
             this.singleDispatch = singleDispatch;
             this.options = options;
@@ -107,6 +111,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             if (ValueDeserializer != null)
             {
                 builder.SetValueDeserializer(ValueDeserializer);
+            }
+
+            if (KeyDeserializer != null)
+            {
+                builder.SetKeyDeserializer(KeyDeserializer);
             }
 
             builder.SetLogHandler((_, m) =>

@@ -104,7 +104,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             {
                 Attribute = attribute,
                 ValueType = typeof(GenericRecord),
-                AvroSchema = attribute.AvroSchema,
+                ValueAvroSchema = attribute.AvroSchema,
             };
 
             var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerFactory.Instance);
@@ -153,7 +153,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             {
                 Attribute = attribute,
                 ValueType = typeof(MyAvroRecord),
-                AvroSchema = MyAvroRecord.SchemaText,
+                ValueAvroSchema = MyAvroRecord.SchemaText,
             };
 
             var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerFactory.Instance);

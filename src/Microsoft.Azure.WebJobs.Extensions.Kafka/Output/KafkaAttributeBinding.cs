@@ -19,7 +19,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly IArgumentBinding<KafkaProducerEntity> argumentBinding;
         private readonly Type keyType;
         private readonly Type valueType;
-        private readonly string avroSchema;
+        private readonly string valueAvroSchema;
+        private readonly string keyAvroSchema;
         private readonly IConfiguration config;
         private readonly INameResolver nameResolver;
 
@@ -30,7 +31,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             IArgumentBinding<KafkaProducerEntity> argumentBinding,
             Type keyType,
             Type valueType,
-            string avroSchema,
+            string valueAvroSchema,
+            string keyAvroSchema,
             IConfiguration config,
             INameResolver nameResolver)
         {
@@ -40,7 +42,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.argumentBinding = argumentBinding ?? throw new ArgumentNullException(nameof(argumentBinding));
             this.keyType = keyType;
             this.valueType = valueType ?? throw new ArgumentNullException(nameof(valueType));
-            this.avroSchema = avroSchema;
+            this.valueAvroSchema = valueAvroSchema;
+            this.keyAvroSchema = keyAvroSchema;
             this.config = config;
             this.nameResolver = nameResolver;
         }
@@ -58,7 +61,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 ValueType = this.valueType,
                 Topic = this.config.ResolveSecureSetting(this.nameResolver, this.attribute.Topic),
                 Attribute = this.attribute,
-                AvroSchema = this.avroSchema,
+                ValueAvroSchema = this.valueAvroSchema,
+                KeyAvroSchema = this.keyAvroSchema,
             };
 
             return await BindAsync(entity, context);
@@ -75,7 +79,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 ValueType = this.valueType,
                 Topic = this.config.ResolveSecureSetting(this.nameResolver, this.attribute.Topic),
                 Attribute = this.attribute,
-                AvroSchema = this.avroSchema,
+                ValueAvroSchema = this.valueAvroSchema,
+                KeyAvroSchema = this.keyAvroSchema
             };
 
             return await BindAsync(entity, context.ValueContext);
