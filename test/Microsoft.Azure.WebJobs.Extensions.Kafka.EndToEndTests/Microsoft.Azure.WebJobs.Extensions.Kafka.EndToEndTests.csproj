@@ -30,7 +30,6 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Azure.WebJobs.Logging" Version="4.0.3" />
     <PackageReference Include="Confluent.Kafka" Version="2.4.0" />
     <PackageReference Include="Confluent.SchemaRegistry" Version="2.4.0" />
     <PackageReference Include="Confluent.SchemaRegistry.Serdes.Avro" Version="2.4.0" />
