@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Confluent.Kafka;
 using Microsoft.Azure.WebJobs.Extensions.Kafka;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Protocols;
@@ -42,11 +43,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private FunctionExecutorBase<TKey, TValue> functionExecutor;
         private Lazy<IConsumer<TKey, TValue>> consumer;
         private bool disposed;
-        private CancellationTokenSource cancellationTokenSource;
+        private CancellationTokenSource listenerCancellationTokenSource;
         private SemaphoreSlim subscriberFinished;
         private readonly string consumerGroup;
         private readonly string topicName;
         private readonly string functionId;
+        private readonly IDrainModeManager drainModeManager;
         protected Lazy<KafkaMetricsProvider<TKey, TValue>> metricsProvider;
         //protected for the unit test
         protected Lazy<KafkaGenericTopicScaler<TKey, TValue>> topicScaler;
@@ -66,7 +68,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             bool requiresKey,
             IDeserializer<TValue> valueDeserializer,
             ILogger logger,
-            string functionId)
+            string functionId,
+            IDrainModeManager drainModeManager)
         {
             this.ValueDeserializer = valueDeserializer;
             this.executor = executor;
@@ -75,10 +78,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.listenerConfiguration = kafkaListenerConfiguration;
             this.requiresKey = requiresKey;
             this.logger = logger;
-            this.cancellationTokenSource = new CancellationTokenSource();
+            this.listenerCancellationTokenSource = new CancellationTokenSource();
             this.consumerGroup = string.IsNullOrEmpty(this.listenerConfiguration.ConsumerGroup) ? "$Default" : this.listenerConfiguration.ConsumerGroup;
             this.topicName = this.listenerConfiguration.Topic;
             this.functionId = functionId;
+            this.drainModeManager = drainModeManager;
             this.consumer = new Lazy<IConsumer<TKey, TValue>>(() => CreateConsumer());
             this.metricsProvider = new Lazy<KafkaMetricsProvider<TKey, TValue>>(CreateMetricsProvider);
             this.topicScaler = new Lazy<KafkaGenericTopicScaler<TKey, TValue>>(CreateTopicScaler);
@@ -143,8 +147,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var commitStrategy = new AsyncCommitStrategy<TKey, TValue>(localConsumer, this.logger);
 
             this.functionExecutor = singleDispatch ?
-                (FunctionExecutorBase<TKey, TValue>)new SingleItemFunctionExecutor<TKey, TValue>(executor, localConsumer, this.consumerGroup, this.options.ExecutorChannelCapacity, this.options.ChannelFullRetryIntervalInMs, commitStrategy, logger) :
-                new MultipleItemFunctionExecutor<TKey, TValue>(executor, localConsumer, this.consumerGroup, this.options.ExecutorChannelCapacity, this.options.ChannelFullRetryIntervalInMs, commitStrategy, logger);
+                (FunctionExecutorBase<TKey, TValue>)new SingleItemFunctionExecutor<TKey, TValue>(executor, localConsumer, this.consumerGroup, this.options.ExecutorChannelCapacity, this.options.ChannelFullRetryIntervalInMs, commitStrategy, logger, drainModeManager) :
+                new MultipleItemFunctionExecutor<TKey, TValue>(executor, localConsumer, this.consumerGroup, this.options.ExecutorChannelCapacity, this.options.ChannelFullRetryIntervalInMs, commitStrategy, logger, drainModeManager);
 
             localConsumer.Subscribe(this.listenerConfiguration.Topic);
             // Using a thread as opposed to a task since this will be long running
@@ -152,7 +156,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 IsBackground = true,
             };
-            thread.Start(cancellationTokenSource.Token);
+            thread.Start(listenerCancellationTokenSource.Token);
 
             return Task.CompletedTask;
         }
@@ -320,7 +324,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                                     var currentSize = this.functionExecutor.Add(kafkaEventData);
                                     if (currentSize >= maxBatchSize)
                                     {
-                                        this.functionExecutor.Flush();
+                                        this.functionExecutor.Flush(listenerCancellationTokenSource.Token);
                                         alreadyFlushedInCurrentExecution = true;
                                     }
                                 }
@@ -341,7 +345,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
                     if (!alreadyFlushedInCurrentExecution)
                     {
-                        this.functionExecutor.Flush();
+                        this.functionExecutor.Flush(listenerCancellationTokenSource.Token);
                     }
                 }
             }
@@ -373,12 +377,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             try
             {
                 // Stop subscriber thread
-                this.cancellationTokenSource.Cancel();
+                this.listenerCancellationTokenSource.Cancel();
 
                 // Stop function executor                
                 if (this.functionExecutor != null)
                 {
-                    await this.functionExecutor.CloseAsync(TimeSpan.FromMilliseconds(TimeToWaitForRunningProcessToEnd));
+                    await this.functionExecutor.CloseAsync();
                 }
 
                 // Wait for subscriber thread to end                
@@ -396,7 +400,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 
                 this.functionExecutor?.Dispose();
                 this.subscriberFinished?.Dispose();
-                this.cancellationTokenSource.Dispose();                
+                this.listenerCancellationTokenSource.Dispose();                
             }
             catch (Exception ex)
             {

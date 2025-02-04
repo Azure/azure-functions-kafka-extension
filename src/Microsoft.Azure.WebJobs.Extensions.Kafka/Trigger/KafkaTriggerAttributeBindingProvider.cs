@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Confluent.Kafka;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.Config;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.Trigger;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Triggers;
@@ -28,19 +29,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly INameResolver nameResolver;
         private readonly IOptions<KafkaOptions> options;
         private readonly ILogger logger;
+        private readonly IDrainModeManager drainModeManager;
 
         public KafkaTriggerAttributeBindingProvider(
             IConfiguration config,
             IOptions<KafkaOptions> options,
             IConverterManager converterManager,
             INameResolver nameResolver,
-            ILoggerFactory loggerFactory)
+            ILoggerFactory loggerFactory,
+            IDrainModeManager drainModeManager)
         {
             this.config = config;
             this.converterManager = converterManager;
             this.nameResolver = nameResolver;
             this.options = options;
             this.logger = loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("Kafka"));
+            this.drainModeManager = drainModeManager;
         }
 
         public Task<ITriggerBinding> TryCreateAsync(TriggerBindingProviderContext context)
@@ -82,7 +86,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     requiresKey,
                     valueDeserializer,
                     this.logger,
-                    factoryContext.Descriptor.Id);
+                    factoryContext.Descriptor.Id,
+                    drainModeManager);
 
                 return Task.FromResult<IListener>(listener);
             }
