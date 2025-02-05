@@ -61,7 +61,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// If KeyAvroSchema is set, this value is ignored and the key will be generated as a generic record.
         /// The default type is System.String.
         /// </summary>
-        public KafkaDataType KeyDataType { get; set; } = KafkaDataType.String;
+        public KafkaMessageKeyType KeyDataType { get; set; } = KafkaMessageKeyType.String;
 
         /// <summary>
         /// SASL mechanism to use for authentication. 

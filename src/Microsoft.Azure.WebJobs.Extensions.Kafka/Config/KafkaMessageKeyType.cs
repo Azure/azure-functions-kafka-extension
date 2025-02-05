@@ -8,13 +8,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     /// <summary>
     /// Defines the data type used in kafka extension as enum.
     /// </summary>
-    public enum KafkaDataType
+    public enum KafkaMessageKeyType
     {
-        Int = 0,
-        Long,
-        String,
-        Float,
-        Double,
+        String = 0,
         Binary
     }
 }
