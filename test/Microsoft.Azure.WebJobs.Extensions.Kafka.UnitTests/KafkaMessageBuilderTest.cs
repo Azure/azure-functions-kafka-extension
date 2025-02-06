@@ -83,5 +83,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             Assert.StartsWith("Could not cast actual key value to the expected", ex.Message);
         }
+
+        [Theory]
+        [InlineData("testKey", "testValue", "testKey", "testValue")] // string type
+        [InlineData("12", "testValue", 12, "testValue")] // int type
+        [InlineData("testKey", "testValue", new byte[] { 116, 101, 115, 116, 75, 101, 121}, "testValue")] // binary type
+        [InlineData("12", "testValue", 12L, "testValue")] // long type
+        public void When_TKey_Is_Different_Type_Should_Cast_Key_To_That_Type<TKey, TValue>(string key, string value, TKey expectedKey, TValue expectedValue)
+        {
+            var toBuildFromEvent = new KafkaEventData<string, string>(key, value);
+            var expectedResult = new KafkaEventData<TKey, TValue>(expectedKey, expectedValue);
+
+            var builder = new KafkaMessageBuilder<TKey, TValue>();
+            var msg = builder.BuildFrom(toBuildFromEvent);
+
+            // assert equal key and value
+            Assert.Equal(expectedResult.Key, msg.Key);
+            Assert.Equal(expectedResult.Value, msg.Value);
+        }
     }
 }

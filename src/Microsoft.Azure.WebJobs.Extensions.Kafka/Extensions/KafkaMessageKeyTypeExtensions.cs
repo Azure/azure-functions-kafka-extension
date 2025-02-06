@@ -25,7 +25,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 case KafkaMessageKeyType.Binary:
                     return typeof(byte[]);
                 default:
-                    throw new InvalidOperationException($"Unsupported KafkaDataType: {dataType}");
+                    throw new InvalidOperationException($"Unsupported KafkaMessageKeyType: {dataType}");
             }
         }
     }
