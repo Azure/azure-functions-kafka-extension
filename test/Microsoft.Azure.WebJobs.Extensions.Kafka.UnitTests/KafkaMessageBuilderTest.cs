@@ -81,7 +81,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             var ex = Assert.Throws<ArgumentException>(()=> builder.BuildFrom(eventData));
 
-            Assert.StartsWith("Key value is not of the expected type", ex.Message);
+            Assert.StartsWith("Could not cast actual key value to the expected", ex.Message);
         }
     }
 }
