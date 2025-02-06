@@ -40,6 +40,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                             // byte[], string are added as data types supported by KafkaMessageKeyType enum
                             Type t when t == typeof(byte[]) => (TKey)(object)System.Text.Encoding.UTF8.GetBytes(eventData.Key.ToString()),
                             Type t when t == typeof(string) => (TKey)(object)eventData.Key.ToString(),
+                            Type t when t == typeof(int) => (TKey)(object)Convert.ToInt32(eventData.Key),
+                            Type t when t == typeof(long) => (TKey)(object)Convert.ToInt64(eventData.Key),
                             _ => (TKey)eventData.Key
                         };
                     }

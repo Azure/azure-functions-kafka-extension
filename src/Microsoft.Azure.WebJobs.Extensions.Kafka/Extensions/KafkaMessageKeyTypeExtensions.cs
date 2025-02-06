@@ -16,6 +16,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             switch (dataType)
             {
+                case KafkaMessageKeyType.Int:
+                    return typeof(int);
+                case KafkaMessageKeyType.Long:
+                    return typeof(long);
                 case KafkaMessageKeyType.String:
                     return typeof(string);
                 case KafkaMessageKeyType.Binary:
