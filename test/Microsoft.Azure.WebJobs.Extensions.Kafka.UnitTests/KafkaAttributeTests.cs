@@ -38,6 +38,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             Assert.Equal(BrokerAuthenticationMode.ScramSha512, attribute.AuthenticationMode);
             Assert.Equal("AvroSchema", attribute.AvroSchema);
+            Assert.Equal("KeyAvroSchema", attribute.KeyAvroSchema);
+            Assert.Equal(KafkaMessageKeyType.Int, attribute.KeyDataType);
             Assert.Equal("BrokerList", attribute.BrokerList);
             Assert.Equal(1, attribute.BatchSize);
             Assert.Equal(true, attribute.EnableIdempotence);
@@ -67,6 +69,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 [Kafka(
                 AuthenticationMode = BrokerAuthenticationMode.ScramSha512,
                 AvroSchema = "AvroSchema",
+                KeyAvroSchema = "KeyAvroSchema",
+                KeyDataType = KafkaMessageKeyType.Int,
                 BrokerList = "BrokerList",
                 BatchSize = 1,
                 EnableIdempotence = true,

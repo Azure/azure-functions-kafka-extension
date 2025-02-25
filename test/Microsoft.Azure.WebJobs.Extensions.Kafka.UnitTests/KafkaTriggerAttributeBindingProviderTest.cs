@@ -74,12 +74,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         static void GenericAvro_WithLongKey_Fn([KafkaTrigger("brokers:9092", "myTopic", AvroSchema = "fake")] KafkaEventData<long, GenericRecord> genericRecord) { }
         static void GenericAvro_WithStringKey_Fn([KafkaTrigger("brokers:9092", "myTopic", AvroSchema = "fake")] KafkaEventData<string, GenericRecord> genericRecord) { }
         static void GenericWithSchemaRegistry_Fn([KafkaTrigger("brokers:9092", "myTopic", SchemaRegistryUrl = "localhost:8081")] KafkaEventData<GenericRecord> genericRecord) { }
+        static void GenericKeyValueAvro_Fn([KafkaTrigger("brokers:9092", "myTopic", AvroSchema = "fake", KeyAvroSchema = "fake")] KafkaEventData<GenericRecord, GenericRecord> genericRecord) { }
+
 
         static void RawSpecificAvro_Fn([KafkaTrigger("brokers:9092", "myTopic")] MyAvroRecord myAvroRecord) { }
         static void SpecificAvro_Fn([KafkaTrigger("brokers:9092", "myTopic")] KafkaEventData<Null, MyAvroRecord> myAvroRecord) { }
         static void SpecificAvroWithoutKey_Fn([KafkaTrigger("brokers:9092", "myTopic")] KafkaEventData<MyAvroRecord> myAvroRecord) { }
         static void SpecificAvro_WithLongKey_Fn([KafkaTrigger("brokers:9092", "myTopic")] KafkaEventData<long, MyAvroRecord> myAvroRecord) { }
         static void SpecificAvro_WithStringKey_Fn([KafkaTrigger("brokers:9092", "myTopic")] KafkaEventData<string, MyAvroRecord> myAvroRecord) { }
+        static void SpecificKeyValueAvro_Fn([KafkaTrigger("brokers:9092", "myTopic")] KafkaEventData<MyAvroRecord, MyAvroRecord> myAvroRecord) { }
 
         static void RawProtobuf_Fn([KafkaTrigger("brokers:9092", "myTopic")] ProtoUser protoUser) { }
         static void Protobuf_Fn([KafkaTrigger("brokers:9092", "myTopic")] KafkaEventData<Null, ProtoUser> protoUser) { }
@@ -194,6 +197,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         [InlineData(nameof(GenericAvroWithoutKey_Fn), typeof(string))]
         [InlineData(nameof(RawGenericAvro_Fn), typeof(string))]
         [InlineData(nameof(GenericWithSchemaRegistry_Fn), typeof(string))]
+        [InlineData(nameof(GenericKeyValueAvro_Fn), typeof(GenericRecord))]
         public async Task When_Avro_Schema_Is_Provided_Should_Create_GenericRecord_Listener(string functionName, Type expectedKeyType)
         {
             var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")
@@ -231,6 +235,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         [InlineData(nameof(SpecificAvro_Fn), typeof(Null))]
         [InlineData(nameof(RawSpecificAvro_Fn), typeof(string))]
         [InlineData(nameof(SpecificAvroWithoutKey_Fn), typeof(string))]
+        [InlineData(nameof(SpecificKeyValueAvro_Fn), typeof(MyAvroRecord))]
         public async Task When_Value_Type_Is_Specific_Record_Should_Create_SpecificRecord_Listener(string functionName, Type expectedKeyType)
         {
             var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")
