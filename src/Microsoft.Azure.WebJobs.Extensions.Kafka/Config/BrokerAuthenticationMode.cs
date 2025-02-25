@@ -16,6 +16,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         Gssapi,
         Plain,
         ScramSha256,
-        ScramSha512
+        ScramSha512,
+        OAuthBearer
     }
 }

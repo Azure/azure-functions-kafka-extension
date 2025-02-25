@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using Confluent.Kafka;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.Config;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
@@ -95,10 +96,79 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public string SslKeyPassword { get; set; }
 
         /// <summary>
+        /// Client certificate in PEM format.
+        /// ssl.certificate.pem in librdkafka
+        /// </summary>
+        public string SslCertificatePEM { get; set; }
+
+        /// <summary>
+        /// Client Private Key in PEM format.
+        /// ssl.key.pem in librdkafka
+        /// </summary>
+        public string SslKeyPEM { get; set; }
+
+        /// <summary>
+        /// Client certificate for verifying the broker's certificate in PEM format.
+        /// ssl.ca.pem in librdkafka.
+        /// </summary>
+        public string SslCaPEM { get; set; }
+
+        /// <summary>
+        /// Client certificate and key in PEM format.
+        /// Additional Configuration for extension as KeyVault supports uploading certificate only with private key.
+        /// </summary>
+        public string SslCertificateandKeyPEM { get; set; }
+
+        /// <summary>
         /// Lag threshold
         /// Default: 1000
         /// </summary>
         public long LagThreshold { get; set; }
+
+        /// <summary>
+        /// OAuth Bearer method.
+        /// Either 'default' or 'oidc'
+        /// sasl.oauthbearer in librdkafka
+        /// </summary>
+        public SaslOauthbearerMethod SaslOAuthBearerMethod { get; set; }
+
+        /// <summary>
+        /// OAuth Bearer Client Id
+        /// Specify only when OAuthBearerMethod is 'oidc'
+        /// sasl.oauthbearer.client.id in librdkafka
+        /// </summary>
+        public string SaslOAuthBearerClientId { get; set; }
+
+        /// <summary>
+        /// OAuth Bearer Client Secret
+        /// Specify only when OAuthBearerMethod is 'oidc'
+        /// sasl.oauthbearer.client.secret in librdkafka
+        /// </summary>
+        public string SaslOAuthBearerClientSecret { get; set; }
+
+        /// <summary>
+        /// OAuth Bearer scope.
+        /// Client use this to specify the scope of the access request to the broker. 
+        /// Specify only when OAuthBearerMethod is 'oidc'
+        /// sasl.oauthbearer.extensions in librdkafka
+        /// </summary>
+        public string SaslOAuthBearerScope { get; set; }
+
+        /// <summary>
+        /// OAuth Bearer token endpoint url.
+        /// Specify only when OAuthBearerMethod is 'oidc'
+        /// sasl.oauthbearer.token.endpoint.url in librdkafka
+        /// </summary>
+        public string SaslOAuthBearerTokenEndpointUrl { get; set; }
+
+        /// <summary>
+        /// OAuth Bearer extensions.
+        /// Allow additional information to be provided to the broker.
+        /// Comma-separated list of key=value pairs. E.g., "supportFeatureX=true,organizationId=sales-emea"
+        /// sasl.oauthbearer.extensions in librdkafka
+        /// </summary>
+        public string SaslOAuthBearerExtensions { get; set; }
+
 
         internal void ApplyToConfig(ClientConfig conf)
         {

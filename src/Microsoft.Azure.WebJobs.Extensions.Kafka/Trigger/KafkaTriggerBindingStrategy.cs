@@ -3,8 +3,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
+using System.Text;
+using Avro.Generic;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Triggers;
+using Newtonsoft.Json;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
@@ -104,7 +108,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 partitions[i] = events[i].Partition;
                 offsets[i] = events[i].Offset;
                 timestamps[i] = events[i].Timestamp;
-                keys[i] = events[i].Key;
+                keys[i] = HandleKeyDataConversion(events[i].Key);
                 topics[i] = events[i].Topic;
                 headers[i] = events[i].Headers;
             }
@@ -112,12 +116,35 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         private static void AddBindingData(Dictionary<string, object> bindingData, IKafkaEventData eventData)
         {
-            bindingData.Add(nameof(IKafkaEventData.Key), eventData.Key);
+            bindingData.Add(nameof(IKafkaEventData.Key), HandleKeyDataConversion(eventData.Key));
             bindingData.Add(nameof(IKafkaEventData.Partition), eventData.Partition);
             bindingData.Add(nameof(IKafkaEventData.Topic), eventData.Topic);
             bindingData.Add(nameof(IKafkaEventData.Timestamp), eventData.Timestamp);
             bindingData.Add(nameof(IKafkaEventData.Offset), eventData.Offset);
             bindingData.Add(nameof(IKafkaEventData.Headers), eventData.Headers);
+        }
+
+        private static object HandleKeyDataConversion(object eventDataKey)
+        {
+            // making the value of "Key" accessible in Binding information
+            if (eventDataKey is GenericRecord genericRecord)
+            {
+                eventDataKey = GenericRecordToObject(genericRecord);
+            }
+            return eventDataKey;
+        }
+
+        private static object GenericRecordToObject(GenericRecord record)
+        {
+            var props = new ExpandoObject() as IDictionary<string, Object>;
+            foreach (var field in record.Schema.Fields)
+            {
+                if (record.TryGetValue(field.Name, out var value))
+                {
+                    props.Add(field.Name, value);
+                }
+            }
+            return props;
         }
     }
 }

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
@@ -16,23 +16,27 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Confluent.Kafka" Version="1.9.0">
-      <NoWarn>NU1605</NoWarn>
+    <PackageReference Include="Azure.Core" Version="1.44.1" />
+    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Http" Version="3.2.0" />
+    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="5.3.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
+    <PackageReference Include="MSTest.TestFramework" Version="3.4.3" />
+    <PackageReference Include="Polly" Version="8.4.0" />
+    <PackageReference Include="xunit" Version="2.8.1" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Http" Version="3.0.12" />
-    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="3.0.4" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.5.0" />
-    <PackageReference Include="MSTest.TestFramework" Version="3.0.4" />
-    <PackageReference Include="Polly" Version="7.2.3" />
-    <PackageReference Include="xunit" Version="2.4.0" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.0" />
-    <PackageReference Include="coverlet.collector" Version="1.2.0" />
-	  <PackageReference Include="Azure.ResourceManager" Version="1.2.1" />
-	  <PackageReference Include="Azure.ResourceManager.EventHubs" Version="1.0.0" />
-	  <PackageReference Include="Azure.Identity" Version="1.6.0" />
-	  <PackageReference Include="Azure.Storage.Queues" Version="12.11.0" />
-	  <PackageReference Include="Microsoft.Extensions.Logging" Version="3.1.32" />
-	  <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="3.1.32" />
+    <PackageReference Include="coverlet.collector" Version="6.0.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+	  <PackageReference Include="Azure.ResourceManager" Version="1.12.0" />
+	  <PackageReference Include="Azure.ResourceManager.EventHubs" Version="1.1.0" />
+	  <PackageReference Include="Azure.Identity" Version="1.13.1" />
+	  <PackageReference Include="Azure.Storage.Queues" Version="12.18.0" />
+	  <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
+	  <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" />
   </ItemGroup>
   
   <ItemGroup>
