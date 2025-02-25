@@ -16,7 +16,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public Type ValueType { get; set; }
 
-        public string AvroSchema { get; set; }
+        public string ValueAvroSchema { get; set; }
+
+        public string KeyAvroSchema { get; set; }
 
         public string Topic { get; set; }
 

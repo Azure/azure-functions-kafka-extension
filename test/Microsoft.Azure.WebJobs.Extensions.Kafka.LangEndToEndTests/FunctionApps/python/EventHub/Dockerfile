@@ -1,5 +1,7 @@
-FROM mcr.microsoft.com/azure-functions/python:4-python3.9-core-tools
+FROM mcr.microsoft.com/dotnet/sdk:8.0-bookworm-slim-amd64 AS dn8-sdk-image
+FROM mcr.microsoft.com/azure-functions/python:4-python3.10-core-tools
 
+COPY --from=dn8-sdk-image [ "/usr/share/dotnet", "/usr/share/dotnet" ]
 # Copy Local File
 RUN mkdir /workspace
 COPY . /workspace

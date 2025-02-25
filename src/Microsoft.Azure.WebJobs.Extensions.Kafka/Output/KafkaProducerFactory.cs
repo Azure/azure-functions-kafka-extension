@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Text;
+using System.Text.RegularExpressions;
 using Confluent.Kafka;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -82,18 +83,45 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var valueType = entity.ValueType ?? typeof(byte[]);
             var keyType = entity.KeyType ?? typeof(Null);
 
-            var avroSchema = this.config.ResolveSecureSetting(nameResolver, entity.AvroSchema);
+            var valueAvroSchema = this.config.ResolveSecureSetting(nameResolver, entity.ValueAvroSchema);
+            var keyAvroSchema = this.config.ResolveSecureSetting(nameResolver, entity.KeyAvroSchema);
             var schemaRegistryUrl = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SchemaRegistryUrl);
             var schemaRegistryUsername = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SchemaRegistryUsername);
             var schemaRegistryPassword = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SchemaRegistryPassword);
 
-            var valueSerializer = SerializationHelper.ResolveValueSerializer(valueType, avroSchema, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword);
+            var valueSerializer = SerializationHelper.ResolveValueSerializer(valueType, valueAvroSchema, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword);
+            var keySerializer = SerializationHelper.ResolveValueSerializer(keyType, keyAvroSchema, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword);
 
             return (IKafkaProducer)Activator.CreateInstance(
                 typeof(KafkaProducer<,>).MakeGenericType(keyType, valueType),
                 producerBaseHandle,
                 valueSerializer,
+                keySerializer,
                 loggerFactory.CreateLogger(typeof(KafkaProducer<,>)));
+        }
+
+        private string ExtractSection(string pemString, string sectionName)
+        {
+            if (!string.IsNullOrEmpty(pemString))
+            {
+                var regex = new Regex($"-----BEGIN {sectionName}-----(.*?)-----END {sectionName}-----", RegexOptions.Singleline);
+                var match = regex.Match(pemString);
+                if (match.Success)
+                {
+                    return match.Value.Replace("\\n", "\n");
+                }
+            }
+            return null;
+        }
+
+        private string ExtractCertificate(string pemString)
+        {
+            return ExtractSection(pemString, "CERTIFICATE");
+        }
+
+        private string ExtractPrivateKey(string pemString)
+        {
+            return ExtractSection(pemString, "PRIVATE KEY");
         }
 
         public ProducerConfig GetProducerConfig(KafkaProducerEntity entity)
@@ -128,14 +156,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 SaslPassword = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.Password),
                 SaslUsername = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.Username),
                 SslKeyLocation = resolvedSslKeyLocation,
-                SslKeyPassword = entity.Attribute.SslKeyPassword,
+                SslKeyPassword = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SslKeyPassword),
                 SslCertificateLocation = resolvedSslCertificationLocation,
                 SslCaLocation = resolvedSslCaLocation,
+                SslCaPem = ExtractCertificate(this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SslCaPEM)),
+                SslCertificatePem = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SslCertificatePEM),
+                SslKeyPem = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SslKeyPEM),
                 Debug = kafkaOptions?.LibkafkaDebug,
                 MetadataMaxAgeMs = kafkaOptions?.MetadataMaxAgeMs,
                 SocketKeepaliveEnable = kafkaOptions?.SocketKeepaliveEnable,
-                LingerMs = entity.Attribute.LingerMs
+                LingerMs = entity.Attribute.LingerMs,
             };
+
+            if (!string.IsNullOrEmpty(entity.Attribute.SslCertificateandKeyPEM))
+            {
+                var sslCertificateandKeyPEM = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SslCertificateandKeyPEM);
+                conf.SslCertificatePem = ExtractCertificate(sslCertificateandKeyPEM);
+                conf.SslKeyPem = ExtractPrivateKey(sslCertificateandKeyPEM);
+            }
 
             if (entity.Attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet)
             {
@@ -145,6 +183,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             if (entity.Attribute.Protocol != BrokerProtocol.NotSet)
             {
                 conf.SecurityProtocol = (SecurityProtocol)entity.Attribute.Protocol;
+            }
+
+            if (entity.Attribute.AuthenticationMode == BrokerAuthenticationMode.OAuthBearer)
+            {
+                conf.SaslOauthbearerMethod = (SaslOauthbearerMethod)entity.Attribute.OAuthBearerMethod;
+                conf.SaslOauthbearerClientId = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerClientId);
+                conf.SaslOauthbearerClientSecret = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerClientSecret);
+                conf.SaslOauthbearerScope = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerScope);
+                conf.SaslOauthbearerTokenEndpointUrl = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerTokenEndpointUrl);
+                conf.SaslOauthbearerExtensions = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerExtensions);
             }
 
             return conf;

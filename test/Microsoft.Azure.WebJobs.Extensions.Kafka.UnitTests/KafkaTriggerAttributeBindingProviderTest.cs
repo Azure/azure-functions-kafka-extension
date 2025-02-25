@@ -74,12 +74,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         static void GenericAvro_WithLongKey_Fn([KafkaTrigger("brokers:9092", "myTopic", AvroSchema = "fake")] KafkaEventData<long, GenericRecord> genericRecord) { }
         static void GenericAvro_WithStringKey_Fn([KafkaTrigger("brokers:9092", "myTopic", AvroSchema = "fake")] KafkaEventData<string, GenericRecord> genericRecord) { }
         static void GenericWithSchemaRegistry_Fn([KafkaTrigger("brokers:9092", "myTopic", SchemaRegistryUrl = "localhost:8081")] KafkaEventData<GenericRecord> genericRecord) { }
+        static void GenericKeyValueAvro_Fn([KafkaTrigger("brokers:9092", "myTopic", AvroSchema = "fake", KeyAvroSchema = "fake")] KafkaEventData<GenericRecord, GenericRecord> genericRecord) { }
+
 
         static void RawSpecificAvro_Fn([KafkaTrigger("brokers:9092", "myTopic")] MyAvroRecord myAvroRecord) { }
         static void SpecificAvro_Fn([KafkaTrigger("brokers:9092", "myTopic")] KafkaEventData<Null, MyAvroRecord> myAvroRecord) { }
         static void SpecificAvroWithoutKey_Fn([KafkaTrigger("brokers:9092", "myTopic")] KafkaEventData<MyAvroRecord> myAvroRecord) { }
         static void SpecificAvro_WithLongKey_Fn([KafkaTrigger("brokers:9092", "myTopic")] KafkaEventData<long, MyAvroRecord> myAvroRecord) { }
         static void SpecificAvro_WithStringKey_Fn([KafkaTrigger("brokers:9092", "myTopic")] KafkaEventData<string, MyAvroRecord> myAvroRecord) { }
+        static void SpecificKeyValueAvro_Fn([KafkaTrigger("brokers:9092", "myTopic")] KafkaEventData<MyAvroRecord, MyAvroRecord> myAvroRecord) { }
 
         static void RawProtobuf_Fn([KafkaTrigger("brokers:9092", "myTopic")] ProtoUser protoUser) { }
         static void Protobuf_Fn([KafkaTrigger("brokers:9092", "myTopic")] KafkaEventData<Null, ProtoUser> protoUser) { }
@@ -194,6 +197,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         [InlineData(nameof(GenericAvroWithoutKey_Fn), typeof(string))]
         [InlineData(nameof(RawGenericAvro_Fn), typeof(string))]
         [InlineData(nameof(GenericWithSchemaRegistry_Fn), typeof(string))]
+        [InlineData(nameof(GenericKeyValueAvro_Fn), typeof(GenericRecord))]
         public async Task When_Avro_Schema_Is_Provided_Should_Create_GenericRecord_Listener(string functionName, Type expectedKeyType)
         {
             var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")
@@ -231,6 +235,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         [InlineData(nameof(SpecificAvro_Fn), typeof(Null))]
         [InlineData(nameof(RawSpecificAvro_Fn), typeof(string))]
         [InlineData(nameof(SpecificAvroWithoutKey_Fn), typeof(string))]
+        [InlineData(nameof(SpecificKeyValueAvro_Fn), typeof(MyAvroRecord))]
         public async Task When_Value_Type_Is_Specific_Record_Should_Create_SpecificRecord_Listener(string functionName, Type expectedKeyType)
         {
             var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")
@@ -509,6 +514,132 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(result.SslKeyLocation, null);
             Assert.Equal(result.SslCaLocation, null);
             Assert.Equal(result.SslCertificateLocation, null);
+        }
+
+        [Fact]
+        public void GetConsumerConfig_When_Protocol_is_SSL_With_Certificate()
+        {
+            var dummySslCaCert = "-----BEGIN CERTIFICATE-----\n" +
+                "dummycacert\n" +
+                "-----END CERTIFICATE-----";
+            var dummySslCert = "-----BEGIN CERTIFICATE-----\n" +
+                "dummyclientcert\n" +
+                "-----END CERTIFICATE-----";
+            var dummySslKey = "-----BEGIN PRIVATE KEY-----\n" +
+                "dummyclientkey\n" +
+                "-----END PRIVATE KEY-----";
+
+            var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")
+            {
+                Protocol = BrokerProtocol.Ssl,
+                SslCaPEM = dummySslCaCert,
+                SslCertificateandKeyPEM = dummySslCert + "\n" + dummySslKey,
+                SslKeyPEM = dummySslKey,
+            };
+
+            var config = this.emptyConfiguration;
+
+            var bindingProvider = new KafkaTriggerAttributeBindingProvider(
+                config,
+                Options.Create(new KafkaOptions()),
+                new KafkaEventDataConvertManager(NullLogger.Instance),
+                new DefaultNameResolver(config),
+                NullLoggerFactory.Instance);
+
+            MethodInfo consumerConfigMethod = typeof(KafkaTriggerAttributeBindingProvider).GetMethod("CreateConsumerConfiguration", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            KafkaListenerConfiguration result = (KafkaListenerConfiguration)consumerConfigMethod.Invoke(bindingProvider, new object[] { attribute });
+            Assert.Equal(result.SslCaPEM, dummySslCaCert);
+            Assert.Equal(result.SslCertificatePEM, dummySslCert);
+            Assert.Equal(result.SslKeyPEM, dummySslKey);
+        }
+
+        [Fact]
+        public void GetConsumerConfig_When_OAuthBearer_Auth_Defined_Should_Contain_Them()
+        {
+            var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")
+            {
+                AuthenticationMode = BrokerAuthenticationMode.OAuthBearer,
+                Protocol = BrokerProtocol.SaslSsl,
+                OAuthBearerClientId = "clientId",
+                OAuthBearerClientSecret = "secret",
+                OAuthBearerMethod = Config.OAuthBearerMethod.Oidc,
+                OAuthBearerScope = "scope",
+                OAuthBearerExtensions = "key=value",
+                OAuthBearerTokenEndpointUrl = "endpointUrl",
+            };
+
+            var config = this.emptyConfiguration;
+
+            var bindingProvider = new KafkaTriggerAttributeBindingProvider(
+                config,
+                Options.Create(new KafkaOptions()),
+                new KafkaEventDataConvertManager(NullLogger.Instance),
+                new DefaultNameResolver(config),
+                NullLoggerFactory.Instance);
+
+            MethodInfo consumerConfigMethod = typeof(KafkaTriggerAttributeBindingProvider).GetMethod("CreateConsumerConfiguration", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            KafkaListenerConfiguration result = (KafkaListenerConfiguration)consumerConfigMethod.Invoke(bindingProvider, new object[] { attribute });
+            Assert.Equal("brokers:9092", result.BrokerList);
+            Assert.Equal(SecurityProtocol.SaslSsl, result.SecurityProtocol);
+            Assert.Equal(SaslMechanism.OAuthBearer, result.SaslMechanism);
+            Assert.Equal("secret", result.SaslOAuthBearerClientSecret);
+            Assert.Equal("clientId", result.SaslOAuthBearerClientId);
+            Assert.Equal(SaslOauthbearerMethod.Oidc, result.SaslOAuthBearerMethod);
+            Assert.Equal("scope", result.SaslOAuthBearerScope);
+            Assert.Equal("key=value", result.SaslOAuthBearerExtensions);
+            Assert.Equal("endpointUrl", result.SaslOAuthBearerTokenEndpointUrl);
+        }
+
+        [Fact]
+        public void GetConsumerConfig_When_OauthBearer_Settings_Resolve_From_AppSetting_InAzure()
+        {
+            AzureEnvironment.SetRunningInAzureEnvVars();
+
+            var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")
+            {
+                AuthenticationMode = BrokerAuthenticationMode.OAuthBearer,
+                Protocol = BrokerProtocol.SaslSsl,
+                OAuthBearerClientId = "OAuthBearerClientId",
+                OAuthBearerClientSecret = "OAuthBearerClientSecret",
+                OAuthBearerMethod = Config.OAuthBearerMethod.Oidc,
+                OAuthBearerScope = "OAuthBearerScope",
+                OAuthBearerExtensions = "OAuthBearerExtensions",
+                OAuthBearerTokenEndpointUrl = "OAuthBearerTokenEndpointUrl",
+            };
+
+            var configSslLocations = new Dictionary<string, string>
+            {
+                {"OAuthBearerClientId", "clientId"},
+                {"OAuthBearerClientSecret", "secret"},
+                {"OAuthBearerScope", "scope"},
+                {"OAuthBearerExtensions", "key=value"},
+                {"OAuthBearerTokenEndpointUrl", "endpointUrl"},
+            };
+
+            var config = new ConfigurationBuilder().AddInMemoryCollection(configSslLocations).Build();
+
+            var bindingProvider = new KafkaTriggerAttributeBindingProvider(
+                config,
+                Options.Create(new KafkaOptions()),
+                new KafkaEventDataConvertManager(NullLogger.Instance),
+                new DefaultNameResolver(config),
+                NullLoggerFactory.Instance);
+
+            MethodInfo consumerConfigMethod = typeof(KafkaTriggerAttributeBindingProvider).GetMethod("CreateConsumerConfiguration", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            KafkaListenerConfiguration result = (KafkaListenerConfiguration)consumerConfigMethod.Invoke(bindingProvider, new object[] { attribute });
+
+            Assert.Equal("brokers:9092", result.BrokerList);
+            Assert.Equal(SecurityProtocol.SaslSsl, result.SecurityProtocol);
+            Assert.Equal(SaslMechanism.OAuthBearer, result.SaslMechanism);
+            Assert.Equal("secret", result.SaslOAuthBearerClientSecret);
+            Assert.Equal("clientId", result.SaslOAuthBearerClientId);
+            Assert.Equal(SaslOauthbearerMethod.Oidc, result.SaslOAuthBearerMethod);
+            Assert.Equal("scope", result.SaslOAuthBearerScope);
+            Assert.Equal("key=value", result.SaslOAuthBearerExtensions);
+            Assert.Equal("endpointUrl", result.SaslOAuthBearerTokenEndpointUrl);
         }
     }
 }

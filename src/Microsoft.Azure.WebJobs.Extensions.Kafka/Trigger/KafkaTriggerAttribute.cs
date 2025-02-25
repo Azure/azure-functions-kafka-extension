@@ -3,6 +3,7 @@
 
 using Avro.Specific;
 using Microsoft.Azure.WebJobs.Description;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.Config;
 using System;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
@@ -44,10 +45,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
 
         /// <summary>
-        /// Gets or sets the Avro schema.
-        /// Should be used only if a generic record should be generated
+        /// Gets or sets the Avro schema of message value.
+        /// Should be used only if a generic record should be generated.
         /// </summary>
         public string AvroSchema { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Avro schema of message key.
+        /// Should be used only if a generic record should be generated.
+        /// </summary>
+        public string KeyAvroSchema { get; set; }
+
+        /// <summary>
+        /// Specifies the data type of the message key that will be deserialized from the Kafka topic.
+        /// If KeyAvroSchema is set, this value is ignored and the key will be generated as a generic record.
+        /// The default type is System.String.
+        /// </summary>
+        public KafkaMessageKeyType KeyDataType { get; set; } = KafkaMessageKeyType.String;
 
         /// <summary>
         /// SASL mechanism to use for authentication. 
@@ -108,6 +122,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public string SslKeyPassword { get; set; }
 
         /// <summary>
+        /// Client certificate in PEM format.
+        /// ssl.certificate.pem in librdkafka
+        /// </summary>
+        public string SslCertificatePEM { get; set; }
+
+        /// <summary>
+        /// Client Private Key in PEM format.
+        /// ssl.key.pem in librdkafka
+        /// </summary>
+        public string SslKeyPEM { get; set; }
+
+        /// <summary>
+        /// CA certificate for verifying the broker's certificate in PEM format
+        /// ssl.ca.pem in librdkafka
+        /// </summary>
+        public string SslCaPEM { get; set; }
+
+        /// <summary>
+        /// Client certificate and key in PEM format.
+        /// Additional Configuration for extension as KeyVault supports uploading certificate only with private key. 
+        /// </summary>
+        public string SslCertificateandKeyPEM { get; set; }
+
+        /// <summary>
         /// Maximum number of unprocessed messages a worker is expected to have at an instance.
         /// When target-based scaling is not disabled, this is used to divide total unprocessed event count  to determine the number of worker instances, which will then be rounded up to a worker instance count that creates a balanced partition distribution.
         /// Default: 1000
@@ -128,6 +166,50 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// Password for the Avro Schema Registry
         /// </summary>
         public string SchemaRegistryPassword { get; set; }
+
+        /// <summary>
+        /// OAuth Bearer method.
+        /// Either 'default' or 'oidc'
+        /// sasl.oauthbearer in librdkafka
+        /// </summary>
+        public OAuthBearerMethod OAuthBearerMethod { get; set; }
+
+        /// <summary>
+        /// OAuth Bearer Client Id
+        /// Specify only when OAuthBearerMethod is 'oidc'
+        /// sasl.oauthbearer.client.id in librdkafka
+        /// </summary>
+        public string OAuthBearerClientId { get; set; }
+
+        /// <summary>
+        /// OAuth Bearer Client Secret
+        /// Specify only when OAuthBearerMethod is 'oidc'
+        /// sasl.oauthbearer.client.secret in librdkafka
+        /// </summary>
+        public string OAuthBearerClientSecret { get; set; }
+
+        /// <summary>
+        /// OAuth Bearer scope.
+        /// Client use this to specify the scope of the access request to the broker. 
+        /// Specify only when OAuthBearerMethod is 'oidc'
+        /// sasl.oauthbearer.extensions in librdkafka
+        /// </summary>
+        public string OAuthBearerScope { get; set; }
+
+        /// <summary>
+        /// OAuth Bearer token endpoint url.
+        /// Specify only when OAuthBearerMethod is 'oidc'
+        /// sasl.oauthbearer.token.endpoint.url in librdkafka
+        /// </summary>
+        public string OAuthBearerTokenEndpointUrl { get; set; }
+
+        /// <summary>
+        /// OAuth Bearer extensions.
+        /// Allow additional information to be provided to the broker.
+        /// Comma-separated list of key=value pairs. E.g., "supportFeatureX=true,organizationId=sales-emea"
+        /// sasl.oauthbearer.extensions in librdkafka
+        /// </summary>
+        public string OAuthBearerExtensions { get; set; }
 
         bool IsValidValueType(Type value)
         {

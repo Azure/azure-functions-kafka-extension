@@ -104,7 +104,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             {
                 Attribute = attribute,
                 ValueType = typeof(GenericRecord),
-                AvroSchema = attribute.AvroSchema,
+                ValueAvroSchema = attribute.AvroSchema,
             };
 
             var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerFactory.Instance);
@@ -153,7 +153,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             {
                 Attribute = attribute,
                 ValueType = typeof(MyAvroRecord),
-                AvroSchema = MyAvroRecord.SchemaText,
+                ValueAvroSchema = MyAvroRecord.SchemaText,
             };
 
             var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerFactory.Instance);
@@ -371,6 +371,88 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(sslCertificate.FullName, config.SslCertificateLocation);
             Assert.Equal(sslCa.FullName, config.SslCaLocation);
             Assert.Equal(sslKeyLocation.FullName, config.SslKeyLocation);
+        }
+
+        [Fact]
+        public void GetProducerConfig_When_OAuthBearer_Auth_Defined_Should_Contain_Them()
+        {
+            var attribute = new KafkaAttribute("brokers:9092", "myTopic")
+            {
+                AuthenticationMode = BrokerAuthenticationMode.OAuthBearer,
+                Protocol = BrokerProtocol.SaslSsl,
+                OAuthBearerClientId = "clientId",
+                OAuthBearerClientSecret = "secret",
+                OAuthBearerMethod = Config.OAuthBearerMethod.Oidc,
+                OAuthBearerScope = "scope",
+                OAuthBearerExtensions = "key=value",
+                OAuthBearerTokenEndpointUrl = "endpointUrl",
+            };
+
+            var entity = new KafkaProducerEntity()
+            {
+                Attribute = attribute,
+                ValueType = typeof(ProtoUser),
+            };
+
+            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerFactory.Instance);
+            var config = factory.GetProducerConfig(entity);
+            Assert.Equal(16, config.Count());
+            Assert.Equal("brokers:9092", config.BootstrapServers);
+            Assert.Equal(SecurityProtocol.SaslSsl, config.SecurityProtocol);
+            Assert.Equal(SaslMechanism.OAuthBearer, config.SaslMechanism);
+            Assert.Equal("secret", config.SaslOauthbearerClientSecret);
+            Assert.Equal("clientId", config.SaslOauthbearerClientId);
+            Assert.Equal(SaslOauthbearerMethod.Oidc, config.SaslOauthbearerMethod);
+            Assert.Equal("scope", config.SaslOauthbearerScope);
+            Assert.Equal("key=value", config.SaslOauthbearerExtensions);
+            Assert.Equal("endpointUrl", config.SaslOauthbearerTokenEndpointUrl);
+        }
+
+        [Fact]
+        public void GetProducerConfig_When_OauthSettings_Resolve_From_AppSetting_InAzure()
+        {
+            AzureEnvironment.SetRunningInAzureEnvVars();
+
+            var attribute = new KafkaAttribute("brokers:9092", "myTopic")
+            {
+                AuthenticationMode = BrokerAuthenticationMode.OAuthBearer,
+                Protocol = BrokerProtocol.SaslSsl,
+                OAuthBearerClientId = "OAuthBearerClientId",
+                OAuthBearerClientSecret = "OAuthBearerClientSecret",
+                OAuthBearerMethod = Config.OAuthBearerMethod.Oidc,
+                OAuthBearerScope = "OAuthBearerScope",
+                OAuthBearerExtensions = "OAuthBearerExtensions",
+                OAuthBearerTokenEndpointUrl = "OAuthBearerTokenEndpointUrl",
+            };
+
+            var entity = new KafkaProducerEntity
+            {
+                Attribute = attribute,
+                ValueType = typeof(ProtoUser)
+            };
+
+            var configSslLocations = new Dictionary<string, string>
+            {
+                {"OAuthBearerClientId", "clientId"},
+                {"OAuthBearerClientSecret", "secret"},
+                {"OAuthBearerScope", "scope"},
+                {"OAuthBearerExtensions", "key=value"},
+                {"OAuthBearerTokenEndpointUrl", "endpointUrl"},
+            };
+
+            var configuration = new ConfigurationBuilder().AddInMemoryCollection(configSslLocations).Build();
+
+            var factory = new KafkaProducerFactory(configuration, new DefaultNameResolver(configuration), NullLoggerFactory.Instance);
+            var config = factory.GetProducerConfig(entity);
+            Assert.Equal("brokers:9092", config.BootstrapServers);
+            Assert.Equal(SecurityProtocol.SaslSsl, config.SecurityProtocol);
+            Assert.Equal(SaslMechanism.OAuthBearer, config.SaslMechanism);
+            Assert.Equal("secret", config.SaslOauthbearerClientSecret);
+            Assert.Equal("clientId", config.SaslOauthbearerClientId);
+            Assert.Equal(SaslOauthbearerMethod.Oidc, config.SaslOauthbearerMethod);
+            Assert.Equal("scope", config.SaslOauthbearerScope);
+            Assert.Equal("key=value", config.SaslOauthbearerExtensions);
+            Assert.Equal("endpointUrl", config.SaslOauthbearerTokenEndpointUrl);
         }
     }
 }

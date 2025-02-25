@@ -17,30 +17,35 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
     internal static class SerializationHelper
     {
-        internal static object ResolveValueDeserializer(Type valueType, string specifiedAvroSchema, string schemaRegistryUrl, string schemaRegistryUsername, string schemaRegistryPassword)
+        internal static object ResolveDeserializer(Type type, string specifiedAvroSchema, string schemaRegistryUrl, string schemaRegistryUsername, string schemaRegistryPassword)
         {
-            if (typeof(IMessage).IsAssignableFrom(valueType))
+            if (typeof(IMessage).IsAssignableFrom(type))
             {
-                return Activator.CreateInstance(typeof(ProtobufDeserializer<>).MakeGenericType(valueType));
+                return Activator.CreateInstance(typeof(ProtobufDeserializer<>).MakeGenericType(type));
             }
 
-            var isSpecificRecord = typeof(ISpecificRecord).IsAssignableFrom(valueType);
-            if (!isSpecificRecord && !typeof(GenericRecord).IsAssignableFrom(valueType))
+            var isSpecificRecord = typeof(ISpecificRecord).IsAssignableFrom(type);
+            if (!isSpecificRecord && !typeof(GenericRecord).IsAssignableFrom(type) && schemaRegistryUrl == null)
             {
                 return null;
             }
 
-            var schemaRegistry = CreateSchemaRegistry(valueType, specifiedAvroSchema, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword, isSpecificRecord);
+            var schemaRegistry = CreateSchemaRegistry(type, specifiedAvroSchema, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword, isSpecificRecord);
 
-            var methodInfo = typeof(SerializationHelper).GetMethod(nameof(CreateAvroDeserializer), BindingFlags.Static | BindingFlags.NonPublic);
-            var genericMethod = methodInfo.MakeGenericMethod(valueType);
+            var methodInfo = typeof(SerializationHelper).GetMethod(nameof(CreateAvroValueDeserializer), BindingFlags.Static | BindingFlags.NonPublic);
+            var genericMethod = methodInfo.MakeGenericMethod(type);
 
             return genericMethod.Invoke(null, new object[] { schemaRegistry });
         }
 
-        private static IDeserializer<TValue> CreateAvroDeserializer<TValue>(ISchemaRegistryClient schemaRegistry)
+        private static IDeserializer<TValue> CreateAvroValueDeserializer<TValue>(ISchemaRegistryClient schemaRegistry)
         {
             return new AvroDeserializer<TValue>(schemaRegistry).AsSyncOverAsync();
+        }
+
+        private static IDeserializer<TKey> CreateAvroKeyDeserializer<TKey>(ISchemaRegistryClient schemaRegistry)
+        {
+            return new AvroDeserializer<TKey>(schemaRegistry).AsSyncOverAsync();
         }
 
         internal static object ResolveValueSerializer(Type valueType, string specifiedAvroSchema, string schemaRegistryUrl, string schemaRegistryUsername, string schemaRegistryPassword)
@@ -51,7 +56,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
 
             var isSpecificRecord = typeof(ISpecificRecord).IsAssignableFrom(valueType);
-            if (!isSpecificRecord && !typeof(GenericRecord).IsAssignableFrom(valueType))
+            if (!isSpecificRecord && !typeof(GenericRecord).IsAssignableFrom(valueType) && schemaRegistryUrl == null)
             {
                 return null;
             }
@@ -91,20 +96,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             public Type KeyType { get; set; }
             public bool RequiresKey { get; set; }
             public Type ValueType { get; set; }
-            public string AvroSchema { get; set; }
+            public string ValueAvroSchema { get; set; }
+            public string KeyAvroSchema { get; set; }
         }
 
         /// <summary>
         /// Gets the type of the key and value.
         /// </summary>
-        /// <param name="avroSchemaFromAttribute">Avro schema from attribute.</param>
-        internal static GetKeyAndValueTypesResult GetKeyAndValueTypes(string avroSchemaFromAttribute, Type parameterType, Type defaultKeyType)
+        /// <param name="valueAvroSchemaFromAttribute">Avro schema of message value from attribute.</param>
+        /// <param name="keyAvroSchemaFromAttribute">Avro schema of message key from attribute.</param>
+        internal static GetKeyAndValueTypesResult GetKeyAndValueTypes(string valueAvroSchemaFromAttribute, string keyAvroSchemaFromAttribute, Type parameterType, Type keyTypeFromAttribute)
         {
-            string avroSchema = null;
+            string valueAvroSchema = null;
+            string keyAvroSchema = null;
             var requiresKey = false;
 
             var valueType = parameterType;
-            var keyType = defaultKeyType;
+            var keyType = keyTypeFromAttribute;
 
             while (valueType.HasElementType && valueType.GetElementType() != typeof(byte))
             {
@@ -135,25 +143,35 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     }
                 }
 
-                if (typeof(ISpecificRecord).IsAssignableFrom(valueType))
-                {
-                    var specificRecord = (ISpecificRecord)Activator.CreateInstance(valueType);
-                    avroSchema = specificRecord.Schema.ToString();
-                }
-                else if (!string.IsNullOrEmpty(avroSchemaFromAttribute))
-                {
-                    avroSchema = avroSchemaFromAttribute;
-                    valueType = typeof(Avro.Generic.GenericRecord);
-                }
+                (valueType, valueAvroSchema) = GetTypeAndSchema(valueType, valueAvroSchemaFromAttribute);
             }
+
+            (keyType, keyAvroSchema) = GetTypeAndSchema(keyType, keyAvroSchemaFromAttribute);
 
             return new GetKeyAndValueTypesResult
             {
                 KeyType = keyType,
                 ValueType = valueType,
-                AvroSchema = avroSchema,
+                ValueAvroSchema = valueAvroSchema,
+                KeyAvroSchema = keyAvroSchema,
                 RequiresKey = requiresKey,
             };
+        }
+
+        private static (Type type, string avroSchema) GetTypeAndSchema(Type type, string avroSchemaFromAttributte)
+        {
+            string avroSchema = null;
+            if (typeof(ISpecificRecord).IsAssignableFrom(type))
+            {
+                var specificRecord = (ISpecificRecord)Activator.CreateInstance(type);
+                avroSchema = specificRecord.Schema.ToString();
+            }
+            else if (!string.IsNullOrEmpty(avroSchemaFromAttributte))
+            {
+                avroSchema = avroSchemaFromAttributte;
+                type = typeof(Avro.Generic.GenericRecord);
+            }
+            return (type, avroSchema);
         }
 
 

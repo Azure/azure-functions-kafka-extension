@@ -18,7 +18,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         const string TopicName = "topicTest";
 
         private readonly int topicPartitionCount;
-        private readonly KafkaTopicScaler<string, byte[]> topicScaler;
+        private readonly KafkaGenericTopicScaler<string, byte[]> topicScaler;
         private readonly Mock<IConsumer<string, byte[]>> consumer;
         private readonly Mock<KafkaMetricsProvider<string, byte[]>> metricsProvider;
 
@@ -27,7 +27,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             consumer = new Mock<IConsumer<string, byte[]>>();
             metricsProvider = new Mock<KafkaMetricsProvider<string, byte[]>>(TopicName, new AdminClientConfig(), consumer.Object, NullLogger.Instance);
 
-            topicScaler = new KafkaTopicScaler<string, byte[]>(
+            topicScaler = new KafkaGenericTopicScaler<string, byte[]>(
                 TopicName,
                 "consumer-group-test",
                 "testfunction",
@@ -42,6 +42,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         public void ScaleMonitor_Id_ReturnsExpectedValue()
         {
             Assert.Equal("testfunction-kafkatrigger-topictest-consumer-group-test", topicScaler.Descriptor.Id);
+        }
+
+        [Fact]
+        public void ScaleMonitor_FunctionId_ReturnsExpectedValue()
+        {
+            Assert.Equal("testfunction", topicScaler.Descriptor.FunctionId);
         }
 
         [Fact]

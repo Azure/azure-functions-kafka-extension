@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
     /// <summary>
-    /// Helper class for file related operations in functions running in Azure
+    /// Helper class for file related operations in functions running in Azure.
     /// </summary>
     internal static class AzureFunctionsFileHelper
     {
@@ -34,7 +34,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         /// <summary>
         /// Indicates if the current excecution environment is either a function hosted in Azure or 
-        /// a function hosted in a container
+        /// a function hosted in a container.
         /// </summary>
         internal static bool IsRunningAsFunctionInAzureOrContainer()
         {
@@ -47,7 +47,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// Gets the function base folder when running as Azure Function App or as a container
         /// When running in Azure Function App default is D:\home\site\wwwroot
         /// When running in Azure Function container default is /home/site/wwwroot
-        /// If not running in Azure or container returns null
+        /// If not running in Azure or container returns null.
         /// </summary>
         internal static string GetFunctionBaseFolder()
         {
@@ -83,7 +83,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// <summary>
         /// Initializes the librdkafka library from a specific place
         /// This address the problem that running Functions in Azure won't have the current directory where the function code is.
-        /// This way we need to specifically choose the location where librdkafka is located
+        /// This way we need to specifically choose the location where librdkafka is located.
         /// </summary>
         internal static void InitializeLibrdKafka(ILogger logger)
         {
@@ -164,11 +164,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         }
 
         /// <summary>
-        /// Ensure file exists, checking for azure function base folder if not found in provided path
+        /// Ensure file exists, checking for azure function base folder if not found in provided path.
         /// </summary>
-        /// <param name="filePath">The file path to validate</param>
-        /// <param name="resultFilePath">The valid file path</param>
-        /// <returns>True if the file returned by <paramref name="resultFilePath"/> exists, otherwise false</returns>
+        /// <param name="filePath">The file path to validate.</param>
+        /// <param name="resultFilePath">The valid file path.</param>
+        /// <returns>True if the file returned by <paramref name="resultFilePath"/> exists, otherwise false.</returns>
         internal static bool TryGetValidFilePath(string filePath, out string resultFilePath)
         {
             resultFilePath = null;
