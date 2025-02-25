@@ -83,17 +83,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var valueType = entity.ValueType ?? typeof(byte[]);
             var keyType = entity.KeyType ?? typeof(Null);
 
-            var avroSchema = this.config.ResolveSecureSetting(nameResolver, entity.AvroSchema);
+            var valueAvroSchema = this.config.ResolveSecureSetting(nameResolver, entity.ValueAvroSchema);
+            var keyAvroSchema = this.config.ResolveSecureSetting(nameResolver, entity.KeyAvroSchema);
             var schemaRegistryUrl = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SchemaRegistryUrl);
             var schemaRegistryUsername = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SchemaRegistryUsername);
             var schemaRegistryPassword = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SchemaRegistryPassword);
 
-            var valueSerializer = SerializationHelper.ResolveValueSerializer(valueType, avroSchema, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword);
+            var valueSerializer = SerializationHelper.ResolveValueSerializer(valueType, valueAvroSchema, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword);
+            var keySerializer = SerializationHelper.ResolveValueSerializer(keyType, keyAvroSchema, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword);
 
             return (IKafkaProducer)Activator.CreateInstance(
                 typeof(KafkaProducer<,>).MakeGenericType(keyType, valueType),
                 producerBaseHandle,
                 valueSerializer,
+                keySerializer,
                 loggerFactory.CreateLogger(typeof(KafkaProducer<,>)));
         }
 

@@ -45,10 +45,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public string BrokerList { get; set; }
 
         /// <summary>
-        /// Gets or sets the Avro schema.
-        /// Should be used only if a generic record should be generated
+        /// Gets or sets the Avro schema of message value.
+        /// Should be used only if a generic record should be generated.
         /// </summary>
         public string AvroSchema { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Avro schema of message key.
+        /// Should be used only if a generic record should be generated.
+        /// </summary>
+        public string KeyAvroSchema { get; set; }
+
+        /// <summary>
+        /// Specifies the data type of the message key.
+        /// This data type will be used to serialize the key before sending it to the Kafka topic.
+        /// If KeyAvroSchema is set, this value is ignored and the key will be serialized using Avro.
+        /// The default type is System.String.
+        /// </summary>
+        public KafkaMessageKeyType KeyDataType { get; set; } = KafkaMessageKeyType.String;
 
         /// <summary>
         /// Gets or sets the Maximum transmit message size. Default: 1MB
