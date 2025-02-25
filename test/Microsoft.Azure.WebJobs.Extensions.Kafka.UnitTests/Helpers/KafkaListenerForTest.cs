@@ -27,6 +27,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             KafkaListenerConfiguration kafkaListenerConfiguration,
             bool requiresKey,
             IDeserializer<TValue> valueDeserializer,
+            IDeserializer<TKey> keyDeserializer,
             ILogger logger, 
             string functionId,
             IDrainModeManager drainModeManager)
@@ -36,6 +37,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 kafkaListenerConfiguration,
                 requiresKey,
                 valueDeserializer,
+                keyDeserializer,
                 logger,
                 functionId, 
                 drainModeManager)

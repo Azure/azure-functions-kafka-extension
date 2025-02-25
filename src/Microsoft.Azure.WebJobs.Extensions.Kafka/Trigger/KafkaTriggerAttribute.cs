@@ -45,10 +45,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
 
         /// <summary>
-        /// Gets or sets the Avro schema.
-        /// Should be used only if a generic record should be generated
+        /// Gets or sets the Avro schema of message value.
+        /// Should be used only if a generic record should be generated.
         /// </summary>
         public string AvroSchema { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Avro schema of message key.
+        /// Should be used only if a generic record should be generated.
+        /// </summary>
+        public string KeyAvroSchema { get; set; }
+
+        /// <summary>
+        /// Specifies the data type of the message key that will be deserialized from the Kafka topic.
+        /// If KeyAvroSchema is set, this value is ignored and the key will be generated as a generic record.
+        /// The default type is System.String.
+        /// </summary>
+        public KafkaMessageKeyType KeyDataType { get; set; } = KafkaMessageKeyType.String;
 
         /// <summary>
         /// SASL mechanism to use for authentication. 
