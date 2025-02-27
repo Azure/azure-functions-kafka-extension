@@ -5,7 +5,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Confluent.Kafka;
-using Microsoft.Azure.WebJobs.Extensions.Kafka;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
@@ -58,7 +57,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         internal IDeserializer<TValue> ValueDeserializer { get; }
 
         /// <summary>
-        /// Gets the Key deserializer
+        /// Gets the Key deserializer.
         /// </summary>
         /// <value>The key deserializer.</value>
         internal IDeserializer<TKey> KeyDeserializer { get; }
