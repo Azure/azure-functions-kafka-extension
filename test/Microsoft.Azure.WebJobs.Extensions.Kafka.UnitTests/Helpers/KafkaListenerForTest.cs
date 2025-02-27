@@ -3,6 +3,7 @@
 
 using System;
 using Confluent.Kafka;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Extensions.Logging;
@@ -11,7 +12,7 @@ using Moq;
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 {
     /// <summary>
-    /// Test <see cref="KafkaListener{TKey, TValue}"/>, allowing the creation of a custom <see cref="IConsumer{TKey, TValue}"/>
+    /// Test <see cref="KafkaListener{TKey, TValue}"/>, allowing the creation of a custom <see cref="IConsumer{TKey, TValue}"/>.
     /// </summary>
     internal class KafkaListenerForTest<TKey, TValue> : KafkaListener<TKey, TValue>
     {
@@ -28,7 +29,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             IDeserializer<TValue> valueDeserializer,
             IDeserializer<TKey> keyDeserializer,
             ILogger logger, 
-            string functionId)
+            string functionId,
+            IDrainModeManager drainModeManager)
             : base(executor,
                 singleDispatch,
                 options,
@@ -37,7 +39,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 valueDeserializer,
                 keyDeserializer,
                 logger,
-                functionId)
+                functionId, 
+                drainModeManager)
         {
         }
 
