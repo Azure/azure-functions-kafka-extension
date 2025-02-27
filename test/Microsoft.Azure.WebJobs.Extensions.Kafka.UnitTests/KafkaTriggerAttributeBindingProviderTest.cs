@@ -20,6 +20,7 @@ using Xunit;
 using System.Collections.Generic;
 using System.IO;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.Helpers;
+using Microsoft.Azure.WebJobs.Host;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 {
@@ -27,6 +28,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
     {
         private List<FileInfo> createdFiles = new List<FileInfo>();
         private IConfigurationRoot emptyConfiguration;
+        private IDrainModeManager drainModeManager = new Mock<IDrainModeManager>().Object;
 
         public KafkaTriggerAttributeBindingProviderTest()
         {
@@ -144,7 +146,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 Options.Create(new KafkaOptions()),
                 new KafkaEventDataConvertManager(NullLogger.Instance),
                 new DefaultNameResolver(config),
-                NullLoggerFactory.Instance);
+                NullLoggerFactory.Instance,
+                drainModeManager);
 
             var parameterInfo = new TriggerBindingProviderContext(this.GetParameterInfo(functionName), default);
 
@@ -180,7 +183,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 Options.Create(new KafkaOptions()),
                 new KafkaEventDataConvertManager(NullLogger.Instance),
                 new DefaultNameResolver(config),
-                NullLoggerFactory.Instance);
+                NullLoggerFactory.Instance,
+                drainModeManager);
 
             var parameterInfo = new TriggerBindingProviderContext(this.GetParameterInfo(functionName), default);
 
@@ -219,7 +223,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 Options.Create(new KafkaOptions()),
                 new KafkaEventDataConvertManager(NullLogger.Instance),
                 new DefaultNameResolver(config),
-                NullLoggerFactory.Instance);
+                NullLoggerFactory.Instance, 
+                drainModeManager);
 
             var parameterInfo = new TriggerBindingProviderContext(this.GetParameterInfo(functionName), default);
 
@@ -257,7 +262,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 Options.Create(new KafkaOptions()),
                 new KafkaEventDataConvertManager(NullLogger.Instance),
                 new DefaultNameResolver(config),
-                NullLoggerFactory.Instance);
+                NullLoggerFactory.Instance,
+                drainModeManager);
 
             var parameterInfo = new TriggerBindingProviderContext(this.GetParameterInfo(functionName), default);
 
@@ -294,7 +300,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 Options.Create(new KafkaOptions()),
                 new KafkaEventDataConvertManager(NullLogger.Instance),
                 new DefaultNameResolver(config),
-                NullLoggerFactory.Instance);
+                NullLoggerFactory.Instance,
+                drainModeManager);
 
             var parameterInfo = new TriggerBindingProviderContext(this.GetParameterInfo(functionName), default);
 
@@ -343,7 +350,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 Options.Create(new KafkaOptions()),
                 new KafkaEventDataConvertManager(NullLogger.Instance),
                 new DefaultNameResolver(config),
-                NullLoggerFactory.Instance);
+                NullLoggerFactory.Instance,
+                drainModeManager);
 
             var parameterInfo = new TriggerBindingProviderContext(this.GetParameterInfo(functionName), default);
 
@@ -381,7 +389,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 Options.Create(new KafkaOptions()),
                 new KafkaEventDataConvertManager(NullLogger.Instance),
                 new DefaultNameResolver(config),
-                NullLoggerFactory.Instance);
+                NullLoggerFactory.Instance,
+                drainModeManager);
 
             MethodInfo consumerConfigMethod = typeof(KafkaTriggerAttributeBindingProvider).GetMethod("CreateConsumerConfiguration", BindingFlags.NonPublic | BindingFlags.Instance);
 
@@ -424,7 +433,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 Options.Create(new KafkaOptions()),
                 new KafkaEventDataConvertManager(NullLogger.Instance),
                 new DefaultNameResolver(config),
-                NullLoggerFactory.Instance);
+                NullLoggerFactory.Instance,
+                drainModeManager);
 
             MethodInfo consumerConfigMethod = typeof(KafkaTriggerAttributeBindingProvider).GetMethod("CreateConsumerConfiguration", BindingFlags.NonPublic | BindingFlags.Instance);
 
@@ -474,7 +484,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 Options.Create(new KafkaOptions()),
                 new KafkaEventDataConvertManager(NullLogger.Instance),
                 new DefaultNameResolver(config),
-                NullLoggerFactory.Instance);
+                NullLoggerFactory.Instance,
+                drainModeManager);
 
             MethodInfo consumerConfigMethod = typeof(KafkaTriggerAttributeBindingProvider).GetMethod("CreateConsumerConfiguration", BindingFlags.NonPublic | BindingFlags.Instance);
 
@@ -504,7 +515,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 Options.Create(new KafkaOptions()),
                 new KafkaEventDataConvertManager(NullLogger.Instance),
                 new DefaultNameResolver(config),
-                NullLoggerFactory.Instance);
+                NullLoggerFactory.Instance,
+                drainModeManager);
 
             MethodInfo consumerConfigMethod = typeof(KafkaTriggerAttributeBindingProvider).GetMethod("CreateConsumerConfiguration", BindingFlags.NonPublic | BindingFlags.Instance);
 
@@ -544,7 +556,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 Options.Create(new KafkaOptions()),
                 new KafkaEventDataConvertManager(NullLogger.Instance),
                 new DefaultNameResolver(config),
-                NullLoggerFactory.Instance);
+                NullLoggerFactory.Instance,
+                drainModeManager);
 
             MethodInfo consumerConfigMethod = typeof(KafkaTriggerAttributeBindingProvider).GetMethod("CreateConsumerConfiguration", BindingFlags.NonPublic | BindingFlags.Instance);
 
@@ -576,7 +589,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 Options.Create(new KafkaOptions()),
                 new KafkaEventDataConvertManager(NullLogger.Instance),
                 new DefaultNameResolver(config),
-                NullLoggerFactory.Instance);
+                NullLoggerFactory.Instance,
+                drainModeManager);
 
             MethodInfo consumerConfigMethod = typeof(KafkaTriggerAttributeBindingProvider).GetMethod("CreateConsumerConfiguration", BindingFlags.NonPublic | BindingFlags.Instance);
 
@@ -625,7 +639,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 Options.Create(new KafkaOptions()),
                 new KafkaEventDataConvertManager(NullLogger.Instance),
                 new DefaultNameResolver(config),
-                NullLoggerFactory.Instance);
+                NullLoggerFactory.Instance,
+                drainModeManager);
 
             MethodInfo consumerConfigMethod = typeof(KafkaTriggerAttributeBindingProvider).GetMethod("CreateConsumerConfiguration", BindingFlags.NonPublic | BindingFlags.Instance);
 
