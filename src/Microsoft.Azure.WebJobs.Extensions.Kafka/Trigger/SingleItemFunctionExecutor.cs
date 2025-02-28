@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Confluent.Kafka;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Extensions.Logging;
 
@@ -21,8 +22,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     {
         private readonly string consumerGroup;
 
-        public SingleItemFunctionExecutor(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, string consumerGroup, int channelCapacity, int channelFullRetryIntervalInMs, ICommitStrategy<TKey, TValue> commitStrategy, ILogger logger)
-            : base(executor, consumer, channelCapacity, channelFullRetryIntervalInMs, commitStrategy, logger)
+        public SingleItemFunctionExecutor(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, string consumerGroup, int channelCapacity, int channelFullRetryIntervalInMs, ICommitStrategy<TKey, TValue> commitStrategy, ILogger logger, IDrainModeManager drainModeManager)
+            : base(executor, consumer, channelCapacity, channelFullRetryIntervalInMs, commitStrategy, logger, drainModeManager)
         {
             this.consumerGroup = consumerGroup;
             logger.LogInformation($"FunctionExecutor Loaded: {nameof(SingleItemFunctionExecutor<TKey, TValue>)}");

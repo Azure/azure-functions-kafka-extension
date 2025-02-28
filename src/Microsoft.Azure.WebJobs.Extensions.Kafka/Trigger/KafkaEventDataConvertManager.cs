@@ -100,6 +100,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 result = bytes;
             }
+            else if (value is null)
+            {
+                result = new byte[0];
+            }
             else if (value is string stringValue)
             {
                 result = Encoding.UTF8.GetBytes(stringValue);

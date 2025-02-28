@@ -8,21 +8,22 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Confluent.Kafka;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
     /// <summary>
-    /// Executes the functions for an specific partition.
-    /// Used for functions that are expecting multiple items at once
+    /// Executes the functions for a specific partition.
+    /// Used for functions that are expecting multiple items at once.
     /// </summary>
     public class MultipleItemFunctionExecutor<TKey, TValue> : FunctionExecutorBase<TKey, TValue>
     {
         private readonly string consumerGroup;
 
-        public MultipleItemFunctionExecutor(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer,  string consumerGroup, int channelCapacity, int channelFullRetryIntervalInMs, ICommitStrategy<TKey, TValue> commitStrategy, ILogger logger) 
-            : base(executor, consumer, channelCapacity, channelFullRetryIntervalInMs, commitStrategy, logger)
+        public MultipleItemFunctionExecutor(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer,  string consumerGroup, int channelCapacity, int channelFullRetryIntervalInMs, ICommitStrategy<TKey, TValue> commitStrategy, ILogger logger, IDrainModeManager drainModeManager) 
+            : base(executor, consumer, channelCapacity, channelFullRetryIntervalInMs, commitStrategy, logger, drainModeManager)
         {
             this.consumerGroup = consumerGroup;
             logger.LogInformation($"FunctionExecutor Loaded: {nameof(MultipleItemFunctionExecutor<TKey, TValue>)}");
