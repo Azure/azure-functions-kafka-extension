@@ -2,7 +2,8 @@
     "IsEncrypted": false,
     "Values": {
         "AzureWebJobsStorage": "UseDevelopmentStorage=true",
-        "FUNCTIONS_WORKER_RUNTIME": "python",
+        "FUNCTIONS_WORKER_RUNTIME": "node",
+        "FUNCTIONS_EXTENSION_VERSION"=~4
         "BrokerList": "{YOUR_CONFLUENT_CLOUD_BROKER}",
         "ConfluentCloudUserName": "{YOUR_CONFLUENT_CLOUD_USERNAME}",
         "ConfluentCloudPassword": "{YOUR_CONFLUENT_CLOUD_PASSWORD}",

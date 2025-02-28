@@ -1,19 +1,22 @@
 import { app, InvocationContext } from "@azure/functions";
 
 export async function kafkaAvroGenericTrigger(
-  event: unknown,
+  event: any,
   context: InvocationContext
 ): Promise<void> {
   context.log("Processed kafka event: ", event);
+  context.log(
+    `Message ID: ${event.id}, amount: ${event.amount}, type: ${event.type}`
+  );
   if (context.triggerMetadata?.key !== undefined) {
-    context.log("message key: ", context.triggerMetadata?.key as string);
+    context.log(`Message Key : ${context.triggerMetadata?.key}`);
   }
 }
 
 // confluent
 app.generic("kafkaAvroGenericTrigger", {
   trigger: {
-    type: "kakfaTrigger",
+    type: "kafkaTrigger",
     direction: "in",
     name: "event",
     protocol: "SASLSSL",
@@ -33,7 +36,7 @@ app.generic("kafkaAvroGenericTrigger", {
 // eventhub
 // app.generic("kafkaAvroGenericTrigger", {
 //   trigger: {
-//     type: "kakfaTrigger",
+//     type: "kafkaTrigger",
 //     direction: "in",
 //     name: "event",
 //     protocol: "SASLSSL",
