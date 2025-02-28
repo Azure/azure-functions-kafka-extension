@@ -10,7 +10,7 @@ export async function kafkaAvroGenericTrigger(event, context) {
 // confluent
 app.generic("kafkaAvroGenericTrigger", {
   trigger: {
-    type: "kakfaTrigger",
+    type: "kafkaTrigger",
     direction: "in",
     name: "event",
     protocol: "SASLSSL",
@@ -30,7 +30,7 @@ app.generic("kafkaAvroGenericTrigger", {
 // eventhub
 // app.generic("kafkaAvroGenericTrigger", {
 //   trigger: {
-//     type: "kakfaTrigger",
+//     type: "kafkaTrigger",
 //     direction: "in",
 //     name: "event",
 //     protocol: "SASLSSL",

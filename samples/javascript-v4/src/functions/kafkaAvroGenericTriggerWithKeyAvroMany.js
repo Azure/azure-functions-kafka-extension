@@ -1,39 +1,45 @@
 const { app } = require("@azure/functions");
 
-export async function kafkaAvroGenericTriggerMany(events, context) {
-  for (var event of events) {
+async function kafkaAvroGenericTriggerWithKeyAvroMany(events, context) {
+  events.forEach((event, index) => {
     context.log("Processed kafka event: ", event);
-  }
-  if (context.triggerMetadata?.key !== undefined) {
-    context.log("message key: ", context.triggerMetadata?.key);
-  }
+    context.log(
+      `Message ID: ${event.id}, amount: ${event.amount}, type: ${event.type}`
+    );
+
+    const key = context.triggerMetadata?.keyArray?.[index];
+    if (key !== undefined) {
+      context.log(`Key ID: ${key.id}, timestamp: ${key.timestamp}`);
+    }
+  });
 }
 
 // confluent
-app.generic("kafkaAvroGenericTriggerMany", {
+app.generic("kafkaAvroGenericTriggerWithKeyAvroMany", {
   trigger: {
     type: "kafkaTrigger",
     direction: "in",
     name: "events",
     protocol: "SASLSSL",
+    username: "ConfluentCloudUsername",
     password: "ConfluentCloudPassword",
     dataType: "string",
     topic: "topic",
     authenticationMode: "PLAIN",
     avroSchema:
       '{"type":"record","name":"Payment","namespace":"io.confluent.examples.clients.basicavro","fields":[{"name":"id","type":"string"},{"name":"amount","type":"double"},{"name":"type","type":"string"}]}',
-    cardinality: "MANY",
+    keyAvroSchema:
+      '{"type":"record","name":"PaymentKey","namespace":"io.confluent.examples.clients.basicavro","fields":[{"name":"id","type":"string"},{"name":"timestamp","type":"string"}]}',
     consumerGroup: "$Default",
-    username: "ConfluentCloudUsername",
     brokerList: "%BrokerList%",
   },
-  handler: kafkaAvroGenericTriggerMany,
+  handler: kafkaAvroGenericTriggerWithKeyAvroMany,
 });
 
 // eventhub
-// app.generic("kafkaAvroGenericTriggerMany", {
+// app.generic("kafkaAvroGenericTriggerWithKeyAvroMany", {
 //   trigger: {
-//     type: "kafkaTrigger",
+//     type: "kakfaTrigger",
 //     direction: "in",
 //     name: "events",
 //     protocol: "SASLSSL",
@@ -43,10 +49,11 @@ app.generic("kafkaAvroGenericTriggerMany", {
 //     authenticationMode: "PLAIN",
 //     avroSchema:
 //       '{"type":"record","name":"Payment","namespace":"io.confluent.examples.clients.basicavro","fields":[{"name":"id","type":"string"},{"name":"amount","type":"double"},{"name":"type","type":"string"}]}',
-//     cardinality: "MANY",
+//     keyAvroSchema:
+//      '{"type":"record","name":"PaymentKey","namespace":"io.confluent.examples.clients.basicavro","fields":[{"name":"id","type":"string"},''{"name":"timestamp","type":"string"}]}',
 //     consumerGroup: "$Default",
 //     username: "$ConnectionString",
 //     brokerList: "%BrokerList%",
 //   },
-//   handler: kafkaAvroGenericTriggerMany,
+//   handler: kafkaAvroGenericTriggerWithKeyAvroMany,
 // });
