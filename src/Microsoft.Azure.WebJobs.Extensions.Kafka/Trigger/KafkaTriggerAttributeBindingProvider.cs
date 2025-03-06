@@ -113,14 +113,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 consumerConfig.SslKeyPassword = this.config.ResolveSecureSetting(nameResolver, attribute.SslKeyPassword);
                 consumerConfig.SslCertificateLocation = GetValidFilePath(attribute.SslCertificateLocation);
                 consumerConfig.SslCaLocation = GetValidFilePath(attribute.SslCaLocation);
-                consumerConfig.SslCaPEM = ExtractCertificate(this.config.ResolveSecureSetting(nameResolver, attribute.SslCaPEM));
+                consumerConfig.SslCaPEM = Config.PEMExtractor.ExtractAllCertificates(this.config.ResolveSecureSetting(nameResolver, attribute.SslCaPEM));
                 consumerConfig.SslCertificatePEM = this.config.ResolveSecureSetting(nameResolver, attribute.SslCertificatePEM);
                 consumerConfig.SslKeyPEM = this.config.ResolveSecureSetting(nameResolver, attribute.SslKeyPEM);
                 consumerConfig.SslCertificateandKeyPEM = this.config.ResolveSecureSetting(nameResolver, attribute.SslCertificateandKeyPEM);
 
-                if (!string.IsNullOrEmpty(consumerConfig.SslCertificateandKeyPEM)) {
-                    consumerConfig.SslCertificatePEM = ExtractCertificate(consumerConfig.SslCertificateandKeyPEM);
-                    consumerConfig.SslKeyPEM = ExtractPrivateKey(consumerConfig.SslCertificateandKeyPEM);
+                if (!string.IsNullOrEmpty(consumerConfig.SslCertificateandKeyPEM))
+                {
+                    consumerConfig.SslCertificatePEM = Config.PEMExtractor.ExtractCertificate(consumerConfig.SslCertificateandKeyPEM);
+                    consumerConfig.SslKeyPEM = Config.PEMExtractor.ExtractPrivateKey(consumerConfig.SslCertificateandKeyPEM);
                 }
 
                 if (attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet)
@@ -159,30 +160,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 throw new Exception($"{location} is not a valid file location");
             }
             return validPath;
-        }
-
-        private string ExtractSection(string pemString, string sectionName)
-        {
-            if (!string.IsNullOrEmpty(pemString))
-            {
-                var regex = new Regex($"-----BEGIN {sectionName}-----(.*?)-----END {sectionName}-----", RegexOptions.Singleline);
-                var match = regex.Match(pemString);
-                if (match.Success)
-                {
-                    return match.Value.Replace("\\n", "\n");
-                }
-            }
-            return null;
-        }
-
-        private string ExtractCertificate(string pemString)
-        {
-            return ExtractSection(pemString, "CERTIFICATE");
-        }
-
-        private string ExtractPrivateKey(string pemString)
-        {
-            return ExtractSection(pemString, "PRIVATE KEY");
         }
     }
 }
