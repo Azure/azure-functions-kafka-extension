@@ -442,4 +442,4 @@ A specified amount of time is allowed to elapse between each retry.
  #### 2. Exponential Backoff
 The first retry waits for the minimum delay. On subsequent retries, time is added exponentially to the initial duration for each retry, until the maximum delay is reached. Exponential back-off adds some small randomization to delays to stagger retries in high-throughput scenarios.
 
-For more info please check [official doc](https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-error-pages?tabs=fixed-delay%2Cin-process&pivots=programming-language-csharp#retry-examples)
+For more info please check [official doc](https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-error-pages?tabs=fixed-delay%2Cin-process&pivots=programming-language-csharp#retry-examples).
