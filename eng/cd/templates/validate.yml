@@ -1,0 +1,42 @@
+parameters:
+  - name: nugetPackageName
+    type: string
+  - name: packageVersion
+    type: string
+
+jobs:
+  - job: ValidateRelease
+    displayName: Validate Release Variables
+    variables:
+      packageVersion: ${{ parameters.packageVersion }}
+      nugetPackageName: ${{ parameters.nugetPackageName }}
+      nugetPackageBaseName: ${{ format('{0}.{1}', parameters.nugetPackageName, parameters.packageVersion) }}
+    steps:
+      - task: PowerShell@2
+        displayName: Validate Nuget Package Version
+        env:
+          nugetPackageBaseName: $(nugetPackageBaseName)
+          nugetPackageName: $(nugetPackageName)
+          packageVersion: $(packageVersion)
+        inputs:
+          targetType: inline
+          script: |-
+            if (-not $nugetPackageName) {
+              Write-Host "##vso[task.LogIssue type=error;]NugetPackageName parameter is null or empty."
+            }
+
+            if (-not $packageVersion) {
+              Write-Host "##vso[task.LogIssue type=error;]PackageVersion parameter is null or empty."
+            }
+
+            $extractedBaseName = (Get-Item "$(System.DefaultWorkingDirectory)\$(Release.PrimaryArtifactSourceAlias)\drop\$(nugetPackageName).*.nupkg").BaseName
+            if ($nugetPackageBaseName -ne $extractedBaseName) {
+                Write-Host "##vso[task.LogIssue type=error;]Package name from artifact ($extractedBaseName) does not match provided package name ($nugetPackageBaseName)."
+            }
+
+            $extractedVersion = $extractedBaseName.Replace("$nugetPackageName.", "").Split(' ')[0]
+            if ($packageVersion -ne $extractedVersion) {
+                Write-Host "##vso[task.LogIssue type=error;]Version from artifact ($extractedVersion) does not match the provided parameter version ($packageVersion)."
+            }
+
+            Write-Host "Validation successful: extracted nugetPackageBaseName and extracted packageVersion match with the release versions."

@@ -1,0 +1,57 @@
+parameters:
+  stageName: ""
+  displayName: ""
+  packageName: ""
+  packageVersion: ""
+  relativeArtifactPath: ""
+  blobPath: ""
+
+stages:
+  - stage: ${{ parameters.stageName }}
+    displayName: ${ parameters.displayName }
+    dependsOn: ValidateAndApprove
+    condition: succeeded()
+    jobs:
+      - job: PublishJob
+        displayName: Publish Package to Storage Account
+        templateContext:
+          type: releaseJob
+          isProduction: true
+          inputs:
+            - input: pipelineArtifact
+              pipeline: "_kafka-extensionofficial"
+              artifactName: "drop"
+              targetPath: "$(Pipeline.Workspace)/drop"
+        variables:
+          - name: artifactPath
+            value: "$(System.DefaultWorkingDirectory)/$(Release.PrimaryArtifactSourceAlias)/${{ parameters.relativeArtifactPath }}"
+          - name: blobPath
+            value: "${{ parameters.blobPath }}"
+          - name: packagesDestinationPath
+            value: "$(System.DefaultWorkingDirectory)/packages"
+        steps:
+          - task: PowerShell@2
+            displayName: Show initialized variables
+            inputs:
+              targetType: inline
+              script: |-
+                Get-ChildItem env:
+          - task: PowerShell@2
+            displayName: Move artifacts to the correct location
+            inputs:
+              targetType: inline
+              script: |-
+                $sourcePath = "$(artifactPath)\*.nupkg"
+                Move-Item -Path $sourcePath -Destination $packagesDestinationPath -Force -Recurse
+                Get-ChildItem -Path $packagesDestinationPath -Recurse | ForEach-Object {
+                  Write-Host "File: $($_.FullName)"
+                }
+          - task: AzureFileCopy@6
+            displayName: Upload .NET artifacts
+            inputs:
+              SourcePath: $(packagesDestinationPath)\*
+              ConnectedServiceNameARM: azure-sdk-partner-drops
+              Destination: AzureBlob
+              StorageAccountRM: azuresdkpartnerdrops
+              ContainerName: drops
+              BlobPrefix: $(blobPath)
