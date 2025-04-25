@@ -7,7 +7,7 @@ jobs:
     steps:
       - task: ManualValidation@1
         inputs:
-          notifyUsers: |-
-            [TEAM FOUNDATION]\Azure Functions IDC
+          # notifyUsers: |-
+          #   [TEAM FOUNDATION]\Azure Functions IDC
           approvers: |-
             [TEAM FOUNDATION]\Azure Functions IDC

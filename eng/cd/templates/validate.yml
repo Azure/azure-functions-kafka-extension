@@ -1,42 +1,46 @@
 parameters:
-  - name: nugetPackageName
+  - name: nugetPackageBaseName # (e.g. Microsoft.Azure.WebJobs.Extensions.Kafka.2.0.0)
     type: string
-  - name: packageVersion
+  - name: nugetArtifactPath # path to which pipeline artifact is copied
     type: string
 
 jobs:
   - job: ValidateRelease
     displayName: Validate Release Variables
     variables:
-      packageVersion: ${{ parameters.packageVersion }}
-      nugetPackageName: ${{ parameters.nugetPackageName }}
-      nugetPackageBaseName: ${{ format('{0}.{1}', parameters.nugetPackageName, parameters.packageVersion) }}
+      nupkgPath: "${{ parameters.nugetArtifactPath }}\\${{ parameters.nugetPackageBaseName }}.nupkg"
+      nupkgSymbolsPath: "${{ parameters.nugetArtifactPath }}\\${{ parameters.nugetPackageBaseName }}.symbols.nupkg"
+    templateContext:
+      type: releaseJob
+      isProduction: true
+      inputs:
+        - input: pipelineArtifact
+          pipeline: "_kafka-extensionofficial"
+          artifactName: "drop"
+          targetPath: "${{ parameters.nugetArtifactPath }}"
     steps:
       - task: PowerShell@2
-        displayName: Validate Nuget Package Version
-        env:
-          nugetPackageBaseName: $(nugetPackageBaseName)
-          nugetPackageName: $(nugetPackageName)
-          packageVersion: $(packageVersion)
+        displayName: Display artifacts
         inputs:
           targetType: inline
           script: |-
-            if (-not $nugetPackageName) {
-              Write-Host "##vso[task.LogIssue type=error;]NugetPackageName parameter is null or empty."
+            Write-Host "##[debug]Listing files in the workspace folder:"
+            Get-ChildItem -Path "$(Build.ArtifactStagingDirectory)" -Recurse
+            Write-Host "##[debug]Listing files in the drop folder:"
+            Get-ChildItem -Path "${{ parameters.nugetArtifactPath }}"
+      - task: PowerShell@2
+        displayName: "Check NuGet Package Files Exist"
+        inputs:
+          targetType: inline
+          script: |
+            Write-Host "##[debug]Checking for $(nupkgPath)..."
+            if (-not (Test-Path -Path $(nupkgPath))) {
+              Write-Host "[error]NuGet package file '$(nupkgPath)' is missing."
+              exit 1
             }
 
-            if (-not $packageVersion) {
-              Write-Host "##vso[task.LogIssue type=error;]PackageVersion parameter is null or empty."
+            Write-Host "##[debug]Checking for $(nupkgSymbolsPath)..."
+            if (-not (Test-Path -Path $(nupkgSymbolsPath))) {
+              Write-Host "[error]NuGet symbols package file '$(nupkgSymbolsPath)' is missing."
+              exit 1
             }
-
-            $extractedBaseName = (Get-Item "$(System.DefaultWorkingDirectory)\$(Release.PrimaryArtifactSourceAlias)\drop\$(nugetPackageName).*.nupkg").BaseName
-            if ($nugetPackageBaseName -ne $extractedBaseName) {
-                Write-Host "##vso[task.LogIssue type=error;]Package name from artifact ($extractedBaseName) does not match provided package name ($nugetPackageBaseName)."
-            }
-
-            $extractedVersion = $extractedBaseName.Replace("$nugetPackageName.", "").Split(' ')[0]
-            if ($packageVersion -ne $extractedVersion) {
-                Write-Host "##vso[task.LogIssue type=error;]Version from artifact ($extractedVersion) does not match the provided parameter version ($packageVersion)."
-            }
-
-            Write-Host "Validation successful: extracted nugetPackageBaseName and extracted packageVersion match with the release versions."

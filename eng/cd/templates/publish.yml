@@ -1,14 +1,13 @@
 parameters:
   stageName: ""
   displayName: ""
-  packageName: ""
-  packageVersion: ""
-  relativeArtifactPath: ""
+  packagesSourcePath: ""
+  packagesDestinationPath: ""
   blobPath: ""
 
 stages:
   - stage: ${{ parameters.stageName }}
-    displayName: ${ parameters.displayName }
+    displayName: ${{ parameters.displayName }}
     dependsOn: ValidateAndApprove
     condition: succeeded()
     jobs:
@@ -21,37 +20,35 @@ stages:
             - input: pipelineArtifact
               pipeline: "_kafka-extensionofficial"
               artifactName: "drop"
-              targetPath: "$(Pipeline.Workspace)/drop"
-        variables:
-          - name: artifactPath
-            value: "$(System.DefaultWorkingDirectory)/$(Release.PrimaryArtifactSourceAlias)/${{ parameters.relativeArtifactPath }}"
-          - name: blobPath
-            value: "${{ parameters.blobPath }}"
-          - name: packagesDestinationPath
-            value: "$(System.DefaultWorkingDirectory)/packages"
+              targetPath: "${{ parameters.packagesSourcePath }}"
         steps:
-          - task: PowerShell@2
-            displayName: Show initialized variables
-            inputs:
-              targetType: inline
-              script: |-
-                Get-ChildItem env:
+          # move only nupkg files to destination location
           - task: PowerShell@2
             displayName: Move artifacts to the correct location
             inputs:
               targetType: inline
               script: |-
-                $sourcePath = "$(artifactPath)\*.nupkg"
-                Move-Item -Path $sourcePath -Destination $packagesDestinationPath -Force -Recurse
-                Get-ChildItem -Path $packagesDestinationPath -Recurse | ForEach-Object {
-                  Write-Host "File: $($_.FullName)"
+                $sourcePath = "${{ parameters.packagesSourcePath }}\*.nupkg"
+                $destinationPath = "${{ parameters.packagesDestinationPath }}"
+                if (!(Test-Path -Path $destinationPath)) {
+                  New-Item -ItemType Directory -Path $destinationPath -Force
                 }
+                Write-Host "##[debug]Moving files from $sourcePath to $destinationPath"
+                Move-Item -Path $sourcePath -Destination $destinationPath -Force
+          - task: PowerShell@2
+            displayName: Display artifacts
+            inputs:
+              targetType: inline
+              script: |-
+                Write-Host "##[debug]Listing files in the destination folder:"
+                Get-ChildItem -Path "${{ parameters.packagesDestinationPath }}"
+          # copy nupkg files from destination location to the storage account
           - task: AzureFileCopy@6
             displayName: Upload .NET artifacts
             inputs:
-              SourcePath: $(packagesDestinationPath)\*
+              SourcePath: ${{ parameters.packagesDestinationPath }}\*
               ConnectedServiceNameARM: azure-sdk-partner-drops
               Destination: AzureBlob
               StorageAccountRM: azuresdkpartnerdrops
               ContainerName: drops
-              BlobPrefix: $(blobPath)
+              BlobPrefix: ${{ parameters.blobPath }}
