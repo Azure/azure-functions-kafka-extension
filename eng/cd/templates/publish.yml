@@ -1,0 +1,54 @@
+parameters:
+  stageName: ""
+  displayName: ""
+  packagesSourcePath: ""
+  packagesDestinationPath: ""
+  blobPath: ""
+
+stages:
+  - stage: ${{ parameters.stageName }}
+    displayName: ${{ parameters.displayName }}
+    dependsOn: ValidateAndApprove
+    condition: succeeded()
+    jobs:
+      - job: PublishJob
+        displayName: Publish Package to Storage Account
+        templateContext:
+          type: releaseJob
+          isProduction: true
+          inputs:
+            - input: pipelineArtifact
+              pipeline: "_kafka-extensionofficial"
+              artifactName: "drop"
+              targetPath: "${{ parameters.packagesSourcePath }}"
+        steps:
+          # move only nupkg files to destination location
+          - task: PowerShell@2
+            displayName: Move artifacts to the correct location
+            inputs:
+              targetType: inline
+              script: |-
+                $sourcePath = "${{ parameters.packagesSourcePath }}\*.nupkg"
+                $destinationPath = "${{ parameters.packagesDestinationPath }}"
+                if (!(Test-Path -Path $destinationPath)) {
+                  New-Item -ItemType Directory -Path $destinationPath -Force
+                }
+                Write-Host "##[debug]Moving files from $sourcePath to $destinationPath"
+                Move-Item -Path $sourcePath -Destination $destinationPath -Force
+          - task: PowerShell@2
+            displayName: Display artifacts
+            inputs:
+              targetType: inline
+              script: |-
+                Write-Host "##[debug]Listing files in the destination folder:"
+                Get-ChildItem -Path "${{ parameters.packagesDestinationPath }}"
+          # copy nupkg files from destination location to the storage account
+          - task: AzureFileCopy@6
+            displayName: Upload .NET artifacts
+            inputs:
+              SourcePath: ${{ parameters.packagesDestinationPath }}\*
+              ConnectedServiceNameARM: azure-sdk-partner-drops
+              Destination: AzureBlob
+              StorageAccountRM: azuresdkpartnerdrops
+              ContainerName: drops
+              BlobPrefix: ${{ parameters.blobPath }}
