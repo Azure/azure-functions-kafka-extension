@@ -1,0 +1,13 @@
+jobs:
+  - job: ApproveRelease
+    displayName: Pre-Deployment Approval
+    condition: succeeded()
+    timeoutInMinutes: 1440
+    pool: server
+    steps:
+      - task: ManualValidation@1
+        inputs:
+          # notifyUsers: |-
+          #   [TEAM FOUNDATION]\Azure Functions IDC
+          approvers: |-
+            [TEAM FOUNDATION]\Azure Functions IDC
