@@ -1,0 +1,27 @@
+// For format details, see https://aka.ms/vscode-remote/devcontainer.json or this file's README at:
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.106.0/containers/azure-functions-node-10
+{
+	"name": "Azure Functions & TypeScript & Node 14 & Confluent Kafka",
+	"dockerComposeFile": "docker-compose.yml",
+	"service": "myfunction",
+	"workspaceFolder": "/workspace",
+	"forwardPorts": [ 7071, 9021 ],
+	"remoteEnv": {"LD_LIBRARY_PATH": "/workspace/target/azure-functions/kafka-function-20190419163130420/bin/runtimes/linux-x64/native"},
+	"containerEnv": {"LD_LIBRARY_PATH": "/workspace/target/azure-functions/kafka-function-20190419163130420/bin/runtimes/linux-x64/native"},
+	// Set *default* container specific settings.json values on container create.
+	"settings": { 
+		"terminal.integrated.shell.linux": "/bin/bash"
+	},
+
+	// Add the IDs of extensions you want installed when the container is created.
+	"extensions": [
+		"ms-azuretools.vscode-azurefunctions",
+		"dbaeumer.vscode-eslint"
+	]
+
+	// Use 'postCreateCommand' to run commands after the container is created.
+	// "postCreateCommand": "npm install",
+
+	// Uncomment to connect as a non-root user. See https://aka.ms/vscode-remote/containers/non-root.
+	// "remoteUser": "node"
+}

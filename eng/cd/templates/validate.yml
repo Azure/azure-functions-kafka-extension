@@ -1,0 +1,46 @@
+parameters:
+  - name: nugetPackageBaseName # (e.g. Microsoft.Azure.WebJobs.Extensions.Kafka.2.0.0)
+    type: string
+  - name: nugetArtifactPath # path to which pipeline artifact is copied
+    type: string
+
+jobs:
+  - job: ValidateRelease
+    displayName: Validate Release Variables
+    variables:
+      nupkgPath: "${{ parameters.nugetArtifactPath }}\\${{ parameters.nugetPackageBaseName }}.nupkg"
+      nupkgSymbolsPath: "${{ parameters.nugetArtifactPath }}\\${{ parameters.nugetPackageBaseName }}.symbols.nupkg"
+    templateContext:
+      type: releaseJob
+      isProduction: true
+      inputs:
+        - input: pipelineArtifact
+          pipeline: "_kafka-extensionofficial"
+          artifactName: "drop"
+          targetPath: "${{ parameters.nugetArtifactPath }}"
+    steps:
+      - task: PowerShell@2
+        displayName: Display artifacts
+        inputs:
+          targetType: inline
+          script: |-
+            Write-Host "##[debug]Listing files in the workspace folder:"
+            Get-ChildItem -Path "$(Build.ArtifactStagingDirectory)" -Recurse
+            Write-Host "##[debug]Listing files in the drop folder:"
+            Get-ChildItem -Path "${{ parameters.nugetArtifactPath }}"
+      - task: PowerShell@2
+        displayName: "Check NuGet Package Files Exist"
+        inputs:
+          targetType: inline
+          script: |
+            Write-Host "##[debug]Checking for $(nupkgPath)..."
+            if (-not (Test-Path -Path $(nupkgPath))) {
+              Write-Host "[error]NuGet package file '$(nupkgPath)' is missing."
+              exit 1
+            }
+
+            Write-Host "##[debug]Checking for $(nupkgSymbolsPath)..."
+            if (-not (Test-Path -Path $(nupkgSymbolsPath))) {
+              Write-Host "[error]NuGet symbols package file '$(nupkgSymbolsPath)' is missing."
+              exit 1
+            }
