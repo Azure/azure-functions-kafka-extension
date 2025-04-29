@@ -100,30 +100,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 loggerFactory.CreateLogger(typeof(KafkaProducer<,>)));
         }
 
-        private string ExtractSection(string pemString, string sectionName)
-        {
-            if (!string.IsNullOrEmpty(pemString))
-            {
-                var regex = new Regex($"-----BEGIN {sectionName}-----(.*?)-----END {sectionName}-----", RegexOptions.Singleline);
-                var match = regex.Match(pemString);
-                if (match.Success)
-                {
-                    return match.Value.Replace("\\n", "\n");
-                }
-            }
-            return null;
-        }
-
-        private string ExtractCertificate(string pemString)
-        {
-            return ExtractSection(pemString, "CERTIFICATE");
-        }
-
-        private string ExtractPrivateKey(string pemString)
-        {
-            return ExtractSection(pemString, "PRIVATE KEY");
-        }
-
         public ProducerConfig GetProducerConfig(KafkaProducerEntity entity)
         {
             var sslCertificateLocation = config.ResolveSecureSetting(nameResolver, entity.Attribute.SslCertificateLocation);
@@ -131,13 +107,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 resolvedSslCertificationLocation = sslCertificateLocation;
             }
-            
+
             var sslCaLocation = config.ResolveSecureSetting(nameResolver, entity.Attribute.SslCaLocation);
             if (!AzureFunctionsFileHelper.TryGetValidFilePath(sslCaLocation, out var resolvedSslCaLocation))
             {
                 resolvedSslCaLocation = sslCaLocation;
             }
-            
+
             var sslKeyLocation = config.ResolveSecureSetting(nameResolver, entity.Attribute.SslKeyLocation);
             if (!AzureFunctionsFileHelper.TryGetValidFilePath(sslKeyLocation, out var resolvedSslKeyLocation))
             {
@@ -159,7 +135,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 SslKeyPassword = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SslKeyPassword),
                 SslCertificateLocation = resolvedSslCertificationLocation,
                 SslCaLocation = resolvedSslCaLocation,
-                SslCaPem = ExtractCertificate(this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SslCaPEM)),
+                SslCaPem = Config.PEMExtractor.ExtractAllCertificates(this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SslCaPEM)),
                 SslCertificatePem = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SslCertificatePEM),
                 SslKeyPem = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SslKeyPEM),
                 Debug = kafkaOptions?.LibkafkaDebug,
@@ -171,8 +147,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             if (!string.IsNullOrEmpty(entity.Attribute.SslCertificateandKeyPEM))
             {
                 var sslCertificateandKeyPEM = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SslCertificateandKeyPEM);
-                conf.SslCertificatePem = ExtractCertificate(sslCertificateandKeyPEM);
-                conf.SslKeyPem = ExtractPrivateKey(sslCertificateandKeyPEM);
+                conf.SslCertificatePem = Config.PEMExtractor.ExtractCertificate(sslCertificateandKeyPEM);
+                conf.SslKeyPem = Config.PEMExtractor.ExtractPrivateKey(sslCertificateandKeyPEM);
             }
 
             if (entity.Attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet)

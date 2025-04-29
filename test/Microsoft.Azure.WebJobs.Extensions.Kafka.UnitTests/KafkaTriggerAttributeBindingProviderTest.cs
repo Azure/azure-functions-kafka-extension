@@ -223,7 +223,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 Options.Create(new KafkaOptions()),
                 new KafkaEventDataConvertManager(NullLogger.Instance),
                 new DefaultNameResolver(config),
-                NullLoggerFactory.Instance, 
+                NullLoggerFactory.Instance,
                 drainModeManager);
 
             var parameterInfo = new TriggerBindingProviderContext(this.GetParameterInfo(functionName), default);
@@ -565,6 +565,53 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(result.SslCaPEM, dummySslCaCert);
             Assert.Equal(result.SslCertificatePEM, dummySslCert);
             Assert.Equal(result.SslKeyPEM, dummySslKey);
+        }
+
+        [Fact]
+        public void GetConsumerConfig_When_Protocol_is_SSL_With_PEM_Certificate_Multiple_CA()
+        {
+            var dummySslCaCert = """
+-----BEGIN CERTIFICATE-----
+dummyIntermediateCaCert
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+dummyRootCaCert
+-----END CERTIFICATE-----
+""";
+            var dummySslCert = """
+-----BEGIN CERTIFICATE-----
+dummyclientcert
+-----END CERTIFICATE-----
+""";
+            var dummySslKey = """
+-----BEGIN PRIVATE KEY-----
+dummyclientkey
+-----END PRIVATE KEY-----
+""";
+            var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")
+            {
+                Protocol = BrokerProtocol.Ssl,
+                SslCaPEM = dummySslCaCert,
+                SslCertificatePEM = dummySslCert,
+                SslKeyPEM = dummySslKey,
+            };
+
+            var config = this.emptyConfiguration;
+
+            var bindingProvider = new KafkaTriggerAttributeBindingProvider(
+                config,
+                Options.Create(new KafkaOptions()),
+                new KafkaEventDataConvertManager(NullLogger.Instance),
+                new DefaultNameResolver(config),
+                NullLoggerFactory.Instance,
+                drainModeManager);
+
+            MethodInfo consumerConfigMethod = typeof(KafkaTriggerAttributeBindingProvider).GetMethod("CreateConsumerConfiguration", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            KafkaListenerConfiguration result = (KafkaListenerConfiguration)consumerConfigMethod.Invoke(bindingProvider, new object[] { attribute });
+            Assert.Equal(dummySslCaCert, result.SslCaPEM);
+            Assert.Equal(dummySslCert, result.SslCertificatePEM);
+            Assert.Equal(dummySslKey, result.SslKeyPEM);
         }
 
         [Fact]
