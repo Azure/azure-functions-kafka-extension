@@ -1,6 +1,6 @@
 import { app, InvocationContext } from "@azure/functions";
 
-export async function kafkaTrigger(
+export async function kafkaTriggerWithRetry(
   event: any,
   context: InvocationContext
 ): Promise<void> {
@@ -8,7 +8,7 @@ export async function kafkaTrigger(
 }
 
 // eventhub
-app.generic("Kafkatrigger", {
+app.generic("kafkaTriggerWithRetry", {
   trigger: {
     type: "kafkaTrigger",
     direction: "in",
@@ -22,7 +22,7 @@ app.generic("Kafkatrigger", {
     authenticationMode: "plain",
     dataType: "string",
   },
-  handler: kafkaTrigger,
+  handler: kafkaTriggerWithRetry,
   retry: {
     strategy: "fixedDelay", // "exponentialBackoff" | "fixedDelay"
     maxRetryCount: 3,
@@ -31,7 +31,7 @@ app.generic("Kafkatrigger", {
 });
 
 // eventhub with exponentialBackoff
-// app.generic("Kafkatrigger", {
+// app.generic("kafkaTriggerWithRetry", {
 //   trigger: {
 //     type: "kafkaTrigger",
 //     direction: "in",
@@ -45,7 +45,7 @@ app.generic("Kafkatrigger", {
 //     authenticationMode: "plain",
 //     dataType: "string",
 //   },
-//   handler: kafkaTrigger,
+//   handler: kafkaTriggerWithRetry,
 //   retry: {
 //     strategy: "exponentialBackoff",
 //     maxRetryCount: 3,
@@ -55,7 +55,7 @@ app.generic("Kafkatrigger", {
 // });
 
 // confluent
-// app.generic("Kafkatrigger", {
+// app.generic("kafkaTriggerWithRetry", {
 //   trigger: {
 //     type: "kafkaTrigger",
 //     direction: "in",
@@ -67,7 +67,12 @@ app.generic("Kafkatrigger", {
 //     consumerGroup: "$Default",
 //     protocol: "saslSsl",
 //     authenticationMode: "plain",
-//     dataType: "string"
+//     dataType: "string",
+//     retry: {
+//       strategy: "fixedDelay", // "exponentialBackoff" | "fixedDelay"
+//       maxRetryCount: 3,
+//       delayInterval: 300,
+//     },
 //   },
-//   handler: kafkaTrigger,
+//   handler: kafkaTriggerWithRetry,
 // });
