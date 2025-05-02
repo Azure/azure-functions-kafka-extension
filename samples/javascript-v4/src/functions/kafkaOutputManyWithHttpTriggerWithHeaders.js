@@ -24,7 +24,7 @@ const kafkaOutput = output.generic({
 //     authenticationMode: "plain",
 //});
 
-export async function kafkaOutputWithHttp(request, context) {
+async function kafkaOutputWithHttp(request, context) {
   context.log(`Http function processed request for url "${request.url}"`);
 
   const queryName = request.query.get("name");

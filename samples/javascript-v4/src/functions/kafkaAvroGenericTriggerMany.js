@@ -1,6 +1,6 @@
 const { app } = require("@azure/functions");
 
-export async function kafkaAvroGenericTriggerMany(events, context) {
+async function kafkaAvroGenericTriggerMany(events, context) {
   for (var event of events) {
     context.log("Processed kafka event: ", event);
   }

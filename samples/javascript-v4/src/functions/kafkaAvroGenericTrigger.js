@@ -1,6 +1,6 @@
 const { app } = require("@azure/functions");
 
-export async function kafkaAvroGenericTrigger(event, context) {
+async function kafkaAvroGenericTrigger(event, context) {
   context.log("Processed kafka event: ", event);
   if (context.triggerMetadata?.key !== undefined) {
     context.log("message key: ", context.triggerMetadata?.key);
