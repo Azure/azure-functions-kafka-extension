@@ -1,6 +1,6 @@
 const { app } = require("@azure/functions");
 
-export async function kafkaTriggerWithHeaders(event, context) {
+async function kafkaTriggerWithHeaders(event, context) {
   context.log("Event Offset: " + event.Offset);
   context.log("Event Partition: " + event.Partition);
   context.log("Event Topic: " + event.Topic);
