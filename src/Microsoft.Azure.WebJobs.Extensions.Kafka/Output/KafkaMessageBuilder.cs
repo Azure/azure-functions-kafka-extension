@@ -22,12 +22,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             if (eventData.Key != null)
             {
-                if (!(eventData.Key is TKey keyValue))
+                try
                 {
-                    throw new ArgumentException($"Key value is not of the expected type. Expected: {typeof(TKey).Name}. Actual: {eventData.Key.GetType().Name}");
+                    if (eventData.Key is TKey keyValue)
+                    {
+                        msg.Key = keyValue;
+                    }
+                    else
+                    {
+                        // this case is possible in out of proc when KafkaMessageKeyType is set specifically
+                        msg.Key = typeof(TKey) switch
+                        {
+                            // byte[], string are added as data types supported by KafkaMessageKeyType enum
+                            Type t when t == typeof(byte[]) => (TKey)(object)System.Text.Encoding.UTF8.GetBytes(eventData.Key.ToString()),
+                            Type t when t == typeof(string) => (TKey)(object)eventData.Key.ToString(),
+                            Type t when t == typeof(int) => (TKey)(object)Convert.ToInt32(eventData.Key),
+                            Type t when t == typeof(long) => (TKey)(object)Convert.ToInt64(eventData.Key),
+                            _ => (TKey)eventData.Key
+                        };
+                    }
                 }
-
-                msg.Key = keyValue;
+                catch
+                {
+                    throw new ArgumentException($"Could not cast actual key value to the expected type. Expected: {typeof(TKey).Name}. Actual: {eventData.Key.GetType().Name}");
+                }
             }
 
             if (eventData.Headers?.Count > 0)

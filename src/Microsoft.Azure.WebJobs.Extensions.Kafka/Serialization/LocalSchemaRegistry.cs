@@ -28,10 +28,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
         }
 
-        public string ConstructKeySubjectName(string topic, string recordType = null)
-        {
-            throw new System.NotImplementedException();
-        }
+        public string ConstructKeySubjectName(string topic, string recordType = null) => $"{topic}-key";
 
         public string ConstructValueSubjectName(string topic, string recordType = null) => topic;
 
