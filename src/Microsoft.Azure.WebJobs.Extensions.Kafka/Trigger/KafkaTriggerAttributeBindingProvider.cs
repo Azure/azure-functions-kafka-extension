@@ -56,7 +56,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var schemaRegistryUrl = this.config.ResolveSecureSetting(nameResolver, attribute.SchemaRegistryUrl);
             var schemaRegistryUsername = this.config.ResolveSecureSetting(nameResolver, attribute.SchemaRegistryUsername);
             var schemaRegistryPassword = this.config.ResolveSecureSetting(nameResolver, attribute.SchemaRegistryPassword);
-            (var valueDeserializer, var keyDeserializer) = SerializationHelper.ResolveDeserializers(keyAndValueTypes, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword, attribute.Topic);
+            var topic = this.config.ResolveSecureSetting(nameResolver, attribute.Topic);
+            (var valueDeserializer, var keyDeserializer) = SerializationHelper.ResolveDeserializers(keyAndValueTypes, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword, topic);
             var consumerConfig = CreateConsumerConfiguration(attribute);
             var binding = CreateBindingStrategyFor(keyAndValueTypes.KeyType ?? typeof(Ignore), keyAndValueTypes.ValueType, keyAndValueTypes.RequiresKey, valueDeserializer, keyDeserializer, parameter, consumerConfig);
             return Task.FromResult<ITriggerBinding>(new KafkaTriggerBindingWrapper(binding));
