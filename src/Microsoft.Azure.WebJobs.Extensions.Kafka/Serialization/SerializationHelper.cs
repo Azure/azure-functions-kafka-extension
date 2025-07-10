@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using Avro.Generic;
 using Avro.Specific;
 using Confluent.Kafka;
@@ -17,25 +18,96 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
     internal static class SerializationHelper
     {
-        internal static object ResolveDeserializer(Type type, string specifiedAvroSchema, string schemaRegistryUrl, string schemaRegistryUsername, string schemaRegistryPassword)
+        internal static (object, object) ResolveDeserializers(GetKeyAndValueTypesResult keyAndValueTypes, string schemaRegistryUrl, string schemaRegistryUsername, string schemaRegistryPassword, string topic)
         {
-            if (typeof(IMessage).IsAssignableFrom(type))
+            object valueDeserializer = null;
+            object keyDeserializer = null;
+
+            var valueType = keyAndValueTypes.ValueType;
+            var keyType = keyAndValueTypes.KeyType;
+            var specifiedValueAvroSchema = keyAndValueTypes.ValueAvroSchema;
+            var specifiedKeyAvroSchema = keyAndValueTypes.KeyAvroSchema;
+
+            // call helper if schema registry is specified and return avro deserializers
+            if (schemaRegistryUrl != null)
             {
-                return Activator.CreateInstance(typeof(ProtobufDeserializer<>).MakeGenericType(type));
+                return ResolveSchemaRegistryDeserializers(valueType, keyType, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword, topic).GetAwaiter().GetResult();
             }
 
-            var isSpecificRecord = typeof(ISpecificRecord).IsAssignableFrom(type);
-            if (!isSpecificRecord && !typeof(GenericRecord).IsAssignableFrom(type) && schemaRegistryUrl == null)
+            // check for protobuf deserialization
+            if (typeof(IMessage).IsAssignableFrom(valueType))
             {
-                return null;
+                valueDeserializer = Activator.CreateInstance(typeof(ProtobufDeserializer<>).MakeGenericType(valueType));
+            }
+            if (typeof(IMessage).IsAssignableFrom(keyType))
+            {
+                keyDeserializer = Activator.CreateInstance(typeof(ProtobufDeserializer<>).MakeGenericType(keyType));
             }
 
-            var schemaRegistry = CreateSchemaRegistry(type, specifiedAvroSchema, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword, isSpecificRecord);
+            var isValueSpecificRecord = typeof(ISpecificRecord).IsAssignableFrom(valueType);
+            var isValueGenericRecord = typeof(GenericRecord).IsAssignableFrom(valueType);
+            var isKeySpecificRecord = typeof(ISpecificRecord).IsAssignableFrom(keyType);
+            var isKeyGenericRecord = typeof(GenericRecord).IsAssignableFrom(keyType);
+            // create schemas for specific records
+            if (string.IsNullOrWhiteSpace(specifiedValueAvroSchema) && isValueSpecificRecord)
+            {
+                specifiedValueAvroSchema = ((ISpecificRecord)Activator.CreateInstance(valueType)).Schema.ToString();
+            }
+            if (string.IsNullOrWhiteSpace(specifiedKeyAvroSchema) && isKeySpecificRecord)
+            {
+                specifiedKeyAvroSchema = ((ISpecificRecord)Activator.CreateInstance(keyType)).Schema.ToString();
+            }
 
-            var methodInfo = typeof(SerializationHelper).GetMethod(nameof(CreateAvroValueDeserializer), BindingFlags.Static | BindingFlags.NonPublic);
-            var genericMethod = methodInfo.MakeGenericMethod(type);
+            // check for avro deserialization
+            if (specifiedValueAvroSchema != null || specifiedKeyAvroSchema != null)
+            {
+                // creates local schema registry if no schema registry url is specified
+                var schemaRegistry = CreateSchemaRegistry(specifiedValueAvroSchema, specifiedKeyAvroSchema, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword);
 
-            return genericMethod.Invoke(null, new object[] { schemaRegistry });
+                // if value avro schema exists, create avro deserializer
+                if (!string.IsNullOrWhiteSpace(specifiedValueAvroSchema))
+                {
+                    var methodInfo = typeof(SerializationHelper).GetMethod(nameof(CreateAvroValueDeserializer), BindingFlags.Static | BindingFlags.NonPublic);
+                    var genericMethod = methodInfo.MakeGenericMethod(valueType);
+                    valueDeserializer = genericMethod.Invoke(null, new object[] { schemaRegistry });
+                }
+
+                // if key avro schema exists, create avro deserializer
+                if (!string.IsNullOrWhiteSpace(specifiedKeyAvroSchema))
+                {
+                    var methodInfo = typeof(SerializationHelper).GetMethod(nameof(CreateAvroKeyDeserializer), BindingFlags.Static | BindingFlags.NonPublic);
+                    var genericMethod = methodInfo.MakeGenericMethod(keyType);
+                }
+            }
+
+            return (valueDeserializer, keyDeserializer);
+        }
+
+        internal static async Task<(object, object)> ResolveSchemaRegistryDeserializers(Type valueType, Type keyType, string schemaRegistryUrl, string schemaRegistryUsername, string schemaRegistryPassword, string topic)
+        {
+            object valueDeserializer = null;
+            object keyDeserializer = null;
+
+            var schemaRegistry = CreateSchemaRegistry(null, null, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword);
+
+            // query schema registry to find existence of value and key schemas
+            var valueSchema = await schemaRegistry.GetLatestSchemaAsync(schemaRegistry.ConstructValueSubjectName(topic));
+            if (valueSchema != null)
+            {
+                var methodInfo = typeof(SerializationHelper).GetMethod(nameof(CreateAvroValueDeserializer), BindingFlags.Static | BindingFlags.NonPublic);
+                var genericMethod = methodInfo.MakeGenericMethod(valueType);
+                valueDeserializer = genericMethod.Invoke(null, new object[] { schemaRegistry });
+            }
+
+            var keySchema = await schemaRegistry.GetLatestSchemaAsync(schemaRegistry.ConstructKeySubjectName(topic));
+            if (keySchema != null)
+            {
+                var methodInfo = typeof(SerializationHelper).GetMethod(nameof(CreateAvroKeyDeserializer), BindingFlags.Static | BindingFlags.NonPublic);
+                var genericMethod = methodInfo.MakeGenericMethod(keyType);
+                keyDeserializer = genericMethod.Invoke(null, new object[] { schemaRegistry });
+            }
+
+            return (valueDeserializer, keyDeserializer);
         }
 
         private static IDeserializer<TValue> CreateAvroValueDeserializer<TValue>(ISchemaRegistryClient schemaRegistry)
@@ -48,35 +120,96 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return new AvroDeserializer<TKey>(schemaRegistry).AsSyncOverAsync();
         }
 
-        internal static object ResolveValueSerializer(Type valueType, string specifiedAvroSchema, string schemaRegistryUrl, string schemaRegistryUsername, string schemaRegistryPassword)
+        internal static (object, object) ResolveSerializers(Type valueType, Type keyType, string specifiedValueAvroSchema, string specifiedKeyAvroSchema, string schemaRegistryUrl, string schemaRegistryUsername, string schemaRegistryPassword, string topic)
         {
+            object keySerializer = null;
+            object valueSerializer = null;
+
+            // call helper if schema registry is specified and return avro serializers
+            if (schemaRegistryUrl != null)
+            {
+                return ResolveSchemaRegistrySerializers(valueType, keyType, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword, topic).GetAwaiter().GetResult();
+            }
+
+            // create serializers for protobuf
             if (typeof(IMessage).IsAssignableFrom(valueType))
             {
-                return Activator.CreateInstance(typeof(ProtobufSerializer<>).MakeGenericType(valueType));
+                valueSerializer = Activator.CreateInstance(typeof(ProtobufSerializer<>).MakeGenericType(valueType));
+                if (typeof(IMessage).IsAssignableFrom(keyType))
+                {
+                    keySerializer = Activator.CreateInstance(typeof(ProtobufSerializer<>).MakeGenericType(keyType));
+                }   
+                return (valueSerializer, keySerializer);
             }
 
-            var isSpecificRecord = typeof(ISpecificRecord).IsAssignableFrom(valueType);
-            if (!isSpecificRecord && !typeof(GenericRecord).IsAssignableFrom(valueType) && schemaRegistryUrl == null)
+            var isValueSpecificRecord = typeof(ISpecificRecord).IsAssignableFrom(valueType);
+            var isValueGenericRecord = typeof(GenericRecord).IsAssignableFrom(valueType);
+            var isKeySpecificRecord = typeof(ISpecificRecord).IsAssignableFrom(keyType);
+            var isKeyGenericRecord = typeof(GenericRecord).IsAssignableFrom(keyType);
+            // create schemas for specific records
+            if (string.IsNullOrWhiteSpace(specifiedValueAvroSchema) && isValueSpecificRecord)
             {
-                return null;
+                specifiedValueAvroSchema = ((ISpecificRecord)Activator.CreateInstance(valueType)).Schema.ToString();
+            }
+            if (string.IsNullOrWhiteSpace(specifiedKeyAvroSchema) && isKeySpecificRecord)
+            {
+                specifiedKeyAvroSchema = ((ISpecificRecord)Activator.CreateInstance(keyType)).Schema.ToString();
             }
 
-            var schemaRegistry = CreateSchemaRegistry(valueType, specifiedAvroSchema, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword, isSpecificRecord);
+            // check for avro serialization
+            if (specifiedValueAvroSchema != null || specifiedKeyAvroSchema != null)
+            {
+                // create schema registry client
+                var schemaRegistry = CreateSchemaRegistry(specifiedValueAvroSchema, specifiedKeyAvroSchema, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword);
+                var serializer = Activator.CreateInstance(null);
 
-            var serializer = Activator.CreateInstance(typeof(AvroSerializer<>).MakeGenericType(valueType), schemaRegistry, null /* config */);
-            return typeof(SyncOverAsyncSerializerExtensionMethods).GetMethod("AsSyncOverAsync").MakeGenericMethod(valueType).Invoke(null, new object[] { serializer });
+                // create serializers for avro - generic or specific records
+                if (isValueGenericRecord || isValueSpecificRecord)
+                {
+                    serializer = Activator.CreateInstance(typeof(AvroSerializer<>).MakeGenericType(valueType), schemaRegistry, null /* config */);
+                    valueSerializer = typeof(SyncOverAsyncSerializerExtensionMethods).GetMethod("AsSyncOverAsync").MakeGenericMethod(valueType).Invoke(null, new object[] { serializer });
+                }
+                if (isKeyGenericRecord || isKeySpecificRecord)
+                {
+                    serializer = Activator.CreateInstance(typeof(AvroSerializer<>).MakeGenericType(keyType), schemaRegistry, null /* config */);
+                    keySerializer = typeof(SyncOverAsyncSerializerExtensionMethods).GetMethod("AsSyncOverAsync").MakeGenericMethod(keyType).Invoke(null, new object[] { serializer });
+                }
+            }
+
+            return (valueSerializer, keySerializer);
         }
 
-        private static ISchemaRegistryClient CreateSchemaRegistry(Type valueType, string specifiedAvroSchema, string schemaRegistryUrl, string schemaRegistryUsername, string schemaRegistryPassword, bool isSpecificRecord)
+        internal static async Task<(object, object)> ResolveSchemaRegistrySerializers(Type valueType, Type keyType, string schemaRegistryUrl, string schemaRegistryUsername, string schemaRegistryPassword, string topic)
         {
-            if (string.IsNullOrWhiteSpace(specifiedAvroSchema) && isSpecificRecord)
+            object valueSerializer = null;
+            object keySerializer = null;
+
+            var schemaRegistry = CreateSchemaRegistry(null, null, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword);
+
+            // query schema registry to find existence of value and key schemas
+            var valueSchema = await schemaRegistry.GetLatestSchemaAsync(schemaRegistry.ConstructValueSubjectName(topic));
+            if (valueSchema != null)
             {
-                specifiedAvroSchema = ((ISpecificRecord)Activator.CreateInstance(valueType)).Schema.ToString();
+                var serializer = Activator.CreateInstance(typeof(AvroSerializer<>).MakeGenericType(valueType), schemaRegistry, null /* config */);
+                valueSerializer = typeof(SyncOverAsyncSerializerExtensionMethods).GetMethod("AsSyncOverAsync").MakeGenericMethod(valueType).Invoke(null, new object[] { serializer });
             }
 
-            if (!string.IsNullOrWhiteSpace(specifiedAvroSchema))
+            var keySchema = await schemaRegistry.GetLatestSchemaAsync(schemaRegistry.ConstructKeySubjectName(topic));
+            if (keySchema != null)
             {
-                return new LocalSchemaRegistry(specifiedAvroSchema);
+                var serializer = Activator.CreateInstance(typeof(AvroSerializer<>).MakeGenericType(keyType), schemaRegistry, null /* config */);
+                keySerializer = typeof(SyncOverAsyncSerializerExtensionMethods).GetMethod("AsSyncOverAsync").MakeGenericMethod(keyType).Invoke(null, new object[] { serializer });
+            }
+
+            return (valueSerializer, keySerializer);
+        }
+
+
+        private static ISchemaRegistryClient CreateSchemaRegistry(string specifiedValueAvroSchema, string specifiedKeyAvroSchema, string schemaRegistryUrl, string schemaRegistryUsername, string schemaRegistryPassword)
+        {
+            if (!string.IsNullOrWhiteSpace(specifiedValueAvroSchema) || !string.IsNullOrWhiteSpace(specifiedKeyAvroSchema))
+            {
+                return new LocalSchemaRegistry(specifiedValueAvroSchema, specifiedKeyAvroSchema);
             }
             if (schemaRegistryUrl != null)
             {
@@ -88,7 +221,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 }
                 return new CachedSchemaRegistryClient(schemaRegistryConfig.ToArray());
             }
-            throw new ArgumentNullException(nameof(specifiedAvroSchema), $@"parameter is required when creating an generic avro serializer");
+            throw new ArgumentNullException(nameof(specifiedValueAvroSchema), $@"parameter is required when creating an generic avro serializer");
         }
 
         internal class GetKeyAndValueTypesResult
@@ -142,6 +275,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                         }
                     }
                 }
+
+                // if schema registry is present, the types must be generic too?
 
                 (valueType, valueAvroSchema) = GetTypeAndSchema(valueType, valueAvroSchemaFromAttribute);
             }
