@@ -90,21 +90,42 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             var schemaRegistry = CreateSchemaRegistry(null, null, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword);
 
-            // query schema registry to find existence of value and key schemas
-            var valueSchema = await schemaRegistry.GetLatestSchemaAsync(schemaRegistry.ConstructValueSubjectName(topic));
-            if (valueSchema != null)
+            // check list of subjects for value and key schemas
+            try
             {
-                var methodInfo = typeof(SerializationHelper).GetMethod(nameof(CreateAvroValueDeserializer), BindingFlags.Static | BindingFlags.NonPublic);
-                var genericMethod = methodInfo.MakeGenericMethod(valueType);
-                valueDeserializer = genericMethod.Invoke(null, new object[] { schemaRegistry });
+                // make sure that valueType is genericRecord
+                if (typeof(GenericRecord).IsAssignableFrom(valueType))
+                {
+                    var valueSchema = await schemaRegistry.GetLatestSchemaAsync(schemaRegistry.ConstructValueSubjectName(topic));
+                    // retrieve schema and create deserializer
+                    var methodInfo = typeof(SerializationHelper).GetMethod(nameof(CreateAvroKeyDeserializer), BindingFlags.Static | BindingFlags.NonPublic);
+                    var genericMethod = methodInfo.MakeGenericMethod(valueType);
+                    valueDeserializer = genericMethod.Invoke(null, new object[] { schemaRegistry });
+                }
+            }
+            catch (SchemaRegistryException ex)
+            {
+                // if exception raises, value schema does not exist
+                throw new TargetException($"Error finding avro schema for value in the schema registry via url. Exception: {ex.Message}");
             }
 
-            var keySchema = await schemaRegistry.GetLatestSchemaAsync(schemaRegistry.ConstructKeySubjectName(topic));
-            if (keySchema != null)
+            try
             {
-                var methodInfo = typeof(SerializationHelper).GetMethod(nameof(CreateAvroKeyDeserializer), BindingFlags.Static | BindingFlags.NonPublic);
-                var genericMethod = methodInfo.MakeGenericMethod(keyType);
-                keyDeserializer = genericMethod.Invoke(null, new object[] { schemaRegistry });
+                // make sure that valueType is genericRecord
+                if (typeof(GenericRecord).IsAssignableFrom(keyType))
+                {
+                    var keySchema = await schemaRegistry.GetLatestSchemaAsync(schemaRegistry.ConstructKeySubjectName(topic));
+                    // retrieve schema and create deserializer
+                    var methodInfo = typeof(SerializationHelper).GetMethod(nameof(CreateAvroKeyDeserializer), BindingFlags.Static | BindingFlags.NonPublic);
+                    var genericMethod = methodInfo.MakeGenericMethod(valueType);
+                    valueDeserializer = genericMethod.Invoke(null, new object[] { schemaRegistry });
+                }
+            }
+            catch (SchemaRegistryException ex)
+            {
+                // if exception raises, key schema does not exist
+                // do not throw an error and return basic confluent deserializer
+                throw new TargetException($"Error finding avro schema for key in the schema registry via url. Exception: {ex.Message}");
             }
 
             return (valueDeserializer, keyDeserializer);
