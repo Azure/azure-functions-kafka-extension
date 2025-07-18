@@ -1,0 +1,21 @@
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Azure.WebJobs.Extensions.Kafka", "Microsoft.Azure.WebJobs.Extensions.Kafka.csproj", "{7C34AFCF-B226-48CC-9DAF-900B39309C51}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7C34AFCF-B226-48CC-9DAF-900B39309C51}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C34AFCF-B226-48CC-9DAF-900B39309C51}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C34AFCF-B226-48CC-9DAF-900B39309C51}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C34AFCF-B226-48CC-9DAF-900B39309C51}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {84712FAB-C7B5-41BA-8443-C43E7D5B2777}
+	EndGlobalSection
+EndGlobal
