@@ -70,52 +70,60 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Null(typedProducer.ValueSerializer);
         }
 
-        [Fact]
-        public void When_String_Value_Type_Is_Set_Should_Create_String_Listener()
+        [Theory]
+        [InlineData(typeof(System.String), typeof(Null), null, null)]
+        [InlineData(typeof(System.String), typeof(System.String), null, null)]
+        [InlineData(typeof(GenericRecord), typeof(Null), "fakeValueAvroSchema", null)]
+        [InlineData(typeof(GenericRecord), typeof(System.String), "fakeValueAvroSchema", null)]
+        [InlineData(typeof(GenericRecord), typeof(GenericRecord), "fakeAvroSchema", "fakeKeyAvroSchema")]
+        public void When_Schema_Is_Provided_Should_Create_Type_Listener(Type valueType, Type keyType, string valueAvroSchema, string keyAvroSchema)
         {
             var attribute = new KafkaAttribute("brokers:9092", "myTopic")
             {
+                AvroSchema = valueAvroSchema,
+                KeyAvroSchema = keyAvroSchema
             };
 
             var entity = new KafkaProducerEntity()
             {
                 Attribute = attribute,
-                ValueType = typeof(string),
-            };
-
-            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerFactory.Instance);
-            var producer = factory.Create(entity);
-
-            Assert.NotNull(producer);
-            Assert.IsType<KafkaProducer<Null, string>>(producer);
-            var typedProducer = (KafkaProducer<Null, string>)producer;
-            Assert.Null(typedProducer.ValueSerializer);
-        }
-
-        [Fact]
-        public void When_Avro_Schema_Is_Provided_Should_Create_GenericRecord_Listener()
-        {
-            var attribute = new KafkaAttribute("brokers:9092", "myTopic")
-            {
-                AvroSchema = "fakeAvroSchema"
-            };
-
-            var entity = new KafkaProducerEntity()
-            {
-                Attribute = attribute,
-                ValueType = typeof(GenericRecord),
+                ValueType = valueType,
+                KeyType = keyType,
                 ValueAvroSchema = attribute.AvroSchema,
+                KeyAvroSchema = attribute.KeyAvroSchema
             };
 
             var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerFactory.Instance);
             var producer = factory.Create(entity);
 
             Assert.NotNull(producer);
-            Assert.IsType<KafkaProducer<Null, GenericRecord>>(producer);
-            var typedProducer = (KafkaProducer<Null, GenericRecord>)producer;
-            Assert.NotNull(typedProducer.ValueSerializer);
-            //Assert.IsType<AvroSerializer<GenericRecord>>(typedProducer.ValueSerializer);
-            Assert.IsType<SyncOverAsyncSerializer<GenericRecord>>(typedProducer.ValueSerializer);
+            var expectedType = typeof(KafkaProducer<,>).MakeGenericType(keyType, valueType);
+            Assert.IsType(expectedType, producer);
+
+            dynamic typedProducer = Convert.ChangeType(producer, expectedType);
+            Assert.NotNull(typedProducer);
+
+            if (valueAvroSchema != null)
+            {
+                Assert.NotNull(typedProducer.ValueSerializer);
+                var valueSerializerType = typeof(SyncOverAsyncSerializer<>).MakeGenericType(valueType);
+                Assert.IsType(valueSerializerType, typedProducer.ValueSerializer);
+            }
+            else
+            {
+                Assert.Null(typedProducer.ValueSerializer);
+            }
+
+            if (keyAvroSchema != null)
+            {
+                Assert.NotNull(typedProducer.KeySerializer);
+                var keySerializerType = typeof(SyncOverAsyncSerializer<>).MakeGenericType(keyType);
+                Assert.IsType(keySerializerType, typedProducer.KeySerializer);
+            }
+            else
+            {
+                Assert.Null(typedProducer.KeySerializer);
+            }
         }
 
         [Fact]
