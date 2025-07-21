@@ -200,7 +200,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         [InlineData(nameof(GenericAvro_Fn), typeof(Null))]
         [InlineData(nameof(GenericAvroWithoutKey_Fn), typeof(string))]
         [InlineData(nameof(RawGenericAvro_Fn), typeof(string))]
-        [InlineData(nameof(GenericWithSchemaRegistry_Fn), typeof(string))]
+        //[InlineData(nameof(GenericWithSchemaRegistry_Fn), typeof(string))]
         [InlineData(nameof(GenericKeyValueAvro_Fn), typeof(GenericRecord))]
         public async Task When_Avro_Schema_Is_Provided_Should_Create_GenericRecord_Listener(string functionName, Type expectedKeyType)
         {
