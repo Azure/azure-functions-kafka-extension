@@ -329,4 +329,35 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             log.LogInformation(kafkaEvent.Value.ToString());
         }
     }
+
+    // Tests for key avro schema
+    internal static class SingleItem_GenericAvroValue_With_GenericAvroKey_Trigger
+    {
+        public static void Trigger(
+            [KafkaTrigger("LocalBroker", Constants.MyKeyAvroRecordTopicName, ConsumerGroup = Constants.ConsumerGroupID, KeyAvroSchema = MyAvroRecord.SchemaText)] KafkaEventData<GenericRecord, MyAvroRecord> kafkaEvent,
+            ILogger log)
+        {
+            var myRecord = kafkaEvent.Value;
+            if (myRecord == null)
+            {
+                throw new Exception("MyAvro record is null");
+            }
+            log.LogInformation("{ticks}:{value}", myRecord.Ticks, myRecord.ID);
+        }
+    }
+
+    internal static class SingleItem_GenericAvroValue_With_GenericAvroKey_SchemaRegistryURL
+    {
+        public static void Trigger(
+            [KafkaTrigger("LocalBroker", Constants.MyKeyAvroRecordTopicName, ConsumerGroup = Constants.ConsumerGroupID, SchemaRegistryUrl = Constants.SchemaRegistryUrl)] KafkaEventData<GenericRecord, MyAvroRecord> kafkaEvent,
+            ILogger log)
+        {
+            var myRecord = kafkaEvent.Value;
+            if (myRecord == null)
+            {
+                throw new Exception("MyAvro record is null");
+            }
+            log.LogInformation("{ticks}:{value}", myRecord.Ticks, myRecord.ID);
+        }
+    }
 }

@@ -288,5 +288,78 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
             await output.AddAsync(message);
         }
+
+        public static async Task Produce_AsyncCollector_GenericRecord_With_GenericRecord_Key(
+            string topic,
+            IEnumerable<string> ids,
+            IEnumerable<string> content,
+            [Kafka(BrokerList = "LocalBroker")] IAsyncCollector<KafkaEventData<GenericRecord, GenericRecord>> output)
+        {
+            // Parse the schemas
+            var keySchema = (RecordSchema)Schema.Parse(MyKeyAvroRecord.SchemaText);
+            var valueSchema = (RecordSchema)Schema.Parse(MyAvroRecord.SchemaText);
+            
+            var idsEnumerator = ids.GetEnumerator();
+            foreach (var c in content)
+            {
+                idsEnumerator.MoveNext();
+                
+                // Create key GenericRecord
+                var keyRecord = new GenericRecord(keySchema);
+                keyRecord.Add("id", idsEnumerator.Current);
+                keyRecord.Add("ticks", DateTime.UtcNow.Ticks);
+                
+                // Create value GenericRecord
+                var valueRecord = new GenericRecord(valueSchema);
+                valueRecord.Add("id", c);
+                valueRecord.Add("ticks", DateTime.UtcNow.Ticks);
+
+                var message = new KafkaEventData<GenericRecord, GenericRecord>()
+                {
+                    Key = keyRecord,
+                    Topic = topic,
+                    Value = valueRecord,
+                };
+
+                await output.AddAsync(message);
+            }
+        }
+
+        public static async Task Produce_AsyncCollector_GenericRecord_With_SchemaRegistry(
+            string topic,
+            IEnumerable<string> ids,
+            IEnumerable<string> content,
+            [Kafka(BrokerList = "LocalBroker", SchemaRegistryUrl = Constants.SchemaRegistryUrl)] 
+            IAsyncCollector<KafkaEventData<GenericRecord, GenericRecord>> output)
+        {
+            // Parse the schemas
+            var keySchema = (RecordSchema)Schema.Parse(MyKeyAvroRecord.SchemaText);
+            var valueSchema = (RecordSchema)Schema.Parse(MyAvroRecord.SchemaText);
+            
+            var idsEnumerator = ids.GetEnumerator();
+            foreach (var c in content)
+            {
+                idsEnumerator.MoveNext();
+                
+                // Create key GenericRecord
+                var keyRecord = new GenericRecord(keySchema);
+                keyRecord.Add("id", idsEnumerator.Current);
+                keyRecord.Add("ticks", DateTime.UtcNow.Ticks);
+                
+                // Create value GenericRecord
+                var valueRecord = new GenericRecord(valueSchema);
+                valueRecord.Add("id", c);
+                valueRecord.Add("ticks", DateTime.UtcNow.Ticks);
+
+                var message = new KafkaEventData<GenericRecord, GenericRecord>()
+                {
+                    Key = keyRecord,
+                    Topic = topic,
+                    Value = valueRecord,
+                };
+
+                await output.AddAsync(message);
+            }
+        }
     }
 }

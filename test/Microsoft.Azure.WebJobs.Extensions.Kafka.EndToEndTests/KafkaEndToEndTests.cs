@@ -1079,7 +1079,82 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
                 await host.StopAsync();
             }
+        }
 
+        [Fact]
+        public async Task SingleItem_With_AvroKey()
+        {
+            const int producedMessagesCount = 5;
+            var messageMasterPrefix = Guid.NewGuid().ToString();
+            
+            var loggerProvider = CreateTestLoggerProvider();
+
+            using (var host = await StartHostAsync(
+                       new[] { typeof(SingleItem_GenericAvroValue_With_GenericAvroKey_Trigger), typeof(KafkaOutputFunctions) },
+                       loggerProvider))
+            {
+                var jobHost = host.GetJobHost();
+
+                // Call the output function that produces messages with Avro keys
+                await jobHost.CallAsync(
+                    GetStaticMethod(typeof(KafkaOutputFunctions), 
+                        nameof(KafkaOutputFunctions.Produce_AsyncCollector_GenericRecord_With_GenericRecord_Key)),
+                    new { 
+                        topic = Constants.MyKeyAvroRecordTopicName,
+                        ids = Enumerable.Range(1, producedMessagesCount).Select(x => $"key-{x}"),
+                        content = Enumerable.Range(1, producedMessagesCount).Select(x => $"{messageMasterPrefix}-{x}")
+                    });
+
+                await TestHelpers.Await(() =>
+                {
+                    var foundCount = loggerProvider.GetAllUserLogMessages()
+                        .Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains(messageMasterPrefix));
+                    return foundCount == producedMessagesCount;
+                });
+
+                // Give time for the commit to be saved
+                await Task.Delay(1500);
+
+                await host.StopAsync();
+            }
+        }
+
+        [Fact]
+        public async Task SingleItem_With_AvroKey_SchemaRegistry()
+        {
+            const int producedMessagesCount = 5;
+            var messageMasterPrefix = Guid.NewGuid().ToString();
+            
+            var loggerProvider = CreateTestLoggerProvider();
+
+            using (var host = await StartHostAsync(
+                       new[] { typeof(SingleItem_GenericAvroValue_With_GenericAvroKey_SchemaRegistryURL), typeof(KafkaOutputFunctions) },
+                       loggerProvider))
+            {
+                var jobHost = host.GetJobHost();
+
+                // Call the output function that produces messages with Avro keys using SchemaRegistry
+                await jobHost.CallAsync(
+                    GetStaticMethod(typeof(KafkaOutputFunctions), 
+                        nameof(KafkaOutputFunctions.Produce_AsyncCollector_GenericRecord_With_SchemaRegistry)),
+                    new { 
+                        topic = Constants.MyKeyAvroRecordTopicName,
+                        ids = Enumerable.Range(1, producedMessagesCount).Select(x => $"key-{x}"),
+                        content = Enumerable.Range(1, producedMessagesCount).Select(x => $"{messageMasterPrefix}-{x}")
+                    });
+
+                await TestHelpers.Await(() =>
+                {
+                    var foundCount = loggerProvider.GetAllUserLogMessages()
+                        .Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains(messageMasterPrefix));
+                    return foundCount == producedMessagesCount;
+                });
+
+                // Give time for the commit to be saved
+                await Task.Delay(1500);
+
+                await host.StopAsync();
+            }
         }
     }
 }
