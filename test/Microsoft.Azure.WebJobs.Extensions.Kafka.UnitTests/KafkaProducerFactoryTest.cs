@@ -127,11 +127,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         }
 
         [Fact]
-        public void When_Schema_Registry_Is_Provided_Should_Create_GenericRecord_Listener()
+        public void When_Schema_Registry_Is_Provided_Should_Create_GenericRecord_Producer()
         {
             var attribute = new KafkaAttribute("brokers:9092", "myTopic");
 
-            attribute.SchemaRegistryUrl = "localhost";
+            attribute.SchemaRegistryUrl = "localhost:8081";
 
             var entity = new KafkaProducerEntity()
             {

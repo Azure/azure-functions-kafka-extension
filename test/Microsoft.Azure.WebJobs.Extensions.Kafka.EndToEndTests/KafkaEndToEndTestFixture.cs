@@ -34,6 +34,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
         internal TopicSpecification MyProtobufTopic { get; } = new TopicSpecification() { Name = Constants.MyProtobufTopicName, NumPartitions = 10, ReplicationFactor = 1 };
 
+        internal TopicSpecification SchemaRegistryTopic { get; } = new TopicSpecification() { Name = Constants.SchemaRegistryTopicName, NumPartitions = 1, ReplicationFactor = 1 };
+
+        internal TopicSpecification schemaRegistryNoKeyTopic { get; } = new TopicSpecification() { Name = Constants.SchemaRegistryNoKeyTopicName, NumPartitions = 1, ReplicationFactor = 1 };
+
         public KafkaEndToEndTestFixture()
         {
             var config = new ConfigurationBuilder()

@@ -11,6 +11,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
         internal const string MyKeyAvroRecordTopicName = "myKeyAvroRecordTopic";
         internal const string MyProtobufTopicName = "myProtobufTopic";
         internal const string SchemaRegistryTopicName = "schemaRegistryTopic";
+        internal const string SchemaRegistryNoKeyTopicName = "schemaRegistryNoKeyTopic";
         internal const string ConsumerGroupID = "e2e_tests";
         internal const string SchemaRegistryUrl = "localhost:8081";
     }

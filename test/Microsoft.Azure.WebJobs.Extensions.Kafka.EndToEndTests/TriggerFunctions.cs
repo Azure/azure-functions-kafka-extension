@@ -4,6 +4,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection.Emit;
 using System.Text;
 using Avro.Generic;
 using Confluent.Kafka;
@@ -330,34 +331,56 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
         }
     }
 
+    internal static class SingleItem_With_Schema_Registry_No_Key
+    {
+        public static void Trigger(
+            [KafkaTrigger("LocalBroker", Constants.SchemaRegistryNoKeyTopicName, ConsumerGroup = Constants.ConsumerGroupID, SchemaRegistryUrl = Constants.SchemaRegistryUrl)] KafkaEventData<GenericRecord> kafkaEvent,
+            ILogger log)
+        {
+            log.LogInformation(kafkaEvent.Value.ToString());
+        }
+    }
+
     // Tests for key avro schema
     internal static class SingleItem_GenericAvroValue_With_GenericAvroKey_Trigger
     {
         public static void Trigger(
-            [KafkaTrigger("LocalBroker", Constants.MyKeyAvroRecordTopicName, ConsumerGroup = Constants.ConsumerGroupID, KeyAvroSchema = MyAvroRecord.SchemaText)] KafkaEventData<GenericRecord, MyAvroRecord> kafkaEvent,
+            [KafkaTrigger("LocalBroker", Constants.MyKeyAvroRecordTopicName, ConsumerGroup = Constants.ConsumerGroupID, AvroSchema = MyAvroRecord.SchemaText, KeyAvroSchema = MyKeyAvroRecord.SchemaText)] KafkaEventData<GenericRecord, GenericRecord> kafkaEvent,
             ILogger log)
         {
             var myRecord = kafkaEvent.Value;
+            var myKey = kafkaEvent.Key;
             if (myRecord == null)
             {
                 throw new Exception("MyAvro record is null");
             }
-            log.LogInformation("{ticks}:{value}", myRecord.Ticks, myRecord.ID);
+            log.LogInformation($"Value: {kafkaEvent.Value.ToString()}");
+            if (myKey == null)
+            {
+                throw new Exception("MyAvro key is null");
+            }  
+            log.BeginScope($"Key: {myKey.ToString()}");
         }
     }
 
     internal static class SingleItem_GenericAvroValue_With_GenericAvroKey_SchemaRegistryURL
     {
         public static void Trigger(
-            [KafkaTrigger("LocalBroker", Constants.MyKeyAvroRecordTopicName, ConsumerGroup = Constants.ConsumerGroupID, SchemaRegistryUrl = Constants.SchemaRegistryUrl)] KafkaEventData<GenericRecord, MyAvroRecord> kafkaEvent,
+            [KafkaTrigger("LocalBroker", Constants.MyKeyAvroRecordTopicName, ConsumerGroup = Constants.ConsumerGroupID, SchemaRegistryUrl = Constants.SchemaRegistryUrl)] KafkaEventData<GenericRecord, GenericRecord> kafkaEvent,
             ILogger log)
         {
             var myRecord = kafkaEvent.Value;
+            var myKey = kafkaEvent.Key;
             if (myRecord == null)
             {
                 throw new Exception("MyAvro record is null");
             }
-            log.LogInformation("{ticks}:{value}", myRecord.Ticks, myRecord.ID);
+            log.LogInformation($"Value: {kafkaEvent.Value.ToString()}");
+            if (myKey == null)
+            {
+                throw new Exception("MyAvro key is null");
+            }
+            log.BeginScope($"Key: {myKey.ToString()}");
         }
     }
 }

@@ -17,7 +17,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
         ""fields"": [
         {
             ""name"": ""id"",
-            ""type"": ""string""
+            ""type"": ""int""
         },  
         {
             ""name"": ""type"",
