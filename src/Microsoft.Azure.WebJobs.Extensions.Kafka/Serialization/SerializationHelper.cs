@@ -49,11 +49,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var isKeySpecificRecord = typeof(ISpecificRecord).IsAssignableFrom(keyType);
             var isKeyGenericRecord = typeof(GenericRecord).IsAssignableFrom(keyType);
             // create schemas for specific records
-            if (string.IsNullOrWhiteSpace(specifiedValueAvroSchema) && isValueSpecificRecord)
+            if (!string.IsNullOrWhiteSpace(specifiedValueAvroSchema) && isValueSpecificRecord)
             {
                 specifiedValueAvroSchema = ((ISpecificRecord)Activator.CreateInstance(valueType)).Schema.ToString();
             }
-            if (string.IsNullOrWhiteSpace(specifiedKeyAvroSchema) && isKeySpecificRecord)
+            if (!string.IsNullOrWhiteSpace(specifiedKeyAvroSchema) && isKeySpecificRecord)
             {
                 specifiedKeyAvroSchema = ((ISpecificRecord)Activator.CreateInstance(keyType)).Schema.ToString();
             }
@@ -67,7 +67,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 // if value avro schema exists and value type is generic record, create avro deserializer
                 if (!string.IsNullOrWhiteSpace(specifiedValueAvroSchema))
                 {
-                    if (isValueGenericRecord)
+                    if (isValueGenericRecord || isValueSpecificRecord)
                     {
                         var methodInfo = typeof(SerializationHelper).GetMethod(nameof(CreateAvroValueDeserializer), BindingFlags.Static | BindingFlags.NonPublic);
                         var genericMethod = methodInfo.MakeGenericMethod(valueType);
@@ -75,14 +75,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     }
                     else
                     {
-                        throw new ArgumentException($"Value type {valueType.FullName} is not a valid data type when avro schema is provided. It must be a GenericRecord.");
+                        throw new ArgumentException($"Value type {valueType.FullName} is not a valid data type when avro schema is provided. It must be a GenericRecord or ISpecificRecord.");
                     }
                 }
 
                 // if key avro schema exists and key type is a generic record, create avro deserializer
-                if (!string.IsNullOrWhiteSpace(specifiedKeyAvroSchema) && isKeyGenericRecord)
+                if (!string.IsNullOrWhiteSpace(specifiedKeyAvroSchema))
                 {
-                    if (isKeyGenericRecord)
+                    if (isKeyGenericRecord || isKeySpecificRecord)
                     {
                         var methodInfo = typeof(SerializationHelper).GetMethod(nameof(CreateAvroKeyDeserializer), BindingFlags.Static | BindingFlags.NonPublic);
                         var genericMethod = methodInfo.MakeGenericMethod(keyType);
@@ -90,7 +90,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     }
                     else
                     {
-                        throw new ArgumentException($"Key type {keyType.FullName} is not a valid data type when avro schema is provided. It must be a GenericRecord.");
+                        throw new ArgumentException($"Key type {keyType.FullName} is not a valid data type when avro schema is provided. It must be a GenericRecord or ISpecificRecord.");
                     }
                 }
             }
@@ -194,11 +194,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var isKeySpecificRecord = typeof(ISpecificRecord).IsAssignableFrom(keyType);
             var isKeyGenericRecord = typeof(GenericRecord).IsAssignableFrom(keyType);
             // create schemas for specific records
-            if (string.IsNullOrWhiteSpace(specifiedValueAvroSchema) && isValueSpecificRecord)
+            if (!string.IsNullOrWhiteSpace(specifiedValueAvroSchema) && isValueSpecificRecord)
             {
                 specifiedValueAvroSchema = ((ISpecificRecord)Activator.CreateInstance(valueType)).Schema.ToString();
             }
-            if (string.IsNullOrWhiteSpace(specifiedKeyAvroSchema) && isKeySpecificRecord)
+            if (!string.IsNullOrWhiteSpace(specifiedKeyAvroSchema) && isKeySpecificRecord)
             {
                 specifiedKeyAvroSchema = ((ISpecificRecord)Activator.CreateInstance(keyType)).Schema.ToString();
             }
@@ -208,7 +208,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 // create schema registry client
                 var schemaRegistry = CreateSchemaRegistry(specifiedValueAvroSchema, specifiedKeyAvroSchema, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword);
-                var serializer = Activator.CreateInstance(null);
+                object serializer = null;
 
                 // create serializers for avro - generic or specific records
                 if (isValueGenericRecord || isValueSpecificRecord)
