@@ -14,8 +14,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     {
         private readonly string valueSchema;
         private readonly string keySchema;
-        private string valueSubjectName;
-        private string keySubjectName;
+        private const int ValueId = 1;
+        private const int KeyId = 2;
+        private string valueSubject;
+        private string keySubject;
         private List<string> subjects = new List<string>();
 
         public LocalSchemaRegistry(string valueSchema, string keySchema = null)
@@ -32,9 +34,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
         }
 
-        public string ConstructKeySubjectName(string topic, string recordType = null) => keySubjectName = $"{topic}-key";
+        public string ConstructKeySubjectName(string topic, string recordType = null) => keySubject = $"{topic}-key";
 
-        public string ConstructValueSubjectName(string topic, string recordType = null) => valueSubjectName = $"{topic}-value";
+        public string ConstructValueSubjectName(string topic, string recordType = null) => valueSubject = $"{topic}-value";
 
         public void Dispose()
         {
@@ -42,7 +44,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public Task<List<string>> GetAllSubjectsAsync()
         {
-            return Task.FromResult(this.subjects);
+            return Task.FromResult(subjects);
         }
 
         public Task<Compatibility> GetCompatibilityAsync(string subject = null)
@@ -62,23 +64,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public Task<string> GetSchemaAsync(string subject, int version)
         {
-            if (subject == keySubjectName)
+            if (subject == keySubject)
             {
-                return Task.FromResult(this.keySchema);
+                return Task.FromResult(keySchema);
             }
-            else
+            else if (subject == valueSubject)
             {
-                return Task.FromResult(this.valueSchema);
+                return Task.FromResult(valueSchema);
             }
+            return Task.FromResult<string>(null);
         }
 
         public Task<Schema> GetSchemaAsync(int id, string format = null)
         {
-            if (subjects[id] == keySubjectName)
+            if (id == KeyId)
             {
-                return Task.FromResult(new Schema(this.keySchema, SchemaType.Avro));
+                return Task.FromResult(new Schema(keySchema, SchemaType.Avro));
             }
-            return Task.FromResult(new Schema(this.valueSchema, SchemaType.Avro));
+            else if (id == ValueId)
+            {
+                return Task.FromResult(new Schema(valueSchema, SchemaType.Avro));
+            }
+            return Task.FromResult<Schema>(null);
         }
 
         public Task<int> GetSchemaIdAsync(string subject, string schema)
