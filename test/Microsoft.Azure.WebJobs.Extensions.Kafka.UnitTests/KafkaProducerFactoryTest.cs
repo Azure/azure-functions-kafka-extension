@@ -126,28 +126,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             }
         }
 
-        //[Fact]
-        //public void When_Schema_Registry_Is_Provided_Should_Create_GenericRecord_Listener()
-        //{
-        //    var attribute = new KafkaAttribute("brokers:9092", "myTopic");
+        [Fact]
+        public void When_Schema_Registry_Is_Provided_Should_Create_GenericRecord_Listener()
+        {
+            var attribute = new KafkaAttribute("brokers:9092", "myTopic");
 
-        //    attribute.SchemaRegistryUrl = "localhost";
+            attribute.SchemaRegistryUrl = "localhost";
 
-        //    var entity = new KafkaProducerEntity()
-        //    {
-        //        Attribute = attribute,
-        //        ValueType = typeof(GenericRecord),
-        //    };
+            var entity = new KafkaProducerEntity()
+            {
+                Attribute = attribute,
+                ValueType = typeof(GenericRecord),
+            };
 
-        //    var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerFactory.Instance);
-        //    var producer = factory.Create(entity);
+            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerFactory.Instance);
+            var producer = factory.Create(entity);
 
-        //    Assert.NotNull(producer);
-        //    Assert.IsType<KafkaProducer<Null, GenericRecord>>(producer);
-        //    var typedProducer = (KafkaProducer<Null, GenericRecord>)producer;
-        //    Assert.NotNull(typedProducer.ValueSerializer);
-        //    Assert.IsType<SyncOverAsyncSerializer<GenericRecord>>(typedProducer.ValueSerializer);
-        //}
+            Assert.NotNull(producer);
+            Assert.IsType<KafkaProducer<Null, GenericRecord>>(producer);
+            var typedProducer = (KafkaProducer<Null, GenericRecord>)producer;
+            Assert.NotNull(typedProducer.ValueSerializer);
+            Assert.IsType<SyncOverAsyncSerializer<GenericRecord>>(typedProducer.ValueSerializer);
+        }
 
         [Fact]
         public void When_Value_Type_Is_Specific_Record_Should_Create_SpecificRecord_Listener()
