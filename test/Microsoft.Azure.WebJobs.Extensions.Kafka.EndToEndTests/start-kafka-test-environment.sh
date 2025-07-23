@@ -13,7 +13,7 @@ echo "Waiting for Kafka to be ready..."
 # Maximum number of retries
 MAX_RETRIES=30
 # Time to wait between retries in seconds
-RETRY_INTERVAL=10
+RETRY_INTERVAL=30
 # Topic name to test
 TEST_TOPIC="test-topic"
 
@@ -21,8 +21,7 @@ TEST_TOPIC="test-topic"
 check_kafka_ready() {
     echo "Attempting to create test topic: $TEST_TOPIC"
     # Try to create a topic and capture the exit code
-    docker exec -it kafka-broker kafka-topics --create --if-not-exists --topic $TEST_TOPIC --bootstrap-server localhost:9092 > /dev/null 2>&1
-    return $?
+    docker exec -it kafka-broker kafka-topics --create --if-not-exists --topic $TEST_TOPIC --bootstrap-server localhost:9092 2>&1
 }
 
 # Retry loop
