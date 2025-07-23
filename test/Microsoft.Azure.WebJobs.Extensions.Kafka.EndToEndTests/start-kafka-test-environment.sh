@@ -13,9 +13,9 @@ TEST_TOPIC="test-topic"
 BOOTSTRAP_SERVER="localhost:9092"
 
 # Default names for containers
-ZOOKEEPER_CONTAINER_NAME = "zookeeper"
-KAFKA_CONTAINER_NAME = "kafka"
-SCHEMA_REGISTRY_CONTAINER_NAME = "schema-registry"
+ZOOKEEPER_CONTAINER_NAME="zookeeper"
+KAFKA_CONTAINER_NAME="kafka"
+SCHEMA_REGISTRY_CONTAINER_NAME="schema-registry"
 
 # Function to check if all containers are running and start them if not
 check_containers() {
@@ -36,6 +36,10 @@ check_containers() {
             
             # Try to start the individual container
             start_container_with_retry "$service"
+
+            if [ $? -eq 0 ]; then
+                all_running=true
+            fi
         else
             echo "Container for service '$service' is running."
         fi
@@ -137,7 +141,8 @@ create_test_topic() {
 }
 
 # Create a test topic if all containers are running
-if [ ! check_containers ]; then
+# Fix: Correct syntax for the if statement with check_containers
+if ! check_containers; then
     echo "Not all containers are running. Exiting."
     exit 1
 fi
