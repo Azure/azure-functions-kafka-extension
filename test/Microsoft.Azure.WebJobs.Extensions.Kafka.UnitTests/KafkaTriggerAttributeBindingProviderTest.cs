@@ -718,5 +718,51 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 AssertIsCorrectKafkaListener(listener, expectedKeyType, typeof(GenericRecord), typeof(SyncOverAsyncDeserializer<GenericRecord>), expectNullKeyDeserializer: false);
             }
         }
+
+        /// <summary>
+        /// Test to verify the specific scenarios from issue #570 work correctly
+        /// These tests directly verify the fix for the key deserialization issue
+        /// </summary>
+        [Fact]
+        public void Test_SerializationHelper_ResolveDeserializer_BasicTypes_Should_Return_Null_When_No_Schema()
+        {
+            // Scenario 1: String key with schema registry URL but no key schema
+            var stringDeserializer = SerializationHelper.ResolveDeserializer(
+                typeof(string), null, "http://localhost:8081", "user", "pass");
+            Assert.Null(stringDeserializer);
+
+            // Scenario 2: byte[] key with schema registry URL but no key schema  
+            var byteArrayDeserializer = SerializationHelper.ResolveDeserializer(
+                typeof(byte[]), null, "http://localhost:8081", "user", "pass");
+            Assert.Null(byteArrayDeserializer);
+
+            // Scenario 3: int key with schema registry URL but no key schema
+            var intDeserializer = SerializationHelper.ResolveDeserializer(
+                typeof(int), null, "http://localhost:8081", "user", "pass");
+            Assert.Null(intDeserializer);
+
+            // Scenario 4: long key with schema registry URL but no key schema
+            var longDeserializer = SerializationHelper.ResolveDeserializer(
+                typeof(long), null, "http://localhost:8081", "user", "pass");
+            Assert.Null(longDeserializer);
+        }
+
+        [Fact]
+        public void Test_SerializationHelper_ResolveDeserializer_GenericRecord_Should_Return_Deserializer_With_Schema_Registry()
+        {
+            // Scenario: GenericRecord with schema registry URL should create deserializer
+            var genericRecordDeserializer = SerializationHelper.ResolveDeserializer(
+                typeof(GenericRecord), null, "http://localhost:8081", "user", "pass");
+            Assert.NotNull(genericRecordDeserializer);
+        }
+
+        [Fact]
+        public void Test_SerializationHelper_ResolveDeserializer_BasicTypes_With_Schema_Should_Return_Deserializer()
+        {
+            // When an explicit schema is provided, even basic types should get deserializers
+            var stringWithSchemaDeserializer = SerializationHelper.ResolveDeserializer(
+                typeof(string), "someSchema", "http://localhost:8081", "user", "pass");
+            Assert.NotNull(stringWithSchemaDeserializer);
+        }
     }
 }
