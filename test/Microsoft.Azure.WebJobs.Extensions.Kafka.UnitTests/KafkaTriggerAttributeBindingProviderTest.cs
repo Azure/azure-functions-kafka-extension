@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using Avro.Generic;
+using Avro.Specific;
 using Confluent.Kafka;
 using Confluent.Kafka.SyncOverAsync;
 using Microsoft.Azure.WebJobs.Host.Executors;
@@ -78,6 +79,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         static void GenericWithSchemaRegistry_Fn([KafkaTrigger("brokers:9092", "myTopic", SchemaRegistryUrl = "localhost:8081")] KafkaEventData<GenericRecord> genericRecord) { }
         static void GenericKeyValueAvro_Fn([KafkaTrigger("brokers:9092", "myTopic", AvroSchema = "fake", KeyAvroSchema = "fake")] KafkaEventData<GenericRecord, GenericRecord> genericRecord) { }
 
+        // New test functions for schema registry scenarios
+        static void SchemaRegistry_WithoutKey_Fn([KafkaTrigger("brokers:9092", "myTopic", SchemaRegistryUrl = "localhost:8081")] KafkaEventData<GenericRecord> genericRecord) { }
+        static void SchemaRegistry_WithStringKey_Fn([KafkaTrigger("brokers:9092", "myTopic", SchemaRegistryUrl = "localhost:8081")] KafkaEventData<string, GenericRecord> genericRecord) { }
+        static void SchemaRegistry_WithBothGenericRecord_Fn([KafkaTrigger("brokers:9092", "myTopic", SchemaRegistryUrl = "localhost:8081")] KafkaEventData<GenericRecord, GenericRecord> genericRecord) { }
+
 
         static void RawSpecificAvro_Fn([KafkaTrigger("brokers:9092", "myTopic")] MyAvroRecord myAvroRecord) { }
         static void SpecificAvro_Fn([KafkaTrigger("brokers:9092", "myTopic")] KafkaEventData<Null, MyAvroRecord> myAvroRecord) { }
@@ -98,14 +104,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             return method.GetParameters().First();
         }
 
-        private void AssertIsCorrectKafkaListener(IListener listener, Type expectedKeyType, Type expectedValueType, Type expectedDeserializerType)
+        private void AssertIsCorrectKafkaListener(IListener listener, Type expectedKeyType, Type expectedValueType, Type expectedDeserializerType, bool expectNullKeyDeserializer = false)
         {
             var method = this.GetType().GetMethod(nameof(AssertIsCorrectKafkaListenerFor), BindingFlags.NonPublic | BindingFlags.Instance);
             var genericMethod = method.MakeGenericMethod(expectedKeyType, expectedValueType);
-            genericMethod.Invoke(this, new object[] { listener, expectedDeserializerType });
+            genericMethod.Invoke(this, new object[] { listener, expectedDeserializerType, expectNullKeyDeserializer });
         }
 
-        private void AssertIsCorrectKafkaListenerFor<TKey, TValue>(IListener listener, Type expectedDeserializerType)
+        private void AssertIsCorrectKafkaListenerFor<TKey, TValue>(IListener listener, Type expectedDeserializerType, bool expectNullKeyDeserializer = false)
         {
             Assert.IsType<KafkaListener<TKey, TValue>>(listener);
             var typedListener = (KafkaListener<TKey, TValue>)listener;
@@ -118,6 +124,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             {
                 Assert.NotNull(typedListener.ValueDeserializer);
                 Assert.IsType(expectedDeserializerType, typedListener.ValueDeserializer);
+            }
+
+            // Check key deserializer expectations
+            if (expectNullKeyDeserializer)
+            {
+                Assert.Null(typedListener.KeyDeserializer);
+            }
+            else
+            {
+                // For legacy tests, we need to handle both cases - some key types may not have deserializers
+                // This is the existing behavior that we want to maintain for backward compatibility
+                // Only check that the deserializer exists if the key type is a schema-based type
+                if (typeof(ISpecificRecord).IsAssignableFrom(typeof(TKey)) || typeof(GenericRecord).IsAssignableFrom(typeof(TKey)))
+                {
+                    Assert.NotNull(typedListener.KeyDeserializer);
+                }
+                // For basic types, the key deserializer may be null, which is fine
             }
         }
 
@@ -655,6 +678,45 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal("scope", result.SaslOAuthBearerScope);
             Assert.Equal("key=value", result.SaslOAuthBearerExtensions);
             Assert.Equal("endpointUrl", result.SaslOAuthBearerTokenEndpointUrl);
+        }
+
+        /// <summary>
+        /// Test to verify that schema registry URL with basic key types (like string) doesn't attempt Avro deserialization for keys
+        /// This test addresses the issue where key deserialization fails when using schema registry with no key schema
+        /// </summary>
+        [Theory]
+        [InlineData(nameof(SchemaRegistry_WithoutKey_Fn), typeof(string))]
+        [InlineData(nameof(SchemaRegistry_WithStringKey_Fn), typeof(string))]
+        [InlineData(nameof(SchemaRegistry_WithBothGenericRecord_Fn), typeof(GenericRecord))]
+        public async Task When_Schema_Registry_Is_Used_Should_Handle_Basic_Key_Types_Correctly(string functionName, Type expectedKeyType)
+        {
+            var config = this.emptyConfiguration;
+
+            var bindingProvider = new KafkaTriggerAttributeBindingProvider(
+                config,
+                Options.Create(new KafkaOptions()),
+                new KafkaEventDataConvertManager(NullLogger.Instance),
+                new DefaultNameResolver(config),
+                NullLoggerFactory.Instance,
+                drainModeManager);
+
+            var parameterInfo = new TriggerBindingProviderContext(this.GetParameterInfo(functionName), default);
+
+            var triggerBinding = await bindingProvider.TryCreateAsync(parameterInfo);
+            var listener = await triggerBinding.CreateListenerAsync(new ListenerFactoryContext(new FunctionDescriptor(), new Mock<ITriggeredFunctionExecutor>().Object, default));
+
+            Assert.NotNull(listener);
+            
+            // For basic key types like string, the key deserializer should be null (allowing default deserialization)
+            // For GenericRecord key types, the key deserializer should be an Avro deserializer
+            if (expectedKeyType == typeof(string))
+            {
+                AssertIsCorrectKafkaListener(listener, expectedKeyType, typeof(GenericRecord), typeof(SyncOverAsyncDeserializer<GenericRecord>), expectNullKeyDeserializer: true);
+            }
+            else
+            {
+                AssertIsCorrectKafkaListener(listener, expectedKeyType, typeof(GenericRecord), typeof(SyncOverAsyncDeserializer<GenericRecord>), expectNullKeyDeserializer: false);
+            }
         }
     }
 }

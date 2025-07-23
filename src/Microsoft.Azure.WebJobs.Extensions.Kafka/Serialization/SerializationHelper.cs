@@ -25,7 +25,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
 
             var isSpecificRecord = typeof(ISpecificRecord).IsAssignableFrom(type);
-            if (!isSpecificRecord && !typeof(GenericRecord).IsAssignableFrom(type) && schemaRegistryUrl == null)
+            var isGenericRecord = typeof(GenericRecord).IsAssignableFrom(type);
+            var isBasicType = IsBasicType(type);
+            
+            // Return null for basic types unless there's an explicit schema for them
+            if (isBasicType && string.IsNullOrWhiteSpace(specifiedAvroSchema))
+            {
+                return null;
+            }
+            
+            // Return null if not a schema-supported type and no schema registry
+            if (!isSpecificRecord && !isGenericRecord && schemaRegistryUrl == null)
             {
                 return null;
             }
@@ -183,6 +193,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return type == typeof(GenericRecord) ||
                 typeof(ISpecificRecord).IsAssignableFrom(type) ||
                 typeof(IMessage).IsAssignableFrom(type);
+        }
+
+        /// <summary>
+        /// Determines if the type is a basic/primitive type that doesn't require schema registry
+        /// </summary>
+        private static bool IsBasicType(Type type)
+        {
+            return type == typeof(string) ||
+                   type == typeof(byte[]) ||
+                   type == typeof(int) ||
+                   type == typeof(long);
         }
     }
 }
