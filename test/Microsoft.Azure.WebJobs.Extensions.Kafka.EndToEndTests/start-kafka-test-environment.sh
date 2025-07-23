@@ -16,7 +16,7 @@ MAX_RETRIES=30
 RETRY_INTERVAL=15
 # Topic name to test
 TEST_TOPIC="test-topic"
-KAFKA_BROKER_NAME="kafka-broker"
+KAFKA_BROKER_NAME="microsoftazurewebjobsextensionskafkaendtoendtests_kafka_1"
 BOOTSTRAP_SERVER="localhost:9092"
 
 # Function to check if Kafka is ready
