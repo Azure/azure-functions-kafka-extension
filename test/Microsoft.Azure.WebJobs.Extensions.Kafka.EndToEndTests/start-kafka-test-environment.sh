@@ -7,6 +7,7 @@ sudo apt install -y docker-compose
 
 echo "Starting Kafka using docker-compose..."
 docker-compose -f ./kafka-singlenode-compose.yaml up --build -d
+sleep 15
 
 # Topic name to test
 TEST_TOPIC="test-topic"
@@ -20,33 +21,15 @@ SCHEMA_REGISTRY_CONTAINER_NAME="schema-registry"
 # Function to check if all containers are running and start them if not
 check_containers() {
     echo "Checking if all containers are running..."
-    
+    docker-compose -f ./kafka-singlenode-compose.yaml ps
     # Get the list of services from docker-compose
     services=$(docker-compose -f ./kafka-singlenode-compose.yaml config --services)
     
     # Check each service
     all_running=true
     for service in $services; do
-        # Get container status
-        container_status=$(docker-compose -f ./kafka-singlenode-compose.yaml ps --services --filter "status=running" $service)
-        
-        if [ -z "$container_status" ]; then
-            echo "Container for service '$service' is not running."
-            all_running=false
-            
-            # Try to start the individual container
-            start_container_with_retry "$service"
+        services_running=$(docker-compose -f ./kafka-singlenode-compose.yaml ps --services --filter "status=running" $service)
 
-            if [ $? -eq 0 ]; then
-                all_running=true
-            fi
-        else
-            echo "Container for service '$service' is running."
-        fi
-    done
-    
-    if [ "$all_running" = true ]; then
-        # Store container names for later use
         if [ "$service" == "kafka" ]; then
             KAFKA_CONTAINER_NAME=$(docker-compose -f ./kafka-singlenode-compose.yaml ps -q $service | xargs docker inspect -f '{{.Name}}' | sed 's/^\///')
             echo "Found Kafka container: $KAFKA_CONTAINER_NAME"
@@ -57,8 +40,32 @@ check_containers() {
             SCHEMA_REGISTRY_CONTAINER_NAME=$(docker-compose -f ./kafka-singlenode-compose.yaml ps -q $service | xargs docker inspect -f '{{.Name}}' | sed 's/^\///')
             echo "Found Schema Registry container: $SCHEMA_REGISTRY_CONTAINER_NAME"
         fi
+
+        if [[ ! " $services_running " =~ (^|[[:space:]])$service($|[[:space:]]) ]]; then
+            echo "Container for service '$service' is not running."
+            all_running=false
+            
+            # Try to start the individual container
+            start_container_with_retry "$service"
+
+            if [ $? -eq 0 ]; then
+                echo "Container for service '$service' is running."
+                all_running=true
+            else 
+                echo "Failed to start container for service '$service'."
+                all_running=false
+            fi
+        else
+            echo "Container for service '$service' is running."
+        fi
+    done
+    
+    if [ "$all_running" = true ]; then
+        # Store container names for later use
         return 0
     else
+        echo "All services are not running."
+        docker-compose -f ./kafka-singlenode-compose.yaml ps 
         return 1
     fi
 }
@@ -79,20 +86,15 @@ start_container_with_retry() {
         # Start the container
         docker-compose -f ./kafka-singlenode-compose.yaml up -d $service
         
-        # Dynamically check container health instead of sleeping
-        for i in {1..6}; do  # Check for 30 seconds (6 * 5s)
-            echo "Checking if '$service' is running (check $i/6)..."
-            container_status=$(docker-compose -f ./kafka-singlenode-compose.yaml ps --services --filter "status=running" $service)
-            
-            if [ ! -z "$container_status" ]; then
-                echo "Successfully started '$service'."                
-                return 0
-            fi
-            
-            echo "Container not ready yet, waiting $wait_time seconds..."
-            sleep $wait_time
-        done
-        
+        sleep 15
+
+        services_running=$(docker-compose -f ./kafka-singlenode-compose.yaml ps --services --filter "status=running" $service)
+
+        if [[ " $services_running " =~ (^|[[:space:]])$service($|[[:space:]]) ]]; then
+            echo "Successfully started '$service' on attempt $attempt."
+            return 0
+        fi
+
         echo "Failed to start '$service' on attempt $attempt."
         
         # Show logs to help diagnose the issue
@@ -109,7 +111,7 @@ start_container_with_retry() {
 # Function to create test topic 
 create_test_topic() {
     local attempts=0
-    local max_attempts=$max_topic_creation_attempts
+    local max_attempts=5
     local wait_time=10
     
     echo "Attempting to create test topic: $TEST_TOPIC"
