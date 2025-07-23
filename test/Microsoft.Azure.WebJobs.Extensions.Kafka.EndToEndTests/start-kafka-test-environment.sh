@@ -11,18 +11,28 @@ docker-compose -f ./kafka-singlenode-compose.yaml up --build -d
 echo "Waiting for Kafka to be ready..."
 
 # Maximum number of retries
-MAX_RETRIES=30
+$MAX_RETRIES=30
 # Time to wait between retries in seconds
-RETRY_INTERVAL=30
+$RETRY_INTERVAL=15
 # Topic name to test
-TEST_TOPIC="test-topic"
-KAFKA_BROKER = "microsoftazurewebjobsextensionskafkaendtoendtests_kafka_1"
+$TEST_TOPIC="test-topic"
+$KAFKA_BROKER_NAME = "microsoftazurewebjobsextensionskafkaendtoendtests_kafka_1"
+$BOOTSTRAP_SERVER = "localhost:9092"
 
 # Function to check if Kafka is ready
 check_kafka_ready() {
-    echo "Attempting to create test topic: $TEST_TOPIC"
-    # Try to create a topic and capture the exit code
-    docker exec -it $KAFKA_BROKER kafka-topics --create --if-not-exists --topic $TEST_TOPIC --bootstrap-server localhost:9092 2>&1
+        echo "Attempting to create test topic: $TEST_TOPIC"
+        # Try to create a topic and capture only actual errors
+        output=$(docker exec -it -e LOG_LEVEL=ERROR $KAFKA_BROKER_NAME kafka-topics --create --if-not-exists --topic $TEST_TOPIC --bootstrap-server $BOOTSTRAP_SERVER 2>&1)
+        result=$?
+    
+        # Only show output if there was an error
+        if [ $result -ne 0 ]; then
+            echo "Error creating topic:"
+            echo "$output"
+        fi
+    
+        return $result
 }
 
 # Retry loop
@@ -43,4 +53,4 @@ echo "Total wait time: $((retry_count * RETRY_INTERVAL)) seconds"
 
 # Optional: List topics to confirm
 echo "Listing available Kafka topics:"
-docker exec -it kafka-broker kafka-topics --list --bootstrap-server localhost:9092
+docker exec -it -e LOG_LEVEL=ERROR $KAFKA_BROKER_NAME kafka-topics --list --bootstrap-server $BOOTSTRAP_SERVER
