@@ -21,7 +21,7 @@ BOOTSTRAP_SERVER="localhost:9092"
 # Function to get Kafka container name
 get_kafka_container_name() {
     # Look for the Kafka container from the running containers
-    docker ps --format "{{.Names}}" | grep -i kafka | head -n 1
+    docker ps --format "{{.Names}}" | grep -i microsoftazurewebjobsextensionskafkaendtoendtests_kafka | head -n 1
 }
 
 # Function to check if Kafka is ready
