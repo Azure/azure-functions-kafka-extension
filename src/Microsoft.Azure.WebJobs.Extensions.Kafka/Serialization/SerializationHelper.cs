@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
 using Avro.Generic;
 using Avro.Specific;
 using Confluent.Kafka;
