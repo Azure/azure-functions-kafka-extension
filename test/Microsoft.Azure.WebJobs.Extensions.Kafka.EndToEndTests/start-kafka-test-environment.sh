@@ -86,7 +86,8 @@ start_container_with_retry() {
         # Start the container
         docker-compose -f ./kafka-singlenode-compose.yaml up -d $service
         
-        sleep 15
+        echo "Waiting $wait_time seconds to let container start..."
+        sleep $wait_time
 
         services_running=$(docker-compose -f ./kafka-singlenode-compose.yaml ps --services --filter "status=running" $service)
 
