@@ -1,3 +1,4 @@
+#mcr.microsoft.com/azure-functions/java:3.0-java8-core-tools
 FROM mcr.microsoft.com/azure-functions/java@sha256:f04443c240bded3fd793380434cb641eb1945cb7dcefa828f00d7ef301639b98
 
 ARG WORK_DIR=/workspace/test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/server/java8
