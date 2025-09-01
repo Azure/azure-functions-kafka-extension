@@ -88,9 +88,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var schemaRegistryUrl = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SchemaRegistryUrl);
             var schemaRegistryUsername = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SchemaRegistryUsername);
             var schemaRegistryPassword = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SchemaRegistryPassword);
+            var topic = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.Topic);
 
-            var valueSerializer = SerializationHelper.ResolveValueSerializer(valueType, valueAvroSchema, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword);
-            var keySerializer = SerializationHelper.ResolveValueSerializer(keyType, keyAvroSchema, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword);
+            (var valueSerializer, var keySerializer) = SerializationHelper.ResolveSerializers(
+                valueType, 
+                keyType, 
+                valueAvroSchema, 
+                keyAvroSchema, 
+                schemaRegistryUrl, 
+                schemaRegistryUsername, 
+                schemaRegistryPassword,
+                topic);
 
             return (IKafkaProducer)Activator.CreateInstance(
                 typeof(KafkaProducer<,>).MakeGenericType(keyType, valueType),
