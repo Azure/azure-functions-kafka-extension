@@ -507,7 +507,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             await Assert.ThrowsAsync<InvalidOperationException>(() => target.StartAsync(default));
         }
 
-        [Fact]
+        //[Fact]
         //public async Task When_Using_Default_Eventhubs_Certificate_File_Should_Contain_File_Location()
         //{
         //    const string eventhubsConnectionString = "Endpoint=sb://fake.servicebus.windows.net/;SharedAccessKeyName=reader;SharedAccessKey=fake";
