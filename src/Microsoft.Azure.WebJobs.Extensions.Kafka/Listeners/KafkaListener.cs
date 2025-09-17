@@ -287,7 +287,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             if (!AzureFunctionsFileHelper.TryGetValidFilePath(defaultEventhubsCertificateFilePath, out var validatedCertificateFilePath))
             {
-                throw new InvalidOperationException($"Could not find event hubs certificate file '{defaultEventhubsCertificateFilePath}'");
+                logger.LogWarning($"Could not find event hubs certificate file '{defaultEventhubsCertificateFilePath}'");
             }
 
             return validatedCertificateFilePath;
