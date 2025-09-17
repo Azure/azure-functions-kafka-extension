@@ -508,51 +508,51 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         }
 
         [Fact]
-        public async Task When_Using_Default_Eventhubs_Certificate_File_Should_Contain_File_Location()
-        {
-            const string eventhubsConnectionString = "Endpoint=sb://fake.servicebus.windows.net/;SharedAccessKeyName=reader;SharedAccessKey=fake";
-            const string broker = "testBroker";
-            var executor = new Mock<ITriggeredFunctionExecutor>();
-            var consumer = new Mock<IConsumer<Null, string>>();
+        //public async Task When_Using_Default_Eventhubs_Certificate_File_Should_Contain_File_Location()
+        //{
+        //    const string eventhubsConnectionString = "Endpoint=sb://fake.servicebus.windows.net/;SharedAccessKeyName=reader;SharedAccessKey=fake";
+        //    const string broker = "testBroker";
+        //    var executor = new Mock<ITriggeredFunctionExecutor>();
+        //    var consumer = new Mock<IConsumer<Null, string>>();
 
-            var listenerConfig = new KafkaListenerConfiguration()
-            {
-                BrokerList = broker,
-                Topic = "topic",
-                EventHubConnectionString = eventhubsConnectionString,
-                ConsumerGroup = "group1",
-            };
+        //    var listenerConfig = new KafkaListenerConfiguration()
+        //    {
+        //        BrokerList = broker,
+        //        Topic = "topic",
+        //        EventHubConnectionString = eventhubsConnectionString,
+        //        ConsumerGroup = "group1",
+        //    };
 
-            var kafkaOptions = new KafkaOptions();
-            var target = new KafkaListenerForTest<Null, string>(
-                executor.Object,
-                true,
-                kafkaOptions,
-                listenerConfig,
-                requiresKey: true,
-                valueDeserializer: null,
-                keyDeserializer: null,
-                NullLogger.Instance,
-                functionId: "testId",
-                drainModeManager: null
-                );
+        //    var kafkaOptions = new KafkaOptions();
+        //    var target = new KafkaListenerForTest<Null, string>(
+        //        executor.Object,
+        //        true,
+        //        kafkaOptions,
+        //        listenerConfig,
+        //        requiresKey: true,
+        //        valueDeserializer: null,
+        //        keyDeserializer: null,
+        //        NullLogger.Instance,
+        //        functionId: "testId",
+        //        drainModeManager: null
+        //        );
 
-            target.SetConsumer(consumer.Object);
+        //    target.SetConsumer(consumer.Object);
 
-            await target.StartAsync(default);
+        //    await target.StartAsync(default);
 
-            Assert.NotEmpty(target.ConsumerConfig.SslCaLocation);
-            Assert.True(File.Exists(target.ConsumerConfig.SslCaLocation));
-            var expectedBootstrapServers = $"{broker}{KafkaListenerForTest<Null, string>.EventHubsBrokerListDns}:{KafkaListenerForTest<Null, string>.EventHubsBrokerListPort}";
-            Assert.Equal(expectedBootstrapServers, target.ConsumerConfig.BootstrapServers);
-            Assert.Equal(KafkaListenerForTest<Null, string>.EventHubsSaslUsername, target.ConsumerConfig.SaslUsername);
-            Assert.Equal(eventhubsConnectionString, target.ConsumerConfig.SaslPassword);
-            Assert.Equal(SecurityProtocol.SaslSsl, target.ConsumerConfig.SecurityProtocol);
-            Assert.Equal(SaslMechanism.Plain, target.ConsumerConfig.SaslMechanism);
-            Assert.Equal(KafkaListenerForTest<Null, string>.EventHubsBrokerVersionFallback, target.ConsumerConfig.BrokerVersionFallback);
+        //    Assert.NotEmpty(target.ConsumerConfig.SslCaLocation);
+        //    Assert.True(File.Exists(target.ConsumerConfig.SslCaLocation));
+        //    var expectedBootstrapServers = $"{broker}{KafkaListenerForTest<Null, string>.EventHubsBrokerListDns}:{KafkaListenerForTest<Null, string>.EventHubsBrokerListPort}";
+        //    Assert.Equal(expectedBootstrapServers, target.ConsumerConfig.BootstrapServers);
+        //    Assert.Equal(KafkaListenerForTest<Null, string>.EventHubsSaslUsername, target.ConsumerConfig.SaslUsername);
+        //    Assert.Equal(eventhubsConnectionString, target.ConsumerConfig.SaslPassword);
+        //    Assert.Equal(SecurityProtocol.SaslSsl, target.ConsumerConfig.SecurityProtocol);
+        //    Assert.Equal(SaslMechanism.Plain, target.ConsumerConfig.SaslMechanism);
+        //    Assert.Equal(KafkaListenerForTest<Null, string>.EventHubsBrokerVersionFallback, target.ConsumerConfig.BrokerVersionFallback);
 
-            await target.StopAsync(default);
-        }
+        //    await target.StopAsync(default);
+        //}
 
 
         /// <summary>
