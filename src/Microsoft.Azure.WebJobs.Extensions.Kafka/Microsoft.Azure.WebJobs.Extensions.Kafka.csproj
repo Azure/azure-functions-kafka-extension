@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\..\build\common.props" />
   <PropertyGroup>
-    <Version>$(Version)</Version>
+	<Version>$(Version)</Version>
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>Microsoft.Azure.WebJobs.Extensions.Kafka</AssemblyName>
     <RootNamespace>Microsoft.Azure.WebJobs.Extensions.Kafka</RootNamespace>
@@ -43,22 +43,5 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="System.Threading.Channels" Version="4.5.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="cacert.pem">
-      <Pack>true</Pack>
-      <PackagePath>build</PackagePath>
-    </None>
-    <None Include="Microsoft.Azure.WebJobs.Extensions.Kafka.targets">
-      <Pack>true</Pack>
-      <PackagePath>build</PackagePath>
-    </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="cacert.pem">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 </Project>
