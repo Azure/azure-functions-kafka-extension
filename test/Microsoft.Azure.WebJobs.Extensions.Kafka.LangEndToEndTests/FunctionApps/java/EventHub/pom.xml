@@ -12,7 +12,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
-        <azure.functions.maven.plugin.version>1.19.0</azure.functions.maven.plugin.version>
+        <azure.functions.maven.plugin.version>1.36.0</azure.functions.maven.plugin.version>
         <azure.functions.java.library.version>2.0.1</azure.functions.java.library.version>
         <functionAppName>KafkaEventHubE2E</functionAppName>
     </properties>
