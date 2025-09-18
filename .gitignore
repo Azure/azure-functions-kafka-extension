@@ -289,3 +289,4 @@ samples/dotnet/KafkaFunctionSample/Properties/
 
 temp
 packages-microsoft-prod.deb
+.venv
