@@ -231,7 +231,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             if (string.IsNullOrEmpty(this.listenerConfiguration.EventHubConnectionString))
             {
-                // Setup native kafka configuration
+                // Setup native kafka configuration.
                 conf.BootstrapServers = this.listenerConfiguration.BrokerList;
                 conf.GroupId = this.listenerConfiguration.ConsumerGroup;
                 conf.SslCaLocation = this.EnsureValidCertificateLocation(conf.SslCaLocation, nameof(conf.SslCaLocation));
