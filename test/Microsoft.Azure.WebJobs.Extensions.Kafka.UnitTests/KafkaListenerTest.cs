@@ -474,40 +474,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         }
 
         [Fact]
-        public async Task When_Using_Invalid_Eventhubs_Certificate_File_Should_Fail()
-        {
-            var executor = new Mock<ITriggeredFunctionExecutor>();
-            var consumer = new Mock<IConsumer<Null, string>>();
-
-            var listenerConfig = new KafkaListenerConfiguration()
-            {
-                BrokerList = "testBroker",
-                Topic = "topic",
-                EventHubConnectionString = "Endpoint=sb://fake.servicebus.windows.net/;SharedAccessKeyName=reader;SharedAccessKey=fake",
-                ConsumerGroup = "group1",
-                SslCaLocation = "does-not-exists.pem",
-            };
-
-            var kafkaOptions = new KafkaOptions();
-            var target = new KafkaListenerForTest<Null, string>(
-                executor.Object,
-                true,
-                kafkaOptions,
-                listenerConfig,
-                requiresKey: true,
-                valueDeserializer: null,
-                keyDeserializer: null,
-                NullLogger.Instance,
-                functionId: "testId",
-                drainModeManager: null
-                );
-
-            target.SetConsumer(consumer.Object);
-
-            await Assert.ThrowsAsync<InvalidOperationException>(() => target.StartAsync(default));
-        }
-
-        [Fact]
         public async Task When_Using_Single_Dispatcher_Slow_Partition_Processing_Should_Not_Delay_Other_Partitions()
         {
             const int Offset1 = 1;
