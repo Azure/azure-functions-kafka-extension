@@ -1,6 +1,6 @@
 variables:
   Codeql.Enabled: true
-  coreToolsVersion: "4.2.2"
+  coreToolsVersion: "4.2.2-1"
 
 # Enable CI on branches master and dev
 # Batch builds
