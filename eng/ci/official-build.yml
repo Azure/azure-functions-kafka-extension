@@ -8,7 +8,6 @@ trigger:
   batch: true
   branches:
     include:
-      - dev
       - master
 
 schedules:
