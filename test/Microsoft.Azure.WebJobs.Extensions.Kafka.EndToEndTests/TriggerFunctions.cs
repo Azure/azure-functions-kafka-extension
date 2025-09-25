@@ -133,8 +133,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
         }
     }
 
-
-
     internal static class MultiItem_KafkaEventData_String_With_Long_Key_Trigger
     {
         public static void Trigger(
@@ -338,21 +336,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             ILogger log)
         {
             log.LogInformation(kafkaEvent.Value.ToString());
-        }
-    }
-
-    internal static class SingleItem_Avro_With_String_Key
-    {
-        public static void Trigger(
-            [KafkaTrigger("LocalBroker", Constants.MyAvroRecordTopicName, ConsumerGroup = Constants.ConsumerGroupID, AvroSchema = MyAvroRecord.SchemaText)] KafkaEventData<string, MyAvroRecord> kafkaEvent,
-            ILogger log)
-        {
-            var myRecord = kafkaEvent.Value;
-            if (myRecord == null)
-            {
-                throw new Exception("MyAvro record is null");
-            }
-            log.LogInformation("{key}:{ticks}:{value}", kafkaEvent.Key, myRecord.Ticks, myRecord.ID);
         }
     }
 
