@@ -1,4 +1,5 @@
-FROM mcr.microsoft.com/azure-functions/python:3.0-python3.8-core-tools
+#mcr.microsoft.com/azure-functions/python:3.0-python3.8-core-tools
+FROM mcr.microsoft.com/azure-functions/python:3.0-python3.8-core-tools@sha256:9ef1b50c1502763b26f0a59eaa7ff58e9c891b0a1d73f43c03dcc1b87bde0a91
 
 # Copy Local File
 RUN mkdir /workspace

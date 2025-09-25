@@ -1,5 +1,6 @@
 variables:
   Codeql.Enabled: true
+  coreToolsVersion: "4.2.2-1"
 
 # Enable CI on branches master and dev
 # Batch builds
@@ -7,11 +8,10 @@ trigger:
   batch: true
   branches:
     include:
-      - dev
       - master
-      
+
 schedules:
-  - cron: '0 12 * * 0'
+  - cron: "0 12 * * 0"
     displayName: Weekly Sunday build
     branches:
       include:
@@ -20,14 +20,14 @@ schedules:
 
 resources:
   repositories:
-  - repository: 1ESPipelineTemplates
-    type: git
-    name: 1ESPipelineTemplates/1ESPipelineTemplates
-    ref: refs/tags/release
-  - repository: eng
-    type: git
-    name: engineering
-    ref: refs/tags/release
+    - repository: 1ESPipelineTemplates
+      type: git
+      name: 1ESPipelineTemplates/1ESPipelineTemplates
+      ref: refs/tags/release
+    - repository: eng
+      type: git
+      name: engineering
+      ref: refs/tags/release
 
 extends:
   template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
@@ -42,98 +42,98 @@ extends:
         image: 1es-windows-2022
         os: windows
     stages:
-    - stage: stage1
-      displayName: Build in Linux VM
-      jobs:
-      - job: job1
-        displayName: Build Kafka Extension
-        templateContext:
-          outputs:
-          - output: pipelineArtifact
-            targetPath: $(Build.ArtifactStagingDirectory)
-            artifactName: drop
-        steps:
-          - task: UseDotNet@2
-            displayName: 'Install .NET Core SDK'
-            inputs:
-              version: 3.1.x
-              packageType: sdk
-          
-          - task: UseDotNet@2
-            displayName: 'Install .NET 6.0'
-            inputs:
-              version: 6.x
-              packageType: sdk
-          
-          - task: UseDotNet@2
-            displayName: 'Install .NET 8.0'
-            inputs:
-              version: 8.x
-              packageType: sdk
-          
-          - task: DotNetCoreCLI@2
-            displayName: Build project
-            inputs:
-              command: 'build'
-              arguments: '--configuration Release -p:IsLocalBuild=False'
-              projects: src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
+      - stage: stage1
+        displayName: Build in Linux VM
+        jobs:
+          - job: job1
+            displayName: Build Kafka Extension
+            templateContext:
+              outputs:
+                - output: pipelineArtifact
+                  targetPath: $(Build.ArtifactStagingDirectory)
+                  artifactName: drop
+            steps:
+              - task: UseDotNet@2
+                displayName: "Install .NET Core SDK"
+                inputs:
+                  version: 3.1.x
+                  packageType: sdk
 
-          - task: DotNetCoreCLI@2
-            displayName: Build test projects
-            inputs:
-              command: 'build'
-              arguments: '--configuration Release -p:IsLocalBuild=False'
-              projects: |
-                test/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.csproj
-                test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests.csproj
-                test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.csproj
-          
-          - task: Bash@3
-            displayName: 'Installing Core tools'
-            inputs:
-              targetType: inline
-              script:
-                sudo apt-get install azure-functions-core-tools-4
-              
-          - pwsh: |
-              cd ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/java/Confluent
-              mvn clean package `-Dmaven`.javadoc`.skip=true `-Dmaven`.test`.skip `-Dorg`.slf4j`.simpleLogger`.log`.org`.apache`.maven`.cli`.transfer`.Slf4jMavenTransferListener=warn `-B
-              cd ../EventHub
-              mvn clean package `-Dmaven`.javadoc`.skip=true `-Dmaven`.test`.skip `-Dorg`.slf4j`.simpleLogger`.log`.org`.apache`.maven`.cli`.transfer`.Slf4jMavenTransferListener=warn `-B
-            displayName: 'Package Java Functions for Codeql'
-          
-          - task: DotNetCoreCLI@2
-            displayName: Run unit tests
-            inputs:
-              command: test
-              projects: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
-          
-          - template: ci/sign-files.yml@eng
-            parameters:
-                displayName: Sign extension assembly
-                folderPath: src/Microsoft.Azure.WebJobs.Extensions.Kafka/bin/Debug/netstandard2.0/
-                pattern: Microsoft.Azure.WebJobs.Extensions.Kafka.dll
-                signType: dll
-          
-          - task: DotNetCoreCLI@2
-            displayName: Pack NuGet package
-            inputs:
-              command: pack
-              packDirectory: '$(Build.ArtifactStagingDirectory)'
-              searchPatternPack: src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
-              configurationToPack: Release
-              includesymbols: true
+              - task: UseDotNet@2
+                displayName: "Install .NET 6.0"
+                inputs:
+                  version: 6.x
+                  packageType: sdk
 
-          - template: ci/sign-files.yml@eng
-            parameters:
-                displayName: Sign extension package
-                folderPath: $(Build.ArtifactStagingDirectory)
-                pattern: Microsoft.Azure.WebJobs.Extensions.Kafka.*.nupkg
-                signType: nuget
+              - task: UseDotNet@2
+                displayName: "Install .NET 8.0"
+                inputs:
+                  version: 8.x
+                  packageType: sdk
 
-          - task: ManifestGeneratorTask@0
-            displayName: SBOM Generation Task
-            inputs:
-              BuildDropPath: $(Build.ArtifactStagingDirectory)
-              PackageName: Microsoft.Azure.WebJobs.Extensions.Kafka
-              Verbosity: Information
+              - task: DotNetCoreCLI@2
+                displayName: Build project
+                inputs:
+                  command: "build"
+                  arguments: "--configuration Release -p:IsLocalBuild=False"
+                  projects: src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
+
+              - task: DotNetCoreCLI@2
+                displayName: Build test projects
+                inputs:
+                  command: "build"
+                  arguments: "--configuration Release -p:IsLocalBuild=False"
+                  projects: |
+                    test/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.csproj
+                    test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests.csproj
+                    test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.csproj
+
+              - task: Bash@3
+                displayName: "Installing Core tools"
+                inputs:
+                  targetType: inline
+                  script: |
+                    sudo apt-get install azure-functions-core-tools-4=$(coreToolsVersion)
+
+              - pwsh: |
+                  cd ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/java/Confluent
+                  mvn clean package `-Dmaven`.javadoc`.skip=true `-Dmaven`.test`.skip `-Dorg`.slf4j`.simpleLogger`.log`.org`.apache`.maven`.cli`.transfer`.Slf4jMavenTransferListener=warn `-B
+                  cd ../EventHub
+                  mvn clean package `-Dmaven`.javadoc`.skip=true `-Dmaven`.test`.skip `-Dorg`.slf4j`.simpleLogger`.log`.org`.apache`.maven`.cli`.transfer`.Slf4jMavenTransferListener=warn `-B
+                displayName: "Package Java Functions for Codeql"
+
+              - task: DotNetCoreCLI@2
+                displayName: Run unit tests
+                inputs:
+                  command: test
+                  projects: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
+
+              - template: ci/sign-files.yml@eng
+                parameters:
+                  displayName: Sign extension assembly
+                  folderPath: src/Microsoft.Azure.WebJobs.Extensions.Kafka/bin/Debug/netstandard2.0/
+                  pattern: Microsoft.Azure.WebJobs.Extensions.Kafka.dll
+                  signType: dll
+
+              - task: DotNetCoreCLI@2
+                displayName: Pack NuGet package
+                inputs:
+                  command: pack
+                  packDirectory: "$(Build.ArtifactStagingDirectory)"
+                  searchPatternPack: src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
+                  configurationToPack: Release
+                  includesymbols: true
+
+              - template: ci/sign-files.yml@eng
+                parameters:
+                  displayName: Sign extension package
+                  folderPath: $(Build.ArtifactStagingDirectory)
+                  pattern: Microsoft.Azure.WebJobs.Extensions.Kafka.*.nupkg
+                  signType: nuget
+
+              - task: ManifestGeneratorTask@0
+                displayName: SBOM Generation Task
+                inputs:
+                  BuildDropPath: $(Build.ArtifactStagingDirectory)
+                  PackageName: Microsoft.Azure.WebJobs.Extensions.Kafka
+                  Verbosity: Information

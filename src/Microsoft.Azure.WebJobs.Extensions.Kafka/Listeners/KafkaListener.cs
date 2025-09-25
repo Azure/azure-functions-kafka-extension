@@ -231,22 +231,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             if (string.IsNullOrEmpty(this.listenerConfiguration.EventHubConnectionString))
             {
-                // Setup native kafka configuration
+                // Setup native kafka configuration.
                 conf.BootstrapServers = this.listenerConfiguration.BrokerList;
                 conf.GroupId = this.listenerConfiguration.ConsumerGroup;
-
-                if (!string.IsNullOrWhiteSpace(conf.SslCaLocation))
-                {
-                    if (AzureFunctionsFileHelper.TryGetValidFilePath(conf.SslCaLocation, out var resolvedSslCaLocation))
-                    {
-                        this.logger.LogDebug("Found SslCaLocation in {filePath}", resolvedSslCaLocation);
-                        conf.SslCaLocation = resolvedSslCaLocation;
-                    }
-                    else
-                    {
-                        this.logger.LogWarning("Could not find valid file path for SslCaLocation {filePath}", conf.SslCaLocation);
-                    }
-                }                
+                conf.SslCaLocation = this.EnsureValidCertificateLocation(conf.SslCaLocation, nameof(conf.SslCaLocation));
             }
             else
             {
@@ -263,7 +251,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 conf.SaslMechanism = SaslMechanism.Plain;
                 conf.SaslUsername = EventHubsSaslUsername;
                 conf.SaslPassword = this.listenerConfiguration.EventHubConnectionString;
-                conf.SslCaLocation= this.EnsureValidEventHubsCertificateLocation(this.listenerConfiguration.SslCaLocation);
+                conf.SslCaLocation = this.EnsureValidCertificateLocation(this.listenerConfiguration.SslCaLocation, nameof(conf.SslCaLocation));
                 conf.GroupId = consumerGroupToUse;
                 conf.BrokerVersionFallback = EventHubsBrokerVersionFallback;
             }
@@ -271,26 +259,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return conf;
         }
 
-        string EnsureValidEventHubsCertificateLocation(string userProvidedLocation)
+        string EnsureValidCertificateLocation(string userProvidedLocation, string confName)
         {
-            const string defaultEventhubsCertificateFilePath = "./cacert.pem";
-
             if (!string.IsNullOrWhiteSpace(userProvidedLocation))
             {
-                if (!AzureFunctionsFileHelper.TryGetValidFilePath(userProvidedLocation, out var validatedUserProvidedLocation))
+                if (AzureFunctionsFileHelper.TryGetValidFilePath(userProvidedLocation, out var resolvedLocation))
                 {
-                    throw new InvalidOperationException($"Could not find user provided event hubs certificate file '{userProvidedLocation}");
+                    this.logger.LogDebug("Found {confName} in {filePath}", confName, resolvedLocation);
+                    userProvidedLocation = resolvedLocation;
                 }
-
-                return validatedUserProvidedLocation;
+                else
+                {
+                    this.logger.LogWarning("Could not find valid file path for {confName} {filePath}", confName, userProvidedLocation);
+                }
             }
-
-            if (!AzureFunctionsFileHelper.TryGetValidFilePath(defaultEventhubsCertificateFilePath, out var validatedCertificateFilePath))
-            {
-                throw new InvalidOperationException($"Could not find event hubs certificate file '{defaultEventhubsCertificateFilePath}'");
-            }
-
-            return validatedCertificateFilePath;
+            return userProvidedLocation;
         }
 
         private void ProcessSubscription(object parameter)
