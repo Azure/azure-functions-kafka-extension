@@ -289,8 +289,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     }
                 }
 
-                // if schema registry is present, the types must be generic too?
-
                 (valueType, valueAvroSchema) = GetTypeAndSchema(valueType, valueAvroSchemaFromAttribute);
             }
 
@@ -324,7 +322,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
 
         /// <summary>
-        /// Gets if the type can be serialized/deserialized
+        /// Gets if the type can be serialized/deserialized.
         /// </summary>
         internal static bool IsDesSerType(Type type)
         {
