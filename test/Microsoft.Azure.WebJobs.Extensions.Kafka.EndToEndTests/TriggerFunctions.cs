@@ -133,8 +133,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
         }
     }
 
-
-
     internal static class MultiItem_KafkaEventData_String_With_Long_Key_Trigger
     {
         public static void Trigger(
