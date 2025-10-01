@@ -2,9 +2,6 @@ trigger:
   branches:
     include:
       - master
-      # release
-      - 4.x.x
-      - 4.x.x-*
   tags:
     include:
       - 4.*
