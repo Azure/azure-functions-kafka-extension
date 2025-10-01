@@ -5,6 +5,9 @@ trigger:
       # release
       - 4.x.x
       - 4.x.x-*
+  tags:
+    include:
+      - 4.*
 
 resources:
   repositories:
