@@ -75,5 +75,29 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.NotNull(kafkaScalerProvider.GetTargetScaler());
             Assert.NotNull(kafkaScalerProvider.GetMonitor());
         }
+
+        [Fact]
+        public void KafkaScalerProvider_Implements_IDisposable()
+        {
+            // Arrange
+            var metadata = new JObject
+            {
+                { "BrokerList", "brokerList" },
+                { "Topic", "topicTest" },
+                { "ConsumerGroup", "consumerGroup" },
+                { "LagThreshold", 1000 },
+            };
+            var triggerMetadata = new TriggerMetadata(metadata);
+
+            // Act & Assert
+            var kafkaScalerProvider = new KafkaScalerProvider(serviceProvider.Object, triggerMetadata);
+            Assert.True(kafkaScalerProvider is IDisposable, "KafkaScalerProvider should implement IDisposable");
+            
+            // Dispose should not throw
+            kafkaScalerProvider.Dispose();
+            
+            // Multiple Dispose calls should be safe
+            kafkaScalerProvider.Dispose();
+        }
     }
 }

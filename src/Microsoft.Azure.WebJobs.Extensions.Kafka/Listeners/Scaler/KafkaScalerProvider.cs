@@ -19,10 +19,12 @@ using static Confluent.Kafka.ConfigPropertyNames;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
-    internal class KafkaScalerProvider : IScaleMonitorProvider, ITargetScalerProvider
+    internal class KafkaScalerProvider : IScaleMonitorProvider, ITargetScalerProvider, IDisposable
     {
         private readonly KafkaObjectTopicScaler _scaleMonitor;
         private readonly KafkaObjectTargetScaler _targetScaler;
+        private readonly KafkaMetricsProvider<string, string> _metricsProvider;
+        private bool _disposed;
 
 
         public KafkaScalerProvider(IServiceProvider serviceProvider, TriggerMetadata triggerMetadata)
@@ -40,10 +42,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             var consumerConfig = GetConsumerConfiguration(kafkaMetadata, config, nameResolver);
             var consumer = new ConsumerBuilder<string, string>(consumerConfig).Build();
-            var metricsProvider = new KafkaMetricsProvider<string, string>(topicName, new AdminClientConfig(consumerConfig), consumer, logger);
+            _metricsProvider = new KafkaMetricsProvider<string, string>(topicName, new AdminClientConfig(consumerConfig), consumer, logger);
 
-            _scaleMonitor = new KafkaObjectTopicScaler(topicName, consumerGroup, metricsProvider, triggerMetadata.FunctionName, lagThreshold, logger);
-            _targetScaler = new KafkaObjectTargetScaler(topicName, consumerGroup, metricsProvider, triggerMetadata.FunctionName, lagThreshold, logger);
+            _scaleMonitor = new KafkaObjectTopicScaler(topicName, consumerGroup, _metricsProvider, triggerMetadata.FunctionName, lagThreshold, logger);
+            _targetScaler = new KafkaObjectTargetScaler(topicName, consumerGroup, _metricsProvider, triggerMetadata.FunctionName, lagThreshold, logger);
         }
 
         private ConsumerConfig GetConsumerConfiguration(KafkaMetaData kafkaMetaData, IConfiguration config, INameResolver nameResolver)
@@ -101,6 +103,32 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public ITargetScaler GetTargetScaler()
         {
             return _targetScaler;
+        }
+
+        /// <summary>
+        /// Disposes the metrics provider which in turn disposes the Kafka consumer.
+        /// This releases native threads spawned by librdkafka.
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Disposes the metrics provider which in turn disposes the Kafka consumer.
+        /// </summary>
+        /// <param name="disposing">True if called from Dispose(), false if called from finalizer.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    _metricsProvider?.Dispose();
+                }
+                _disposed = true;
+            }
         }
 
         private string ExtractSection(string pemString, string sectionName)
