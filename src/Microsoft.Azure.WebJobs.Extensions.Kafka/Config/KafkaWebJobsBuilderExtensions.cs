@@ -44,18 +44,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         internal static IWebJobsBuilder AddKafkaScaleForTrigger(this IWebJobsBuilder builder, TriggerMetadata triggerMetadata)
         {
-            IServiceProvider serviceProvider = null;
-            var scalerProvider = new Lazy<KafkaScalerProvider>(() => new KafkaScalerProvider(serviceProvider, triggerMetadata));
-            builder.Services.AddSingleton((Func<IServiceProvider, IScaleMonitorProvider>)delegate (IServiceProvider resolvedServiceProvider)
-            {
-                serviceProvider = serviceProvider ?? resolvedServiceProvider;
-                return scalerProvider.Value;
-            });
-            builder.Services.AddSingleton((Func<IServiceProvider, ITargetScalerProvider>)delegate (IServiceProvider resolvedServiceProvider)
-            {
-                serviceProvider = serviceProvider ?? resolvedServiceProvider;
-                return scalerProvider.Value;
-            });
+            // Register KafkaScalerProvider as a singleton that the DI container manages directly.
+            // This ensures that:
+            // 1. The same instance is shared between IScaleMonitorProvider and ITargetScalerProvider
+            // 2. The DI container will call Dispose() on the instance when the host is disposed
+            // 3. This fixes the librdkafka thread leak issue where native threads were not being cleaned up
+            //
+            // Previous implementation used Lazy<T> which prevented the DI container from managing
+            // the lifetime of KafkaScalerProvider, causing thread leaks when consumers were not disposed.
+            builder.Services.AddSingleton<KafkaScalerProvider>(serviceProvider => 
+                new KafkaScalerProvider(serviceProvider, triggerMetadata));
+
+            // Register the same singleton instance for both interfaces
+            builder.Services.AddSingleton<IScaleMonitorProvider>(serviceProvider =>
+                serviceProvider.GetRequiredService<KafkaScalerProvider>());
+            builder.Services.AddSingleton<ITargetScalerProvider>(serviceProvider =>
+                serviceProvider.GetRequiredService<KafkaScalerProvider>());
+
             return builder;
         }
     }
