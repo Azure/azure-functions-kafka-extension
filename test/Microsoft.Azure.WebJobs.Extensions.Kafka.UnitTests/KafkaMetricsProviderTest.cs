@@ -139,5 +139,44 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(topicPartitions.Count, metrics.PartitionCount);
             Assert.Equal(0, metrics.TotalLag);
         }
+
+        [Fact]
+        public void KafkaMetricsProvider_Implements_IDisposable()
+        {
+            // Assert type implements IDisposable
+            Assert.True(metricsProvider is IDisposable, "KafkaMetricsProvider should implement IDisposable");
+        }
+
+        [Fact]
+        public void KafkaMetricsProvider_Dispose_Closes_And_Disposes_Consumer()
+        {
+            // Arrange
+            consumer.Setup(x => x.Close()).Verifiable();
+            consumer.Setup(x => x.Dispose()).Verifiable();
+
+            // Act
+            metricsProvider.Dispose();
+
+            // Assert
+            consumer.Verify(x => x.Close(), Times.Once);
+            consumer.Verify(x => x.Dispose(), Times.Once);
+        }
+
+        [Fact]
+        public void KafkaMetricsProvider_Dispose_Can_Be_Called_Multiple_Times()
+        {
+            // Arrange
+            consumer.Setup(x => x.Close());
+            consumer.Setup(x => x.Dispose());
+
+            // Act - calling Dispose multiple times should not throw
+            metricsProvider.Dispose();
+            metricsProvider.Dispose();
+            metricsProvider.Dispose();
+
+            // Assert - Close and Dispose should only be called once
+            consumer.Verify(x => x.Close(), Times.Once);
+            consumer.Verify(x => x.Dispose(), Times.Once);
+        }
     }
 }
