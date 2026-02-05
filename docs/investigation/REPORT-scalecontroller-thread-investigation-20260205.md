@@ -238,8 +238,14 @@ The IHost.Dispose() issue is a **separate problem**. It may contribute to resour
 
 ## Related Issues
 
-- **Confluent.Kafka #2232**: "Too many threads in the process for a single consumer" (Open)
-- **librdkafka FAQ**: Documents "1 main thread + 1 thread per broker" per consumer
+- **Confluent.Kafka #2232**: "Too many threads in the process for a single consumer" (Open)  
+  https://github.com/confluentinc/confluent-kafka-dotnet/issues/2232
+
+- **librdkafka FAQ - Number of internal threads**  
+  https://github.com/confluentinc/librdkafka/wiki/FAQ#number-of-internal-threads
+
+- **librdkafka INTRODUCTION.md - Threads and callbacks**  
+  https://github.com/confluentinc/librdkafka/blob/master/INTRODUCTION.md#threads-and-callbacks
 
 ---
 
@@ -483,5 +489,11 @@ IHost.Dispose() の問題は**別の問題**です。一般的なリソースリ
 
 ## 関連 Issue
 
-- **Confluent.Kafka #2232**: "Too many threads in the process for a single consumer" (Open)
-- **librdkafka FAQ**: consumer ごとに "1 メインスレッド + ブローカーごとに 1 スレッド" を文書化
+- **Confluent.Kafka #2232**: "Too many threads in the process for a single consumer" (Open)  
+  https://github.com/confluentinc/confluent-kafka-dotnet/issues/2232
+
+- **librdkafka FAQ - Number of internal threads**  
+  https://github.com/confluentinc/librdkafka/wiki/FAQ#number-of-internal-threads
+
+- **librdkafka INTRODUCTION.md - Threads and callbacks**  
+  https://github.com/confluentinc/librdkafka/blob/master/INTRODUCTION.md#threads-and-callbacks
