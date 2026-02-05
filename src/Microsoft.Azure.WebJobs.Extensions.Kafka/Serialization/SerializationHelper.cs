@@ -112,6 +112,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 var genericMethod = methodInfo.MakeGenericMethod(valueType);
                 valueDeserializer = genericMethod.Invoke(null, new object[] { schemaRegistry });
             }
+            else if (!typeof(ISpecificRecord).IsAssignableFrom(valueType) &&
+                     !typeof(Google.Protobuf.IMessage).IsAssignableFrom(valueType))
+            {
+                // Fix for Issue #532: For Out-of-proc scenarios where valueType is string or byte[],
+                // create a GenericRecord deserializer to properly handle Avro messages from Schema Registry.
+                // The GenericRecord will be converted to JSON when sent to the out-of-proc worker.
+                valueDeserializer = CreateAvroValueDeserializer<GenericRecord>(schemaRegistry);
+            }
 
             // if keyType is genericRecord, create avro deserializer
             if (typeof(GenericRecord).IsAssignableFrom(keyType))
