@@ -300,4 +300,4 @@ internal class SharedConsumerMessageDispatcher<TKey, TValue>
 
 - Current implementation: [KafkaListener.cs](azure-functions-kafka-extension/src/Microsoft.Azure.WebJobs.Extensions.Kafka/Listeners/KafkaListener.cs)
 - Binding provider: [KafkaTriggerAttributeBindingProvider.cs](azure-functions-kafka-extension/src/Microsoft.Azure.WebJobs.Extensions.Kafka/Trigger/KafkaTriggerAttributeBindingProvider.cs)
-- Investigation report: [REPORT-scalecontroller-thread-investigation-20260205.md](docs/investigation/REPORT-scalecontroller-thread-investigation-20260205.md)
+- Investigation report: AAPT-Antares-ScaleController/docs/investigations/REPORT-scalecontroller-thread-investigation-20260205.md (internal repo)
