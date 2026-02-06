@@ -1,29 +1,29 @@
-# Consumer Sharing パターン仕様書
+# Consumer Sharing Pattern Specification
 
 ## Overview
 
-Azure Functions Kafka Extension で、同一設定の複数 Kafka Trigger が librdkafka Consumer を共有するパターンを実装する。これにより、多数の Kafka Trigger を持つ Function App のスレッド数を大幅に削減する。
+Implement a Consumer Sharing pattern in Azure Functions Kafka Extension where multiple Kafka Triggers with matching configurations share a single librdkafka Consumer instance. This significantly reduces the thread count for Function Apps with many Kafka Triggers.
 
 ## Background
 
-### 現状の問題
+### Current Problem
 
-| 項目 | 現状 |
-|------|------|
-| Consumer 生成 | 1 Trigger = 1 Consumer |
-| スレッド数 | 1 Consumer = ~25 threads (librdkafka 内部スレッド) |
-| 例：31 triggers | 31 × 25 = ~775 threads |
+| Item | Current State |
+|------|---------------|
+| Consumer creation | 1 Trigger = 1 Consumer |
+| Thread count | 1 Consumer = ~25 threads (librdkafka internal threads) |
+| Example: 31 triggers | 31 × 25 = ~775 threads |
 
-### 根本原因
+### Root Cause
 
-librdkafka は Consumer/Producer インスタンスごとに固定数の内部スレッドを生成する：
+librdkafka creates a fixed number of internal threads per Consumer/Producer instance:
 - Main thread (1)
 - Broker connection threads (~3 per broker)
 - Other internal threads (~10)
 
-この設計は librdkafka のアーキテクチャに由来し、Confluent.Kafka (.NET wrapper) では変更不可。
+This design is inherent to librdkafka's architecture and cannot be changed at the Confluent.Kafka (.NET wrapper) level.
 
-### 既存コードの TODO
+### Existing TODO in Code
 
 ```csharp
 // KafkaTriggerAttributeBindingProvider.cs:71
@@ -37,10 +37,10 @@ Task<IListener> listenerCreator(ListenerFactoryContext factoryContext, bool sing
 
 ## Proposed Solution: Consumer Sharing
 
-### 概念図
+### Conceptual Diagram
 
 ```
-現状:
+Current State:
 ┌─────────────────────────────────────────────────────────────┐
 │ Function App                                                │
 │                                                             │
@@ -57,7 +57,7 @@ Task<IListener> listenerCreator(ListenerFactoryContext factoryContext, bool sing
 │  Total: N × 25 threads                                      │
 └─────────────────────────────────────────────────────────────┘
 
-改善後 (Consumer Sharing):
+After Improvement (Consumer Sharing):
 ┌─────────────────────────────────────────────────────────────┐
 │ Function App                                                │
 │                                                             │
@@ -84,7 +84,7 @@ Task<IListener> listenerCreator(ListenerFactoryContext factoryContext, bool sing
 
 ### Consumer Sharing Key
 
-同一 Consumer を共有できる条件 (全て一致する必要あり):
+Conditions for sharing a Consumer (all must match):
 
 ```csharp
 public class ConsumerSharingKey : IEquatable<ConsumerSharingKey>
@@ -102,7 +102,7 @@ public class ConsumerSharingKey : IEquatable<ConsumerSharingKey>
 
 ### Consumer Pool Manager
 
-新規コンポーネント `IKafkaConsumerPool` を導入：
+Introduce a new component `IKafkaConsumerPool`:
 
 ```csharp
 public interface IKafkaConsumerPool
@@ -144,7 +144,7 @@ public interface ISharedConsumer<TKey, TValue> : IDisposable
 
 ### Message Dispatcher
 
-単一 Consumer から複数 Trigger へのメッセージ分配：
+Dispatching messages from a single Consumer to multiple Triggers:
 
 ```csharp
 internal class SharedConsumerMessageDispatcher<TKey, TValue>
@@ -167,81 +167,81 @@ internal class SharedConsumerMessageDispatcher<TKey, TValue>
 
 ---
 
-## 変更が必要なファイル
+## Files to Change
 
-| ファイル | 変更内容 | 影響度 |
-|----------|----------|--------|
-| `KafkaTriggerAttributeBindingProvider.cs` | Consumer Pool 使用に変更 | High |
-| `KafkaListener.cs` | SharedConsumer 使用に変更 | High |
-| **新規** `IKafkaConsumerPool.cs` | インターフェース定義 | - |
-| **新規** `KafkaConsumerPool.cs` | Pool 実装 | - |
-| **新規** `SharedConsumer.cs` | 共有 Consumer ラッパー | - |
-| **新規** `ConsumerSharingKey.cs` | キー定義 | - |
-| `KafkaWebJobsStartup.cs` | DI 登録 | Low |
-| `FunctionExecutorBase.cs` | Commit strategy 調整 | Medium |
+| File | Change Description | Impact |
+|------|-------------------|--------|
+| `KafkaTriggerAttributeBindingProvider.cs` | Use Consumer Pool | High |
+| `KafkaListener.cs` | Use SharedConsumer | High |
+| **New** `IKafkaConsumerPool.cs` | Interface definition | - |
+| **New** `KafkaConsumerPool.cs` | Pool implementation | - |
+| **New** `SharedConsumer.cs` | Shared Consumer wrapper | - |
+| **New** `ConsumerSharingKey.cs` | Key definition | - |
+| `KafkaWebJobsStartup.cs` | DI registration | Low |
+| `FunctionExecutorBase.cs` | Commit strategy adjustment | Medium |
 
 ---
 
-## 考慮事項
+## Considerations
 
 ### 1. Offset Commit Strategy
 
-**問題**: 複数 Trigger が同一 topic を共有する場合、offset commit の競合が発生しうる。
+**Problem**: When multiple Triggers share the same topic, offset commit conflicts may occur.
 
-**解決案**:
-- Per-partition offset tracking を各 handler で独立管理
-- Commit は最小 offset のみ実行 (at-least-once semantics 維持)
+**Solution**:
+- Manage per-partition offset tracking independently for each handler
+- Commit only the minimum offset (maintaining at-least-once semantics)
 
 ### 2. Consumer Group Semantics
 
-**問題**: 同一 consumer group で複数 topic を subscribe すると、partition assignment が変わる可能性。
+**Problem**: Subscribing to multiple topics with the same consumer group may change partition assignment.
 
-**解決案**:
-- Topic ごとに異なる internal consumer を使用する選択肢を提供
-- または、sharing は同一 topic の trigger 間のみに限定
+**Solution**:
+- Provide option to use different internal consumers per topic
+- Or limit sharing to triggers on the same topic only
 
 ### 3. Lifecycle Management
 
-**問題**: Trigger の start/stop タイミングが異なる場合の Consumer lifecycle。
+**Problem**: Consumer lifecycle when Triggers have different start/stop timing.
 
-**解決案**:
-- Reference counting による管理
-- 最後の参照が解放されるまで Consumer を維持
-- Drain mode 対応
+**Solution**:
+- Manage via reference counting
+- Maintain Consumer until last reference is released
+- Support drain mode
 
 ### 4. Error Handling
 
-**問題**: 共有 Consumer でエラー発生時、全 trigger に影響。
+**Problem**: Errors in shared Consumer affect all triggers.
 
-**解決案**:
+**Solution**:
 - Per-handler error isolation
-- Consumer 再作成時の自動復旧
+- Automatic recovery on Consumer recreation
 
 ### 5. Metrics & Monitoring
 
-**問題**: 共有時のメトリクス集約方法。
+**Problem**: How to aggregate metrics when sharing.
 
-**解決案**:
-- Per-trigger メトリクスは維持
-- Consumer-level メトリクスは共有
+**Solution**:
+- Maintain per-trigger metrics
+- Share Consumer-level metrics
 
 ### 6. Breaking Changes
 
-**Opt-in approach** を推奨：
-- 新規設定 `KafkaOptions.EnableConsumerSharing = false` (デフォルト)
-- 既存動作との互換性維持
-- Phase 2 でデフォルト有効化を検討
+**Opt-in approach** recommended:
+- New setting `KafkaOptions.EnableConsumerSharing = false` (default)
+- Maintain compatibility with existing behavior
+- Consider enabling by default in Phase 2
 
 ---
 
 ## Implementation Phases
 
 ### Phase 1: Foundation (MVP)
-- [ ] ConsumerSharingKey 実装
-- [ ] IKafkaConsumerPool インターフェース定義
-- [ ] KafkaConsumerPool 基本実装
-- [ ] SharedConsumer 基本実装
-- [ ] 同一 topic/consumerGroup での sharing のみ対応
+- [ ] Implement ConsumerSharingKey
+- [ ] Define IKafkaConsumerPool interface
+- [ ] Implement basic KafkaConsumerPool
+- [ ] Implement basic SharedConsumer
+- [ ] Support sharing only for same topic/consumerGroup
 
 ### Phase 2: Production Ready
 - [ ] Comprehensive error handling
@@ -276,7 +276,7 @@ internal class SharedConsumerMessageDispatcher<TKey, TValue>
 | Memory overhead | Low |
 | Connection count | 1 × brokers |
 
-**スレッド数削減率**: ~97%
+**Thread reduction rate**: ~97%
 
 ---
 
@@ -290,9 +290,9 @@ internal class SharedConsumerMessageDispatcher<TKey, TValue>
 
 ## Open Questions
 
-1. **Sharing Scope**: 同一 topic 限定 vs. 同一 broker/consumerGroup で複数 topic を許可？
-2. **Default Behavior**: Opt-in (安全) vs. Opt-out (既存ユーザーへの影響)?
-3. **Scale Out Strategy**: Consumer sharing 時の KEDA スケーリングへの影響は？
+1. **Sharing Scope**: Limit to same topic only vs. allow multiple topics with same broker/consumerGroup?
+2. **Default Behavior**: Opt-in (safe) vs. Opt-out (impact on existing users)?
+3. **Scale Out Strategy**: How does Consumer sharing affect KEDA scaling?
 
 ---
 
