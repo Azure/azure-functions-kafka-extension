@@ -22,8 +22,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     {
         private readonly string consumerGroup;
 
-        public SingleItemFunctionExecutor(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, string consumerGroup, int channelCapacity, int channelFullRetryIntervalInMs, ICommitStrategy<TKey, TValue> commitStrategy, ILogger logger, IDrainModeManager drainModeManager)
-            : base(executor, consumer, channelCapacity, channelFullRetryIntervalInMs, commitStrategy, logger, drainModeManager)
+        public SingleItemFunctionExecutor(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, string consumerGroup, int channelCapacity, int channelFullRetryIntervalInMs, ICommitStrategy<TKey, TValue> commitStrategy, ILogger logger, IDrainModeManager drainModeManager, KafkaOptions options)
+            : base(executor, consumer, channelCapacity, channelFullRetryIntervalInMs, commitStrategy, logger, drainModeManager, options)
         {
             this.consumerGroup = consumerGroup;
             logger.LogInformation($"FunctionExecutor Loaded: {nameof(SingleItemFunctionExecutor<TKey, TValue>)}");
@@ -109,7 +109,36 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 // Doing it after each event minimizes the delay
                 if (!cancellationToken.IsCancellationRequested)
                 {
-                    this.Commit(new[] { new TopicPartitionOffset(topicPartition, kafkaEventData.Offset + 1) });  // offset is inclusive when resuming
+                    if (functionResult.Succeeded)
+                    {
+                        this.ClearRetryCounter(kafkaEventData.Topic, partition, kafkaEventData.Offset);
+                        this.Commit(new[] { new TopicPartitionOffset(topicPartition, kafkaEventData.Offset + 1) });
+                    }
+                    else if (this.options.CommitOnFailure)
+                    {
+                        // Legacy at-most-once behavior
+                        this.Commit(new[] { new TopicPartitionOffset(topicPartition, kafkaEventData.Offset + 1) });
+                    }
+                    else if (this.HasExceededMaxRetries(kafkaEventData.Topic, partition, kafkaEventData.Offset))
+                    {
+                        // Poison message — max retries exceeded, force-commit to skip
+                        logger.LogError(functionResult.Exception,
+                            "Message at {topic} / {partition} / {offset} failed after {maxRetries} retries. " +
+                            "Offset will be force-committed and the message will be skipped. " +
+                            "Consider implementing dead-letter handling in your function code.",
+                            kafkaEventData.Topic, partition, kafkaEventData.Offset, this.options.MaxRetries);
+                        this.ClearRetryCounter(kafkaEventData.Topic, partition, kafkaEventData.Offset);
+                        this.Commit(new[] { new TopicPartitionOffset(topicPartition, kafkaEventData.Offset + 1) });
+                    }
+                    else
+                    {
+                        // At-least-once: skip commit, message will be redelivered
+                        logger.LogWarning(functionResult.Exception,
+                            "Function execution failed for {topic} / {partition} / {offset}. " +
+                            "Offset will not be committed and the message will be redelivered.",
+                            kafkaEventData.Topic, partition, kafkaEventData.Offset);
+                        break;  // Stop processing remaining events in this partition
+                    }
                 }
             }
         }
