@@ -14,5 +14,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         string Topic { get; }
         DateTime Timestamp { get; }
         IKafkaEventDataHeaders Headers { get; }
+
+        /// <summary>
+        /// The offset leader epoch, if available.
+        /// </summary>
+        int? LeaderEpoch { get; }
+
+        /// <summary>
+        /// True if this represents an end-of-partition event rather than a message.
+        /// </summary>
+        bool IsPartitionEOF { get; }
     }
 }
