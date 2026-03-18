@@ -976,7 +976,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
         private Task<IHost> StartHostAsync(Type testType, ILoggerProvider customLoggerProvider = null) => StartHostAsync(new[] { testType }, customLoggerProvider);
 
-        private async Task<IHost> StartHostAsync(Type[] testTypes, ILoggerProvider customLoggerProvider = null, Action<IServiceCollection> serviceRegistrationCallback = null)
+        private async Task<IHost> StartHostAsync(Type[] testTypes, ILoggerProvider customLoggerProvider = null, Action<IServiceCollection> serviceRegistrationCallback = null, Action<KafkaOptions> configureKafka = null)
         {
             IHost host = new HostBuilder()
                 .ConfigureWebJobs(builder =>
@@ -987,6 +987,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                     .AddKafka(kafkaoption =>
                     {
                         kafkaoption.SessionTimeoutMs = 10000;
+                        configureKafka?.Invoke(kafkaoption);
                     });
                 })
                 .ConfigureAppConfiguration(c =>
@@ -1189,6 +1190,115 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                 await Task.Delay(1500);
                 await host.StopAsync();
             }
+        }
+
+        /// <summary>
+        /// Validates at-least-once delivery: when a function fails on the first attempt,
+        /// the message is redelivered and processed successfully on the second attempt.
+        /// CommitOnFailure=false (default) ensures the offset is not committed on failure.
+        /// </summary>
+        [Fact]
+        public async Task AtLeastOnce_SingleTrigger_FailThenSucceed_MessageRedelivered()
+        {
+            const int producedMessagesCount = 3;
+            var messagePrefix = Guid.NewGuid().ToString() + ":";
+
+            var loggerProvider1 = CreateTestLoggerProvider();
+
+            // CommitOnFailure=false is the default, but being explicit for clarity
+            using (var host = await StartHostAsync(
+                new[] { typeof(SingleItem_AtLeastOnce_FailThenSucceed_Trigger), typeof(KafkaOutputFunctions) },
+                loggerProvider1,
+                configureKafka: options =>
+                {
+                    options.CommitOnFailure = false;
+                }))
+            {
+                var jobHost = host.GetJobHost();
+
+                await jobHost.CallOutputTriggerStringAsync(
+                    GetStaticMethod(typeof(KafkaOutputFunctions), nameof(KafkaOutputFunctions.Produce_AsyncCollector_String_Without_Key)),
+                    endToEndTestFixture.AtLeastOnceTopic.Name,
+                    Enumerable.Range(1, producedMessagesCount).Select(x => messagePrefix + x));
+
+                // Wait for all messages to be processed successfully (each message needs 2 attempts)
+                await TestHelpers.Await(() =>
+                {
+                    var successCount = loggerProvider1.GetAllUserLogMessages()
+                        .Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("AtLeastOnce SUCCESS for " + messagePrefix));
+                    return successCount == producedMessagesCount;
+                });
+
+                await Task.Delay(1500);
+                await host.StopAsync();
+            }
+
+            // Verify each message was attempted at least twice (first fail, then succeed)
+            var attemptLogs = loggerProvider1.GetAllUserLogMessages()
+                .Where(p => p.FormattedMessage != null && p.FormattedMessage.Contains("AtLeastOnce attempt"))
+                .Select(p => p.FormattedMessage)
+                .ToList();
+
+            // Should have at least producedMessagesCount * 2 attempt logs (1 fail + 1 success per message)
+            Assert.True(attemptLogs.Count >= producedMessagesCount * 2,
+                $"Expected at least {producedMessagesCount * 2} attempt logs, got {attemptLogs.Count}. Logs: {string.Join("; ", attemptLogs)}");
+        }
+
+        /// <summary>
+        /// Validates maxRetries: when a function always fails, the message is retried up to maxRetries times,
+        /// then the offset is force-committed and the next message is processed.
+        /// Produces 2 messages: the first always fails (should be skipped after maxRetries),
+        /// the second should eventually be processed (also fails, but verifies that processing moves on).
+        /// </summary>
+        [Fact]
+        public async Task AtLeastOnce_SingleTrigger_AlwaysFails_MaxRetriesSkipsMessage()
+        {
+            const int maxRetries = 2;
+            var messagePrefix = Guid.NewGuid().ToString() + ":";
+
+            var loggerProvider1 = CreateTestLoggerProvider();
+
+            using (var host = await StartHostAsync(
+                new[] { typeof(SingleItem_AtLeastOnce_AlwaysFail_Trigger), typeof(KafkaOutputFunctions) },
+                loggerProvider1,
+                configureKafka: options =>
+                {
+                    options.CommitOnFailure = false;
+                    options.MaxRetries = maxRetries;
+                }))
+            {
+                var jobHost = host.GetJobHost();
+
+                // Produce 2 messages
+                await jobHost.CallOutputTriggerStringAsync(
+                    GetStaticMethod(typeof(KafkaOutputFunctions), nameof(KafkaOutputFunctions.Produce_AsyncCollector_String_Without_Key)),
+                    endToEndTestFixture.AtLeastOnceMaxRetriesTopic.Name,
+                    Enumerable.Range(1, 2).Select(x => messagePrefix + x));
+
+                // Wait for the force-commit log that indicates maxRetries was exceeded
+                await TestHelpers.Await(() =>
+                {
+                    var forceCommitLogs = loggerProvider1.GetAllLogMessages()
+                        .Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("force-committed"));
+                    return forceCommitLogs >= 1;
+                });
+
+                await Task.Delay(1500);
+                await host.StopAsync();
+            }
+
+            // Verify that both messages were attempted (proving the first was skipped via force-commit)
+            var message1Attempts = loggerProvider1.GetAllUserLogMessages()
+                .Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains(messagePrefix + "1"));
+            var message2Attempts = loggerProvider1.GetAllUserLogMessages()
+                .Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains(messagePrefix + "2"));
+
+            // Message 1 should have been attempted maxRetries+1 times (initial + retries)
+            // then force-committed, allowing message 2 to be processed
+            Assert.True(message1Attempts >= maxRetries + 1,
+                $"Expected at least {maxRetries + 1} attempts for message 1, got {message1Attempts}");
+            Assert.True(message2Attempts >= 1,
+                $"Expected message 2 to be attempted at least once after message 1 was force-committed, got {message2Attempts}");
         }
     }
 }
