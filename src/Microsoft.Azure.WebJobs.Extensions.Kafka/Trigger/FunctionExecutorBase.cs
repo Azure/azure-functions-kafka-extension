@@ -153,10 +153,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         }
 
         /// <summary>
-        /// Checks if the message at the given offset has exceeded max retries.
-        /// If maxRetries is -1 (unlimited), always returns false.
+        /// Increments the retry counter for the given offset and checks if max retries has been exceeded.
+        /// If maxRetries is -1 (unlimited), always returns false without incrementing.
         /// </summary>
-        protected bool HasExceededMaxRetries(string topic, int partition, long offset)
+        protected bool IncrementRetryAndCheckExceeded(string topic, int partition, long offset)
         {
             if (this.options.MaxRetries < 0)
             {

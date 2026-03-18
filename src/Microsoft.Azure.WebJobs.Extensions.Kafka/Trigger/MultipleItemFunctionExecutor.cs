@@ -110,7 +110,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                             {
                                 // Check if any offset in the batch has exceeded max retries
                                 var anyExceeded = offsetsToCommit.Values.Any(tpo =>
-                                    this.HasExceededMaxRetries(tpo.Topic, tpo.Partition, tpo.Offset - 1));
+                                    this.IncrementRetryAndCheckExceeded(tpo.Topic, tpo.Partition, tpo.Offset - 1));
 
                                 if (anyExceeded)
                                 {

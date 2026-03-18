@@ -21,6 +21,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
     /// </summary>
     public class AtLeastOnceDeliveryTest
     {
+        /// <summary>
+        /// Default timeout for all async waits. Long enough for slow CI, short enough to fail fast.
+        /// </summary>
+        private static readonly TimeSpan TestTimeout = TimeSpan.FromSeconds(10);
+
         private ConsumeResult<TKey, TValue> CreateConsumeResult<TKey, TValue>(TValue value, int partition, long offset, string topic = "topic")
         {
             var msg = new Message<TKey, TValue>()
@@ -38,16 +43,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             return res;
         }
 
-        private (Mock<ITriggeredFunctionExecutor> executor, Mock<IConsumer<Null, string>> consumer, ConcurrentQueue<TopicPartitionOffset> committed) CreateMocks()
+        /// <summary>
+        /// Creates mock executor, consumer, and a queue that captures committed offsets.
+        /// The commitSignal is released each time StoreOffset is called.
+        /// </summary>
+        private (Mock<ITriggeredFunctionExecutor> executor, Mock<IConsumer<Null, string>> consumer, ConcurrentQueue<TopicPartitionOffset> committed, SemaphoreSlim commitSignal) CreateMocks()
         {
             var executor = new Mock<ITriggeredFunctionExecutor>();
             var consumer = new Mock<IConsumer<Null, string>>();
             var committed = new ConcurrentQueue<TopicPartitionOffset>();
+            var commitSignal = new SemaphoreSlim(0);
 
             consumer.Setup(x => x.StoreOffset(It.IsNotNull<TopicPartitionOffset>()))
-                .Callback<TopicPartitionOffset>((tpo) => committed.Enqueue(tpo));
+                .Callback<TopicPartitionOffset>((tpo) =>
+                {
+                    committed.Enqueue(tpo);
+                    commitSignal.Release();
+                });
 
-            return (executor, consumer, committed);
+            return (executor, consumer, committed, commitSignal);
         }
 
         private KafkaListenerForTest<Null, string> CreateListener(
@@ -86,7 +100,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         [Fact]
         public async Task SingleItem_FunctionFails_OffsetNotCommitted()
         {
-            var (executor, consumer, committed) = CreateMocks();
+            var (executor, consumer, committed, commitSignal) = CreateMocks();
 
             consumer.SetupSequence(x => x.Consume(It.IsNotNull<TimeSpan>()))
                 .Returns(CreateConsumeResult<Null, string>("msg1", 0, 0))
@@ -100,14 +114,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var target = CreateListener(executor, consumer, singleDispatch: true);
 
             await target.StartAsync(default);
-            Assert.True(await executorCalled.WaitAsync(TimeSpan.FromSeconds(5)));
+            Assert.True(await executorCalled.WaitAsync(TestTimeout), "Executor should have been called");
 
-            // Give time for commit to _not_ happen
-            await Task.Delay(500);
+            // commitSignal should NOT fire — wait briefly and confirm nothing arrived
+            Assert.False(await commitSignal.WaitAsync(TimeSpan.FromMilliseconds(200)), "Offset should not have been committed on failure");
 
             await target.StopAsync(default);
-
-            // Offset should NOT have been committed
             Assert.Empty(committed);
         }
 
@@ -117,7 +129,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         [Fact]
         public async Task SingleItem_FunctionFails_StopsPartitionProcessing()
         {
-            var (executor, consumer, committed) = CreateMocks();
+            var (executor, consumer, committed, commitSignal) = CreateMocks();
 
             // 3 events on same partition
             consumer.SetupSequence(x => x.Consume(It.IsNotNull<TimeSpan>()))
@@ -127,7 +139,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 .Returns((ConsumeResult<Null, string>)null);
 
             var executorCalls = 0;
-            var executorDone = new SemaphoreSlim(0);
+            var executorCalledTwice = new SemaphoreSlim(0);
 
             executor.Setup(x => x.TryExecuteAsync(It.IsNotNull<TriggeredFunctionData>(), It.IsAny<CancellationToken>()))
                 .Returns<TriggeredFunctionData, CancellationToken>((td, _) =>
@@ -135,7 +147,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                     var call = Interlocked.Increment(ref executorCalls);
                     if (call >= 2)
                     {
-                        executorDone.Release();
+                        executorCalledTwice.Release();
                     }
 
                     // First message succeeds, second fails
@@ -152,17 +164,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var target = CreateListener(executor, consumer, singleDispatch: true);
 
             await target.StartAsync(default);
-            Assert.True(await executorDone.WaitAsync(TimeSpan.FromSeconds(5)));
 
-            await Task.Delay(500);
+            // Wait for commit of first message (success)
+            Assert.True(await commitSignal.WaitAsync(TestTimeout), "First message should have been committed");
+
+            // Wait for executor to be called a second time (failure)
+            Assert.True(await executorCalledTwice.WaitAsync(TestTimeout), "Executor should have been called twice");
+
+            // No more commits should arrive (2nd failed, 3rd not processed)
+            Assert.False(await commitSignal.WaitAsync(TimeSpan.FromMilliseconds(200)), "No more commits should happen after failure");
+
             await target.StopAsync(default);
 
-            // Only the first message's offset should be committed
             Assert.Single(committed);
             Assert.Equal(1, committed.First().Offset);  // offset 0 + 1
-
-            // 3rd message should NOT have been executed (break on failure)
-            Assert.Equal(2, executorCalls);
+            Assert.Equal(2, executorCalls);  // 3rd message NOT executed
         }
 
         // ====================================================================
@@ -171,27 +187,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         [Fact]
         public async Task SingleItem_FunctionFails_CommitOnFailureTrue_OffsetCommitted()
         {
-            var (executor, consumer, committed) = CreateMocks();
+            var (executor, consumer, committed, commitSignal) = CreateMocks();
 
             consumer.SetupSequence(x => x.Consume(It.IsNotNull<TimeSpan>()))
                 .Returns(CreateConsumeResult<Null, string>("msg1", 0, 0))
                 .Returns((ConsumeResult<Null, string>)null);
 
-            var executorCalled = new SemaphoreSlim(0);
             executor.Setup(x => x.TryExecuteAsync(It.IsNotNull<TriggeredFunctionData>(), It.IsAny<CancellationToken>()))
-                .Callback(() => executorCalled.Release())
                 .ReturnsAsync(new FunctionResult(false));
 
             var options = new KafkaOptions { CommitOnFailure = true };
             var target = CreateListener(executor, consumer, singleDispatch: true, options: options);
 
             await target.StartAsync(default);
-            Assert.True(await executorCalled.WaitAsync(TimeSpan.FromSeconds(5)));
 
-            await Task.Delay(500);
+            // Wait for the commit (should happen despite failure)
+            Assert.True(await commitSignal.WaitAsync(TestTimeout), "Offset should be committed with CommitOnFailure=true");
+
             await target.StopAsync(default);
 
-            // Offset SHOULD be committed (legacy behavior)
             Assert.Single(committed);
             Assert.Equal(1, committed.First().Offset);
         }
@@ -202,38 +216,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         [Fact]
         public async Task SingleItem_FunctionFails_MaxRetriesExceeded_ForceCommits()
         {
-            var (executor, consumer, committed) = CreateMocks();
+            var (executor, consumer, committed, commitSignal) = CreateMocks();
             var maxRetries = 2;
 
             // Return the same message repeatedly (simulating redelivery)
             consumer.Setup(x => x.Consume(It.IsNotNull<TimeSpan>()))
                 .Returns(() => CreateConsumeResult<Null, string>("poison", 0, 5));
 
-            var executorCallCount = 0;
-            var forceCommitted = new SemaphoreSlim(0);
-
             executor.Setup(x => x.TryExecuteAsync(It.IsNotNull<TriggeredFunctionData>(), It.IsAny<CancellationToken>()))
-                .Returns<TriggeredFunctionData, CancellationToken>((td, _) =>
-                {
-                    Interlocked.Increment(ref executorCallCount);
-                    return Task.FromResult(new FunctionResult(false));
-                });
+                .ReturnsAsync(new FunctionResult(false));
 
             var options = new KafkaOptions { MaxRetries = maxRetries };
             var target = CreateListener(executor, consumer, singleDispatch: true, options: options);
 
             await target.StartAsync(default);
 
-            // Wait for enough retries + force-commit
-            // MaxRetries=2 means: 1st try + 2 retries = 3 executions, on 4th the counter exceeds
-            // Actually: HasExceededMaxRetries increments and checks > maxRetries
-            // Call 1: count=1, >2? no. Call 2: count=2, >2? no. Call 3: count=3, >2? yes → force-commit
-            await Task.Delay(3000);
+            // Wait for the force-commit (after maxRetries+1 attempts)
+            Assert.True(await commitSignal.WaitAsync(TestTimeout), "Should have force-committed the poison message");
 
             await target.StopAsync(default);
 
-            // Should have force-committed after maxRetries+1 attempts
-            Assert.True(committed.Count > 0, "Should have force-committed the poison message");
+            Assert.True(committed.Count > 0);
             Assert.Equal(6, committed.First().Offset);  // offset 5 + 1
         }
 
@@ -243,14 +246,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         [Fact]
         public async Task SingleItem_FunctionFails_UnlimitedRetries_NeverForceCommits()
         {
-            var (executor, consumer, committed) = CreateMocks();
+            var (executor, consumer, committed, commitSignal) = CreateMocks();
 
             consumer.Setup(x => x.Consume(It.IsNotNull<TimeSpan>()))
                 .Returns(() => CreateConsumeResult<Null, string>("fail", 0, 0));
 
             var executorCallCount = 0;
+            var enoughRetries = new SemaphoreSlim(0);
             executor.Setup(x => x.TryExecuteAsync(It.IsNotNull<TriggeredFunctionData>(), It.IsAny<CancellationToken>()))
-                .Callback(() => Interlocked.Increment(ref executorCallCount))
+                .Callback(() =>
+                {
+                    if (Interlocked.Increment(ref executorCallCount) >= 10)
+                    {
+                        enoughRetries.Release();
+                    }
+                })
                 .ReturnsAsync(new FunctionResult(false));
 
             var options = new KafkaOptions { MaxRetries = -1 };
@@ -258,15 +268,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             await target.StartAsync(default);
 
-            // Let it retry several times
-            await Task.Delay(2000);
+            // Wait for at least 10 retries
+            Assert.True(await enoughRetries.WaitAsync(TestTimeout), "Should have retried at least 10 times");
 
             await target.StopAsync(default);
 
-            // Should never have committed
+            // Should never have committed despite many retries
             Assert.Empty(committed);
-            // But should have been called multiple times
-            Assert.True(executorCallCount > 3, $"Expected more than 3 retries, got {executorCallCount}");
+            Assert.True(executorCallCount >= 10);
         }
 
         // ====================================================================
@@ -275,26 +284,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         [Fact]
         public async Task SingleItem_FunctionSucceeds_OffsetCommitted()
         {
-            var (executor, consumer, committed) = CreateMocks();
+            var (executor, consumer, committed, commitSignal) = CreateMocks();
 
             consumer.SetupSequence(x => x.Consume(It.IsNotNull<TimeSpan>()))
                 .Returns(CreateConsumeResult<Null, string>("msg1", 0, 0))
                 .Returns((ConsumeResult<Null, string>)null);
 
-            var executorCalled = new SemaphoreSlim(0);
             executor.Setup(x => x.TryExecuteAsync(It.IsNotNull<TriggeredFunctionData>(), It.IsAny<CancellationToken>()))
-                .Callback(() => executorCalled.Release())
                 .ReturnsAsync(new FunctionResult(true));
 
             var target = CreateListener(executor, consumer, singleDispatch: true);
 
             await target.StartAsync(default);
-            Assert.True(await executorCalled.WaitAsync(TimeSpan.FromSeconds(5)));
 
-            await Task.Delay(500);
+            Assert.True(await commitSignal.WaitAsync(TestTimeout), "Offset should be committed on success");
+
             await target.StopAsync(default);
 
-            // Offset should be committed
             Assert.Single(committed);
             Assert.Equal(1, committed.First().Offset);
         }
@@ -305,7 +311,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         [Fact]
         public async Task MultiItem_FunctionFails_OffsetNotCommitted()
         {
-            var (executor, consumer, committed) = CreateMocks();
+            var (executor, consumer, committed, commitSignal) = CreateMocks();
 
             var offset = 0L;
             consumer.Setup(x => x.Consume(It.IsNotNull<TimeSpan>()))
@@ -316,6 +322,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                         offset++;
                         return CreateConsumeResult<Null, string>(offset.ToString(), 0, offset);
                     }
+
                     return null;
                 });
 
@@ -327,12 +334,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var target = CreateListener(executor, consumer, singleDispatch: false);
 
             await target.StartAsync(default);
-            Assert.True(await executorCalled.WaitAsync(TimeSpan.FromSeconds(5)));
+            Assert.True(await executorCalled.WaitAsync(TestTimeout), "Executor should have been called");
 
-            await Task.Delay(500);
+            // commitSignal should NOT fire
+            Assert.False(await commitSignal.WaitAsync(TimeSpan.FromMilliseconds(200)), "Offset should not have been committed on failure");
+
             await target.StopAsync(default);
-
-            // Offset should NOT have been committed
             Assert.Empty(committed);
         }
 
@@ -342,7 +349,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         [Fact]
         public async Task MultiItem_FunctionFails_CommitOnFailureTrue_OffsetCommitted()
         {
-            var (executor, consumer, committed) = CreateMocks();
+            var (executor, consumer, committed, commitSignal) = CreateMocks();
 
             var offset = 0L;
             consumer.Setup(x => x.Consume(It.IsNotNull<TimeSpan>()))
@@ -353,43 +360,39 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                         offset++;
                         return CreateConsumeResult<Null, string>(offset.ToString(), 0, offset);
                     }
+
                     return null;
                 });
 
-            var executorCalled = new SemaphoreSlim(0);
             executor.Setup(x => x.TryExecuteAsync(It.IsNotNull<TriggeredFunctionData>(), It.IsAny<CancellationToken>()))
-                .Callback(() => executorCalled.Release())
                 .ReturnsAsync(new FunctionResult(false));
 
             var options = new KafkaOptions { CommitOnFailure = true };
             var target = CreateListener(executor, consumer, singleDispatch: false, options: options);
 
             await target.StartAsync(default);
-            Assert.True(await executorCalled.WaitAsync(TimeSpan.FromSeconds(5)));
 
-            await Task.Delay(500);
+            // Wait for the commit (should happen despite failure)
+            Assert.True(await commitSignal.WaitAsync(TestTimeout), "Offset should be committed with CommitOnFailure=true");
+
             await target.StopAsync(default);
-
-            // Offset SHOULD be committed (legacy behavior)
             Assert.NotEmpty(committed);
         }
 
         // ====================================================================
-        // Batch-dispatch: MaxRetries exceeded → force-commit 
+        // Batch-dispatch: MaxRetries exceeded → force-commit
         // ====================================================================
         [Fact]
         public async Task MultiItem_FunctionFails_MaxRetriesExceeded_ForceCommits()
         {
-            var (executor, consumer, committed) = CreateMocks();
+            var (executor, consumer, committed, commitSignal) = CreateMocks();
             var maxRetries = 2;
 
             // Always return the same batch
             consumer.Setup(x => x.Consume(It.IsNotNull<TimeSpan>()))
                 .Returns(() => CreateConsumeResult<Null, string>("batch-poison", 0, 10));
 
-            var executorCallCount = 0;
             executor.Setup(x => x.TryExecuteAsync(It.IsNotNull<TriggeredFunctionData>(), It.IsAny<CancellationToken>()))
-                .Callback(() => Interlocked.Increment(ref executorCallCount))
                 .ReturnsAsync(new FunctionResult(false));
 
             var options = new KafkaOptions { MaxRetries = maxRetries };
@@ -397,13 +400,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             await target.StartAsync(default);
 
-            // Wait for retries + force-commit
-            await Task.Delay(3000);
+            // Wait for the force-commit
+            Assert.True(await commitSignal.WaitAsync(TestTimeout), "Should have force-committed the batch after max retries");
 
             await target.StopAsync(default);
-
-            // Should have force-committed
-            Assert.True(committed.Count > 0, "Should have force-committed the batch after max retries");
+            Assert.True(committed.Count > 0);
         }
 
         // ====================================================================
@@ -412,7 +413,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         [Fact]
         public async Task MultiItem_FunctionSucceeds_OffsetCommitted()
         {
-            var (executor, consumer, committed) = CreateMocks();
+            var (executor, consumer, committed, commitSignal) = CreateMocks();
 
             var offset = 0L;
             consumer.Setup(x => x.Consume(It.IsNotNull<TimeSpan>()))
@@ -423,23 +424,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                         offset++;
                         return CreateConsumeResult<Null, string>(offset.ToString(), 0, offset);
                     }
+
                     return null;
                 });
 
-            var executorCalled = new SemaphoreSlim(0);
             executor.Setup(x => x.TryExecuteAsync(It.IsNotNull<TriggeredFunctionData>(), It.IsAny<CancellationToken>()))
-                .Callback(() => executorCalled.Release())
                 .ReturnsAsync(new FunctionResult(true));
 
             var target = CreateListener(executor, consumer, singleDispatch: false);
 
             await target.StartAsync(default);
-            Assert.True(await executorCalled.WaitAsync(TimeSpan.FromSeconds(5)));
 
-            await Task.Delay(500);
+            Assert.True(await commitSignal.WaitAsync(TestTimeout), "Offset should be committed on success");
+
             await target.StopAsync(default);
-
-            // Offset should be committed
             Assert.NotEmpty(committed);
         }
 

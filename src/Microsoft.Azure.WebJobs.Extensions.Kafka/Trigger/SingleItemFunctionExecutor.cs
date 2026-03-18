@@ -119,7 +119,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                         // Legacy at-most-once behavior
                         this.Commit(new[] { new TopicPartitionOffset(topicPartition, kafkaEventData.Offset + 1) });
                     }
-                    else if (this.HasExceededMaxRetries(kafkaEventData.Topic, partition, kafkaEventData.Offset))
+                    else if (this.IncrementRetryAndCheckExceeded(kafkaEventData.Topic, partition, kafkaEventData.Offset))
                     {
                         // Poison message — max retries exceeded, force-commit to skip
                         logger.LogError(functionResult.Exception,
