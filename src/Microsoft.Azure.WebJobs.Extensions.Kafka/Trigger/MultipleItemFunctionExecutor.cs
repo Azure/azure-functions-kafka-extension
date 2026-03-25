@@ -103,41 +103,62 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                             }
                             else if (this.options.CommitOnFailure)
                             {
-                                // Legacy at-most-once behavior
+                                // Default at-most-once behavior: commit regardless of failure
                                 this.Commit(offsetsToCommit.Values);
                             }
                             else
                             {
-                                // Check if any offset in the batch has exceeded max retries
-                                var anyExceeded = offsetsToCommit.Values.Any(tpo =>
-                                    this.IncrementRetryAndCheckExceeded(tpo.Topic, tpo.Partition, tpo.Offset - 1));
+                                // At-least-once: retry the batch in-place
+                                var retryCommitted = false;
+                                while (!retryCommitted && !cancellationToken.IsCancellationRequested)
+                                {
+                                    // Check if any offset in the batch has exceeded max retries
+                                    var anyExceeded = offsetsToCommit.Values.Any(tpo =>
+                                        this.IncrementRetryAndCheckExceeded(tpo.Topic, tpo.Partition, tpo.Offset - 1));
 
-                                if (anyExceeded)
-                                {
-                                    logger.LogError(functionResult.Exception,
-                                        "Batch execution failed with {batchSize} items in {topic} / {partitions} / {offsets} " +
-                                        "and max retries ({maxRetries}) exceeded. Offsets will be force-committed. " +
-                                        "Consider implementing dead-letter handling in your function code.",
-                                        itemsToExecute.Length,
-                                        itemsToExecute[0].Topic,
-                                        string.Join(",", offsetsToCommit.Keys),
-                                        string.Join(",", offsetsToCommit.Values.Select(x => x.Offset)),
-                                        this.options.MaxRetries);
-                                    foreach (var tpo in offsetsToCommit.Values)
+                                    if (anyExceeded)
                                     {
-                                        this.ClearRetryCounter(tpo.Topic, tpo.Partition, tpo.Offset - 1);
+                                        logger.LogError(functionResult.Exception,
+                                            "Batch execution failed with {batchSize} items in {topic} / {partitions} / {offsets} " +
+                                            "and max retries ({maxRetries}) exceeded. Offsets will be force-committed. " +
+                                            "Consider implementing dead-letter handling in your function code.",
+                                            itemsToExecute.Length,
+                                            itemsToExecute[0].Topic,
+                                            string.Join(",", offsetsToCommit.Keys),
+                                            string.Join(",", offsetsToCommit.Values.Select(x => x.Offset)),
+                                            this.options.MaxRetries);
+                                        foreach (var tpo in offsetsToCommit.Values)
+                                        {
+                                            this.ClearRetryCounter(tpo.Topic, tpo.Partition, tpo.Offset - 1);
+                                        }
+                                        this.Commit(offsetsToCommit.Values);
+                                        retryCommitted = true;
                                     }
-                                    this.Commit(offsetsToCommit.Values);
-                                }
-                                else
-                                {
-                                    logger.LogWarning(functionResult.Exception,
-                                        "Function execution failed with {batchSize} items in {topic} / {partitions} / {offsets}. " +
-                                        "Offsets will not be committed and the messages will be redelivered.",
-                                        itemsToExecute.Length,
-                                        itemsToExecute[0].Topic,
-                                        string.Join(",", offsetsToCommit.Keys),
-                                        string.Join(",", offsetsToCommit.Values.Select(x => x.Offset)));
+                                    else
+                                    {
+                                        logger.LogWarning(functionResult.Exception,
+                                            "Function execution failed with {batchSize} items in {topic} / {partitions} / {offsets}. " +
+                                            "Batch will be retried in-place.",
+                                            itemsToExecute.Length,
+                                            itemsToExecute[0].Topic,
+                                            string.Join(",", offsetsToCommit.Keys),
+                                            string.Join(",", offsetsToCommit.Values.Select(x => x.Offset)));
+
+                                        // Re-execute the batch
+                                        triggerInput = KafkaTriggerInput.New(itemsToExecute);
+                                        triggerData = new TriggeredFunctionData { TriggerValue = triggerInput };
+                                        functionResult = await this.ExecuteFunctionAsync(triggerData, cancellationToken);
+
+                                        if (functionResult.Succeeded)
+                                        {
+                                            foreach (var tpo in offsetsToCommit.Values)
+                                            {
+                                                this.ClearRetryCounter(tpo.Topic, tpo.Partition, tpo.Offset - 1);
+                                            }
+                                            this.Commit(offsetsToCommit.Values);
+                                            retryCommitted = true;
+                                        }
+                                    }
                                 }
                             }
                         }

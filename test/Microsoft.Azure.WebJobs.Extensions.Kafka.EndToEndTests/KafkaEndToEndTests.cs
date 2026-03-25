@@ -1205,7 +1205,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
             var loggerProvider1 = CreateTestLoggerProvider();
 
-            // CommitOnFailure=false is the default, but being explicit for clarity
+            // CommitOnFailure=false enables at-least-once with in-place retry
             using (var host = await StartHostAsync(
                 new[] { typeof(SingleItem_AtLeastOnce_FailThenSucceed_Trigger), typeof(KafkaOutputFunctions) },
                 loggerProvider1,

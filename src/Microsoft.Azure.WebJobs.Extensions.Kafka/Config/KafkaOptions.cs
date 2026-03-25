@@ -211,11 +211,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         /// <summary>
         /// Gets or sets whether to commit offsets when function execution fails.
-        /// When false (default), failed messages will be redelivered (at-least-once).
-        /// When true, offsets are always committed regardless of function result (at-most-once, legacy behavior).
-        /// Default: false
+        /// When true (default), offsets are always committed regardless of function result (at-most-once).
+        /// When false, failed messages will be retried in-place up to MaxRetries times (at-least-once).
+        /// Default: true
         /// </summary>
-        public bool CommitOnFailure { get; set; } = false;
+        public bool CommitOnFailure { get; set; } = true;
 
         int maxRetries = 5;
         /// <summary>

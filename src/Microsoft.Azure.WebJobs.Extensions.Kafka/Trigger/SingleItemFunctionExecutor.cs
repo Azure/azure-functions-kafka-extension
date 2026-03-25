@@ -70,54 +70,53 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             TopicPartition topicPartition = null;
             foreach (var kafkaEventData in events)
             {
-                var triggerInput = KafkaTriggerInput.New(kafkaEventData);
-                var triggerData = new TriggeredFunctionData
-                {
-                    TriggerValue = triggerInput,
-                };
-
-                // Create Single Event Activity Provider and Start the activity
-                var singleEventActivityProvider = new SingleEventActivityProvider(kafkaEventData, consumerGroup);
-                singleEventActivityProvider.StartActivity();
-                FunctionResult functionResult = null;
-                try
-                {
-                    // Execute the Function
-                    functionResult = await this.ExecuteFunctionAsync(triggerData, cancellationToken);
-                    // Set the status of activity.
-                    singleEventActivityProvider.SetActivityStatus(functionResult.Succeeded, functionResult.Exception);
-                }
-                catch (Exception ex)
-                {
-                    singleEventActivityProvider.SetActivityStatus(false, ex);
-                    throw;
-                }
-                finally
-                {
-                    // Stop the activity
-                    singleEventActivityProvider.StopCurrentActivity();
-                }
-
                 if (topicPartition == null)
                 {
                     topicPartition = new TopicPartition(kafkaEventData.Topic, partition);
                 }
 
-                // Commiting after each function execution plays nicer with function scaler.
-                // When processing a large batch of events where the execution of each event takes time
-                // it would take Events_In_Batch_For_Partition * Event_Processing_Time to update the current offset.
-                // Doing it after each event minimizes the delay
-                if (!cancellationToken.IsCancellationRequested)
+                var committed = false;
+                while (!committed && !cancellationToken.IsCancellationRequested)
                 {
+                    var triggerInput = KafkaTriggerInput.New(kafkaEventData);
+                    var triggerData = new TriggeredFunctionData
+                    {
+                        TriggerValue = triggerInput,
+                    };
+
+                    // Create Single Event Activity Provider and Start the activity
+                    var singleEventActivityProvider = new SingleEventActivityProvider(kafkaEventData, consumerGroup);
+                    singleEventActivityProvider.StartActivity();
+                    FunctionResult functionResult = null;
+                    try
+                    {
+                        // Execute the Function
+                        functionResult = await this.ExecuteFunctionAsync(triggerData, cancellationToken);
+                        // Set the status of activity.
+                        singleEventActivityProvider.SetActivityStatus(functionResult.Succeeded, functionResult.Exception);
+                    }
+                    catch (Exception ex)
+                    {
+                        singleEventActivityProvider.SetActivityStatus(false, ex);
+                        throw;
+                    }
+                    finally
+                    {
+                        // Stop the activity
+                        singleEventActivityProvider.StopCurrentActivity();
+                    }
+
                     if (functionResult.Succeeded)
                     {
                         this.ClearRetryCounter(kafkaEventData.Topic, partition, kafkaEventData.Offset);
                         this.Commit(new[] { new TopicPartitionOffset(topicPartition, kafkaEventData.Offset + 1) });
+                        committed = true;
                     }
                     else if (this.options.CommitOnFailure)
                     {
-                        // Legacy at-most-once behavior
+                        // Default at-most-once behavior: commit regardless of failure
                         this.Commit(new[] { new TopicPartitionOffset(topicPartition, kafkaEventData.Offset + 1) });
+                        committed = true;
                     }
                     else if (this.IncrementRetryAndCheckExceeded(kafkaEventData.Topic, partition, kafkaEventData.Offset))
                     {
@@ -129,15 +128,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                             kafkaEventData.Topic, partition, kafkaEventData.Offset, this.options.MaxRetries);
                         this.ClearRetryCounter(kafkaEventData.Topic, partition, kafkaEventData.Offset);
                         this.Commit(new[] { new TopicPartitionOffset(topicPartition, kafkaEventData.Offset + 1) });
+                        committed = true;
                     }
                     else
                     {
-                        // At-least-once: skip commit, message will be redelivered
+                        // At-least-once: retry the same message in-place
                         logger.LogWarning(functionResult.Exception,
                             "Function execution failed for {topic} / {partition} / {offset}. " +
-                            "Offset will not be committed and the message will be redelivered.",
+                            "Message will be retried in-place.",
                             kafkaEventData.Topic, partition, kafkaEventData.Offset);
-                        break;  // Stop processing remaining events in this partition
                     }
                 }
             }
