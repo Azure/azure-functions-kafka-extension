@@ -1194,8 +1194,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
         /// <summary>
         /// Validates at-least-once delivery: when a function fails on the first attempt,
-        /// the message is redelivered and processed successfully on the second attempt.
-        /// CommitOnFailure=false (default) ensures the offset is not committed on failure.
+        /// the message is retried in-place and processed successfully on the second attempt.
+        /// CommitOnFailure=false enables at-least-once with in-place retry.
         /// </summary>
         [Fact]
         public async Task AtLeastOnce_SingleTrigger_FailThenSucceed_MessageRedelivered()
