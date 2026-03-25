@@ -411,6 +411,56 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         }
 
         // ====================================================================
+        // Batch-dispatch: Function fails then succeeds on retry (CommitOnFailure=false)
+        // ====================================================================
+        [Fact]
+        public async Task MultiItem_FunctionFails_RetriesInPlaceThenSucceeds()
+        {
+            var (executor, consumer, committed, commitSignal) = CreateMocks();
+
+            var offset = 0L;
+            consumer.Setup(x => x.Consume(It.IsNotNull<TimeSpan>()))
+                .Returns(() =>
+                {
+                    if (offset < 3)
+                    {
+                        offset++;
+                        return CreateConsumeResult<Null, string>(offset.ToString(), 0, offset);
+                    }
+
+                    return null;
+                });
+
+            var callCount = 0;
+            executor.Setup(x => x.TryExecuteAsync(It.IsNotNull<TriggeredFunctionData>(), It.IsAny<CancellationToken>()))
+                .Returns<TriggeredFunctionData, CancellationToken>((td, _) =>
+                {
+                    var c = Interlocked.Increment(ref callCount);
+                    // First execution fails, second (retry) succeeds
+                    if (c == 1)
+                    {
+                        return Task.FromResult(new FunctionResult(false));
+                    }
+
+                    return Task.FromResult(new FunctionResult(true));
+                });
+
+            var options = new KafkaOptions { CommitOnFailure = false };
+            var target = CreateListener(executor, consumer, singleDispatch: false, options: options);
+
+            await target.StartAsync(default);
+
+            // Wait for commit (retry succeeds on 2nd attempt)
+            Assert.True(await commitSignal.WaitAsync(TestTimeout), "Should commit after successful batch retry");
+
+            await target.StopAsync(default);
+
+            Assert.NotEmpty(committed);
+            // Should have been called at least 2 times (1 fail + 1 success)
+            Assert.True(callCount >= 2, $"Expected at least 2 calls, got {callCount}");
+        }
+
+        // ====================================================================
         // Batch-dispatch: Function succeeds → offset committed (regression)
         // ====================================================================
         [Fact]
