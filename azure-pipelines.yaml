@@ -45,10 +45,16 @@ steps:
         test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.csproj
 
   - task: DotNetCoreCLI@2
-    displayName: Run unit tests
+    displayName: Run unit tests with coverage
     inputs:
       command: test
       projects: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
+      arguments: '--configuration $(buildConfiguration) --collect:"XPlat Code Coverage" --results-directory $(Agent.TempDirectory)/coverage'
+
+  - task: PublishCodeCoverageResults@2
+    displayName: Publish code coverage
+    inputs:
+      summaryFileLocation: $(Agent.TempDirectory)/coverage/**/coverage.cobertura.xml
 
   - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
     displayName: Component Detection
