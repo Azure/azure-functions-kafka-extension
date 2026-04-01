@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Channels;
@@ -26,9 +27,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly CancellationTokenSource functionExecutionCancellationTokenSource;
         private readonly Channel<IKafkaEventData[]> channel;
         private readonly List<IKafkaEventData> currentBatch;
-        private readonly ILogger logger;
+        protected readonly ILogger logger;
         private readonly IDrainModeManager drainModeManager;
         private SemaphoreSlim readerFinished = new SemaphoreSlim(0, 1);
+        protected readonly KafkaOptions options;
+        private readonly ConcurrentDictionary<string, int> retryCounters = new ConcurrentDictionary<string, int>();
 
         internal FunctionExecutorBase(
             ITriggeredFunctionExecutor executor,
@@ -37,7 +40,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             int channelFullRetryIntervalInMs,
             ICommitStrategy<TKey, TValue> commitStrategy,
             ILogger logger,
-            IDrainModeManager drainModeManager)
+            IDrainModeManager drainModeManager,
+            KafkaOptions options)
         {
             this.executor = executor ?? throw new System.ArgumentNullException(nameof(executor));
             this.consumer = consumer ?? throw new System.ArgumentNullException(nameof(consumer));
@@ -47,6 +51,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.functionExecutionCancellationTokenSource = new CancellationTokenSource();
             this.currentBatch = new List<IKafkaEventData>();
             this.drainModeManager = drainModeManager;
+            this.options = options ?? new KafkaOptions();
 
             this.channel = Channel.CreateBounded<IKafkaEventData[]>(new BoundedChannelOptions(channelCapacity)
             {
@@ -144,8 +149,32 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         protected Task<FunctionResult> ExecuteFunctionAsync(TriggeredFunctionData triggerData, CancellationToken cancellationToken)
         {
-            // TODO: add retry logic
             return this.executor.TryExecuteAsync(triggerData, cancellationToken);
+        }
+
+        /// <summary>
+        /// Increments the retry counter for the given offset and checks if max retries has been exceeded.
+        /// If maxRetries is -1 (unlimited), always returns false without incrementing.
+        /// </summary>
+        protected bool IncrementRetryAndCheckExceeded(string topic, int partition, long offset)
+        {
+            if (this.options.MaxRetries < 0)
+            {
+                return false;
+            }
+
+            var key = $"{topic}/{partition}/{offset}";
+            var count = this.retryCounters.AddOrUpdate(key, 1, (_, c) => c + 1);
+            return count > this.options.MaxRetries;
+        }
+
+        /// <summary>
+        /// Clears the retry counter for a successfully processed offset.
+        /// </summary>
+        protected void ClearRetryCounter(string topic, int partition, long offset)
+        {
+            var key = $"{topic}/{partition}/{offset}";
+            this.retryCounters.TryRemove(key, out _);
         }
 
         bool isClosed = false;
