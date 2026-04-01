@@ -22,8 +22,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     {
         private readonly string consumerGroup;
 
-        public SingleItemFunctionExecutor(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, string consumerGroup, int channelCapacity, int channelFullRetryIntervalInMs, ICommitStrategy<TKey, TValue> commitStrategy, ILogger logger, IDrainModeManager drainModeManager)
-            : base(executor, consumer, channelCapacity, channelFullRetryIntervalInMs, commitStrategy, logger, drainModeManager)
+        public SingleItemFunctionExecutor(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, string consumerGroup, int channelCapacity, int channelFullRetryIntervalInMs, ICommitStrategy<TKey, TValue> commitStrategy, ILogger logger, IDrainModeManager drainModeManager, KafkaOptions options)
+            : base(executor, consumer, channelCapacity, channelFullRetryIntervalInMs, commitStrategy, logger, drainModeManager, options)
         {
             this.consumerGroup = consumerGroup;
             logger.LogInformation($"FunctionExecutor Loaded: {nameof(SingleItemFunctionExecutor<TKey, TValue>)}");
@@ -70,46 +70,74 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             TopicPartition topicPartition = null;
             foreach (var kafkaEventData in events)
             {
-                var triggerInput = KafkaTriggerInput.New(kafkaEventData);
-                var triggerData = new TriggeredFunctionData
-                {
-                    TriggerValue = triggerInput,
-                };
-
-                // Create Single Event Activity Provider and Start the activity
-                var singleEventActivityProvider = new SingleEventActivityProvider(kafkaEventData, consumerGroup);
-                singleEventActivityProvider.StartActivity();
-                FunctionResult functionResult = null;
-                try
-                {
-                    // Execute the Function
-                    functionResult = await this.ExecuteFunctionAsync(triggerData, cancellationToken);
-                    // Set the status of activity.
-                    singleEventActivityProvider.SetActivityStatus(functionResult.Succeeded, functionResult.Exception);
-                }
-                catch (Exception ex)
-                {
-                    singleEventActivityProvider.SetActivityStatus(false, ex);
-                    throw;
-                }
-                finally
-                {
-                    // Stop the activity
-                    singleEventActivityProvider.StopCurrentActivity();
-                }
-
                 if (topicPartition == null)
                 {
                     topicPartition = new TopicPartition(kafkaEventData.Topic, partition);
                 }
 
-                // Commiting after each function execution plays nicer with function scaler.
-                // When processing a large batch of events where the execution of each event takes time
-                // it would take Events_In_Batch_For_Partition * Event_Processing_Time to update the current offset.
-                // Doing it after each event minimizes the delay
-                if (!cancellationToken.IsCancellationRequested)
+                var committed = false;
+                while (!committed && !cancellationToken.IsCancellationRequested)
                 {
-                    this.Commit(new[] { new TopicPartitionOffset(topicPartition, kafkaEventData.Offset + 1) });  // offset is inclusive when resuming
+                    var triggerInput = KafkaTriggerInput.New(kafkaEventData);
+                    var triggerData = new TriggeredFunctionData
+                    {
+                        TriggerValue = triggerInput,
+                    };
+
+                    // Create Single Event Activity Provider and Start the activity
+                    var singleEventActivityProvider = new SingleEventActivityProvider(kafkaEventData, consumerGroup);
+                    singleEventActivityProvider.StartActivity();
+                    FunctionResult functionResult = null;
+                    try
+                    {
+                        // Execute the Function
+                        functionResult = await this.ExecuteFunctionAsync(triggerData, cancellationToken);
+                        // Set the status of activity.
+                        singleEventActivityProvider.SetActivityStatus(functionResult.Succeeded, functionResult.Exception);
+                    }
+                    catch (Exception ex)
+                    {
+                        singleEventActivityProvider.SetActivityStatus(false, ex);
+                        throw;
+                    }
+                    finally
+                    {
+                        // Stop the activity
+                        singleEventActivityProvider.StopCurrentActivity();
+                    }
+
+                    if (functionResult.Succeeded)
+                    {
+                        this.ClearRetryCounter(kafkaEventData.Topic, partition, kafkaEventData.Offset);
+                        this.Commit(new[] { new TopicPartitionOffset(topicPartition, kafkaEventData.Offset + 1) });
+                        committed = true;
+                    }
+                    else if (this.options.CommitOnFailure)
+                    {
+                        // Default at-most-once behavior: commit regardless of failure
+                        this.Commit(new[] { new TopicPartitionOffset(topicPartition, kafkaEventData.Offset + 1) });
+                        committed = true;
+                    }
+                    else if (this.IncrementRetryAndCheckExceeded(kafkaEventData.Topic, partition, kafkaEventData.Offset))
+                    {
+                        // Poison message — max retries exceeded, force-commit to skip
+                        logger.LogError(functionResult.Exception,
+                            "Message at {topic} / {partition} / {offset} failed after {maxRetries} retries. " +
+                            "Offset will be force-committed and the message will be skipped. " +
+                            "Consider implementing dead-letter handling in your function code.",
+                            kafkaEventData.Topic, partition, kafkaEventData.Offset, this.options.MaxRetries);
+                        this.ClearRetryCounter(kafkaEventData.Topic, partition, kafkaEventData.Offset);
+                        this.Commit(new[] { new TopicPartitionOffset(topicPartition, kafkaEventData.Offset + 1) });
+                        committed = true;
+                    }
+                    else
+                    {
+                        // At-least-once: retry the same message in-place
+                        logger.LogWarning(functionResult.Exception,
+                            "Function execution failed for {topic} / {partition} / {offset}. " +
+                            "Message will be retried in-place.",
+                            kafkaEventData.Topic, partition, kafkaEventData.Offset);
+                    }
                 }
             }
         }
