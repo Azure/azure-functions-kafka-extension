@@ -199,7 +199,8 @@ RULES:
 | **Output Binding** | `KafkaAttribute`, `KafkaAttributeBindingProvider`, `CompositeKafkaProducerBindingProvider` | Attribute → binding → producer wiring |
 | **Listener / Executor** | `KafkaListener`, `FunctionExecutorBase`, `SingleItemFunctionExecutor`, `MultipleItemFunctionExecutor` | Consumer lifecycle, message dispatch, offset commit |
 | **Producer** | `KafkaProducerFactory`, `KafkaProducer`, `KafkaMessageBuilder` | Producer pooling, message construction, delivery |
-| **Scaling** | `KafkaTopicScaler`, `KafkaTriggerMetrics` | Lag-based scale monitoring for host/Scale Controller |
+| **Scaling** | `KafkaGenericTopicScaler`, `KafkaMetricsProvider`, `KafkaScalerProvider`, `KafkaTriggerMetrics` | Lag-based scale monitoring for host/Scale Controller |
+| **Diagnostics** | `ActivityProvider`, `SingleEventActivityProvider`, `BatchEventActivityProvider` | OpenTelemetry Activity tracing for trigger/output operations |
 | **Serialization** | `SerializationHelper`, `ProtobufDeserializer`, `ProtobufSerializer`, `LocalSchemaRegistry` | Format detection, Avro/Protobuf codec creation |
 | **Data Models** | `IKafkaEventData`, `KafkaEventData<T>`, `KafkaEventDataHeaders` | Event envelope shared across all layers |
 
@@ -462,6 +463,8 @@ These are used directly by Azure Functions users in their code:
 | `KafkaOptions` | Class | All configuration properties |
 | `BrokerAuthenticationMode` | Enum | All enum values and their names |
 | `BrokerProtocol` | Enum | All enum values and their names |
+| `KafkaMessageKeyType` | Enum | Key type selection: String, Bytes |
+| `OAuthBearerMethod` | Enum | OAuth bearer auth method |
 | `IKafkaProducer` | Interface | ProduceAsync signature |
 
 ### Tier 2: Host/Scale Controller Contract (Breaking change = coordinated release)
@@ -471,7 +474,7 @@ These are consumed by the Azure Functions Host and Scale Controller:
 | Type | Kind | Consumer | Notes |
 |------|------|----------|-------|
 | `KafkaTriggerMetrics` | Class | Scale Controller | `TotalLag`, `PartitionCount` properties |
-| `KafkaTopicScaler<TKey, TValue>` | Class | Scale Controller | `IScaleMonitor<KafkaTriggerMetrics>` contract |
+| `KafkaTopicScaler<TKey, TValue>` → `KafkaGenericTopicScaler<TKey, TValue>` | Class | Scale Controller | `IScaleMonitor<KafkaTriggerMetrics>` contract |
 | `KafkaWebJobsBuilderExtensions` | Static Class | Scale Controller | `AddKafka()`, `AddKafkaScaleForTrigger()` methods |
 | `KafkaWebJobsStartup` | Class | Host | `[assembly: WebJobsStartup]` entry point |
 | `KafkaExtensionConfigProvider` | Class | Host | `IExtensionConfigProvider.Initialize()` |

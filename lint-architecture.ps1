@@ -67,7 +67,9 @@ function Get-Layer {
     if ($rel -match "^Listeners/") { return "Listener" }
     if ($rel -match "^Config/") { return "Config" }
     if ($rel -match "^Serialization/") { return "Serialization" }
+    if ($rel -match "^Diagnostics/") { return "Diagnostics" }
     if ($rel -match "^Extensions/") { return "Util" }
+    if ($rel -match "^Properties/") { return "Util" }
     
     # Root-level files
     if ($rel -match "KafkaWebJobsStartup") { return "Bootstrap" }
@@ -205,7 +207,13 @@ function Test-ConfluentKafkaIsolation {
     $allowedFiles = @(
         # Listener & Consumer
         "KafkaListener.cs",
-        "KafkaTopicScaler.cs",
+        # Scaler (Listeners/Scaler/)
+        "KafkaGenericTopicScaler.cs",
+        "KafkaGenericTargetScaler.cs",
+        "KafkaObjectTopicScaler.cs",
+        "KafkaObjectTargetScaler.cs",
+        "KafkaMetricsProvider.cs",
+        "KafkaScalerProvider.cs",
         # Producer
         "KafkaProducerFactory.cs",
         "KafkaProducer.cs",
@@ -291,7 +299,6 @@ function Test-PublicAPISurface {
     # Tier 2: Host/ScaleController contract types
     $requiredHostTypes = @(
         @{ Name = "KafkaTriggerMetrics"; File = "Trigger/KafkaTriggerMetrics.cs"; Kind = "class" },
-        @{ Name = "KafkaTopicScaler"; File = "Listeners/KafkaTopicScaler.cs"; Kind = "class" },
         @{ Name = "KafkaWebJobsStartup"; File = "KafkaWebJobsStartup.cs"; Kind = "class" },
         @{ Name = "KafkaExtensionConfigProvider"; File = "Config/KafkaExtensionConfigProvider.cs"; Kind = "class" },
         @{ Name = "KafkaWebJobsBuilderExtensions"; File = "Config/KafkaWebJobsBuilderExtensions.cs"; Kind = "class" }
@@ -427,7 +434,9 @@ function Test-EventDataInterface {
         @{ Name = "Offset"; Type = "long" },
         @{ Name = "Partition"; Type = "int" },
         @{ Name = "Topic"; Type = "string" },
-        @{ Name = "Timestamp"; Type = "DateTime" }
+        @{ Name = "Timestamp"; Type = "DateTime" },
+        @{ Name = "LeaderEpoch"; Type = "int\?" },
+        @{ Name = "IsPartitionEOF"; Type = "bool" }
     )
     
     foreach ($prop in $requiredProperties) {
