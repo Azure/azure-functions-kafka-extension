@@ -69,22 +69,15 @@ steps:
   - task: DotNetCoreCLI@2
     displayName: Run unit tests with coverage
     inputs:
-      command: custom
-      custom: test
+      command: test
       projects: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
-      arguments: '--configuration $(buildConfiguration) --logger trx --collect:"XPlat Code Coverage" --results-directory $(Agent.TempDirectory)/coverage'
+      arguments: '--configuration $(buildConfiguration) --collect:"XPlat Code Coverage"'
 
-  - task: PublishTestResults@2
-    displayName: Publish test results
-    inputs:
-      testResultsFormat: VSTest
-      testResultsFiles: '$(Agent.TempDirectory)/coverage/**/*.trx'
-    condition: always()
-
-  - task: PublishCodeCoverageResults@2
+  - task: PublishCodeCoverageResults@1
     displayName: Publish code coverage
     inputs:
-      summaryFileLocation: '$(Agent.TempDirectory)/coverage/**/coverage.cobertura.xml'
+      codeCoverageTool: Cobertura
+      summaryFileLocation: '$(Agent.TempDirectory)/**/coverage.cobertura.xml'
 
   - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
     displayName: Component Detection
