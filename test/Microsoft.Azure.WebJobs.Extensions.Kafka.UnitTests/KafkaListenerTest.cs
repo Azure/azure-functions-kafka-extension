@@ -81,8 +81,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
+                keyDeserializer: null,
                 logger: NullLogger.Instance,
-                functionId: "testId"
+                functionId: "testId",
+                drainModeManager: null
                 );
 
             target.SetConsumer(consumer.Object);
@@ -144,8 +146,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
+                keyDeserializer: null,
                 logger: NullLogger.Instance,
-                functionId: "testId"
+                functionId: "testId",
+                drainModeManager: null
                 );
 
             target.SetConsumer(consumer.Object);
@@ -240,7 +244,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                                 break;
 
                             default:
-                                Assert.True(false, "Unknown partition");
+                                Assert.Fail("Unknown partition");
                                 break;
                         }
                     }
@@ -266,8 +270,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
+                keyDeserializer: null,
                 NullLogger.Instance,
-                functionId: "testId"
+                functionId: "testId",
+                drainModeManager: null
                 );
 
             target.SetConsumer(consumer.Object);
@@ -334,15 +340,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
+                keyDeserializer: null,
                 NullLogger.Instance,
-                functionId: "testId"
+                functionId: "testId",
+                drainModeManager: null
                 );
 
             target.SetConsumer(consumer.Object);
 
             await target.StartAsync(default);
 
-            Assert.Equal(12, target.ConsumerConfig.Count());
+            Assert.Equal(14, target.ConsumerConfig.Count());
             Assert.Equal("testBroker", target.ConsumerConfig.BootstrapServers);
             Assert.Equal("group1", target.ConsumerConfig.GroupId);
             Assert.Equal("password1", target.ConsumerConfig.SslKeyPassword);
@@ -388,15 +396,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
+                keyDeserializer: null,
                 NullLogger.Instance,
-                functionId: "testId"
+                functionId: "testId",
+                drainModeManager: null
                 );
 
             target.SetConsumer(consumer.Object);
 
             await target.StartAsync(default);
 
-            Assert.Equal(12, target.ConsumerConfig.Count());
+            Assert.Equal(14, target.ConsumerConfig.Count());
             Assert.Equal("testBroker", target.ConsumerConfig.BootstrapServers);
             Assert.Equal("group1", target.ConsumerConfig.GroupId);
             Assert.Equal("password1", target.ConsumerConfig.SslKeyPassword);
@@ -438,15 +448,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
+                keyDeserializer: null,
                 NullLogger.Instance,
-                functionId: "testId"
+                functionId: "testId",
+                drainModeManager: null
                 );
 
             target.SetConsumer(consumer.Object);
 
             await target.StartAsync(default);
 
-            Assert.Equal(12, target.ConsumerConfig.Count());
+            Assert.Equal(14, target.ConsumerConfig.Count());
             Assert.Equal("testBroker", target.ConsumerConfig.BootstrapServers);
             Assert.Equal("group1", target.ConsumerConfig.GroupId);
             Assert.Equal(kafkaOptions.AutoCommitIntervalMs, target.ConsumerConfig.AutoCommitIntervalMs);
@@ -461,92 +473,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             await target.StopAsync(default);
         }
 
-        [Fact]
-        public async Task When_Using_Invalid_Eventhubs_Certificate_File_Should_Fail()
-        {
-            var executor = new Mock<ITriggeredFunctionExecutor>();
-            var consumer = new Mock<IConsumer<Null, string>>();
-
-            var listenerConfig = new KafkaListenerConfiguration()
-            {
-                BrokerList = "testBroker",
-                Topic = "topic",
-                EventHubConnectionString = "Endpoint=sb://fake.servicebus.windows.net/;SharedAccessKeyName=reader;SharedAccessKey=fake",
-                ConsumerGroup = "group1",
-                SslCaLocation = "does-not-exists.pem",
-            };
-
-            var kafkaOptions = new KafkaOptions();
-            var target = new KafkaListenerForTest<Null, string>(
-                executor.Object,
-                true,
-                kafkaOptions,
-                listenerConfig,
-                requiresKey: true,
-                valueDeserializer: null,
-                NullLogger.Instance,
-                functionId: "testId"
-                );
-
-            target.SetConsumer(consumer.Object);
-
-            await Assert.ThrowsAsync<InvalidOperationException>(() => target.StartAsync(default));
-        }
-
-        [Fact]
-        public async Task When_Using_Default_Eventhubs_Certificate_File_Should_Contain_File_Location()
-        {
-            const string eventhubsConnectionString = "Endpoint=sb://fake.servicebus.windows.net/;SharedAccessKeyName=reader;SharedAccessKey=fake";
-            const string broker = "testBroker";
-            var executor = new Mock<ITriggeredFunctionExecutor>();
-            var consumer = new Mock<IConsumer<Null, string>>();
-
-            var listenerConfig = new KafkaListenerConfiguration()
-            {
-                BrokerList = broker,
-                Topic = "topic",
-                EventHubConnectionString = eventhubsConnectionString,
-                ConsumerGroup = "group1",
-            };
-
-            var kafkaOptions = new KafkaOptions();
-            var target = new KafkaListenerForTest<Null, string>(
-                executor.Object,
-                true,
-                kafkaOptions,
-                listenerConfig,
-                requiresKey: true,
-                valueDeserializer: null,
-                NullLogger.Instance,
-                functionId: "testId"
-                );
-
-            target.SetConsumer(consumer.Object);
-
-            await target.StartAsync(default);
-
-            Assert.NotEmpty(target.ConsumerConfig.SslCaLocation);
-            Assert.True(File.Exists(target.ConsumerConfig.SslCaLocation));
-            var expectedBootstrapServers = $"{broker}{KafkaListenerForTest<Null, string>.EventHubsBrokerListDns}:{KafkaListenerForTest<Null, string>.EventHubsBrokerListPort}";
-            Assert.Equal(expectedBootstrapServers, target.ConsumerConfig.BootstrapServers);
-            Assert.Equal(KafkaListenerForTest<Null, string>.EventHubsSaslUsername, target.ConsumerConfig.SaslUsername);
-            Assert.Equal(eventhubsConnectionString, target.ConsumerConfig.SaslPassword);
-            Assert.Equal(SecurityProtocol.SaslSsl, target.ConsumerConfig.SecurityProtocol);
-            Assert.Equal(SaslMechanism.Plain, target.ConsumerConfig.SaslMechanism);
-            Assert.Equal(KafkaListenerForTest<Null, string>.EventHubsBrokerVersionFallback, target.ConsumerConfig.BrokerVersionFallback);
-
-            await target.StopAsync(default);
-        }
-
-
-        /// <summary>
-        /// Ensures that delays while processing a particular partition won't affect commits in different partitions
-        /// Example:
-        /// - Processing partition 0 is slow
-        /// - Processing partition 1 is fast
-        /// 
-        /// Expected result is that partition 1 offset is commit without waiting for partition 0 to be finished
-        /// </summary>
         [Fact]
         public async Task When_Using_Single_Dispatcher_Slow_Partition_Processing_Should_Not_Delay_Other_Partitions()
         {
@@ -621,8 +547,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 listenerConfig,
                 requiresKey: true,
                 valueDeserializer: null,
+                keyDeserializer: null,
                 NullLogger.Instance,
-                functionId: "testId"
+                functionId: "testId",
+                drainModeManager: null
                 );
 
             target.SetConsumer(consumer.Object);

@@ -1,0 +1,26 @@
+{
+  "scriptFile": "__init__.py",
+  "bindings": [
+    {
+      "type": "kafkaTrigger",
+      "name": "kevents",
+      "direction": "in",
+      "brokerList": "EventHubBrokerList",
+      "topic": "e2e-kafka-python-multi-eventhub",
+      "username": "$ConnectionString",
+      "password": "EventHubConnectionString",
+      "protocol": "saslSsl",
+      "authenticationMode": "plain",
+      "consumerGroup": "$Default",
+      "cardinality" : "MANY",
+      "dataType": "string"
+    },
+    {
+      "type": "queue",
+      "direction": "out",
+      "name": "queueMsg",
+      "queueName": "e2e-python-multi-eventhub",
+      "connection": "AzureWebJobsStorage"
+    }
+  ]
+}

@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Confluent.Kafka;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Extensions.Logging;
 
@@ -14,7 +15,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
 
     /// <summary>
-    /// Executes the functions for an specific partition
+    /// Executes the functions for an specific partition.
     /// </summary>
     public abstract class FunctionExecutorBase<TKey, TValue> : IDisposable
     {
@@ -22,10 +23,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly IConsumer<TKey, TValue> consumer;
         private readonly int channelFullRetryIntervalInMs;
         private readonly ICommitStrategy<TKey, TValue> commitStrategy;
-        private readonly CancellationTokenSource cancellationTokenSource;
+        private readonly CancellationTokenSource functionExecutionCancellationTokenSource;
         private readonly Channel<IKafkaEventData[]> channel;
         private readonly List<IKafkaEventData> currentBatch;
         private readonly ILogger logger;
+        private readonly IDrainModeManager drainModeManager;
         private SemaphoreSlim readerFinished = new SemaphoreSlim(0, 1);
 
         internal FunctionExecutorBase(
@@ -34,15 +36,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             int channelCapacity,
             int channelFullRetryIntervalInMs,
             ICommitStrategy<TKey, TValue> commitStrategy,
-            ILogger logger)
+            ILogger logger,
+            IDrainModeManager drainModeManager)
         {
             this.executor = executor ?? throw new System.ArgumentNullException(nameof(executor));
             this.consumer = consumer ?? throw new System.ArgumentNullException(nameof(consumer));
             this.channelFullRetryIntervalInMs = channelFullRetryIntervalInMs;
             this.commitStrategy = commitStrategy;
             this.logger = logger;
-            this.cancellationTokenSource = new CancellationTokenSource();
+            this.functionExecutionCancellationTokenSource = new CancellationTokenSource();
             this.currentBatch = new List<IKafkaEventData>();
+            this.drainModeManager = drainModeManager;
 
             this.channel = Channel.CreateBounded<IKafkaEventData[]>(new BoundedChannelOptions(channelCapacity)
             {
@@ -54,7 +58,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 try
                 {
-                    await this.ReaderAsync(this.channel.Reader, this.cancellationTokenSource.Token, this.logger);
+                    await this.ReaderAsync(this.channel.Reader, this.functionExecutionCancellationTokenSource.Token, this.logger);
                 }
                 catch (Exception ex)
                 {
@@ -72,11 +76,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         }
 
         /// <summary>
-        /// Channel reader, executing the function once data is available in channel
+        /// Channel reader, executing the function once data is available in channel.
         /// </summary>
-        /// <param name="reader">The channel reader</param>
-        /// <param name="cancellationToken">Cancellation token indicating the host is shutting down</param>
-        /// <param name="logger">Logger</param>
+        /// <param name="reader">The channel reader.</param>
+        /// <param name="cancellationToken">Cancellation token indicating the host is shutting down.</param>
+        /// <param name="logger">Logger.</param>
         protected abstract Task ReaderAsync(ChannelReader<IKafkaEventData[]> reader, CancellationToken cancellationToken, ILogger logger);
 
 
@@ -93,7 +97,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         }
 
         /// <summary>
-        /// Adds an item, returning the current pending amount
+        /// Adds an item, returning the current pending amount.
         /// </summary>
         internal int Add(IKafkaEventData kafkaEventData)
         {
@@ -102,9 +106,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         }
 
         /// <summary>
-        /// Sends the items in queue to function execution pipeline
+        /// Sends the items in queue to function execution pipeline.
         /// </summary>
-        internal void Flush()
+        internal void Flush(CancellationToken cancellationToken)
         {
             if (this.currentBatch.Count == 0)
             {
@@ -117,7 +121,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var loggedWaitingForFunction = false;
 
 
-            while (!this.cancellationTokenSource.IsCancellationRequested)
+            while (!cancellationToken.IsCancellationRequested)
             {
                 if (channel.Writer.TryWrite(items))
                 {
@@ -145,7 +149,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         }
 
         bool isClosed = false;
-        public async Task<bool> CloseAsync(TimeSpan timeout)
+        public async Task<bool> CloseAsync()
         {
             if (this.isClosed)
             {
@@ -155,10 +159,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             try
             {
 
-                this.cancellationTokenSource.Cancel();
+                if (!drainModeManager.IsDrainModeEnabled)
+                {
+                    functionExecutionCancellationTokenSource.Cancel();
+                }
+
                 this.channel.Writer.Complete();
 
-                if (await this.readerFinished.WaitAsync(TimeSpan.FromSeconds(120)))
+                if (await this.readerFinished.WaitAsync(TimeSpan.FromSeconds(300)))
                 {
                     this.isClosed = true;
                     return true;
@@ -174,7 +182,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public void Dispose()
         {
-            this.CloseAsync(TimeSpan.Zero).GetAwaiter().GetResult();
+            this.CloseAsync().GetAwaiter().GetResult();
             GC.SuppressFinalize(this);
         }
     }

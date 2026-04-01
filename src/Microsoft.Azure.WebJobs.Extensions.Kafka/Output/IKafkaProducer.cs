@@ -13,5 +13,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         /// Produces a Kafka message
         /// </summary>
         Task ProduceAsync(string topic, object item);
+
+        /// <summary>
+        /// Produces a Kafka message
+        /// </summary>
+        void Produce(string topic, object item);
+
+        /// <summary>
+        /// Flushing all added messages to broker
+        /// </summary>
+        void Flush();
     }
 }

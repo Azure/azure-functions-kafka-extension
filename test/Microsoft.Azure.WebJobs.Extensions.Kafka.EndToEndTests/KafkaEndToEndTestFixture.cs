@@ -30,7 +30,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
         internal TopicSpecification MyAvroRecordTopic { get; } = new TopicSpecification() { Name = Constants.MyAvroRecordTopicName, NumPartitions = 10, ReplicationFactor = 1 };
 
+        internal TopicSpecification MyKeyAvroRecordTopic { get; } = new TopicSpecification() { Name = Constants.MyKeyAvroRecordTopicName, NumPartitions = 10, ReplicationFactor = 1 };
+
         internal TopicSpecification MyProtobufTopic { get; } = new TopicSpecification() { Name = Constants.MyProtobufTopicName, NumPartitions = 10, ReplicationFactor = 1 };
+
+        internal TopicSpecification SchemaRegistryTopic { get; } = new TopicSpecification() { Name = Constants.SchemaRegistryTopicName, NumPartitions = 1, ReplicationFactor = 1 };
+
+        internal TopicSpecification schemaRegistryNoKeyTopic { get; } = new TopicSpecification() { Name = Constants.SchemaRegistryNoKeyTopicName, NumPartitions = 1, ReplicationFactor = 1 };
 
         public KafkaEndToEndTestFixture()
         {

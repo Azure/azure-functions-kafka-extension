@@ -16,6 +16,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public IKafkaEventDataHeaders Headers { get; }
         public DateTime Timestamp { get; set; }
         public TValue Value { get; set; }
+        public int? LeaderEpoch { get; set; }
+        public bool IsPartitionEOF { get; set; }
 
         object IKafkaEventData.Value => this.Value;
 
@@ -40,6 +42,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.Partition = consumeResult.Partition;
             this.Timestamp = consumeResult.Message.Timestamp.UtcDateTime;
             this.Topic = consumeResult.Topic;
+            this.LeaderEpoch = consumeResult.LeaderEpoch;
+            this.IsPartitionEOF = consumeResult.IsPartitionEOF;
             if (consumeResult.Headers?.Count > 0)
             {
                 this.Headers = new KafkaEventDataHeaders(consumeResult.Message.Headers);
@@ -58,10 +62,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public string Topic { get; set; }
         public DateTime Timestamp { get; set; }
         public TValue Value { get; set; }
+        public int? LeaderEpoch { get; set; }
+        public bool IsPartitionEOF { get; set; }
+
+        public object Key { get; set; }
 
         object IKafkaEventData.Value => this.Value;
 
-        object IKafkaEventData.Key => null;
+        object IKafkaEventData.Key => this.Key;
 
         public IKafkaEventDataHeaders Headers { get; private set; } 
 
@@ -98,7 +106,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 Offset = consumeResult.Offset,
                 Partition = consumeResult.Partition,
                 Timestamp = consumeResult.Timestamp.UtcDateTime,
-                Topic = consumeResult.Topic
+                Topic = consumeResult.Topic,
+                Key = consumeResult.Key,
+                LeaderEpoch = consumeResult.LeaderEpoch,
+                IsPartitionEOF = consumeResult.IsPartitionEOF
             };
 
             return result;
@@ -111,6 +122,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             this.Partition = src.Partition;
             this.Timestamp = src.Timestamp;
             this.Topic = src.Topic;
+            this.LeaderEpoch = src.LeaderEpoch;
+            this.IsPartitionEOF = src.IsPartitionEOF;
             this.Headers = new KafkaEventDataHeaders(src.Headers.Select(x => new KafkaEventDataHeader(x.Key, x.Value)), (src.Headers as KafkaEventDataHeaders)?.IsReadOnly == true);
         }
     }

@@ -2,12 +2,13 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
-    internal class CollectorValueProvider : IValueProvider
+    internal class CollectorValueProvider : IValueBinder
     {
         private readonly KafkaProducerEntity entity;
         private readonly object value;
@@ -33,6 +34,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public Task<object> GetValueAsync()
         {
             return Task.FromResult(value);
+        }
+
+        public Task SetValueAsync(object value, CancellationToken cancellationToken)
+        {
+            return (Task) (this.value.GetType().GetMethod("FlushAsync")).Invoke(this.value, new object[] { System.Reflection.Missing.Value });
         }
 
         public string ToInvokeString()

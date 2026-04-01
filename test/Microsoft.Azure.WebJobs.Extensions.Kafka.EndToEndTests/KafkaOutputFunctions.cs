@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using Avro;
+using Avro.Generic;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 {
@@ -82,7 +84,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             return list.ToArray();
         }
 
-        
+
         [return: Kafka("LocalBroker", Constants.StringTopicWithTenPartitionsName)]
         public static string[] Produce_Return_Parameter_Raw_String_Array(
             string topic,
@@ -182,7 +184,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
         {
 
             foreach (var c in content)
-            {                
+            {
                 await output.AddAsync(new MyAvroRecord()
                 {
                     ID = c,
@@ -243,6 +245,146 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
                 await output.AddAsync(message);
                 i++;
+            }
+        }
+
+        public static async Task Produce_AsyncCollector_PageView_With_String_Key(
+            string topic,
+            [Kafka(BrokerList = "LocalBroker", SchemaRegistryUrl = Constants.SchemaRegistryUrl)]
+            IAsyncCollector<KafkaEventData<string, GenericRecord>> output
+        )
+        {
+            const string pageViewsSchema = @"{
+  ""type"": ""record"",
+  ""name"": ""PageViews"",
+  ""namespace"": ""ksql"",
+  ""fields"": [
+    {
+      ""name"": ""ViewTime"",
+      ""type"": ""long""
+    },
+    {
+      ""name"": ""UserID"",
+      ""type"": ""string""
+    },
+    {
+      ""name"": ""PageID"",
+      ""type"": ""string""
+    }
+  ]
+}";
+
+            var record = new GenericRecord((RecordSchema)Schema.Parse(pageViewsSchema));
+            record.Add("UserID", "4711");
+            record.Add("PageID", "4712");
+            record.Add("ViewTime", 4713L);
+
+            var message = new KafkaEventData<string, GenericRecord>()
+            {
+                Key = "key",
+                Topic = topic,
+                Value = record
+            };
+
+            await output.AddAsync(message);
+        }
+
+        public static async Task Produce_AsyncCollector_GenericRecordKeyValue(
+            string topic,
+            IEnumerable<int> ids,
+            IEnumerable<string> content,
+            [Kafka(BrokerList = "LocalBroker", AvroSchema = MyAvroRecord.SchemaText, KeyAvroSchema = MyKeyAvroRecord.SchemaText)] IAsyncCollector<KafkaEventData<GenericRecord, GenericRecord>> output)
+        {
+            // Parse the schemas
+            var keySchema = (RecordSchema)Schema.Parse(MyKeyAvroRecord.SchemaText);
+            var valueSchema = (RecordSchema)Schema.Parse(MyAvroRecord.SchemaText);
+            
+            var idsEnumerator = ids.GetEnumerator();
+            foreach (var c in content)
+            {
+                idsEnumerator.MoveNext();
+                
+                // Create key GenericRecord
+                var keyRecord = new GenericRecord(keySchema);
+                keyRecord.Add("id", idsEnumerator.Current);
+                keyRecord.Add("type", "message-" + DateTime.UtcNow.Ticks % 100);
+                
+                // Create value GenericRecord
+                var valueRecord = new GenericRecord(valueSchema);
+                valueRecord.Add("id", c);
+                valueRecord.Add("ticks", DateTime.UtcNow.Ticks);
+
+                var message = new KafkaEventData<GenericRecord, GenericRecord>()
+                {
+                    Key = keyRecord,
+                    Topic = topic,
+                    Value = valueRecord,
+                };
+
+                await output.AddAsync(message);
+            }
+        }
+
+        public static async Task Produce_AsyncCollector_GenericRecordKeyValue_With_SchemaRegistry(
+            string topic,
+            IEnumerable<int> ids,
+            IEnumerable<string> content,
+            [Kafka(BrokerList = "LocalBroker", AvroSchema = MyAvroRecord.SchemaText, KeyAvroSchema = MyKeyAvroRecord.SchemaText, SchemaRegistryUrl = Constants.SchemaRegistryUrl)] 
+            IAsyncCollector<KafkaEventData<GenericRecord, GenericRecord>> output)
+        {
+            // Parse the schemas
+            var keySchema = (RecordSchema)Schema.Parse(MyKeyAvroRecord.SchemaText);
+            var valueSchema = (RecordSchema)Schema.Parse(MyAvroRecord.SchemaText);
+            
+            var idsEnumerator = ids.GetEnumerator();
+            foreach (var c in content)
+            {
+                idsEnumerator.MoveNext();
+                
+                // Create key GenericRecords
+                var keyRecord = new GenericRecord(keySchema);
+                keyRecord.Add("id", idsEnumerator.Current);
+                keyRecord.Add("type", "message-" + DateTime.UtcNow.Ticks % 100);
+
+                // Create value GenericRecord
+                var valueRecord = new GenericRecord(valueSchema);
+                valueRecord.Add("id", c);
+                valueRecord.Add("ticks", DateTime.UtcNow.Ticks);
+
+                var message = new KafkaEventData<GenericRecord, GenericRecord>()
+                {
+                    Key = keyRecord,
+                    Topic = topic,
+                    Value = valueRecord,
+                };
+
+                await output.AddAsync(message);
+            }
+        }
+
+        public static async Task Produce_AsyncCollector_GenericRecord_NoKey_With_SchemaRegistry(
+            string topic,
+            IEnumerable<string> content,
+            [Kafka(BrokerList = "LocalBroker", SchemaRegistryUrl = Constants.SchemaRegistryUrl)]
+            IAsyncCollector<KafkaEventData<GenericRecord>> output)  
+        {
+            // Parse the schema
+            var valueSchema = (RecordSchema)Schema.Parse(MyAvroRecord.SchemaText);
+            
+            foreach (var c in content)
+            {
+                // Create value GenericRecord
+                var valueRecord = new GenericRecord(valueSchema);
+                valueRecord.Add("id", c);
+                valueRecord.Add("ticks", DateTime.UtcNow.Ticks);
+
+                var message = new KafkaEventData<GenericRecord>()
+                {
+                    Topic = topic,
+                    Value = valueRecord,
+                };
+
+                await output.AddAsync(message);
             }
         }
     }

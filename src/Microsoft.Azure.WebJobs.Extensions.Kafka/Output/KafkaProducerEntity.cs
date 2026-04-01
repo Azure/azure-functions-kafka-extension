@@ -16,25 +16,33 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         public Type ValueType { get; set; }
 
-        public string AvroSchema { get; set; }
+        public string ValueAvroSchema { get; set; }
+
+        public string KeyAvroSchema { get; set; }
 
         public string Topic { get; set; }
 
         public KafkaAttribute Attribute { get; set; }
 
-        internal async Task SendAndCreateEntityIfNotExistsAsync<T>(T item, Guid functionInstanceId, CancellationToken cancellationToken)
+        internal Task SendAndCreateEntityIfNotExistsAsync<T>(T item, Guid functionInstanceId, CancellationToken cancellationToken)
         {
             var kafkaProducer = this.KafkaProducerFactory.Create(this);
-            if (item is ICollection collection)
+
+            if (item is ICollection)
             {
-                foreach (var collectionItem in collection)
-                {
-                    await kafkaProducer.ProduceAsync(this.Topic, this.GetItemToProduce(collectionItem));
-                }
+                ProduceEvents((ICollection)item, kafkaProducer);
+                return Task.CompletedTask;
             }
-            else
+            //await kafkaProducer.ProduceAsync(this.Topic, this.GetItemToProduce(item));
+            kafkaProducer.Produce(this.Topic, this.GetItemToProduce(item));
+            return Task.CompletedTask;
+        }
+
+        private void ProduceEvents(ICollection collection, IKafkaProducer kafkaProducer)
+        {
+            foreach (var collectionItem in collection)
             {
-                await kafkaProducer.ProduceAsync(this.Topic, this.GetItemToProduce(item));
+                kafkaProducer.Produce(this.Topic, this.GetItemToProduce(collectionItem));
             }
         }
 

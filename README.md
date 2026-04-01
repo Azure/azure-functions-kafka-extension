@@ -309,7 +309,7 @@ The settings exposed here are targeted to more advanced users that want to custo
 
 |Setting|librdkafka property|Trigger or Output|
 |-|-|-|
-|ReconnectBackoffMs|reconnect.backoff.max.ms|Trigger
+|ReconnectBackoffMs|reconnect.backoff.ms|Trigger
 |ReconnectBackoffMaxMs|reconnect.backoff.max.ms|Trigger
 |StatisticsIntervalMs|statistics.interval.ms|Trigger
 |SessionTimeoutMs|session.timeout.ms|Trigger
@@ -323,6 +323,7 @@ The settings exposed here are targeted to more advanced users that want to custo
 |LibkafkaDebug|debug|Both
 |MetadataMaxAgeMs|metadata.max.age.ms|Both
 |SocketKeepaliveEnable|socket.keepalive.enable|Both
+|LingerMs|linger.ms|Output
 
 **NOTE:** `MetadataMaxAgeMs` default is `180000` `SocketKeepaliveEnable` default is `true` otherwise, the default value is the same as the [Configuration properties](https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md). The reason of the default settings, refer to this [issue](https://github.com/Azure/azure-functions-kafka-extension/issues/187).
 **NOTE:** `AutoOffsetReset` default is Earliest. Allowed Values are `Earliest` and `Latest`.
@@ -343,6 +344,12 @@ Both, trigger and output, can connect to a secure Kafka broker. The following at
 |SslKeyPassword|ssl.key.password|Password for client's certificate|
 |SslCertificateLocation|ssl.certificate.location|Path to client's certificate|
 |SslCaLocation|ssl.ca.location|Path to CA certificate file for verifying the broker's certificate|
+|OAuthBearerMethod|sasl.oauthbearer|OAuth bearer method. Only 'default' or 'oidc'. AuthenticationMode must be set to OAuthBearer
+|OAuthBearerClientId|sasl.oauthbearer.client.id|OIDC ClientId
+|OAuthBearerClientSecret|sasl.oauthbearer.client.secret|OIDC ClientSecret
+|OAuthBearerScope|sasl.oauthbearer.scope|OIDC Scope
+|OAuthBearerTokenEndpointUrl|sasl.oauthbearer.token.endpoint.url|Token endpoint URL
+|OAuthBearerExtensions|sasl.oauthbearer.extensions|Comma separated key/value pair required by Confluent Kafka
 
 Username and password should reference a Azure function configuration variable and not be hardcoded.
 
@@ -419,3 +426,20 @@ By default end to end tests will try to connect to Kafka on `localhost:9092`. If
     "LocalBroker": "location-of-your-kafka-broker:9092"
 }
 ```
+
+## Error Handling and Retries
+
+Handling errors in Azure Functions is important to avoid lost data, missed events, and to monitor the health of your application. It's also important to understand the retry behaviors of event-based triggers.
+
+### Retries
+Kafka Extensions supports the Function Level retries, it is evaluated when a **trigger** function raises an **uncaught exception**. As a best practice, you should catch all exceptions in your code and rethrow any errors that you want to result in a retry.
+
+### Retry Strategies
+There are two retry strategies supported by policy that you can configure :-
+ #### 1. Fixed Delay
+A specified amount of time is allowed to elapse between each retry.
+
+ #### 2. Exponential Backoff
+The first retry waits for the minimum delay. On subsequent retries, time is added exponentially to the initial duration for each retry, until the maximum delay is reached. Exponential back-off adds some small randomization to delays to stagger retries in high-throughput scenarios.
+
+For more info please check [official doc](https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-error-pages?tabs=fixed-delay%2Cin-process&pivots=programming-language-csharp#retry-examples)

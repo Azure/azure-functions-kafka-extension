@@ -2,6 +2,9 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Diagnostics;
+using System.Linq;
+using System.Reflection.Emit;
 using System.Text;
 using Avro.Generic;
 using Confluent.Kafka;
@@ -23,7 +26,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
     }
 
     internal static class MultiItem_KafkaEventData_String_With_Ignore_Key_Trigger
-    {        public static void Trigger(
+    {
+        public static void Trigger(
                [KafkaTrigger("LocalBroker", Constants.StringTopicWithTenPartitionsName, ConsumerGroup = Constants.ConsumerGroupID)] KafkaEventData<Ignore, string>[] kafkaEvents,
                ILogger log)
         {
@@ -68,7 +72,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             }
         }
     }
-    
+
 
     internal static class MultiItem_String_With_Long_Key_Trigger
     {
@@ -128,8 +132,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             log.LogInformation($@"Byte data received. Length: {kafkaEvent.Length}, Content: ""{Encoding.UTF8.GetString(kafkaEvent)}""");
         }
     }
-
-
 
     internal static class MultiItem_KafkaEventData_String_With_Long_Key_Trigger
     {
@@ -268,6 +270,115 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             {
                 log.LogInformation(kafkaEvent.Value.ToString());
             }
+        }
+    }
+
+    internal static class SingleItem_Single_Partition_Raw_String_Without_Key_Trigger_Retry
+    {
+        [FixedDelayRetry(5, "00:00:01")]
+        public static void Trigger(
+            [KafkaTrigger("LocalBroker", Constants.StringTopicWithOnePartitionName, ConsumerGroup = Constants.ConsumerGroupID)] KafkaEventData<string> kafkaEvent,
+            ILogger log)
+        {
+            log.LogInformation(kafkaEvent.Value.ToString());
+            throw new Exception("unhandled error");
+        }
+    }
+
+    internal static class SingleEventTrigger_With_Activity
+    {
+        public static void Trigger(
+            [KafkaTrigger("LocalBroker", Constants.StringTopicWithOnePartitionName, ConsumerGroup = Constants.ConsumerGroupID)] KafkaEventData<string> kafkaEvent,
+            ILogger log)
+        {
+            var activity = Activity.Current;
+            if (activity != null)
+            {
+                log.LogInformation("TraceId:" + activity.TraceId);
+            }
+        }
+    }
+
+    internal static class BatchEvenTrigger_With_Activity
+    {
+        public static void Trigger(
+            [KafkaTrigger("LocalBroker", Constants.StringTopicWithOnePartitionName, ConsumerGroup = Constants.ConsumerGroupID)] KafkaEventData<string>[] kafkaEvents,
+            ILogger log)
+        {
+            var activity = Activity.Current;
+            if (activity != null)
+            {
+                log.LogInformation("TraceId:" + activity.TraceId);
+                var links = activity.Links;
+                log.LogInformation("ActivityLinks: {numlink}", links.Count());
+                foreach (var link in links)
+                {
+                    log.LogInformation("LinkedActivity: 00-" + link.Context.TraceId + "-" + link.Context.SpanId + "-01");
+                }
+            }
+        }
+    }
+
+    internal static class SingleItem_With_Schema_Registry
+    {
+        public static void Trigger(
+            [KafkaTrigger("LocalBroker", Constants.SchemaRegistryTopicName, ConsumerGroup = Constants.ConsumerGroupID, SchemaRegistryUrl = Constants.SchemaRegistryUrl)] KafkaEventData<string, GenericRecord> kafkaEvent,
+            ILogger log)
+        {
+            log.LogInformation(kafkaEvent.Value.ToString());
+        }
+    }
+
+    internal static class SingleItem_With_Schema_Registry_No_Key
+    {
+        public static void Trigger(
+            [KafkaTrigger("LocalBroker", Constants.SchemaRegistryNoKeyTopicName, ConsumerGroup = Constants.ConsumerGroupID, SchemaRegistryUrl = Constants.SchemaRegistryUrl)] KafkaEventData<GenericRecord> kafkaEvent,
+            ILogger log)
+        {
+            log.LogInformation(kafkaEvent.Value.ToString());
+        }
+    }
+
+    // Tests for key avro schema
+    internal static class SingleItem_GenericAvroValue_With_GenericAvroKey_Trigger
+    {
+        public static void Trigger(
+            [KafkaTrigger("LocalBroker", Constants.MyKeyAvroRecordTopicName, ConsumerGroup = Constants.ConsumerGroupID, AvroSchema = MyAvroRecord.SchemaText, KeyAvroSchema = MyKeyAvroRecord.SchemaText)] KafkaEventData<GenericRecord, GenericRecord> kafkaEvent,
+            ILogger log)
+        {
+            var myRecord = kafkaEvent.Value;
+            var myKey = kafkaEvent.Key;
+            if (myRecord == null)
+            {
+                throw new Exception("MyAvro record is null");
+            }
+            log.LogInformation($"Value: {kafkaEvent.Value.ToString()}");
+            if (myKey == null)
+            {
+                throw new Exception("MyAvro key is null");
+            }  
+            log.BeginScope($"Key: {myKey.ToString()}");
+        }
+    }
+
+    internal static class SingleItem_GenericAvroValue_With_GenericAvroKey_SchemaRegistryURL
+    {
+        public static void Trigger(
+            [KafkaTrigger("LocalBroker", Constants.MyKeyAvroRecordTopicName, ConsumerGroup = Constants.ConsumerGroupID, SchemaRegistryUrl = Constants.SchemaRegistryUrl)] KafkaEventData<GenericRecord, GenericRecord> kafkaEvent,
+            ILogger log)
+        {
+            var myRecord = kafkaEvent.Value;
+            var myKey = kafkaEvent.Key;
+            if (myRecord == null)
+            {
+                throw new Exception("MyAvro record is null");
+            }
+            log.LogInformation($"Value: {kafkaEvent.Value.ToString()}");
+            if (myKey == null)
+            {
+                throw new Exception("MyAvro key is null");
+            }
+            log.BeginScope($"Key: {myKey.ToString()}");
         }
     }
 }

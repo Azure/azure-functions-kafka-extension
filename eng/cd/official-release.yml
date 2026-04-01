@@ -1,0 +1,46 @@
+trigger: none
+
+parameters:
+  - name: nugetPackageName
+    type: string
+    displayName: "Name of the Nuget package"
+    default: "Microsoft.Azure.WebJobs.Extensions.Kafka"
+  - name: packageVersion
+    displayName: "Release version (e.g. 1.0.0, 1.0.0-preview)"
+    type: string
+    default: ""
+
+resources:
+  pipelines:
+    - pipeline: "_kafka-extensionofficial"
+      project: "internal"
+      source: 'azure\azure-functions-kafka-extension\kafka-extension.official'
+  repositories:
+    - repository: 1ESPipelineTemplates
+      type: git
+      name: 1ESPipelineTemplates/1ESPipelineTemplates
+      ref: refs/tags/release
+
+extends:
+  template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
+  parameters:
+    pool:
+      name: 1es-pool-azfunc
+      image: 1es-windows-2022
+      os: windows
+    stages:
+      - stage: ValidateAndApprove
+        displayName: Validate and Approve Release
+        jobs:
+          - template: /eng/cd/templates/validate.yml@self
+            parameters:
+              nugetPackageBaseName: "${{ parameters.nugetPackageName }}.${{ parameters.packageVersion }}"
+              nugetArtifactPath: "$(Build.ArtifactStagingDirectory)\\drop"
+          - template: /eng/cd/templates/approve.yml@self
+      - template: /eng/cd/templates/publish.yml@self
+        parameters:
+          stageName: "NugetPublishStage"
+          displayName: "Publish Nuget Package"
+          packagesSourcePath: "$(Build.ArtifactStagingDirectory)\\drop"
+          packagesDestinationPath: "$(Build.ArtifactStagingDirectory)\\packages"
+          blobPath: "azure-functions-kafka-extension/net/${{ parameters.packageVersion }}"

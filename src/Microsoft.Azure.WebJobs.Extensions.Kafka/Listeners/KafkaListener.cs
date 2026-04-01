@@ -2,14 +2,12 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Confluent.Kafka;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
-using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Azure.WebJobs.Host.Scale;
 using Microsoft.Extensions.Logging;
 
@@ -17,9 +15,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
     /// <summary>
     /// Kafka listener.
-    /// Connects a Kafka trigger function with a Kafka Consumer
+    /// Connects a Kafka trigger function with a Kafka Consumer.
     /// </summary>
-    internal class KafkaListener<TKey, TValue> : IListener, IScaleMonitorProvider
+    internal class KafkaListener<TKey, TValue> : IListener, IScaleMonitorProvider, ITargetScalerProvider
     {
         internal const string EventHubsBrokerVersionFallback = "1.0.0";
         internal const string EventHubsSaslUsername = "$ConnectionString";
@@ -41,19 +39,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private FunctionExecutorBase<TKey, TValue> functionExecutor;
         private Lazy<IConsumer<TKey, TValue>> consumer;
         private bool disposed;
-        private CancellationTokenSource cancellationTokenSource;
+        private CancellationTokenSource listenerCancellationTokenSource;
         private SemaphoreSlim subscriberFinished;
         private readonly string consumerGroup;
         private readonly string topicName;
         private readonly string functionId;
+        private readonly IDrainModeManager drainModeManager;
+        protected Lazy<KafkaMetricsProvider<TKey, TValue>> metricsProvider;
         //protected for the unit test
-        protected Lazy<KafkaTopicScaler<TKey, TValue>> topicScaler;
+        protected Lazy<KafkaGenericTopicScaler<TKey, TValue>> topicScaler;
+        protected Lazy<KafkaGenericTargetScaler<TKey, TValue>> targetScaler;
 
         /// <summary>
-        /// Gets the value deserializer
+        /// Gets the value deserializer.
         /// </summary>
         /// <value>The value deserializer.</value>
         internal IDeserializer<TValue> ValueDeserializer { get; }
+
+        /// <summary>
+        /// Gets the Key deserializer.
+        /// </summary>
+        /// <value>The key deserializer.</value>
+        internal IDeserializer<TKey> KeyDeserializer { get; }
 
         public KafkaListener(
             ITriggeredFunctionExecutor executor,
@@ -62,22 +69,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             KafkaListenerConfiguration kafkaListenerConfiguration,
             bool requiresKey,
             IDeserializer<TValue> valueDeserializer,
+            IDeserializer<TKey> keyDeserializer,
             ILogger logger,
-            string functionId)
+            string functionId,
+            IDrainModeManager drainModeManager)
         {
             this.ValueDeserializer = valueDeserializer;
+            this.KeyDeserializer = keyDeserializer;
             this.executor = executor;
             this.singleDispatch = singleDispatch;
             this.options = options;
             this.listenerConfiguration = kafkaListenerConfiguration;
             this.requiresKey = requiresKey;
             this.logger = logger;
-            this.cancellationTokenSource = new CancellationTokenSource();
+            this.listenerCancellationTokenSource = new CancellationTokenSource();
             this.consumerGroup = string.IsNullOrEmpty(this.listenerConfiguration.ConsumerGroup) ? "$Default" : this.listenerConfiguration.ConsumerGroup;
             this.topicName = this.listenerConfiguration.Topic;
             this.functionId = functionId;
+            this.drainModeManager = drainModeManager;
             this.consumer = new Lazy<IConsumer<TKey, TValue>>(() => CreateConsumer());
-            this.topicScaler = new Lazy<KafkaTopicScaler<TKey, TValue>>(() => CreateTopicScaler());
+            this.metricsProvider = new Lazy<KafkaMetricsProvider<TKey, TValue>>(CreateMetricsProvider);
+            this.topicScaler = new Lazy<KafkaGenericTopicScaler<TKey, TValue>>(CreateTopicScaler);
+            this.targetScaler = new Lazy<KafkaGenericTargetScaler<TKey, TValue>>(CreateTargetScaler);
         }
 
         private IConsumer<TKey, TValue> CreateConsumer()
@@ -104,6 +117,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 builder.SetValueDeserializer(ValueDeserializer);
             }
 
+            if (KeyDeserializer != null)
+            {
+                builder.SetKeyDeserializer(KeyDeserializer);
+            }
+
             builder.SetLogHandler((_, m) =>
             {
                 logger.Log((LogLevel)m.LevelAs(LogLevelType.MicrosoftExtensionsLogging), $"Libkafka: {m?.Message}");
@@ -112,9 +130,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return builder.Build();
         }
 
-        private KafkaTopicScaler<TKey, TValue> CreateTopicScaler()
+        private KafkaMetricsProvider<TKey, TValue> CreateMetricsProvider()
         {
-            return new KafkaTopicScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.consumerGroup, this.functionId, this.consumer.Value, new AdminClientConfig(GetConsumerConfiguration()), this.listenerConfiguration.LagThreshold, this.logger);
+            return new KafkaMetricsProvider<TKey, TValue>(this.topicName, new AdminClientConfig(GetConsumerConfiguration()), consumer.Value, this.logger);
+        }
+
+        private KafkaGenericTopicScaler<TKey, TValue> CreateTopicScaler()
+        {
+            return new KafkaGenericTopicScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.consumerGroup, this.functionId, this.consumer.Value, metricsProvider.Value, this.listenerConfiguration.LagThreshold, this.logger);
+        }
+
+        private KafkaGenericTargetScaler<TKey, TValue> CreateTargetScaler()
+        {
+            return new KafkaGenericTargetScaler<TKey, TValue>(this.listenerConfiguration.Topic, this.consumerGroup, this.functionId, this.consumer.Value, metricsProvider.Value, this.listenerConfiguration.LagThreshold, this.logger);
         }
 
         public void Cancel()
@@ -128,8 +156,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var commitStrategy = new AsyncCommitStrategy<TKey, TValue>(localConsumer, this.logger);
 
             this.functionExecutor = singleDispatch ?
-                (FunctionExecutorBase<TKey, TValue>)new SingleItemFunctionExecutor<TKey, TValue>(executor, localConsumer, this.options.ExecutorChannelCapacity, this.options.ChannelFullRetryIntervalInMs, commitStrategy, logger) :
-                new MultipleItemFunctionExecutor<TKey, TValue>(executor, localConsumer, this.options.ExecutorChannelCapacity, this.options.ChannelFullRetryIntervalInMs, commitStrategy, logger);
+                (FunctionExecutorBase<TKey, TValue>)new SingleItemFunctionExecutor<TKey, TValue>(executor, localConsumer, this.consumerGroup, this.options.ExecutorChannelCapacity, this.options.ChannelFullRetryIntervalInMs, commitStrategy, logger, drainModeManager) :
+                new MultipleItemFunctionExecutor<TKey, TValue>(executor, localConsumer, this.consumerGroup, this.options.ExecutorChannelCapacity, this.options.ChannelFullRetryIntervalInMs, commitStrategy, logger, drainModeManager);
 
             localConsumer.Subscribe(this.listenerConfiguration.Topic);
             // Using a thread as opposed to a task since this will be long running
@@ -137,13 +165,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 IsBackground = true,
             };
-            thread.Start(cancellationTokenSource.Token);
+            thread.Start(listenerCancellationTokenSource.Token);
 
             return Task.CompletedTask;
         }
 
         /// <summary>
-        /// Creates the ConsumerBuilder. Overriding in unit tests
+        /// Creates the ConsumerBuilder. Overriding in unit tests.
         /// </summary>
         protected virtual ConsumerBuilder<TKey, TValue> CreateConsumerBuilder(ConsumerConfig config) => new ConsumerBuilder<TKey, TValue>(config);
 
@@ -175,6 +203,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 SslCertificateLocation = this.listenerConfiguration.SslCertificateLocation,
                 SslKeyLocation = this.listenerConfiguration.SslKeyLocation,
                 SslKeyPassword = this.listenerConfiguration.SslKeyPassword,
+                SslCaPem = this.listenerConfiguration.SslCaPEM,
+                SslCertificatePem = this.listenerConfiguration.SslCertificatePEM,
+                SslKeyPem = this.listenerConfiguration.SslKeyPEM,
+
+                // OAuthBearer config
+                SaslOauthbearerMethod = this.listenerConfiguration.SaslOAuthBearerMethod,
+                SaslOauthbearerClientId = this.listenerConfiguration.SaslOAuthBearerClientId,
+                SaslOauthbearerClientSecret = this.listenerConfiguration.SaslOAuthBearerClientSecret,
+                SaslOauthbearerScope = this.listenerConfiguration.SaslOAuthBearerScope,
+                SaslOauthbearerTokenEndpointUrl = this.listenerConfiguration.SaslOAuthBearerTokenEndpointUrl,
+                SaslOauthbearerExtensions = this.listenerConfiguration.SaslOAuthBearerExtensions,
 
                 // Values from host configuration
                 StatisticsIntervalMs = this.options.StatisticsIntervalMs,
@@ -192,22 +231,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             if (string.IsNullOrEmpty(this.listenerConfiguration.EventHubConnectionString))
             {
-                // Setup native kafka configuration
+                // Setup native kafka configuration.
                 conf.BootstrapServers = this.listenerConfiguration.BrokerList;
                 conf.GroupId = this.listenerConfiguration.ConsumerGroup;
-
-                if (!string.IsNullOrWhiteSpace(conf.SslCaLocation))
-                {
-                    if (AzureFunctionsFileHelper.TryGetValidFilePath(conf.SslCaLocation, out var resolvedSslCaLocation))
-                    {
-                        this.logger.LogDebug("Found SslCaLocation in {filePath}", resolvedSslCaLocation);
-                        conf.SslCaLocation = resolvedSslCaLocation;
-                    }
-                    else
-                    {
-                        this.logger.LogWarning("Could not find valid file path for SslCaLocation {filePath}", conf.SslCaLocation);
-                    }
-                }                
+                conf.SslCaLocation = this.EnsureValidCertificateLocation(conf.SslCaLocation, nameof(conf.SslCaLocation));
             }
             else
             {
@@ -224,7 +251,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 conf.SaslMechanism = SaslMechanism.Plain;
                 conf.SaslUsername = EventHubsSaslUsername;
                 conf.SaslPassword = this.listenerConfiguration.EventHubConnectionString;
-                conf.SslCaLocation= this.EnsureValidEventHubsCertificateLocation(this.listenerConfiguration.SslCaLocation);
+                conf.SslCaLocation = this.EnsureValidCertificateLocation(this.listenerConfiguration.SslCaLocation, nameof(conf.SslCaLocation));
                 conf.GroupId = consumerGroupToUse;
                 conf.BrokerVersionFallback = EventHubsBrokerVersionFallback;
             }
@@ -232,26 +259,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return conf;
         }
 
-        string EnsureValidEventHubsCertificateLocation(string userProvidedLocation)
+        string EnsureValidCertificateLocation(string userProvidedLocation, string confName)
         {
-            const string defaultEventhubsCertificateFilePath = "./cacert.pem";
-
             if (!string.IsNullOrWhiteSpace(userProvidedLocation))
             {
-                if (!AzureFunctionsFileHelper.TryGetValidFilePath(userProvidedLocation, out var validatedUserProvidedLocation))
+                if (AzureFunctionsFileHelper.TryGetValidFilePath(userProvidedLocation, out var resolvedLocation))
                 {
-                    throw new InvalidOperationException($"Could not find user provided event hubs certificate file '{userProvidedLocation}");
+                    this.logger.LogDebug("Found {confName} in {filePath}", confName, resolvedLocation);
+                    userProvidedLocation = resolvedLocation;
                 }
-
-                return validatedUserProvidedLocation;
+                else
+                {
+                    this.logger.LogWarning("Could not find valid file path for {confName} {filePath}", confName, userProvidedLocation);
+                }
             }
-
-            if (!AzureFunctionsFileHelper.TryGetValidFilePath(defaultEventhubsCertificateFilePath, out var validatedCertificateFilePath))
-            {
-                throw new InvalidOperationException($"Could not find event hubs certificate file '{defaultEventhubsCertificateFilePath}'");
-            }
-
-            return validatedCertificateFilePath;
+            return userProvidedLocation;
         }
 
         private void ProcessSubscription(object parameter)
@@ -294,7 +316,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                                     var currentSize = this.functionExecutor.Add(kafkaEventData);
                                     if (currentSize >= maxBatchSize)
                                     {
-                                        this.functionExecutor.Flush();
+                                        this.functionExecutor.Flush(listenerCancellationTokenSource.Token);
                                         alreadyFlushedInCurrentExecution = true;
                                     }
                                 }
@@ -315,7 +337,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
                     if (!alreadyFlushedInCurrentExecution)
                     {
-                        this.functionExecutor.Flush();
+                        this.functionExecutor.Flush(listenerCancellationTokenSource.Token);
                     }
                 }
             }
@@ -347,12 +369,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             try
             {
                 // Stop subscriber thread
-                this.cancellationTokenSource.Cancel();
+                this.listenerCancellationTokenSource.Cancel();
 
                 // Stop function executor                
                 if (this.functionExecutor != null)
                 {
-                    await this.functionExecutor.CloseAsync(TimeSpan.FromMilliseconds(TimeToWaitForRunningProcessToEnd));
+                    await this.functionExecutor.CloseAsync();
                 }
 
                 // Wait for subscriber thread to end                
@@ -370,7 +392,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 
                 this.functionExecutor?.Dispose();
                 this.subscriberFinished?.Dispose();
-                this.cancellationTokenSource.Dispose();                
+                this.listenerCancellationTokenSource.Dispose();                
             }
             catch (Exception ex)
             {
@@ -401,6 +423,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public IScaleMonitor GetMonitor()
         {
             return topicScaler.Value;
+        }
+
+        public ITargetScaler GetTargetScaler()
+        {
+            return targetScaler.Value;
         }
     }
 }

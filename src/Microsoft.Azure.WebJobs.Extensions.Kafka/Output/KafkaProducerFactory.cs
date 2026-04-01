@@ -3,16 +3,11 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Reflection;
 using System.Text;
-using Avro.Generic;
-using Avro.Specific;
+using System.Text.RegularExpressions;
 using Confluent.Kafka;
-using Microsoft.Azure.WebJobs.Host;
-using Microsoft.Azure.WebJobs.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
@@ -24,22 +19,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
     {
         private readonly IConfiguration config;
         private readonly INameResolver nameResolver;
-        private readonly ILoggerProvider loggerProvider;
+        private readonly ILoggerFactory loggerFactory;
         private readonly ConcurrentDictionary<string, IProducer<byte[], byte[]>> baseProducers = new ConcurrentDictionary<string, IProducer<byte[], byte[]>>();
 
         public KafkaProducerFactory(
             IConfiguration config,
             INameResolver nameResolver,
-            ILoggerProvider loggerProvider)
+            ILoggerFactory loggerFactory)
         {
             this.config = config;
             this.nameResolver = nameResolver;
-            this.loggerProvider = loggerProvider;
+            this.loggerFactory = loggerFactory;
         }
 
         public IKafkaProducer Create(KafkaProducerEntity entity)
         {
-            AzureFunctionsFileHelper.InitializeLibrdKafka(this.loggerProvider.CreateLogger(LogCategories.CreateTriggerCategory("Kafka")));
+            AzureFunctionsFileHelper.InitializeLibrdKafka(this.loggerFactory.CreateLogger(typeof(AzureFunctionsFileHelper)));
 
             // Goal is to create as less producers as possible
             // We can group producers based on following criterias
@@ -74,7 +69,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private IProducer<byte[], byte[]> CreateBaseProducer(ProducerConfig producerConfig)
         {
             var builder = new ProducerBuilder<byte[], byte[]>(producerConfig);
-            ILogger logger = this.loggerProvider.CreateLogger("Kafka");
+            ILogger logger = this.loggerFactory.CreateLogger("Kafka");
             builder.SetLogHandler((_, m) =>
             {
                 logger.Log((LogLevel)m.LevelAs(LogLevelType.MicrosoftExtensionsLogging), $"Libkafka: {m?.Message}");
@@ -88,30 +83,73 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var valueType = entity.ValueType ?? typeof(byte[]);
             var keyType = entity.KeyType ?? typeof(Null);
 
-            var valueSerializer = SerializationHelper.ResolveValueSerializer(valueType, entity.AvroSchema);
+            var valueAvroSchema = this.config.ResolveSecureSetting(nameResolver, entity.ValueAvroSchema);
+            var keyAvroSchema = this.config.ResolveSecureSetting(nameResolver, entity.KeyAvroSchema);
+            var schemaRegistryUrl = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SchemaRegistryUrl);
+            var schemaRegistryUsername = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SchemaRegistryUsername);
+            var schemaRegistryPassword = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SchemaRegistryPassword);
+            var topic = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.Topic);
+
+            (var valueSerializer, var keySerializer) = SerializationHelper.ResolveSerializers(
+                valueType, 
+                keyType, 
+                valueAvroSchema, 
+                keyAvroSchema, 
+                schemaRegistryUrl, 
+                schemaRegistryUsername, 
+                schemaRegistryPassword,
+                topic);
 
             return (IKafkaProducer)Activator.CreateInstance(
                 typeof(KafkaProducer<,>).MakeGenericType(keyType, valueType),
                 producerBaseHandle,
                 valueSerializer,
-                loggerProvider.CreateLogger(LogCategories.CreateTriggerCategory("Kafka")));
+                keySerializer,
+                loggerFactory.CreateLogger(typeof(KafkaProducer<,>)));
+        }
+
+        private string ExtractSection(string pemString, string sectionName)
+        {
+            if (!string.IsNullOrEmpty(pemString))
+            {
+                var regex = new Regex($"-----BEGIN {sectionName}-----(.*?)-----END {sectionName}-----", RegexOptions.Singleline);
+                var match = regex.Match(pemString);
+                if (match.Success)
+                {
+                    return match.Value.Replace("\\n", "\n");
+                }
+            }
+            return null;
+        }
+
+        private string ExtractCertificate(string pemString)
+        {
+            return ExtractSection(pemString, "CERTIFICATE");
+        }
+
+        private string ExtractPrivateKey(string pemString)
+        {
+            return ExtractSection(pemString, "PRIVATE KEY");
         }
 
         public ProducerConfig GetProducerConfig(KafkaProducerEntity entity)
         {
-            if (!AzureFunctionsFileHelper.TryGetValidFilePath(entity.Attribute.SslCertificateLocation, out var resolvedSslCertificationLocation))
+            var sslCertificateLocation = config.ResolveSecureSetting(nameResolver, entity.Attribute.SslCertificateLocation);
+            if (!AzureFunctionsFileHelper.TryGetValidFilePath(sslCertificateLocation, out var resolvedSslCertificationLocation))
             {
-                resolvedSslCertificationLocation = entity.Attribute.SslCertificateLocation;
+                resolvedSslCertificationLocation = sslCertificateLocation;
             }
-
-            if (!AzureFunctionsFileHelper.TryGetValidFilePath(entity.Attribute.SslCaLocation, out var resolvedSslCaLocation))
+            
+            var sslCaLocation = config.ResolveSecureSetting(nameResolver, entity.Attribute.SslCaLocation);
+            if (!AzureFunctionsFileHelper.TryGetValidFilePath(sslCaLocation, out var resolvedSslCaLocation))
             {
-                resolvedSslCaLocation = entity.Attribute.SslCaLocation;
+                resolvedSslCaLocation = sslCaLocation;
             }
-
-            if (!AzureFunctionsFileHelper.TryGetValidFilePath(entity.Attribute.SslKeyLocation, out var resolvedSslKeyLocation))
+            
+            var sslKeyLocation = config.ResolveSecureSetting(nameResolver, entity.Attribute.SslKeyLocation);
+            if (!AzureFunctionsFileHelper.TryGetValidFilePath(sslKeyLocation, out var resolvedSslKeyLocation))
             {
-                resolvedSslKeyLocation = entity.Attribute.SslKeyLocation;
+                resolvedSslKeyLocation = sslKeyLocation;
             }
             var kafkaOptions = this.config.Get<KafkaOptions>();
             var conf = new ProducerConfig()
@@ -122,16 +160,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 MessageSendMaxRetries = entity.Attribute.MaxRetries,
                 MessageTimeoutMs = entity.Attribute.MessageTimeoutMs,
                 RequestTimeoutMs = entity.Attribute.RequestTimeoutMs,
+                MessageMaxBytes = entity.Attribute.MaxMessageBytes,
                 SaslPassword = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.Password),
                 SaslUsername = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.Username),
                 SslKeyLocation = resolvedSslKeyLocation,
-                SslKeyPassword = entity.Attribute.SslKeyPassword,
+                SslKeyPassword = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SslKeyPassword),
                 SslCertificateLocation = resolvedSslCertificationLocation,
                 SslCaLocation = resolvedSslCaLocation,
+                SslCaPem = ExtractCertificate(this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SslCaPEM)),
+                SslCertificatePem = ExtractCertificate(this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SslCertificatePEM)),
+                SslKeyPem = ExtractPrivateKey(this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SslKeyPEM)),
                 Debug = kafkaOptions?.LibkafkaDebug,
                 MetadataMaxAgeMs = kafkaOptions?.MetadataMaxAgeMs,
-                SocketKeepaliveEnable = kafkaOptions?.SocketKeepaliveEnable
+                SocketKeepaliveEnable = kafkaOptions?.SocketKeepaliveEnable,
+                LingerMs = entity.Attribute.LingerMs,
             };
+
+            if (!string.IsNullOrEmpty(entity.Attribute.SslCertificateandKeyPEM))
+            {
+                var sslCertificateandKeyPEM = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SslCertificateandKeyPEM);
+                conf.SslCertificatePem = ExtractCertificate(sslCertificateandKeyPEM);
+                conf.SslKeyPem = ExtractPrivateKey(sslCertificateandKeyPEM);
+            }
 
             if (entity.Attribute.AuthenticationMode != BrokerAuthenticationMode.NotSet)
             {
@@ -141,6 +191,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             if (entity.Attribute.Protocol != BrokerProtocol.NotSet)
             {
                 conf.SecurityProtocol = (SecurityProtocol)entity.Attribute.Protocol;
+            }
+
+            if (entity.Attribute.AuthenticationMode == BrokerAuthenticationMode.OAuthBearer)
+            {
+                conf.SaslOauthbearerMethod = (SaslOauthbearerMethod)entity.Attribute.OAuthBearerMethod;
+                conf.SaslOauthbearerClientId = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerClientId);
+                conf.SaslOauthbearerClientSecret = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerClientSecret);
+                conf.SaslOauthbearerScope = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerScope);
+                conf.SaslOauthbearerTokenEndpointUrl = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerTokenEndpointUrl);
+                conf.SaslOauthbearerExtensions = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerExtensions);
             }
 
             return conf;

@@ -33,7 +33,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             if (typeof(IKafkaEventData).IsAssignableFrom(typeSource))
             {
-                if (typeDest == typeSource)
+                if (typeDest == typeof(ParameterBindingData))
+                {
+                    return ConvertToParameterBindingData;
+                }
+                else if (typeDest == typeSource)
                 {
                     return ConvertToSame;
                 }
@@ -74,6 +78,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return this.converterManager?.GetConverter<TAttribute>(typeSource, typeDest);
         }
 
+        private Task<object> ConvertToParameterBindingData(object src, Attribute attribute, ValueBindingContext context)
+        {
+            var eventData = (IKafkaEventData)src;
+            var content = KafkaRecordSerializer.Serialize(eventData);
+            var bindingData = new ParameterBindingData(
+                "1.0",
+                KafkaRecordSerializer.BindingSource,
+                new BinaryData(content),
+                KafkaRecordSerializer.JsonContentType);
+            return Task.FromResult<object>(bindingData);
+        }
+
         private Task<object> ConvertFromIKafkaEventToGenericItem(object src, Attribute attribute, ValueBindingContext context)
         {
             return Task.FromResult(src);
@@ -99,6 +115,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             if (value is byte[] bytes)
             {
                 result = bytes;
+            }
+            else if (value is null)
+            {
+                result = new byte[0];
             }
             else if (value is string stringValue)
             {

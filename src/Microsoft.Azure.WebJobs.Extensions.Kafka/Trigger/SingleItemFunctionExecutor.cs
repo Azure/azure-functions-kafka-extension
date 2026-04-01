@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Confluent.Kafka;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Extensions.Logging;
 
@@ -15,13 +16,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
     /// <summary>
     /// Executes the functions for an specific partition
-    /// Used for functions that are expecting a single item
+    /// Used for functions that are expecting a single item.
     /// </summary>
     public class SingleItemFunctionExecutor<TKey, TValue> : FunctionExecutorBase<TKey, TValue>
     {
-        public SingleItemFunctionExecutor(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, int channelCapacity, int channelFullRetryIntervalInMs, ICommitStrategy<TKey, TValue> commitStrategy, ILogger logger)
-            : base(executor, consumer, channelCapacity, channelFullRetryIntervalInMs, commitStrategy, logger)
+        private readonly string consumerGroup;
+
+        public SingleItemFunctionExecutor(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, string consumerGroup, int channelCapacity, int channelFullRetryIntervalInMs, ICommitStrategy<TKey, TValue> commitStrategy, ILogger logger, IDrainModeManager drainModeManager)
+            : base(executor, consumer, channelCapacity, channelFullRetryIntervalInMs, commitStrategy, logger, drainModeManager)
         {
+            this.consumerGroup = consumerGroup;
             logger.LogInformation($"FunctionExecutor Loaded: {nameof(SingleItemFunctionExecutor<TKey, TValue>)}");
         }
 
@@ -72,7 +76,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     TriggerValue = triggerInput,
                 };
 
-                await this.ExecuteFunctionAsync(triggerData, cancellationToken);
+                // Create Single Event Activity Provider and Start the activity
+                var singleEventActivityProvider = new SingleEventActivityProvider(kafkaEventData, consumerGroup);
+                singleEventActivityProvider.StartActivity();
+                FunctionResult functionResult = null;
+                try
+                {
+                    // Execute the Function
+                    functionResult = await this.ExecuteFunctionAsync(triggerData, cancellationToken);
+                    // Set the status of activity.
+                    singleEventActivityProvider.SetActivityStatus(functionResult.Succeeded, functionResult.Exception);
+                }
+                catch (Exception ex)
+                {
+                    singleEventActivityProvider.SetActivityStatus(false, ex);
+                    throw;
+                }
+                finally
+                {
+                    // Stop the activity
+                    singleEventActivityProvider.StopCurrentActivity();
+                }
 
                 if (topicPartition == null)
                 {
@@ -83,7 +107,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 // When processing a large batch of events where the execution of each event takes time
                 // it would take Events_In_Batch_For_Partition * Event_Processing_Time to update the current offset.
                 // Doing it after each event minimizes the delay
-                this.Commit(new[] { new TopicPartitionOffset(topicPartition, kafkaEventData.Offset + 1) });  // offset is inclusive when resuming
+                if (!cancellationToken.IsCancellationRequested)
+                {
+                    this.Commit(new[] { new TopicPartitionOffset(topicPartition, kafkaEventData.Offset + 1) });  // offset is inclusive when resuming
+                }
             }
         }
     }

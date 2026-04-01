@@ -8,20 +8,24 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Confluent.Kafka;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
     /// <summary>
-    /// Executes the functions for an specific partition.
-    /// Used for functions that are expecting multiple items at once
+    /// Executes the functions for a specific partition.
+    /// Used for functions that are expecting multiple items at once.
     /// </summary>
     public class MultipleItemFunctionExecutor<TKey, TValue> : FunctionExecutorBase<TKey, TValue>
     {
-        public MultipleItemFunctionExecutor(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer, int channelCapacity, int channelFullRetryIntervalInMs, ICommitStrategy<TKey, TValue> commitStrategy, ILogger logger) 
-            : base(executor, consumer, channelCapacity, channelFullRetryIntervalInMs, commitStrategy, logger)
+        private readonly string consumerGroup;
+
+        public MultipleItemFunctionExecutor(ITriggeredFunctionExecutor executor, IConsumer<TKey, TValue> consumer,  string consumerGroup, int channelCapacity, int channelFullRetryIntervalInMs, ICommitStrategy<TKey, TValue> commitStrategy, ILogger logger, IDrainModeManager drainModeManager) 
+            : base(executor, consumer, channelCapacity, channelFullRetryIntervalInMs, commitStrategy, logger, drainModeManager)
         {
+            this.consumerGroup = consumerGroup;
             logger.LogInformation($"FunctionExecutor Loaded: {nameof(MultipleItemFunctionExecutor<TKey, TValue>)}");
         }
 
@@ -40,7 +44,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                             TriggerValue = triggerInput,
                         };
 
-                        var functionResult = await this.ExecuteFunctionAsync(triggerData, cancellationToken);
+                        // Create Batch Event Activity Provider and Start the activity 
+                        var batchEventActivityProvider = new BatchEventActivityProvider(itemsToExecute, consumerGroup);
+                        batchEventActivityProvider.StartActivity();
+
+                        FunctionResult functionResult = null;
+                        try
+                        {
+                            // Execute the function
+                            functionResult = await this.ExecuteFunctionAsync(triggerData, cancellationToken);
+                            // Set the status of activity.
+                            batchEventActivityProvider.SetActivityStatus(functionResult.Succeeded, functionResult.Exception);
+                        }
+                        catch (Exception ex)
+                        {
+                            batchEventActivityProvider.SetActivityStatus(false, ex);
+                            throw;
+                        }
+                        finally
+                        {
+                            // Stop the Activity
+                            batchEventActivityProvider.StopCurrentActivity();
+                        }
 
                         var offsetsToCommit = new Dictionary<int, TopicPartitionOffset>();
                         for (var i=itemsToExecute.Length - 1; i >= 0; i--)
