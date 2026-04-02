@@ -14,10 +14,13 @@ using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Tests;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Host;
+using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.Serialization;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
@@ -1299,6 +1302,144 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                 $"Expected at least {maxRetries + 1} attempts for message 1, got {message1Attempts}");
             Assert.True(message2Attempts >= 1,
                 $"Expected message 2 to be attempted at least once after message 1 was force-committed, got {message2Attempts}");
+        }
+
+        /// <summary>
+        /// E2E test for KafkaRecord Protobuf serialization (PR #619, Phase 2a).
+        /// Produces messages to a real Kafka broker, consumes them via trigger,
+        /// then converts the consumed events to ParameterBindingData using
+        /// KafkaEventDataConvertManager and verifies the Protobuf payload
+        /// preserves value, topic, partition, offset, and timestamp.
+        /// </summary>
+        [Fact]
+        public async Task KafkaRecord_ProtobufSerialization_PreservesValueAndBrokerMetadata()
+        {
+            var input = Enumerable.Range(1, 5)
+                .Select(x => new KafkaEventData<string>
+                {
+                    Value = "protobuf-e2e-" + x.ToString()
+                });
+
+            var output = await ProduceAndConsumeAsync<
+                KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>,
+                KafkaTriggerForProduceAndConsume<KafkaEventData<string>>>(
+                x => x.Produce(default), input);
+
+            Assert.Equal(5, output.Count);
+
+            var convertManager = new KafkaEventDataConvertManager(null, NullLogger.Instance);
+            var converter = convertManager.GetConverter<KafkaTriggerAttribute>(
+                typeof(IKafkaEventData), typeof(ParameterBindingData));
+            Assert.NotNull(converter);
+
+            foreach (var consumedEvent in output)
+            {
+                var result = await converter(consumedEvent, new KafkaTriggerAttribute("broker", "topic"), null);
+                Assert.IsType<ParameterBindingData>(result);
+
+                var bindingData = (ParameterBindingData)result;
+                Assert.Equal("1.0", bindingData.Version);
+                Assert.Equal("AzureKafkaRecord", bindingData.Source);
+                Assert.Equal("application/x-protobuf", bindingData.ContentType);
+
+                var proto = KafkaRecordProto.Parser.ParseFrom(bindingData.Content);
+
+                // Value preserved
+                Assert.Contains("protobuf-e2e-", Encoding.UTF8.GetString(proto.Value.ToByteArray()));
+
+                // Broker-assigned metadata is populated
+                Assert.Equal(Constants.StringTopicWithTenPartitionsName, proto.Topic);
+                Assert.True(proto.Partition >= 0, "Partition should be >= 0");
+                Assert.True(proto.Offset >= 0, "Offset should be >= 0");
+                Assert.NotNull(proto.Timestamp);
+                Assert.True(proto.Timestamp.UnixTimestampMs > 0, "Timestamp should be > 0");
+            }
+        }
+
+        /// <summary>
+        /// E2E test verifying that Kafka message headers survive the full
+        /// Kafka produce/consume round-trip AND Protobuf serialization.
+        /// </summary>
+        [Fact]
+        public async Task KafkaRecord_ProtobufSerialization_PreservesHeaders()
+        {
+            var input = Enumerable.Range(1, 3)
+                .Select(x =>
+                {
+                    var eventData = new KafkaEventData<string>
+                    {
+                        Value = "header-test-" + x.ToString()
+                    };
+                    eventData.Headers.Add("correlationId", Encoding.UTF8.GetBytes("corr-" + x));
+                    eventData.Headers.Add("source", Encoding.UTF8.GetBytes("e2e-test"));
+                    return eventData;
+                });
+
+            var output = await ProduceAndConsumeAsync<
+                KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>,
+                KafkaTriggerForProduceAndConsume<KafkaEventData<string>>>(
+                x => x.Produce(default), input);
+
+            Assert.Equal(3, output.Count);
+
+            var convertManager = new KafkaEventDataConvertManager(null, NullLogger.Instance);
+            var converter = convertManager.GetConverter<KafkaTriggerAttribute>(
+                typeof(IKafkaEventData), typeof(ParameterBindingData));
+
+            foreach (var consumedEvent in output)
+            {
+                var result = await converter(consumedEvent, new KafkaTriggerAttribute("broker", "topic"), null);
+                var bindingData = (ParameterBindingData)result;
+                var proto = KafkaRecordProto.Parser.ParseFrom(bindingData.Content);
+
+                // Headers preserved in Protobuf
+                Assert.Equal(2, proto.Headers.Count);
+
+                var correlationHeader = proto.Headers.First(h => h.Key == "correlationId");
+                Assert.StartsWith("corr-", Encoding.UTF8.GetString(correlationHeader.Value.ToByteArray()));
+
+                var sourceHeader = proto.Headers.First(h => h.Key == "source");
+                Assert.Equal("e2e-test", Encoding.UTF8.GetString(sourceHeader.Value.ToByteArray()));
+            }
+        }
+
+        /// <summary>
+        /// E2E test verifying that messages produced without a key result in
+        /// the Protobuf key field being absent (not set) after serialization.
+        /// </summary>
+        [Fact]
+        public async Task KafkaRecord_ProtobufSerialization_NullKey_IsOmitted()
+        {
+            var input = Enumerable.Range(1, 3)
+                .Select(x => new KafkaEventData<string>
+                {
+                    Value = "nullkey-test-" + x.ToString()
+                });
+
+            var output = await ProduceAndConsumeAsync<
+                KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>,
+                KafkaTriggerForProduceAndConsume<KafkaEventData<string>>>(
+                x => x.Produce(default), input);
+
+            Assert.Equal(3, output.Count);
+
+            var convertManager = new KafkaEventDataConvertManager(null, NullLogger.Instance);
+            var converter = convertManager.GetConverter<KafkaTriggerAttribute>(
+                typeof(IKafkaEventData), typeof(ParameterBindingData));
+
+            foreach (var consumedEvent in output)
+            {
+                var result = await converter(consumedEvent, new KafkaTriggerAttribute("broker", "topic"), null);
+                var bindingData = (ParameterBindingData)result;
+                var proto = KafkaRecordProto.Parser.ParseFrom(bindingData.Content);
+
+                // Key should not be set (null key from producer)
+                Assert.False(proto.HasKey, "Key should not be set for null-key messages");
+
+                // Value should still be present
+                Assert.True(proto.HasValue, "Value should be set");
+                Assert.Contains("nullkey-test-", Encoding.UTF8.GetString(proto.Value.ToByteArray()));
+            }
         }
     }
 }
