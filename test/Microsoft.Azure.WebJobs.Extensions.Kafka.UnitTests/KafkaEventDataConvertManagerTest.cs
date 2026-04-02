@@ -4,6 +4,7 @@
 using System;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.Serialization;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json.Linq;
@@ -53,23 +54,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.IsType<ParameterBindingData>(result);
             var bindingData = (ParameterBindingData)result;
             Assert.Equal("1.0", bindingData.Version);
-            Assert.Equal(KafkaRecordSerializer.BindingSource, bindingData.Source);
-            Assert.Equal(KafkaRecordSerializer.JsonContentType, bindingData.ContentType);
+            Assert.Equal(KafkaRecordProtobufSerializer.BindingSource, bindingData.Source);
+            Assert.Equal(KafkaRecordProtobufSerializer.ContentType, bindingData.ContentType);
 
-            // Verify content is valid JSON with expected fields
-            var json = JObject.Parse(bindingData.Content.ToString());
-            Assert.Equal("test-topic", json["topic"].Value<string>());
-            Assert.Equal(3, json["partition"].Value<int>());
-            Assert.Equal(42L, json["offset"].Value<long>());
-            Assert.Equal(5, json["leaderEpoch"].Value<int>());
-            Assert.False(json["isPartitionEOF"].Value<bool>());
-            Assert.Equal("test-key", json["message"]["key"].Value<string>());
-            Assert.Equal("test-value", json["message"]["value"].Value<string>());
+            // Verify content is valid Protobuf with expected fields
+            var proto = KafkaRecordProto.Parser.ParseFrom(bindingData.Content);
+            Assert.Equal("test-topic", proto.Topic);
+            Assert.Equal(3, proto.Partition);
+            Assert.Equal(42L, proto.Offset);
+            Assert.Equal(5, proto.LeaderEpoch);
+            Assert.Equal("test-key", Encoding.UTF8.GetString(proto.Key.ToByteArray()));
+            Assert.Equal("test-value", Encoding.UTF8.GetString(proto.Value.ToByteArray()));
 
             // Headers
-            var headers = json["message"]["headers"] as JArray;
-            Assert.Single(headers);
-            Assert.Equal("h1", headers[0]["key"].Value<string>());
+            Assert.Single(proto.Headers);
+            Assert.Equal("h1", proto.Headers[0].Key);
+            Assert.Equal("v1", Encoding.UTF8.GetString(proto.Headers[0].Value.ToByteArray()));
         }
 
         [Fact]
