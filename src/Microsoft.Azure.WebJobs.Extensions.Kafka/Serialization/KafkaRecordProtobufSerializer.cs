@@ -35,8 +35,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.Serialization
                 Topic = eventData.Topic ?? string.Empty,
                 Partition = eventData.Partition,
                 Offset = eventData.Offset,
-                Key = ToByteString(eventData.Key),
-                Value = ToByteString(eventData.Value),
                 Timestamp = new KafkaTimestampProto
                 {
                     UnixTimestampMs = new DateTimeOffset(
@@ -47,6 +45,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.Serialization
                 },
             };
 
+            if (eventData.Key != null)
+            {
+                proto.Key = ToByteString(eventData.Key);
+            }
+
+            if (eventData.Value != null)
+            {
+                proto.Value = ToByteString(eventData.Value);
+            }
+
             if (eventData.LeaderEpoch.HasValue)
             {
                 proto.LeaderEpoch = eventData.LeaderEpoch.Value;
@@ -56,13 +64,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.Serialization
             {
                 foreach (var header in eventData.Headers)
                 {
-                    proto.Headers.Add(new KafkaHeaderProto
+                    var headerProto = new KafkaHeaderProto
                     {
                         Key = header.Key ?? string.Empty,
-                        Value = header.Value != null
-                            ? ByteString.CopyFrom(header.Value)
-                            : ByteString.Empty,
-                    });
+                    };
+                    if (header.Value != null)
+                    {
+                        headerProto.Value = ByteString.CopyFrom(header.Value);
+                    }
+
+                    proto.Headers.Add(headerProto);
                 }
             }
 
