@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Avro.Generic;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.Serialization;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -81,12 +82,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private Task<object> ConvertToParameterBindingData(object src, Attribute attribute, ValueBindingContext context)
         {
             var eventData = (IKafkaEventData)src;
-            var content = KafkaRecordSerializer.Serialize(eventData);
+            var content = KafkaRecordProtobufSerializer.Serialize(eventData);
             var bindingData = new ParameterBindingData(
                 "1.0",
-                KafkaRecordSerializer.BindingSource,
+                KafkaRecordProtobufSerializer.BindingSource,
                 new BinaryData(content),
-                KafkaRecordSerializer.JsonContentType);
+                KafkaRecordProtobufSerializer.ContentType);
             return Task.FromResult<object>(bindingData);
         }
 
