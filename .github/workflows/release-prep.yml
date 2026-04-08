@@ -1,0 +1,173 @@
+# =============================================================================
+# Release Prep — Phase A
+# =============================================================================
+# Creates a release branch from master, syncs dev content, removes dev-only
+# files, updates the version, creates a PR for peer review, and drafts a
+# GitHub Release.
+#
+# Trigger: Manual (workflow_dispatch) with version input
+# Result:  PR (release/<version> → master) + Draft GitHub Release
+# =============================================================================
+
+name: "Release Prep"
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (e.g. 4.3.0 or 4.3.0-preview1)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  prepare-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate version format
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
+            echo "::error::Invalid version format: $VERSION. Expected: X.Y.Z or X.Y.Z-suffix"
+            exit 1
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Checkout master
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create release branch from master
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "release/${{ env.VERSION }}"
+
+      - name: Sync dev content into release branch
+        run: |
+          # Replace the entire working tree with dev's content.
+          # This does NOT switch branches — HEAD stays on release/<version>.
+          # It overwrites all tracked files and stages new files from dev.
+          # Files that exist only on master (not in dev) are NOT deleted by
+          # this command, so we handle them in the cleanup step.
+          git checkout origin/dev -- .
+
+      - name: Remove dev-only files
+        run: |
+          # These files exist in dev but should not be on the release branch.
+          # samples/              — Sample apps, removed from master since PR #491
+          # Architecture.md       — Dev architecture documentation
+          # AGENT-RULES.md        — AI agent rules (dev workflow only)
+          # lint-architecture.ps1 — Architecture linting script (dev only)
+          # CHECKLIST-*.md        — Working artifacts
+          # PLAN-*.md             — Planning artifacts
+          # SOLUTION-*.md         — Analysis artifacts
+          git rm -rf samples/ 2>/dev/null || true
+          git rm -f Architecture.md 2>/dev/null || true
+          git rm -f AGENT-RULES.md 2>/dev/null || true
+          git rm -f lint-architecture.ps1 2>/dev/null || true
+          find . -maxdepth 1 -name 'CHECKLIST-*.md' -exec git rm -f {} \; 2>/dev/null || true
+          find . -maxdepth 1 -name 'PLAN-*.md' -exec git rm -f {} \; 2>/dev/null || true
+          find . -maxdepth 1 -name 'SOLUTION-*.md' -exec git rm -f {} \; 2>/dev/null || true
+
+      - name: Remove master-only files no longer needed
+        run: |
+          # update-version.ps1 — Old manual version update script
+          git rm -f update-version.ps1 2>/dev/null || true
+
+      - name: Update version in common.props
+        run: |
+          sed -i "s|<Version>[^<]*|<Version>${{ env.VERSION }}|" build/common.props
+          echo "Updated version to ${{ env.VERSION }}:"
+          grep '<Version>' build/common.props
+
+      - name: Commit and push release branch
+        run: |
+          git add -A
+          git commit -m "[Release] Prepare ${{ env.VERSION }} from dev"
+          git push origin "release/${{ env.VERSION }}"
+
+      - name: Generate changelog from dev commits
+        id: changelog
+        run: |
+          # Get the last release tag to generate changelog
+          LAST_TAG=$(git describe --tags --abbrev=0 origin/master 2>/dev/null || echo "")
+          echo "Last tag: $LAST_TAG"
+
+          if [ -n "$LAST_TAG" ]; then
+            CHANGELOG=$(git log --oneline "$LAST_TAG..origin/dev" --no-merges --pretty=format:"- %s" | head -100)
+          else
+            CHANGELOG="Initial release"
+          fi
+
+          # Write to file to avoid escaping issues
+          echo "$CHANGELOG" > /tmp/changelog.txt
+          echo "Generated changelog with $(echo "$CHANGELOG" | wc -l) entries"
+
+      - name: Create Pull Request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          CHANGELOG=$(cat /tmp/changelog.txt)
+          PR_BODY=$(cat <<'PREOF'
+          ## Release ${{ env.VERSION }}
+
+          This PR syncs the `dev` branch content to `master` for release **${{ env.VERSION }}**.
+
+          ### What this PR does
+          - Replaces master tree with dev content (tree replacement, not merge)
+          - Removes dev-only files (samples/, Architecture.md, AGENT-RULES.md, lint-architecture.ps1)
+          - Updates version in `build/common.props` to `${{ env.VERSION }}`
+
+          ### After merge
+          The `release-tag` workflow will automatically:
+          1. Create tag `${{ env.VERSION }}` on master
+          2. Publish the draft GitHub Release
+          3. ADO Code Mirror → Official Build → Release Pipeline will follow
+
+          ### Changes since last release
+          PREOF
+          )
+          PR_BODY="${PR_BODY}
+          ${CHANGELOG}"
+
+          gh pr create \
+            --base master \
+            --head "release/${{ env.VERSION }}" \
+            --title "[Release] ${{ env.VERSION }}" \
+            --body "$PR_BODY" \
+            --label "release"
+
+      - name: Create Draft GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          CHANGELOG=$(cat /tmp/changelog.txt)
+          gh release create "${{ env.VERSION }}" \
+            --draft \
+            --title "${{ env.VERSION }}" \
+            --notes "## What's Changed
+          $CHANGELOG
+
+          **Full Changelog**: https://github.com/${{ github.repository }}/compare/$(git describe --tags --abbrev=0 origin/master 2>/dev/null || echo 'dev')...${{ env.VERSION }}" \
+            --target master
+
+      - name: Summary
+        run: |
+          echo "## Release Prep Complete :rocket:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ env.VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: release/${{ env.VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **PR**: release/${{ env.VERSION }} → master (review required)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Draft Release**: ${{ env.VERSION }} (will be published after PR merge)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. Review and approve the PR" >> $GITHUB_STEP_SUMMARY
+          echo "2. Merge the PR to master" >> $GITHUB_STEP_SUMMARY
+          echo "3. The release-tag workflow will automatically tag and publish" >> $GITHUB_STEP_SUMMARY
