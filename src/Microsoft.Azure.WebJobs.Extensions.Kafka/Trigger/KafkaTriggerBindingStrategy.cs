@@ -53,6 +53,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             AddBindingContractMember(contract, nameof(KafkaEventData<TKey, TValue>.Timestamp), typeof(DateTime), isSingleDispatch);
             AddBindingContractMember(contract, nameof(KafkaEventData<TKey, TValue>.Offset), typeof(long), isSingleDispatch);
             AddBindingContractMember(contract, nameof(KafkaEventData<TKey, TValue>.Headers), typeof(Array), isSingleDispatch);
+            AddBindingContractMember(contract, nameof(KafkaEventData<TKey, TValue>.LeaderEpoch), typeof(int?), isSingleDispatch);
+            AddBindingContractMember(contract, nameof(KafkaEventData<TKey, TValue>.IsPartitionEOF), typeof(bool), isSingleDispatch);
 
             return contract;
         }
@@ -95,6 +97,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var topics = new string[length];
             var keys = new object[length];
             var headers = new object[length];
+            var leaderEpochs = new int?[length];
+            var isPartitionEOFs = new bool[length];
 
             bindingData.Add("PartitionArray", partitions);
             bindingData.Add("OffsetArray", offsets);
@@ -102,6 +106,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             bindingData.Add("TopicArray", topics);
             bindingData.Add("KeyArray", keys);
             bindingData.Add("HeadersArray", headers);
+            bindingData.Add("LeaderEpochArray", leaderEpochs);
+            bindingData.Add("IsPartitionEOFArray", isPartitionEOFs);
 
             for (int i = 0; i < events.Length; i++)
             {
@@ -111,6 +117,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 keys[i] = HandleKeyDataConversion(events[i].Key);
                 topics[i] = events[i].Topic;
                 headers[i] = events[i].Headers;
+                leaderEpochs[i] = events[i].LeaderEpoch;
+                isPartitionEOFs[i] = events[i].IsPartitionEOF;
             }
         }
 
@@ -122,6 +130,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             bindingData.Add(nameof(IKafkaEventData.Timestamp), eventData.Timestamp);
             bindingData.Add(nameof(IKafkaEventData.Offset), eventData.Offset);
             bindingData.Add(nameof(IKafkaEventData.Headers), eventData.Headers);
+            bindingData.Add(nameof(IKafkaEventData.LeaderEpoch), eventData.LeaderEpoch);
+            bindingData.Add(nameof(IKafkaEventData.IsPartitionEOF), eventData.IsPartitionEOF);
         }
 
         private static object HandleKeyDataConversion(object eventDataKey)

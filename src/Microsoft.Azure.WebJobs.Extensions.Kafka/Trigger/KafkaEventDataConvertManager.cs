@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Avro.Generic;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.Serialization;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -33,7 +34,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             if (typeof(IKafkaEventData).IsAssignableFrom(typeSource))
             {
-                if (typeDest == typeSource)
+                if (typeDest == typeof(ParameterBindingData))
+                {
+                    return ConvertToParameterBindingData;
+                }
+                else if (typeDest == typeSource)
                 {
                     return ConvertToSame;
                 }
@@ -72,6 +77,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
 
             return this.converterManager?.GetConverter<TAttribute>(typeSource, typeDest);
+        }
+
+        private Task<object> ConvertToParameterBindingData(object src, Attribute attribute, ValueBindingContext context)
+        {
+            var eventData = (IKafkaEventData)src;
+            var content = KafkaRecordProtobufSerializer.Serialize(eventData);
+            var bindingData = new ParameterBindingData(
+                "1.0",
+                KafkaRecordProtobufSerializer.BindingSource,
+                new BinaryData(content),
+                KafkaRecordProtobufSerializer.ContentType);
+            return Task.FromResult<object>(bindingData);
         }
 
         private Task<object> ConvertFromIKafkaEventToGenericItem(object src, Attribute attribute, ValueBindingContext context)
