@@ -47,6 +47,11 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Clean up any leftover release branch from a previous failed run
+          git push origin --delete "release/${{ env.VERSION }}" 2>/dev/null || true
+          git branch -D "release/${{ env.VERSION }}" 2>/dev/null || true
+
           git checkout -b "release/${{ env.VERSION }}"
 
       - name: Sync dev content into release branch
@@ -92,6 +97,12 @@ jobs:
           git add -A
           git commit -m "[Release] Prepare ${{ env.VERSION }} from dev"
           git push origin "release/${{ env.VERSION }}"
+
+      - name: Ensure release label exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh label create "release" --description "Release PR" --color "0E8A16" 2>/dev/null || echo "Label 'release' already exists"
 
       - name: Generate changelog from dev commits
         id: changelog
@@ -149,6 +160,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           CHANGELOG=$(cat /tmp/changelog.txt)
+
+          # Delete any leftover draft release from a previous failed run
+          gh release delete "${{ env.VERSION }}" --yes 2>/dev/null || true
+
           gh release create "${{ env.VERSION }}" \
             --draft \
             --title "${{ env.VERSION }}" \
