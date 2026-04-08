@@ -25,7 +25,7 @@ jobs:
     # Only run when a release PR is merged (not just closed)
     if: >
       github.event.pull_request.merged == true &&
-      contains(toJSON(github.event.pull_request.labels), 'release')
+      contains(github.event.pull_request.labels.*.name, 'release')
     runs-on: ubuntu-latest
     steps:
       - name: Extract version from PR branch
