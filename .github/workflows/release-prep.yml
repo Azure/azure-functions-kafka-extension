@@ -41,7 +41,7 @@ jobs:
         with:
           ref: master
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PIPELINE_ADMIN }}
 
       - name: Create release branch from master
         run: |
@@ -100,7 +100,7 @@ jobs:
 
       - name: Ensure release label exists
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PIPELINE_ADMIN }}
         run: |
           gh label create "release" --description "Release PR" --color "0E8A16" 2>/dev/null || echo "Label 'release' already exists"
 
@@ -123,7 +123,7 @@ jobs:
 
       - name: Create Pull Request
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PIPELINE_ADMIN }}
         run: |
           CHANGELOG=$(cat /tmp/changelog.txt)
           PR_BODY=$(cat <<'PREOF'
@@ -157,7 +157,7 @@ jobs:
 
       - name: Create Draft GitHub Release
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PIPELINE_ADMIN }}
         run: |
           CHANGELOG=$(cat /tmp/changelog.txt)
 

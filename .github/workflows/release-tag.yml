@@ -49,7 +49,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: master
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PIPELINE_ADMIN }}
 
       - name: Verify version in common.props
         run: |
@@ -70,7 +70,7 @@ jobs:
 
       - name: Publish draft GitHub Release
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PIPELINE_ADMIN }}
         run: |
           # Find the draft release and publish it
           gh release edit "${{ env.VERSION }}" --draft=false
@@ -78,7 +78,7 @@ jobs:
 
       - name: Clean up release branch
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PIPELINE_ADMIN }}
         run: |
           git push origin --delete "release/${{ env.VERSION }}" 2>/dev/null || true
           echo "Cleaned up branch: release/${{ env.VERSION }}"
