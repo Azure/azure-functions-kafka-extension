@@ -1,0 +1,99 @@
+# =============================================================================
+# Release Tag — Phase B
+# =============================================================================
+# Triggered when a release PR is merged to master. Creates a version tag on
+# master and publishes the draft GitHub Release.
+#
+# Trigger: PR merge to master with "release" label
+# Result:  Tag on master + Published GitHub Release
+#          → ADO Code Mirror auto-triggers on tag
+#          → ADO Official Build auto-triggers on master
+# =============================================================================
+
+name: "Release Tag"
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  tag-and-publish:
+    # Only run when a release PR is merged (not just closed)
+    if: >
+      github.event.pull_request.merged == true &&
+      contains(github.event.pull_request.labels.*.name, 'release')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract version from PR branch
+        id: version
+        run: |
+          BRANCH="${{ github.event.pull_request.head.ref }}"
+          echo "Branch: $BRANCH"
+
+          # Extract version from branch name: release/X.Y.Z → X.Y.Z
+          VERSION="${BRANCH#release/}"
+
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
+            echo "::error::Could not extract valid version from branch: $BRANCH"
+            exit 1
+          fi
+
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Extracted version: $VERSION"
+
+      - name: Checkout master
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          token: ${{ secrets.PIPELINE_ADMIN }}
+
+      - name: Verify version in common.props
+        run: |
+          PROPS_VERSION=$(grep -oP '<Version>\K[^<$]+' build/common.props)
+          echo "Version in common.props: $PROPS_VERSION"
+          if [ "$PROPS_VERSION" != "${{ env.VERSION }}" ]; then
+            echo "::error::Version mismatch! common.props=$PROPS_VERSION, expected=${{ env.VERSION }}"
+            exit 1
+          fi
+
+      - name: Create and push tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "${{ env.VERSION }}" -m "Release ${{ env.VERSION }}"
+          git push origin "${{ env.VERSION }}"
+          echo "Created and pushed tag: ${{ env.VERSION }}"
+
+      - name: Publish draft GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.PIPELINE_ADMIN }}
+        run: |
+          # Find the draft release and publish it
+          gh release edit "${{ env.VERSION }}" --draft=false
+          echo "Published release: ${{ env.VERSION }}"
+
+      - name: Clean up release branch
+        env:
+          GH_TOKEN: ${{ secrets.PIPELINE_ADMIN }}
+        run: |
+          git push origin --delete "release/${{ env.VERSION }}" 2>/dev/null || true
+          echo "Cleaned up branch: release/${{ env.VERSION }}"
+
+      - name: Summary
+        run: |
+          echo "## Release ${{ env.VERSION }} Tagged :tada:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag**: ${{ env.VERSION }} on master" >> $GITHUB_STEP_SUMMARY
+          echo "- **GitHub Release**: Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ADO pipelines (auto-triggered)" >> $GITHUB_STEP_SUMMARY
+          echo "1. [Code Mirror](https://azfunc.visualstudio.com/internal/_build?definitionId=541) — mirrors tag to internal repo" >> $GITHUB_STEP_SUMMARY
+          echo "2. [Official Build](https://azfunc.visualstudio.com/internal/_build?definitionId=690) — builds + signs NuGet package" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Manual steps remaining" >> $GITHUB_STEP_SUMMARY
+          echo "3. Run [Release Pipeline](https://azfunc.visualstudio.com/internal/_build?definitionId=1553) with artifact from Official Build" >> $GITHUB_STEP_SUMMARY
+          echo "4. Run [.NET Partner Pipeline](https://dev.azure.com/azure-sdk/internal/_build?definitionId=4442) with path \`azure-functions-kafka-extension/net/${{ env.VERSION }}\`" >> $GITHUB_STEP_SUMMARY

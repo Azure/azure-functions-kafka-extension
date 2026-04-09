@@ -14,10 +14,13 @@ using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Tests;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Host;
+using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.Serialization;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
@@ -976,7 +979,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
         private Task<IHost> StartHostAsync(Type testType, ILoggerProvider customLoggerProvider = null) => StartHostAsync(new[] { testType }, customLoggerProvider);
 
-        private async Task<IHost> StartHostAsync(Type[] testTypes, ILoggerProvider customLoggerProvider = null, Action<IServiceCollection> serviceRegistrationCallback = null)
+        private async Task<IHost> StartHostAsync(Type[] testTypes, ILoggerProvider customLoggerProvider = null, Action<IServiceCollection> serviceRegistrationCallback = null, Action<KafkaOptions> configureKafka = null)
         {
             IHost host = new HostBuilder()
                 .ConfigureWebJobs(builder =>
@@ -987,6 +990,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                     .AddKafka(kafkaoption =>
                     {
                         kafkaoption.SessionTimeoutMs = 10000;
+                        configureKafka?.Invoke(kafkaoption);
                     });
                 })
                 .ConfigureAppConfiguration(c =>
@@ -1188,6 +1192,253 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
                 await Task.Delay(1500);
                 await host.StopAsync();
+            }
+        }
+
+        /// <summary>
+        /// Validates at-least-once delivery: when a function fails on the first attempt,
+        /// the message is retried in-place and processed successfully on the second attempt.
+        /// CommitOnFailure=false enables at-least-once with in-place retry.
+        /// </summary>
+        [Fact]
+        public async Task AtLeastOnce_SingleTrigger_FailThenSucceed_MessageRedelivered()
+        {
+            const int producedMessagesCount = 3;
+            var messagePrefix = Guid.NewGuid().ToString() + ":";
+
+            var loggerProvider1 = CreateTestLoggerProvider();
+
+            // CommitOnFailure=false enables at-least-once with in-place retry
+            using (var host = await StartHostAsync(
+                new[] { typeof(SingleItem_AtLeastOnce_FailThenSucceed_Trigger), typeof(KafkaOutputFunctions) },
+                loggerProvider1,
+                configureKafka: options =>
+                {
+                    options.CommitOnFailure = false;
+                }))
+            {
+                var jobHost = host.GetJobHost();
+
+                await jobHost.CallOutputTriggerStringAsync(
+                    GetStaticMethod(typeof(KafkaOutputFunctions), nameof(KafkaOutputFunctions.Produce_AsyncCollector_String_Without_Key)),
+                    endToEndTestFixture.AtLeastOnceTopic.Name,
+                    Enumerable.Range(1, producedMessagesCount).Select(x => messagePrefix + x));
+
+                // Wait for all messages to be processed successfully (each message needs 2 attempts)
+                await TestHelpers.Await(() =>
+                {
+                    var successCount = loggerProvider1.GetAllUserLogMessages()
+                        .Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("AtLeastOnce SUCCESS for " + messagePrefix));
+                    return successCount == producedMessagesCount;
+                });
+
+                await Task.Delay(1500);
+                await host.StopAsync();
+            }
+
+            // Verify each message was attempted at least twice (first fail, then succeed)
+            var attemptLogs = loggerProvider1.GetAllUserLogMessages()
+                .Where(p => p.FormattedMessage != null && p.FormattedMessage.Contains("AtLeastOnce attempt"))
+                .Select(p => p.FormattedMessage)
+                .ToList();
+
+            // Should have at least producedMessagesCount * 2 attempt logs (1 fail + 1 success per message)
+            Assert.True(attemptLogs.Count >= producedMessagesCount * 2,
+                $"Expected at least {producedMessagesCount * 2} attempt logs, got {attemptLogs.Count}. Logs: {string.Join("; ", attemptLogs)}");
+        }
+
+        /// <summary>
+        /// Validates maxRetries: when a function always fails, the message is retried up to maxRetries times,
+        /// then the offset is force-committed and the next message is processed.
+        /// Produces 2 messages: the first always fails (should be skipped after maxRetries),
+        /// the second should eventually be processed (also fails, but verifies that processing moves on).
+        /// </summary>
+        [Fact]
+        public async Task AtLeastOnce_SingleTrigger_AlwaysFails_MaxRetriesSkipsMessage()
+        {
+            const int maxRetries = 2;
+            var messagePrefix = Guid.NewGuid().ToString() + ":";
+
+            var loggerProvider1 = CreateTestLoggerProvider();
+
+            using (var host = await StartHostAsync(
+                new[] { typeof(SingleItem_AtLeastOnce_AlwaysFail_Trigger), typeof(KafkaOutputFunctions) },
+                loggerProvider1,
+                configureKafka: options =>
+                {
+                    options.CommitOnFailure = false;
+                    options.MaxRetries = maxRetries;
+                }))
+            {
+                var jobHost = host.GetJobHost();
+
+                // Produce 2 messages
+                await jobHost.CallOutputTriggerStringAsync(
+                    GetStaticMethod(typeof(KafkaOutputFunctions), nameof(KafkaOutputFunctions.Produce_AsyncCollector_String_Without_Key)),
+                    endToEndTestFixture.AtLeastOnceMaxRetriesTopic.Name,
+                    Enumerable.Range(1, 2).Select(x => messagePrefix + x));
+
+                // Wait for the force-commit log that indicates maxRetries was exceeded
+                await TestHelpers.Await(() =>
+                {
+                    var forceCommitLogs = loggerProvider1.GetAllLogMessages()
+                        .Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("force-committed"));
+                    return forceCommitLogs >= 1;
+                });
+
+                await Task.Delay(1500);
+                await host.StopAsync();
+            }
+
+            // Verify that both messages were attempted (proving the first was skipped via force-commit)
+            var message1Attempts = loggerProvider1.GetAllUserLogMessages()
+                .Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains(messagePrefix + "1"));
+            var message2Attempts = loggerProvider1.GetAllUserLogMessages()
+                .Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains(messagePrefix + "2"));
+
+            // Message 1 should have been attempted maxRetries+1 times (initial + retries)
+            // then force-committed, allowing message 2 to be processed
+            Assert.True(message1Attempts >= maxRetries + 1,
+                $"Expected at least {maxRetries + 1} attempts for message 1, got {message1Attempts}");
+            Assert.True(message2Attempts >= 1,
+                $"Expected message 2 to be attempted at least once after message 1 was force-committed, got {message2Attempts}");
+        }
+
+        /// <summary>
+        /// E2E test for KafkaRecord Protobuf serialization (PR #619, Phase 2a).
+        /// Produces messages to a real Kafka broker, consumes them via trigger,
+        /// then converts the consumed events to ParameterBindingData using
+        /// KafkaEventDataConvertManager and verifies the Protobuf payload
+        /// preserves value, topic, partition, offset, and timestamp.
+        /// </summary>
+        [Fact]
+        public async Task KafkaRecord_ProtobufSerialization_PreservesValueAndBrokerMetadata()
+        {
+            var input = Enumerable.Range(1, 5)
+                .Select(x => new KafkaEventData<string>
+                {
+                    Value = "protobuf-e2e-" + x.ToString()
+                });
+
+            var output = await ProduceAndConsumeAsync<
+                KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>,
+                KafkaTriggerForProduceAndConsume<KafkaEventData<string>>>(
+                x => x.Produce(default), input);
+
+            Assert.Equal(5, output.Count);
+
+            var convertManager = new KafkaEventDataConvertManager(null, NullLogger.Instance);
+            var converter = convertManager.GetConverter<KafkaTriggerAttribute>(
+                typeof(IKafkaEventData), typeof(ParameterBindingData));
+            Assert.NotNull(converter);
+
+            foreach (var consumedEvent in output)
+            {
+                var result = await converter(consumedEvent, new KafkaTriggerAttribute("broker", "topic"), null);
+                Assert.IsType<ParameterBindingData>(result);
+
+                var bindingData = (ParameterBindingData)result;
+                Assert.Equal("1.0", bindingData.Version);
+                Assert.Equal("AzureKafkaRecord", bindingData.Source);
+                Assert.Equal("application/x-protobuf", bindingData.ContentType);
+
+                var proto = KafkaRecordProto.Parser.ParseFrom(bindingData.Content);
+
+                // Value preserved
+                Assert.Contains("protobuf-e2e-", Encoding.UTF8.GetString(proto.Value.ToByteArray()));
+
+                // Broker-assigned metadata is populated
+                Assert.Equal(Constants.StringTopicWithTenPartitionsName, proto.Topic);
+                Assert.True(proto.Partition >= 0, "Partition should be >= 0");
+                Assert.True(proto.Offset >= 0, "Offset should be >= 0");
+                Assert.NotNull(proto.Timestamp);
+                Assert.True(proto.Timestamp.UnixTimestampMs > 0, "Timestamp should be > 0");
+            }
+        }
+
+        /// <summary>
+        /// E2E test verifying that Kafka message headers survive the full
+        /// Kafka produce/consume round-trip AND Protobuf serialization.
+        /// </summary>
+        [Fact]
+        public async Task KafkaRecord_ProtobufSerialization_PreservesHeaders()
+        {
+            var input = Enumerable.Range(1, 3)
+                .Select(x =>
+                {
+                    var eventData = new KafkaEventData<string>
+                    {
+                        Value = "header-test-" + x.ToString()
+                    };
+                    eventData.Headers.Add("correlationId", Encoding.UTF8.GetBytes("corr-" + x));
+                    eventData.Headers.Add("source", Encoding.UTF8.GetBytes("e2e-test"));
+                    return eventData;
+                });
+
+            var output = await ProduceAndConsumeAsync<
+                KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>,
+                KafkaTriggerForProduceAndConsume<KafkaEventData<string>>>(
+                x => x.Produce(default), input);
+
+            Assert.Equal(3, output.Count);
+
+            var convertManager = new KafkaEventDataConvertManager(null, NullLogger.Instance);
+            var converter = convertManager.GetConverter<KafkaTriggerAttribute>(
+                typeof(IKafkaEventData), typeof(ParameterBindingData));
+
+            foreach (var consumedEvent in output)
+            {
+                var result = await converter(consumedEvent, new KafkaTriggerAttribute("broker", "topic"), null);
+                var bindingData = (ParameterBindingData)result;
+                var proto = KafkaRecordProto.Parser.ParseFrom(bindingData.Content);
+
+                // Headers preserved in Protobuf
+                Assert.Equal(2, proto.Headers.Count);
+
+                var correlationHeader = proto.Headers.First(h => h.Key == "correlationId");
+                Assert.StartsWith("corr-", Encoding.UTF8.GetString(correlationHeader.Value.ToByteArray()));
+
+                var sourceHeader = proto.Headers.First(h => h.Key == "source");
+                Assert.Equal("e2e-test", Encoding.UTF8.GetString(sourceHeader.Value.ToByteArray()));
+            }
+        }
+
+        /// <summary>
+        /// E2E test verifying that messages produced without a key result in
+        /// the Protobuf key field being absent (not set) after serialization.
+        /// </summary>
+        [Fact]
+        public async Task KafkaRecord_ProtobufSerialization_NullKey_IsOmitted()
+        {
+            var input = Enumerable.Range(1, 3)
+                .Select(x => new KafkaEventData<string>
+                {
+                    Value = "nullkey-test-" + x.ToString()
+                });
+
+            var output = await ProduceAndConsumeAsync<
+                KafkaOutputFunctionsForProduceAndConsume<KafkaEventData<string>>,
+                KafkaTriggerForProduceAndConsume<KafkaEventData<string>>>(
+                x => x.Produce(default), input);
+
+            Assert.Equal(3, output.Count);
+
+            var convertManager = new KafkaEventDataConvertManager(null, NullLogger.Instance);
+            var converter = convertManager.GetConverter<KafkaTriggerAttribute>(
+                typeof(IKafkaEventData), typeof(ParameterBindingData));
+
+            foreach (var consumedEvent in output)
+            {
+                var result = await converter(consumedEvent, new KafkaTriggerAttribute("broker", "topic"), null);
+                var bindingData = (ParameterBindingData)result;
+                var proto = KafkaRecordProto.Parser.ParseFrom(bindingData.Content);
+
+                // Key should not be set (null key from producer)
+                Assert.False(proto.HasKey, "Key should not be set for null-key messages");
+
+                // Value should still be present
+                Assert.True(proto.HasValue, "Value should be set");
+                Assert.Contains("nullkey-test-", Encoding.UTF8.GetString(proto.Value.ToByteArray()));
             }
         }
     }

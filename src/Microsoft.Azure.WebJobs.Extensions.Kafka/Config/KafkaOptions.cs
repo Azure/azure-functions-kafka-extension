@@ -209,6 +209,36 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
         }
 
+        /// <summary>
+        /// Gets or sets whether to commit offsets when function execution fails.
+        /// When true (default), offsets are always committed regardless of function result (at-most-once).
+        /// When false, failed messages will be retried in-place up to MaxRetries times (at-least-once).
+        /// Default: true
+        /// </summary>
+        public bool CommitOnFailure { get; set; } = true;
+
+        int maxRetries = 5;
+        /// <summary>
+        /// Gets or sets the maximum number of times a failed message will be redelivered
+        /// before the offset is force-committed (message skipped).
+        /// Only applies when CommitOnFailure is false.
+        /// Set to -1 for unlimited retries (not recommended — risk of infinite loop).
+        /// Default: 5
+        /// </summary>
+        public int MaxRetries
+        {
+            get => this.maxRetries;
+            set
+            {
+                if (value < -1)
+                {
+                    throw new InvalidOperationException("MaxRetries must be -1 (unlimited) or a non-negative integer.");
+                }
+
+                this.maxRetries = value;
+            }
+        }
+
         int channelFullRetryIntervalInMs = 50;
         /// <summary>
         /// Defines the interval in milliseconds in which the subscriber should retry adding items to channel once it reaches the capacity

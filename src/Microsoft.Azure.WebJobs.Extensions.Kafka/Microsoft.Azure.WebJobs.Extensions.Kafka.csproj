@@ -38,10 +38,16 @@
     <PackageReference Include="Confluent.SchemaRegistry" Version="2.4.0" />
     <PackageReference Include="Confluent.SchemaRegistry.Serdes.Avro" Version="2.4.0" />
     <PackageReference Include="Confluent.SchemaRegistry.Serdes.Protobuf" Version="2.4.0" />
+    <PackageReference Include="Grpc.Tools" Version="2.60.0">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.39" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.1.118">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="System.Threading.Channels" Version="4.5.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Protobuf Include="Serialization\KafkaRecordProto.proto" GrpcServices="None" />
   </ItemGroup>
 </Project>
