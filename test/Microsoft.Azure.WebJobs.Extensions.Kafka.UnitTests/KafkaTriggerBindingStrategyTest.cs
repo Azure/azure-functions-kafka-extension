@@ -16,13 +16,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var strategy = new KafkaTriggerBindingStrategy<string, string>();
             var contract = strategy.GetBindingContract();
 
-            Assert.Equal(6, contract.Count);
+            Assert.Equal(8, contract.Count);
             Assert.Equal(typeof(object), contract["Key"]);
             Assert.Equal(typeof(int), contract["Partition"]);
             Assert.Equal(typeof(string), contract["Topic"]);
             Assert.Equal(typeof(DateTime), contract["Timestamp"]);
             Assert.Equal(typeof(long), contract["Offset"]);
             Assert.Equal(typeof(System.Array), contract["Headers"]);
+            Assert.Equal(typeof(int?), contract["LeaderEpoch"]);
+            Assert.Equal(typeof(bool), contract["IsPartitionEOF"]);
         }
 
         [Fact]
@@ -31,13 +33,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var strategy = new KafkaTriggerBindingStrategy<string, string>();
             var contract = strategy.GetBindingContract(true);
 
-            Assert.Equal(6, contract.Count);
+            Assert.Equal(8, contract.Count);
             Assert.Equal(typeof(object), contract["Key"]);
             Assert.Equal(typeof(int), contract["Partition"]);
             Assert.Equal(typeof(string), contract["Topic"]);
             Assert.Equal(typeof(DateTime), contract["Timestamp"]);
             Assert.Equal(typeof(long), contract["Offset"]);
             Assert.Equal(typeof(Array), contract["Headers"]);
+            Assert.Equal(typeof(int?), contract["LeaderEpoch"]);
+            Assert.Equal(typeof(bool), contract["IsPartitionEOF"]);
         }
 
         [Fact]
@@ -50,7 +54,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 Partition = 2,
                 Timestamp = new DateTime(2019, 1, 10, 9, 21, 0, DateTimeKind.Utc),
                 Topic = "myTopic",
-                Value = "Nothing"
+                Value = "Nothing",
+                LeaderEpoch = 5,
+                IsPartitionEOF = false
             };
             kafkaEventData.Headers.Add("test", Encoding.UTF8.GetBytes("test"));
 
@@ -65,6 +71,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.NotNull(binding["Headers"]);
             Assert.Equal(1, ((KafkaEventDataHeaders)binding["Headers"]).Count);
             Assert.NotNull(((KafkaEventDataHeaders)binding["Headers"]).GetFirst("test"));
+            Assert.Equal(5, binding["LeaderEpoch"]);
+            Assert.Equal(false, binding["IsPartitionEOF"]);
 
             // lower case too
             Assert.Equal("1", binding["key"]);
@@ -76,6 +84,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.NotNull(binding["Headers"]);
             Assert.Equal(1, ((KafkaEventDataHeaders)binding["Headers"]).Count);
             Assert.NotNull(((KafkaEventDataHeaders)binding["Headers"]).GetFirst("test"));
+            Assert.Equal(5, binding["leaderEpoch"]);
+            Assert.Equal(false, binding["isPartitionEOF"]);
         }
 
         [Fact]
@@ -91,6 +101,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                     Timestamp = new DateTime(2019, 1, 10, 9, 21, 0, DateTimeKind.Utc),
                     Topic = "myTopic",
                     Value = "Nothing1",
+                    LeaderEpoch = 3,
+                    IsPartitionEOF = false,
                 },
                 new KafkaEventData<string, string>()
                 {
@@ -100,6 +112,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                     Timestamp = new DateTime(2019, 1, 10, 9, 21, 1, DateTimeKind.Utc),
                     Topic = "myTopic",
                     Value = "Nothing2",
+                    LeaderEpoch = null,
+                    IsPartitionEOF = true,
                 },
             });
 
@@ -117,6 +131,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(2, ((object[])binding["HeadersArray"]).Length);
             Assert.NotNull(((KafkaEventDataHeaders)(((object[])binding["HeadersArray"])[0])).GetFirst("test"));
             Assert.NotNull(((KafkaEventDataHeaders)(((object[])binding["HeadersArray"])[1])).GetFirst("testNew"));
+            Assert.Equal(new int?[] { 3, null }, binding["LeaderEpochArray"]);
+            Assert.Equal(new[] { false, true }, binding["IsPartitionEOFArray"]);
 
             // lower case too
             Assert.Equal(new[] { "1", "2" }, binding["keyArray"]);
@@ -127,6 +143,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(2, ((object[])binding["headersArray"]).Length);
             Assert.NotNull(((KafkaEventDataHeaders)(((object[])binding["headersArray"])[0])).GetFirst("test"));
             Assert.NotNull(((KafkaEventDataHeaders)(((object[])binding["headersArray"])[1])).GetFirst("testNew"));
+            Assert.Equal(new int?[] { 3, null }, binding["leaderEpochArray"]);
+            Assert.Equal(new[] { false, true }, binding["isPartitionEOFArray"]);
         }
     }
 }

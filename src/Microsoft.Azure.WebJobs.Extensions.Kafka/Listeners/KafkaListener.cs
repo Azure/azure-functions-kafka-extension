@@ -156,8 +156,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var commitStrategy = new AsyncCommitStrategy<TKey, TValue>(localConsumer, this.logger);
 
             this.functionExecutor = singleDispatch ?
-                (FunctionExecutorBase<TKey, TValue>)new SingleItemFunctionExecutor<TKey, TValue>(executor, localConsumer, this.consumerGroup, this.options.ExecutorChannelCapacity, this.options.ChannelFullRetryIntervalInMs, commitStrategy, logger, drainModeManager) :
-                new MultipleItemFunctionExecutor<TKey, TValue>(executor, localConsumer, this.consumerGroup, this.options.ExecutorChannelCapacity, this.options.ChannelFullRetryIntervalInMs, commitStrategy, logger, drainModeManager);
+                (FunctionExecutorBase<TKey, TValue>)new SingleItemFunctionExecutor<TKey, TValue>(executor, localConsumer, this.consumerGroup, this.options.ExecutorChannelCapacity, this.options.ChannelFullRetryIntervalInMs, commitStrategy, logger, drainModeManager, this.options) :
+                new MultipleItemFunctionExecutor<TKey, TValue>(executor, localConsumer, this.consumerGroup, this.options.ExecutorChannelCapacity, this.options.ChannelFullRetryIntervalInMs, commitStrategy, logger, drainModeManager, this.options);
 
             localConsumer.Subscribe(this.listenerConfiguration.Topic);
             // Using a thread as opposed to a task since this will be long running

@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Emit;
@@ -379,6 +380,48 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                 throw new Exception("MyAvro key is null");
             }
             log.BeginScope($"Key: {myKey.ToString()}");
+        }
+    }
+
+    /// <summary>
+    /// Trigger function that fails on the first attempt for each message (tracked by a static counter per message prefix).
+    /// On the second attempt (redelivery), it succeeds. Used to validate at-least-once delivery.
+    /// </summary>
+    internal static class SingleItem_AtLeastOnce_FailThenSucceed_Trigger
+    {
+        private static readonly ConcurrentDictionary<string, int> AttemptCounts = new ConcurrentDictionary<string, int>();
+
+        public static void Trigger(
+            [KafkaTrigger("LocalBroker", Constants.AtLeastOnceTopicName, ConsumerGroup = Constants.AtLeastOnceConsumerGroupID)] KafkaEventData<string> kafkaEvent,
+            ILogger log)
+        {
+            var value = kafkaEvent.Value.ToString();
+            var attempt = AttemptCounts.AddOrUpdate(value, 1, (_, c) => c + 1);
+            log.LogInformation("AtLeastOnce attempt {attempt} for {value}", attempt, value);
+
+            if (attempt == 1)
+            {
+                throw new InvalidOperationException($"Simulated failure on first attempt for: {value}");
+            }
+
+            // Second attempt: succeed
+            log.LogInformation("AtLeastOnce SUCCESS for {value}", value);
+        }
+    }
+
+    /// <summary>
+    /// Trigger function that always fails. Used to validate maxRetries force-commit behavior.
+    /// After maxRetries, the extension should skip the message and process the next one.
+    /// </summary>
+    internal static class SingleItem_AtLeastOnce_AlwaysFail_Trigger
+    {
+        public static void Trigger(
+            [KafkaTrigger("LocalBroker", Constants.AtLeastOnceMaxRetriesTopicName, ConsumerGroup = Constants.AtLeastOnceMaxRetriesConsumerGroupID)] KafkaEventData<string> kafkaEvent,
+            ILogger log)
+        {
+            var value = kafkaEvent.Value.ToString();
+            log.LogInformation("AtLeastOnce_AlwaysFail for {value}", value);
+            throw new InvalidOperationException($"Permanent failure for: {value}");
         }
     }
 }
