@@ -325,7 +325,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                             }
                             else
                             {
-                                // TODO: maybe slow down if there isn't much incoming data
+                                // No data available — outer loop will back off
                                 break;
                             }
                         }
@@ -338,6 +338,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     if (!alreadyFlushedInCurrentExecution)
                     {
                         this.functionExecutor.Flush(listenerCancellationTokenSource.Token);
+                    }
+
+                    // When Consume() returned no messages during the entire batch window,
+                    // back off to avoid busy-looping. Without this, the outer loop spins
+                    // at full CPU speed because Consume() may return null immediately
+                    // (e.g., no data on the topic, or in unit tests with mocked consumers).
+                    if (!alreadyFlushedInCurrentExecution && this.options.SubscriberIdleBackoffMs > 0)
+                    {
+                        Thread.Sleep(this.options.SubscriberIdleBackoffMs);
                     }
                 }
             }
