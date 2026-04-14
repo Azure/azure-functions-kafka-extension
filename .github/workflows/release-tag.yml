@@ -83,6 +83,33 @@ jobs:
           git push origin --delete "release/${{ env.VERSION }}" 2>/dev/null || true
           echo "Cleaned up branch: release/${{ env.VERSION }}"
 
+      - name: Bump version on dev branch
+        env:
+          GH_TOKEN: ${{ secrets.PIPELINE_ADMIN }}
+        run: |
+          # After releasing X.Y.Z on master, dev's common.props must be
+          # updated to X.Y.Z$(VersionSuffix) so it stays in sync.
+          # Without this, dev retains the OLD version indefinitely.
+          BUMP_BRANCH="auto/bump-dev-to-${{ env.VERSION }}"
+
+          git fetch origin dev
+          git checkout -b "$BUMP_BRANCH" origin/dev
+
+          # Update version — preserve $(VersionSuffix) for dev builds
+          sed -i 's|<Version>[^<]*|<Version>'"${{ env.VERSION }}"'$(VersionSuffix)|' build/common.props
+          echo "Updated dev common.props:"
+          grep '<Version>' build/common.props
+
+          git add build/common.props
+          git commit -m "Bump version to ${{ env.VERSION }} on dev after release"
+          git push origin "$BUMP_BRANCH"
+
+          gh pr create \
+            --base dev \
+            --head "$BUMP_BRANCH" \
+            --title "Bump version to ${{ env.VERSION }} on dev after release" \
+            --body "Automated version bump after release **${{ env.VERSION }}**."$'\n\n'"Updates \`build/common.props\` from the pre-release version to \`${{ env.VERSION }}\$(VersionSuffix)\`."
+
       - name: Summary
         run: |
           echo "## Release ${{ env.VERSION }} Tagged :tada:" >> $GITHUB_STEP_SUMMARY
@@ -94,6 +121,10 @@ jobs:
           echo "1. [Code Mirror](https://azfunc.visualstudio.com/internal/_build?definitionId=541) — mirrors tag to internal repo" >> $GITHUB_STEP_SUMMARY
           echo "2. [Official Build](https://azfunc.visualstudio.com/internal/_build?definitionId=690) — builds + signs NuGet package" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Dev branch" >> $GITHUB_STEP_SUMMARY
+          echo "- Version bump PR created for \`dev\` → \`${{ env.VERSION }}\$(VersionSuffix)\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Manual steps remaining" >> $GITHUB_STEP_SUMMARY
           echo "3. Run [Release Pipeline](https://azfunc.visualstudio.com/internal/_build?definitionId=1553) with artifact from Official Build" >> $GITHUB_STEP_SUMMARY
           echo "4. Run [.NET Partner Pipeline](https://dev.azure.com/azure-sdk/internal/_build?definitionId=4442) with path \`azure-functions-kafka-extension/net/${{ env.VERSION }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "5. Merge the dev version bump PR" >> $GITHUB_STEP_SUMMARY
