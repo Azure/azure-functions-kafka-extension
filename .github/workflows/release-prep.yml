@@ -107,18 +107,24 @@ jobs:
       - name: Generate changelog from dev commits
         id: changelog
         run: |
-          # Find the latest release tag by sorting semver tags.
-          # git describe --tags --abbrev=0 origin/master can miss tags when
-          # the tag commit is not a direct ancestor of master HEAD (e.g.,
-          # annotated tags created by release-tag.yml after merge).
-          LAST_TAG=$(git tag -l --sort=-version:refname '[0-9]*.[0-9]*.[0-9]*' | head -1)
-          echo "Last tag: $LAST_TAG"
+          # Find the changelog base: the most recent version bump commit on dev.
+          # We cannot use tags directly because tags live on master, and master/dev
+          # have divergent commit graphs (asymmetric branches). Using a master tag
+          # as the base for "git log TAG..origin/dev" includes the entire dev history
+          # since the branches diverged — not just post-release changes.
+          #
+          # Instead, find the last commit on dev that touched build/common.props
+          # (which is the version bump PR created by release-tag.yml after each release).
+          BUMP_COMMIT=$(git log origin/dev --first-parent --format="%H" -- build/common.props | head -1)
+          echo "Last version bump commit on dev: $BUMP_COMMIT"
 
-          if [ -n "$LAST_TAG" ]; then
+          if [ -n "$BUMP_COMMIT" ]; then
+            git log --oneline "$BUMP_COMMIT" -1
+
             # --first-parent: only include squash-merged PRs on dev (not
             # internal feature branch commits merged into those PRs).
             # --invert-grep: exclude version bump and CI-only commits.
-            git log "$LAST_TAG..origin/dev" --first-parent --no-merges \
+            git log "$BUMP_COMMIT..origin/dev" --first-parent --no-merges \
               --pretty=format:"- %s" \
               --grep="^Bump version" --grep="^Update common.props" \
               --grep="^Updating extension version" --grep="^Update version" \
@@ -126,6 +132,11 @@ jobs:
               | head -50 > /tmp/changelog.txt
           else
             echo "Initial release" > /tmp/changelog.txt
+          fi
+
+          # If no entries (e.g., only the version bump itself), note it
+          if [ ! -s /tmp/changelog.txt ]; then
+            echo "- No functional changes since last release" > /tmp/changelog.txt
           fi
 
           echo "Generated changelog with $(wc -l < /tmp/changelog.txt) entries"
