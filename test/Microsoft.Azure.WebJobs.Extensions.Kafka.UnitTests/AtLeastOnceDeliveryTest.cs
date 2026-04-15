@@ -528,6 +528,32 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             Assert.True(options.CommitOnFailure);
             Assert.Equal(5, options.MaxRetries);
+            Assert.Equal(50, options.SubscriberIdleBackoffMs);
+        }
+
+        // ====================================================================
+        // KafkaOptions: SubscriberIdleBackoffMs validation
+        // ====================================================================
+        [Fact]
+        public void KafkaOptions_SubscriberIdleBackoffMs_AcceptsValidValues()
+        {
+            var options = new KafkaOptions();
+
+            // 0 is valid (disables backoff, useful in tests)
+            options.SubscriberIdleBackoffMs = 0;
+            Assert.Equal(0, options.SubscriberIdleBackoffMs);
+
+            // Positive values are valid
+            options.SubscriberIdleBackoffMs = 100;
+            Assert.Equal(100, options.SubscriberIdleBackoffMs);
+        }
+
+        [Fact]
+        public void KafkaOptions_SubscriberIdleBackoffMs_RejectsNegative()
+        {
+            var options = new KafkaOptions();
+
+            Assert.Throws<InvalidOperationException>(() => options.SubscriberIdleBackoffMs = -1);
         }
     }
 }

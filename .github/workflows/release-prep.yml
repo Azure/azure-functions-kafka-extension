@@ -107,26 +107,37 @@ jobs:
       - name: Generate changelog from dev commits
         id: changelog
         run: |
-          # Get the last release tag to generate changelog
-          LAST_TAG=$(git describe --tags --abbrev=0 origin/master 2>/dev/null || echo "")
+          # Find the latest release tag by sorting semver tags.
+          # git describe --tags --abbrev=0 origin/master can miss tags when
+          # the tag commit is not a direct ancestor of master HEAD (e.g.,
+          # annotated tags created by release-tag.yml after merge).
+          LAST_TAG=$(git tag -l --sort=-version:refname '[0-9]*.[0-9]*.[0-9]*' | head -1)
           echo "Last tag: $LAST_TAG"
 
           if [ -n "$LAST_TAG" ]; then
-            CHANGELOG=$(git log --oneline "$LAST_TAG..origin/dev" --no-merges --pretty=format:"- %s" | head -100)
+            # --first-parent: only include squash-merged PRs on dev (not
+            # internal feature branch commits merged into those PRs).
+            # --invert-grep: exclude version bump and CI-only commits.
+            git log "$LAST_TAG..origin/dev" --first-parent --no-merges \
+              --pretty=format:"- %s" \
+              --grep="^Bump version" --grep="^Update common.props" \
+              --grep="^Updating extension version" --grep="^Update version" \
+              --invert-grep \
+              | head -50 > /tmp/changelog.txt
           else
-            CHANGELOG="Initial release"
+            echo "Initial release" > /tmp/changelog.txt
           fi
 
-          # Write to file to avoid escaping issues
-          echo "$CHANGELOG" > /tmp/changelog.txt
-          echo "Generated changelog with $(echo "$CHANGELOG" | wc -l) entries"
+          echo "Generated changelog with $(wc -l < /tmp/changelog.txt) entries"
+          cat /tmp/changelog.txt
 
       - name: Create Pull Request
         env:
           GH_TOKEN: ${{ secrets.PIPELINE_ADMIN }}
         run: |
-          CHANGELOG=$(cat /tmp/changelog.txt)
-          PR_BODY=$(cat <<'PREOF'
+          # Build PR body from template + changelog file to avoid
+          # shell variable expansion issues with special characters.
+          cat > /tmp/pr-body.md <<'PREOF'
           ## Release ${{ env.VERSION }}
 
           This PR syncs the `dev` branch content to `master` for release **${{ env.VERSION }}**.
@@ -144,22 +155,32 @@ jobs:
 
           ### Changes since last release
           PREOF
-          )
-          PR_BODY="${PR_BODY}
-          ${CHANGELOG}"
+
+          cat /tmp/changelog.txt >> /tmp/pr-body.md
 
           gh pr create \
             --base master \
             --head "release/${{ env.VERSION }}" \
             --title "[Release] ${{ env.VERSION }}" \
-            --body "$PR_BODY" \
+            --body-file /tmp/pr-body.md \
             --label "release"
 
       - name: Create Draft GitHub Release
         env:
           GH_TOKEN: ${{ secrets.PIPELINE_ADMIN }}
         run: |
-          CHANGELOG=$(cat /tmp/changelog.txt)
+          # Find the previous tag for the "Full Changelog" compare link
+          LAST_TAG=$(git tag -l --sort=-version:refname '[0-9]*.[0-9]*.[0-9]*' | head -1)
+          COMPARE_BASE="${LAST_TAG:-dev}"
+
+          # Build release notes from changelog file to avoid shell
+          # variable expansion issues in --notes inline strings.
+          {
+            echo "## What's Changed"
+            cat /tmp/changelog.txt
+            echo ""
+            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${COMPARE_BASE}...${{ env.VERSION }}"
+          } > /tmp/release-notes.md
 
           # Delete any leftover draft release from a previous failed run
           gh release delete "${{ env.VERSION }}" --yes 2>/dev/null || true
@@ -167,11 +188,8 @@ jobs:
           gh release create "${{ env.VERSION }}" \
             --draft \
             --title "${{ env.VERSION }}" \
-            --notes "## What's Changed
-          $CHANGELOG
-
-          **Full Changelog**: https://github.com/${{ github.repository }}/compare/$(git describe --tags --abbrev=0 origin/master 2>/dev/null || echo 'dev')...${{ env.VERSION }}" \
-            --target master
+            --notes-file /tmp/release-notes.md \
+            --target "release/${{ env.VERSION }}"
 
       - name: Summary
         run: |
