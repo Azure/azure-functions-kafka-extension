@@ -259,6 +259,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
         }
 
+        int subscriberIdleBackoffMs = 50;
+        /// <summary>
+        /// Defines the backoff interval in milliseconds when the subscriber receives
+        /// no messages from Consume(). Prevents busy-looping when the topic is idle.
+        /// Set to 0 to disable (useful in unit tests that control timing externally).
+        ///
+        /// default: 50ms
+        /// </summary>
+        public int SubscriberIdleBackoffMs
+        {
+            get => this.subscriberIdleBackoffMs;
+            set
+            {
+                if (value < 0)
+                {
+                    throw new InvalidOperationException("SubscriberIdleBackoffMs must be 0 or a positive integer.");
+                }
+
+                this.subscriberIdleBackoffMs = value;
+            }
+        }
+
         public string Format()
         {
             var serializerSettings = new JsonSerializerSettings()
