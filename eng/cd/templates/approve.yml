@@ -8,8 +8,8 @@ jobs:
       - task: ManualValidation@1
         inputs:
           notifyUsers: |-
-            [TEAM FOUNDATION]\Varad Meru''s Team
+            [TEAM FOUNDATION]\Varad Meru's Team
           approvers: |-
-            [TEAM FOUNDATION]\Varad Meru''s Team
+            [TEAM FOUNDATION]\Varad Meru's Team
           allowApproversToApproveTheirOwnRuns: false
 
