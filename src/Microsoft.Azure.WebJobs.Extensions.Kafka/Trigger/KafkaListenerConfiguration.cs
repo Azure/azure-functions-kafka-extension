@@ -127,10 +127,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         /// <summary>
         /// OAuth Bearer method.
-        /// Either 'default' or 'oidc'
-        /// sasl.oauthbearer in librdkafka
+        /// One of <c>Default</c>, <c>Oidc</c>, or <c>OidcManaged</c>.
+        /// The first two map directly onto librdkafka's <c>sasl.oauthbearer.method</c>;
+        /// <c>OidcManaged</c> bypasses librdkafka's libcurl-based OIDC flow and
+        /// performs token acquisition in managed .NET code.
         /// </summary>
-        public SaslOauthbearerMethod SaslOAuthBearerMethod { get; set; }
+        public OAuthBearerMethod SaslOAuthBearerMethod { get; set; }
 
         /// <summary>
         /// OAuth Bearer Client Id

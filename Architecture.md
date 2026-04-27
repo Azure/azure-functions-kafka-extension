@@ -522,6 +522,8 @@ Only these classes may directly reference `Confluent.Kafka` types:
 | `AsyncCommitStrategy` | `IConsumer<TKey, TValue>.StoreOffset()` |
 | `KafkaListenerConfiguration` | `SaslMechanism`, `SecurityProtocol` enums |
 | `BrokerAuthenticationMode` / `BrokerProtocol` | Enum mapping to Confluent types |
+| `OidcManagedAuth` | `ConsumerBuilder`, `ProducerBuilder`, `AdminClientBuilder`, `IClient` (wiring `SetOAuthBearerTokenRefreshHandler`) |
+| `OidcAuthenticationHeaderValueProvider` | `Confluent.SchemaRegistry.IAuthenticationHeaderValueProvider` |
 
 **Why**: Isolating Confluent.Kafka references to specific classes makes it possible to upgrade the Confluent.Kafka version with minimal blast radius.
 

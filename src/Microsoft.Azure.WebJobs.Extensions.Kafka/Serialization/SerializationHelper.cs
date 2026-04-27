@@ -17,7 +17,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
     internal static class SerializationHelper
     {
-        internal static (object, object) ResolveDeserializers(GetKeyAndValueTypesResult keyAndValueTypes, string schemaRegistryUrl, string schemaRegistryUsername, string schemaRegistryPassword, string topic)
+        internal static (object, object) ResolveDeserializers(GetKeyAndValueTypesResult keyAndValueTypes, string schemaRegistryUrl, string schemaRegistryUsername, string schemaRegistryPassword, string topic, IAuthenticationHeaderValueProvider schemaRegistryAuthProvider = null)
         {
             object valueDeserializer = null;
             object keyDeserializer = null;
@@ -30,7 +30,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             // call helper if schema registry is specified and return avro deserializers
             if (schemaRegistryUrl != null)
             {
-                return ResolveSchemaRegistryDeserializers(valueType, keyType, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword, topic);
+                return ResolveSchemaRegistryDeserializers(valueType, keyType, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword, topic, schemaRegistryAuthProvider);
             }
 
             // check for protobuf deserialization
@@ -98,12 +98,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return (valueDeserializer, keyDeserializer);
         }
 
-        internal static (object, object) ResolveSchemaRegistryDeserializers(Type valueType, Type keyType, string schemaRegistryUrl, string schemaRegistryUsername, string schemaRegistryPassword, string topic)
+        internal static (object, object) ResolveSchemaRegistryDeserializers(Type valueType, Type keyType, string schemaRegistryUrl, string schemaRegistryUsername, string schemaRegistryPassword, string topic, IAuthenticationHeaderValueProvider authHeaderProvider = null)
         {
             object valueDeserializer = null;
             object keyDeserializer = null;
 
-            var schemaRegistry = CreateSchemaRegistry(null, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword);
+            var schemaRegistry = CreateSchemaRegistry(null, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword, authHeaderProvider);
 
             if (typeof(GenericRecord).IsAssignableFrom(valueType))
             {
@@ -142,7 +142,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return new AvroDeserializer<TKey>(schemaRegistry).AsSyncOverAsync();
         }
 
-        internal static (object, object) ResolveSerializers(Type valueType, Type keyType, string specifiedValueAvroSchema, string specifiedKeyAvroSchema, string schemaRegistryUrl, string schemaRegistryUsername, string schemaRegistryPassword, string topic)
+        internal static (object, object) ResolveSerializers(Type valueType, Type keyType, string specifiedValueAvroSchema, string specifiedKeyAvroSchema, string schemaRegistryUrl, string schemaRegistryUsername, string schemaRegistryPassword, string topic, IAuthenticationHeaderValueProvider schemaRegistryAuthProvider = null)
         {
             object keySerializer = null;
             object valueSerializer = null;
@@ -150,7 +150,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             // call helper if schema registry is specified and return avro serializers
             if (schemaRegistryUrl != null)
             {
-                return ResolveSchemaRegistrySerializers(valueType, keyType, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword, topic);
+                return ResolveSchemaRegistrySerializers(valueType, keyType, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword, topic, schemaRegistryAuthProvider);
             }
 
             // create serializers for protobuf
@@ -203,12 +203,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return (valueSerializer, keySerializer);
         }
 
-        internal static (object, object) ResolveSchemaRegistrySerializers(Type valueType, Type keyType, string schemaRegistryUrl, string schemaRegistryUsername, string schemaRegistryPassword, string topic)
+        internal static (object, object) ResolveSchemaRegistrySerializers(Type valueType, Type keyType, string schemaRegistryUrl, string schemaRegistryUsername, string schemaRegistryPassword, string topic, IAuthenticationHeaderValueProvider authHeaderProvider = null)
         {
             object valueSerializer = null;
             object keySerializer = null;
 
-            var schemaRegistry = CreateSchemaRegistry(null, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword); 
+            var schemaRegistry = CreateSchemaRegistry(null, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword, authHeaderProvider);
 
             if (typeof(GenericRecord).IsAssignableFrom(valueType) || typeof(ISpecificRecord).IsAssignableFrom(valueType))
             {
@@ -226,7 +226,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         }
 
 
-        private static ISchemaRegistryClient CreateSchemaRegistry(string specifiedAvroSchema, string schemaRegistryUrl, string schemaRegistryUsername, string schemaRegistryPassword)
+        private static ISchemaRegistryClient CreateSchemaRegistry(string specifiedAvroSchema, string schemaRegistryUrl, string schemaRegistryUsername, string schemaRegistryPassword, IAuthenticationHeaderValueProvider authHeaderProvider = null)
         {
             if (!string.IsNullOrWhiteSpace(specifiedAvroSchema))
             {
@@ -236,9 +236,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 var schemaRegistryConfig = new List<KeyValuePair<string, string>>();
                 schemaRegistryConfig.Add(new KeyValuePair<string, string>("schema.registry.url", schemaRegistryUrl));
-                if (schemaRegistryUsername != null && schemaRegistryPassword != null) {
+                if (schemaRegistryUsername != null && schemaRegistryPassword != null)
+                {
                     var authString = schemaRegistryUsername + ":" + schemaRegistryPassword;
                     schemaRegistryConfig.Add(new KeyValuePair<string, string>("schema.registry.basic.auth.user.info", authString));
+                }
+                if (authHeaderProvider != null)
+                {
+                    return new CachedSchemaRegistryClient(new SchemaRegistryConfig { Url = schemaRegistryUrl }, authHeaderProvider);
                 }
                 return new CachedSchemaRegistryClient(schemaRegistryConfig.ToArray());
             }
