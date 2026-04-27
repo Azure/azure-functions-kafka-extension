@@ -600,7 +600,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(SaslMechanism.OAuthBearer, result.SaslMechanism);
             Assert.Equal("secret", result.SaslOAuthBearerClientSecret);
             Assert.Equal("clientId", result.SaslOAuthBearerClientId);
-            Assert.Equal(SaslOauthbearerMethod.Oidc, result.SaslOAuthBearerMethod);
+            Assert.Equal(Config.OAuthBearerMethod.Oidc, result.SaslOAuthBearerMethod);
             Assert.Equal("scope", result.SaslOAuthBearerScope);
             Assert.Equal("key=value", result.SaslOAuthBearerExtensions);
             Assert.Equal("endpointUrl", result.SaslOAuthBearerTokenEndpointUrl);
@@ -651,7 +651,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal(SaslMechanism.OAuthBearer, result.SaslMechanism);
             Assert.Equal("secret", result.SaslOAuthBearerClientSecret);
             Assert.Equal("clientId", result.SaslOAuthBearerClientId);
-            Assert.Equal(SaslOauthbearerMethod.Oidc, result.SaslOAuthBearerMethod);
+            Assert.Equal(Config.OAuthBearerMethod.Oidc, result.SaslOAuthBearerMethod);
             Assert.Equal("scope", result.SaslOAuthBearerScope);
             Assert.Equal("key=value", result.SaslOAuthBearerExtensions);
             Assert.Equal("endpointUrl", result.SaslOAuthBearerTokenEndpointUrl);

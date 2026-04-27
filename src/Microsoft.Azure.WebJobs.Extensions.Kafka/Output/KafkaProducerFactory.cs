@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 using System.Text;
 using System.Text.RegularExpressions;
 using Confluent.Kafka;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.Config;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -43,7 +44,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var producerConfig = this.GetProducerConfig(entity);
             var producerKey = CreateKeyForConfig(producerConfig);
 
-            var baseProducer = baseProducers.GetOrAdd(producerKey, (k) => CreateBaseProducer(producerConfig));
+            OidcTokenProvider tokenProvider = null;
+            if (entity.Attribute.AuthenticationMode == BrokerAuthenticationMode.OAuthBearer &&
+                OidcManagedAuth.IsManaged(entity.Attribute.OAuthBearerMethod))
+            {
+                tokenProvider = OidcManagedAuth.CreateProvider(
+                    this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerTokenEndpointUrl),
+                    this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerClientId),
+                    this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerClientSecret),
+                    this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerScope),
+                    this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerExtensions));
+            }
+
+            var baseProducer = baseProducers.GetOrAdd(producerKey, (k) => CreateBaseProducer(producerConfig, tokenProvider));
             return Create(baseProducer.Handle, entity);
         }
 
@@ -66,7 +79,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return keyBuilder.ToString();
         }
 
-        private IProducer<byte[], byte[]> CreateBaseProducer(ProducerConfig producerConfig)
+        private IProducer<byte[], byte[]> CreateBaseProducer(ProducerConfig producerConfig, OidcTokenProvider tokenProvider)
         {
             var builder = new ProducerBuilder<byte[], byte[]>(producerConfig);
             ILogger logger = this.loggerFactory.CreateLogger("Kafka");
@@ -75,7 +88,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 logger.Log((LogLevel)m.LevelAs(LogLevelType.MicrosoftExtensionsLogging), $"Libkafka: {m?.Message}");
             });
 
-            return builder.Build();
+            if (tokenProvider != null)
+            {
+                OidcManagedAuth.WireProducer(builder, tokenProvider, logger);
+            }
+
+            var producer = builder.Build();
+            if (tokenProvider != null)
+            {
+                OidcManagedAuth.PrimeToken(producer, tokenProvider, logger);
+            }
+            return producer;
         }
 
         private IKafkaProducer Create(Handle producerBaseHandle, KafkaProducerEntity entity)
@@ -90,15 +113,29 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var schemaRegistryPassword = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.SchemaRegistryPassword);
             var topic = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.Topic);
 
+            Confluent.SchemaRegistry.IAuthenticationHeaderValueProvider schemaRegistryAuthProvider = null;
+            if (entity.Attribute.AuthenticationMode == BrokerAuthenticationMode.OAuthBearer &&
+                OidcManagedAuth.IsManaged(entity.Attribute.OAuthBearerMethod))
+            {
+                var srTokenProvider = OidcManagedAuth.CreateProvider(
+                    this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerTokenEndpointUrl),
+                    this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerClientId),
+                    this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerClientSecret),
+                    this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerScope),
+                    this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerExtensions));
+                schemaRegistryAuthProvider = new OidcAuthenticationHeaderValueProvider(srTokenProvider);
+            }
+
             (var valueSerializer, var keySerializer) = SerializationHelper.ResolveSerializers(
-                valueType, 
-                keyType, 
-                valueAvroSchema, 
-                keyAvroSchema, 
-                schemaRegistryUrl, 
-                schemaRegistryUsername, 
+                valueType,
+                keyType,
+                valueAvroSchema,
+                keyAvroSchema,
+                schemaRegistryUrl,
+                schemaRegistryUsername,
                 schemaRegistryPassword,
-                topic);
+                topic,
+                schemaRegistryAuthProvider);
 
             return (IKafkaProducer)Activator.CreateInstance(
                 typeof(KafkaProducer<,>).MakeGenericType(keyType, valueType),
@@ -193,7 +230,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 conf.SecurityProtocol = (SecurityProtocol)entity.Attribute.Protocol;
             }
 
-            if (entity.Attribute.AuthenticationMode == BrokerAuthenticationMode.OAuthBearer)
+            if (entity.Attribute.AuthenticationMode == BrokerAuthenticationMode.OAuthBearer &&
+                !OidcManagedAuth.IsManaged(entity.Attribute.OAuthBearerMethod))
             {
                 conf.SaslOauthbearerMethod = (SaslOauthbearerMethod)entity.Attribute.OAuthBearerMethod;
                 conf.SaslOauthbearerClientId = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerClientId);
