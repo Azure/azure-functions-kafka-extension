@@ -12,6 +12,7 @@ using Confluent.Kafka.SyncOverAsync;
 using Confluent.SchemaRegistry;
 using Confluent.SchemaRegistry.Serdes;
 using Google.Protobuf;
+using Microsoft.Azure.WebJobs.Host.Bindings;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
@@ -271,6 +272,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             while (valueType.HasElementType && valueType.GetElementType() != typeof(byte))
             {
                 valueType = valueType.GetElementType();
+            }
+
+            if (valueType == typeof(ParameterBindingData))
+            {
+                valueType = typeof(byte[]);
             }
 
             if (!valueType.IsPrimitive)

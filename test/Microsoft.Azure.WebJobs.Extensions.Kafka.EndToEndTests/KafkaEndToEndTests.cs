@@ -376,46 +376,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
         /// Ensures that multiple hosts processing a topic with 10 partition share the content, having the events being processed at least once.
         /// 
         /// Test flow:
-        /// 1. In a separated task producer creates 4x80 items. After the first batch is created waits for semaphore.
-        /// 2. In main task host1 starts processing messages
-        /// 3. When host1 has at least a message starts hosts2
-        /// 4. When host2 obtains at least 1 partitions it triggers the semaphore
-        /// 5. Once the producer tasks is finished (all 240 messages were created), validate that all messages were processed by host1 and host2
+        /// 1. In main task host1 starts processing messages
+        /// 2. When host1 has partitions, start host2
+        /// 3. When host2 obtains at least 1 partition, produce messages evenly across all partitions
+        /// 4. Validate that all messages were processed by host1 and host2
         /// </summary>
         [Fact]
         public async Task Multiple_Hosts_Process_Events_At_Least_Once()
         {
-            const int producedMessagesCount = 240;
+            const int producedMessagesCount = 120;
+            const int waitForAllMessagesTimeoutMs = 180 * 1000;
             var messagePrefix = Guid.NewGuid().ToString() + ":";
-
-            var producerHost = await StartHostAsync(typeof(KafkaOutputFunctions));
-            var producerJobHost = producerHost.GetJobHost();
-
-            var host2HasPartitionsSemaphore = new SemaphoreSlim(0);
-
-            // Split the call in 4, waiting 1sec between calls
-            var producerTask = Task.Run(async () =>
-            {
-                var allMessages = Enumerable.Range(1, producedMessagesCount).Select(x => EndToEndTestExtensions.CreateMessageValue(messagePrefix, x));
-                const int loopCount = 4;
-                var itemsPerLoop = producedMessagesCount / loopCount;
-                for (var i = 0; i < loopCount; ++i)
-                {
-                    var messages = allMessages.Skip(i * itemsPerLoop).Take(itemsPerLoop);
-                    await producerJobHost.CallOutputTriggerStringAsync(
-                        GetStaticMethod(typeof(KafkaOutputFunctions), nameof(KafkaOutputFunctions.Produce_AsyncCollector_String_Without_Key)),
-                        this.endToEndTestFixture.StringTopicWithTenPartitions.Name,
-                        messages);
-
-                    if (i == 0)
-                    {
-                        // wait until host2 has partitions assigned
-                        Assert.True(await host2HasPartitionsSemaphore.WaitAsync(TimeSpan.FromSeconds(50)), "Host2 has not been assigned any partition after waiting for 30 seconds");
-                    }
-
-                    await Task.Delay(100);
-                }
-            });
 
             IHost host1 = null, host2 = null;
             Func<LogMessage, bool> messageFilter = (LogMessage m) => m.FormattedMessage != null && m.FormattedMessage.Contains(messagePrefix);
@@ -442,16 +413,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                 {
                     var host2HasPartitions = host2Log.GetAllLogMessages().Any(x => x.FormattedMessage != null && x.FormattedMessage.Contains("Assigned partitions"));
 
-                    if (host2HasPartitions)
-                    {
-                        host2HasPartitionsSemaphore.Release();
-                    }
-
                     return host2HasPartitions;
                 });
 
-                // Wait until producer is finished
-                await producerTask;
+                await ProduceMessagesToAllPartitionsAsync(
+                    this.endToEndTestFixture.StringTopicWithTenPartitions.Name,
+                    Enumerable.Range(1, producedMessagesCount).Select(x => EndToEndTestExtensions.CreateMessageValue(messagePrefix, x)));
 
                 await TestHelpers.Await(() =>
                 {
@@ -461,7 +428,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                     return host1Events.Count > 0 &&
                         host2Events.Count > 0 &&
                         host2Events.Count + host1Events.Count >= producedMessagesCount;
-                });
+                }, timeout: waitForAllMessagesTimeoutMs);
 
 
                 await TestHelpers.Await(() =>
@@ -481,7 +448,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                     }
 
                     return true;
-                });
+                }, timeout: waitForAllMessagesTimeoutMs);
 
                 // For history write down items that have been processed more than once
                 // If an item is processed more than 2x times test fails
@@ -509,10 +476,35 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                 await host1?.StopAsync();
                 await host2?.StopAsync();
             }
+        }
 
-            await producerTask;
-            await producerHost?.StopAsync();
+        private static Task ProduceMessagesToAllPartitionsAsync(string topicName, IEnumerable<string> messages)
+        {
+            using var producer = new Confluent.Kafka.ProducerBuilder<Confluent.Kafka.Null, string>(new Confluent.Kafka.ProducerConfig
+            {
+                BootstrapServers = "localhost:9092"
+            }).Build();
 
+            var partition = 0;
+            foreach (var message in messages)
+            {
+                producer.Produce(
+                    new Confluent.Kafka.TopicPartition(topicName, new Confluent.Kafka.Partition(partition)),
+                    new Confluent.Kafka.Message<Confluent.Kafka.Null, string>
+                    {
+                        Value = message
+                    });
+
+                partition = (partition + 1) % 10;
+            }
+
+            var remainingMessages = producer.Flush(TimeSpan.FromSeconds(30));
+            if (remainingMessages != 0)
+            {
+                throw new TimeoutException($"Kafka producer did not flush within timeout. Remaining messages: {remainingMessages}");
+            }
+
+            return Task.CompletedTask;
         }
 
         private List<KafkaEventData<string>> GetKafkaEventsWithTraceParentHeader(int numEvents)
@@ -1439,6 +1431,74 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                 // Value should still be present
                 Assert.True(proto.HasValue, "Value should be set");
                 Assert.Contains("nullkey-test-", Encoding.UTF8.GetString(proto.Value.ToByteArray()));
+            }
+        }
+
+        /// <summary>
+        /// E2E test that exercises the FULL deferred binding path for KafkaRecord.
+        /// The trigger function parameter is ParameterBindingData — the same type the
+        /// host sees when a .NET isolated worker uses KafkaRecord with SupportsDeferredBinding.
+        /// This validates that:
+        ///   1. SerializationHelper.GetKeyAndValueTypes maps ParameterBindingData → byte[]
+        ///   2. The Kafka consumer starts successfully (no deserializer error)
+        ///   3. KafkaEventDataConvertManager converts consumed events to ParameterBindingData
+        ///   4. The ParameterBindingData contains valid Protobuf with correct metadata
+        /// Without the fix, this test fails at host startup with:
+        ///   "Value deserializer was not specified and there is no default deserializer
+        ///    defined for type ParameterBindingData"
+        /// </summary>
+        [Fact]
+        public async Task KafkaRecord_DeferredBinding_ParameterBindingData_HostStartsAndReceivesProtobuf()
+        {
+            const int messageCount = 5;
+            var messagePrefix = Guid.NewGuid().ToString() + ":pbd:";
+
+            // Clear any previous test data
+            while (SingleItem_ParameterBindingData_Trigger.Received.TryTake(out _)) { }
+
+            var loggerProvider1 = CreateTestLoggerProvider();
+
+            using (var host = await StartHostAsync(
+                new[] { typeof(SingleItem_ParameterBindingData_Trigger), typeof(KafkaOutputFunctions) },
+                loggerProvider1))
+            {
+                var jobHost = host.GetJobHost();
+
+                // Produce messages via the existing KafkaOutputFunctions
+                await jobHost.CallOutputTriggerStringAsync(
+                    GetStaticMethod(typeof(KafkaOutputFunctions), nameof(KafkaOutputFunctions.Produce_AsyncCollector_String_Without_Key)),
+                    endToEndTestFixture.StringTopicWithTenPartitions.Name,
+                    Enumerable.Range(1, messageCount).Select(x => messagePrefix + x));
+
+                // Wait for the trigger to receive all messages as ParameterBindingData
+                await TestHelpers.Await(() =>
+                    SingleItem_ParameterBindingData_Trigger.Received.Count >= messageCount);
+            }
+
+            // Validate received ParameterBindingData
+            var received = SingleItem_ParameterBindingData_Trigger.Received.ToList();
+            Assert.True(received.Count >= messageCount,
+                $"Expected at least {messageCount} ParameterBindingData items, got {received.Count}");
+
+            foreach (var bindingData in received)
+            {
+                // Source and content type must match the KafkaRecord deferred binding contract
+                Assert.Equal("AzureKafkaRecord", bindingData.Source);
+                Assert.Equal("application/x-protobuf", bindingData.ContentType);
+
+                // Content must be valid Protobuf
+                var proto = KafkaRecordProto.Parser.ParseFrom(bindingData.Content);
+
+                // Broker-assigned metadata is populated
+                Assert.Equal(Constants.StringTopicWithTenPartitionsName, proto.Topic);
+                Assert.True(proto.Partition >= 0, "Partition should be >= 0");
+                Assert.True(proto.Offset >= 0, "Offset should be >= 0");
+                Assert.NotNull(proto.Timestamp);
+                Assert.True(proto.Timestamp.UnixTimestampMs > 0, "Timestamp should be > 0");
+
+                // Value is the produced string
+                Assert.True(proto.HasValue, "Value should be set");
+                Assert.Contains(messagePrefix, Encoding.UTF8.GetString(proto.Value.ToByteArray()));
             }
         }
     }

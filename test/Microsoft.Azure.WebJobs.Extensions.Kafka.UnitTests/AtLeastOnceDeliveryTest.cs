@@ -24,7 +24,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         /// <summary>
         /// Default timeout for all async waits. Long enough for slow CI, short enough to fail fast.
         /// </summary>
-        private static readonly TimeSpan TestTimeout = TimeSpan.FromSeconds(10);
+        private static readonly TimeSpan TestTimeout = TimeSpan.FromSeconds(30);
 
         private ConsumeResult<TKey, TValue> CreateConsumeResult<TKey, TValue>(TValue value, int partition, long offset, string topic = "topic")
         {

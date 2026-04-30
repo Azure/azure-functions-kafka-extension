@@ -9,6 +9,7 @@ using System.Reflection.Emit;
 using System.Text;
 using Avro.Generic;
 using Confluent.Kafka;
+using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
@@ -422,6 +423,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             var value = kafkaEvent.Value.ToString();
             log.LogInformation("AtLeastOnce_AlwaysFail for {value}", value);
             throw new InvalidOperationException($"Permanent failure for: {value}");
+        }
+    }
+
+    /// <summary>
+    /// Trigger function that binds to ParameterBindingData — simulates the host-side
+    /// parameter type seen during .NET isolated deferred binding for KafkaRecord.
+    /// Without the ParameterBindingData → byte[] fix in SerializationHelper,
+    /// the host fails at startup with "no default deserializer for ParameterBindingData".
+    /// </summary>
+    internal static class SingleItem_ParameterBindingData_Trigger
+    {
+        public static ConcurrentBag<ParameterBindingData> Received = new ConcurrentBag<ParameterBindingData>();
+
+        public static void Trigger(
+            [KafkaTrigger("LocalBroker", Constants.StringTopicWithTenPartitionsName, ConsumerGroup = Constants.ConsumerGroupID)] ParameterBindingData bindingData,
+            ILogger log)
+        {
+            Received.Add(bindingData);
+            log.LogInformation("ParameterBindingData received: source={source}", bindingData.Source);
         }
     }
 }
