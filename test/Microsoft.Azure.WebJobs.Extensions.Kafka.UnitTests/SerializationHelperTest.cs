@@ -8,6 +8,7 @@ using Confluent.Kafka;
 using Confluent.Kafka.SyncOverAsync;
 using Confluent.SchemaRegistry.Serdes;
 using Google.Protobuf;
+using Microsoft.Azure.WebJobs.Host.Bindings;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
@@ -18,6 +19,38 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
     /// </summary>
     public class SerializationHelperTest
     {
+        [Fact]
+        public void GetKeyAndValueTypes_WhenParameterTypeIsParameterBindingData_ShouldUseByteArrayValueType()
+        {
+            // Act
+            var result = SerializationHelper.GetKeyAndValueTypes(
+                valueAvroSchemaFromAttribute: null,
+                keyAvroSchemaFromAttribute: null,
+                parameterType: typeof(ParameterBindingData),
+                keyTypeFromAttribute: typeof(Ignore));
+
+            // Assert
+            Assert.Equal(typeof(byte[]), result.ValueType);
+            Assert.Equal(typeof(Ignore), result.KeyType);
+            Assert.False(result.RequiresKey);
+        }
+
+        [Fact]
+        public void GetKeyAndValueTypes_WhenParameterTypeIsParameterBindingDataArray_ShouldUseByteArrayValueType()
+        {
+            // Act
+            var result = SerializationHelper.GetKeyAndValueTypes(
+                valueAvroSchemaFromAttribute: null,
+                keyAvroSchemaFromAttribute: null,
+                parameterType: typeof(ParameterBindingData[]),
+                keyTypeFromAttribute: typeof(Ignore));
+
+            // Assert
+            Assert.Equal(typeof(byte[]), result.ValueType);
+            Assert.Equal(typeof(Ignore), result.KeyType);
+            Assert.False(result.RequiresKey);
+        }
+
         /// <summary>
         /// Test that when SchemaRegistryUrl is provided and valueType is string (Out-of-proc scenario),
         /// the deserializer should still be created for GenericRecord to properly deserialize Avro messages.
