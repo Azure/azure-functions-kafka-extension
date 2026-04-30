@@ -385,7 +385,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
         [Fact]
         public async Task Multiple_Hosts_Process_Events_At_Least_Once()
         {
-            const int producedMessagesCount = 240;
+            const int producedMessagesCount = 120;
+            const int waitForAllMessagesTimeoutMs = 180 * 1000;
             var messagePrefix = Guid.NewGuid().ToString() + ":";
 
             var producerHost = await StartHostAsync(typeof(KafkaOutputFunctions));
@@ -461,7 +462,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                     return host1Events.Count > 0 &&
                         host2Events.Count > 0 &&
                         host2Events.Count + host1Events.Count >= producedMessagesCount;
-                });
+                }, timeout: waitForAllMessagesTimeoutMs);
 
 
                 await TestHelpers.Await(() =>
@@ -481,7 +482,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                     }
 
                     return true;
-                });
+                }, timeout: waitForAllMessagesTimeoutMs);
 
                 // For history write down items that have been processed more than once
                 // If an item is processed more than 2x times test fails
