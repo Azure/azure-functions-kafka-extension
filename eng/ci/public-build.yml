@@ -1,6 +1,5 @@
 variables:
   Codeql.Enabled: true
-  coreToolsVersion: "4.2.2-1"
 
 # Enable PR validation on branches master and dev
 pr:
@@ -83,7 +82,9 @@ extends:
             inputs:
               targetType: inline
               script: |
-                sudo apt-get install azure-functions-core-tools-4=$(coreToolsVersion)
+                sudo apt-get update
+                sudo apt-get install -y azure-functions-core-tools-4
+                func --version
 
           - task: DotNetCoreCLI@2
             displayName: Build project

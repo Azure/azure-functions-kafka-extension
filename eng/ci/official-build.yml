@@ -1,6 +1,5 @@
 variables:
   Codeql.Enabled: true
-  coreToolsVersion: "4.2.2-1"
 
 # Enable CI on branches master and dev
 # Batch builds
@@ -93,7 +92,9 @@ extends:
                 inputs:
                   targetType: inline
                   script: |
-                    sudo apt-get install azure-functions-core-tools-4=$(coreToolsVersion)
+                    sudo apt-get update
+                    sudo apt-get install -y azure-functions-core-tools-4
+                    func --version
 
               - pwsh: |
                   cd ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/java/Confluent

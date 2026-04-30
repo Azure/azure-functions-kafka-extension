@@ -2,7 +2,6 @@ name: $(Build.SourceBranchName)_$(Build.Reason)_$(majorVersion).$(Build.BuildId)
 variables:
   buildConfiguration: Release
   majorVersion: 0.0.0
-  coreToolsVersion: "4.2.2-1"
   isReleaseTriggered: $[startsWith(variables['Build.SourceBranch'], 'refs/heads/action/release')]
   isMasterTriggered: $[startsWith(variables['Build.SourceBranch'], 'refs/heads/master')]
   Codeql.Enabled: true
@@ -61,7 +60,9 @@ steps:
     inputs:
       targetType: inline
       script: |
-        sudo apt-get install azure-functions-core-tools-4=$(coreToolsVersion)
+        sudo apt-get update
+        sudo apt-get install -y azure-functions-core-tools-4
+        func --version
 
   - task: DotNetCoreCLI@2
     displayName: Build project
