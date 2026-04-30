@@ -1441,5 +1441,73 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                 Assert.Contains("nullkey-test-", Encoding.UTF8.GetString(proto.Value.ToByteArray()));
             }
         }
+
+        /// <summary>
+        /// E2E test that exercises the FULL deferred binding path for KafkaRecord.
+        /// The trigger function parameter is ParameterBindingData — the same type the
+        /// host sees when a .NET isolated worker uses KafkaRecord with SupportsDeferredBinding.
+        /// This validates that:
+        ///   1. SerializationHelper.GetKeyAndValueTypes maps ParameterBindingData → byte[]
+        ///   2. The Kafka consumer starts successfully (no deserializer error)
+        ///   3. KafkaEventDataConvertManager converts consumed events to ParameterBindingData
+        ///   4. The ParameterBindingData contains valid Protobuf with correct metadata
+        /// Without the fix, this test fails at host startup with:
+        ///   "Value deserializer was not specified and there is no default deserializer
+        ///    defined for type ParameterBindingData"
+        /// </summary>
+        [Fact]
+        public async Task KafkaRecord_DeferredBinding_ParameterBindingData_HostStartsAndReceivesProtobuf()
+        {
+            const int messageCount = 5;
+            var messagePrefix = Guid.NewGuid().ToString() + ":pbd:";
+
+            // Clear any previous test data
+            while (SingleItem_ParameterBindingData_Trigger.Received.TryTake(out _)) { }
+
+            var loggerProvider1 = CreateTestLoggerProvider();
+
+            using (var host = await StartHostAsync(
+                new[] { typeof(SingleItem_ParameterBindingData_Trigger), typeof(KafkaOutputFunctions) },
+                loggerProvider1))
+            {
+                var jobHost = host.GetJobHost();
+
+                // Produce messages via the existing KafkaOutputFunctions
+                await jobHost.CallOutputTriggerStringAsync(
+                    GetStaticMethod(typeof(KafkaOutputFunctions), nameof(KafkaOutputFunctions.Produce_AsyncCollector_String_Without_Key)),
+                    endToEndTestFixture.StringTopicWithTenPartitions.Name,
+                    Enumerable.Range(1, messageCount).Select(x => messagePrefix + x));
+
+                // Wait for the trigger to receive all messages as ParameterBindingData
+                await TestHelpers.Await(() =>
+                    SingleItem_ParameterBindingData_Trigger.Received.Count >= messageCount);
+            }
+
+            // Validate received ParameterBindingData
+            var received = SingleItem_ParameterBindingData_Trigger.Received.ToList();
+            Assert.True(received.Count >= messageCount,
+                $"Expected at least {messageCount} ParameterBindingData items, got {received.Count}");
+
+            foreach (var bindingData in received)
+            {
+                // Source and content type must match the KafkaRecord deferred binding contract
+                Assert.Equal("AzureKafkaRecord", bindingData.Source);
+                Assert.Equal("application/x-protobuf", bindingData.ContentType);
+
+                // Content must be valid Protobuf
+                var proto = KafkaRecordProto.Parser.ParseFrom(bindingData.Content);
+
+                // Broker-assigned metadata is populated
+                Assert.Equal(Constants.StringTopicWithTenPartitionsName, proto.Topic);
+                Assert.True(proto.Partition >= 0, "Partition should be >= 0");
+                Assert.True(proto.Offset >= 0, "Offset should be >= 0");
+                Assert.NotNull(proto.Timestamp);
+                Assert.True(proto.Timestamp.UnixTimestampMs > 0, "Timestamp should be > 0");
+
+                // Value is the produced string
+                Assert.True(proto.HasValue, "Value should be set");
+                Assert.Contains(messagePrefix, Encoding.UTF8.GetString(proto.Value.ToByteArray()));
+            }
+        }
     }
 }
