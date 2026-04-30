@@ -55,15 +55,6 @@ steps:
       version: 8.x
       packageType: sdk
 
-  - task: Bash@3
-    displayName: 'Install Azure Functions Core Tools'
-    inputs:
-      targetType: inline
-      script: |
-        sudo apt-get update
-        sudo apt-get install -y azure-functions-core-tools-4
-        func --version
-
   - task: DotNetCoreCLI@2
     displayName: Build project
     inputs:
