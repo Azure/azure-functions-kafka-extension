@@ -2,6 +2,7 @@ name: $(Build.SourceBranchName)_$(Build.Reason)_$(majorVersion).$(Build.BuildId)
 variables:
   buildConfiguration: Release
   majorVersion: 0.0.0
+  coreToolsVersion: "4.2.2-1"
   isReleaseTriggered: $[startsWith(variables['Build.SourceBranch'], 'refs/heads/action/release')]
   isMasterTriggered: $[startsWith(variables['Build.SourceBranch'], 'refs/heads/master')]
   Codeql.Enabled: true
@@ -48,6 +49,19 @@ steps:
     inputs:
       version: 6.x
       packageType: sdk
+
+  - task: UseDotNet@2
+    displayName: 'Install .NET 8.0'
+    inputs:
+      version: 8.x
+      packageType: sdk
+
+  - task: Bash@3
+    displayName: 'Install Azure Functions Core Tools'
+    inputs:
+      targetType: inline
+      script: |
+        sudo apt-get install azure-functions-core-tools-4=$(coreToolsVersion)
 
   - task: DotNetCoreCLI@2
     displayName: Build project
