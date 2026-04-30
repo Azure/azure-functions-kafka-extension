@@ -62,7 +62,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal("test-topic", proto.Topic);
             Assert.Equal(3, proto.Partition);
             Assert.Equal(42L, proto.Offset);
-            Assert.Equal(5, proto.LeaderEpoch);
+            // LeaderEpoch intentionally not serialized into KafkaRecordProto (issue #639)
             Assert.Equal("test-key", Encoding.UTF8.GetString(proto.Key.ToByteArray()));
             Assert.Equal("test-value", Encoding.UTF8.GetString(proto.Value.ToByteArray()));
 
