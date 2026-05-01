@@ -32,8 +32,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal("test-topic", proto.Topic);
             Assert.Equal(3, proto.Partition);
             Assert.Equal(42, proto.Offset);
-            Assert.Equal(7, proto.LeaderEpoch);
-            Assert.True(proto.HasLeaderEpoch);
             Assert.Equal("myKey", Encoding.UTF8.GetString(proto.Key.ToByteArray()));
             Assert.Equal("myValue", Encoding.UTF8.GetString(proto.Value.ToByteArray()));
             Assert.NotNull(proto.Timestamp);
@@ -41,21 +39,29 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         }
 
         [Fact]
-        public void Serialize_NullLeaderEpoch_OmitsField()
+        public void Serialize_LeaderEpoch_NotIncludedInProtobuf()
         {
+            // LeaderEpoch is consumer fetch metadata, not stored record data (issue #639).
+            // Even when set on IKafkaEventData, it should NOT appear in the Protobuf output.
             var eventData = new KafkaEventData<string, string>("key", "value")
             {
                 Offset = 1,
                 Partition = 0,
                 Topic = "topic",
                 Timestamp = DateTime.UtcNow,
-                LeaderEpoch = null,
+                LeaderEpoch = 42,
             };
 
             var bytes = KafkaRecordProtobufSerializer.Serialize(eventData);
+            Assert.False(ProtobufTestHelpers.ContainsTopLevelField(bytes, 8));
+
             var proto = KafkaRecordProto.Parser.ParseFrom(bytes);
 
-            Assert.False(proto.HasLeaderEpoch);
+            // Protobuf schema no longer has leader_epoch field.
+            // Verify the record still round-trips correctly without it.
+            Assert.Equal("topic", proto.Topic);
+            Assert.Equal(0, proto.Partition);
+            Assert.Equal(1, proto.Offset);
         }
 
         [Fact]

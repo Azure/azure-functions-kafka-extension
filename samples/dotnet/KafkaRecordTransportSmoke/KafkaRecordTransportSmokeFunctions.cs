@@ -65,8 +65,7 @@ namespace KafkaRecordTransportSmoke
                 Value = value,
                 TimestampUnixMs = proto.Timestamp?.UnixTimestampMs ?? 0,
                 TimestampType = proto.Timestamp?.Type ?? 0,
-                HeaderCount = proto.Headers.Count,
-                LeaderEpoch = proto.HasLeaderEpoch ? proto.LeaderEpoch : (int?)null
+                HeaderCount = proto.Headers.Count
             };
 
             ReceivedRecords.Enqueue(record);
@@ -127,7 +126,5 @@ namespace KafkaRecordTransportSmoke
         public int TimestampType { get; set; }
 
         public int HeaderCount { get; set; }
-
-        public int? LeaderEpoch { get; set; }
     }
 }

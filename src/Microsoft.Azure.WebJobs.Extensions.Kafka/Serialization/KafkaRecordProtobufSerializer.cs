@@ -55,10 +55,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.Serialization
                 proto.Value = ToByteString(eventData.Value);
             }
 
-            if (eventData.LeaderEpoch.HasValue)
-            {
-                proto.LeaderEpoch = eventData.LeaderEpoch.Value;
-            }
+            // LeaderEpoch intentionally not serialized into KafkaRecordProto.
+            // It is consumer fetch metadata, not stored record data (issue #639).
 
             if (eventData.Headers != null)
             {

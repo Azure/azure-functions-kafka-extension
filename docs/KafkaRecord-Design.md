@@ -5,7 +5,7 @@
 
 ## Overview
 
-`KafkaRecord` is a new binding type that gives Azure Functions users access to the complete Apache Kafka record metadata — topic, partition, offset, key (raw bytes), value (raw bytes), headers, timestamp, and leader epoch — without coupling to the Confluent.Kafka library.
+`KafkaRecord` is a new binding type that gives Azure Functions users access to the complete Apache Kafka record metadata — topic, partition, offset, key (raw bytes), value (raw bytes), headers, and timestamp — without coupling to the Confluent.Kafka library.
 
 Users opt in by changing their function parameter type. Existing bindings (`string`, `byte[]`, `KafkaEventData<T>`) are completely unaffected.
 
@@ -54,6 +54,7 @@ Based on customer feedback ([#612 discussion](https://github.com/Azure/azure-fun
 | **No generics** — Key and Value are `byte[]` | User controls deserialization; supports any schema strategy |
 | **Apache Kafka spec-aligned** | Fields match the Kafka protocol record definition |
 | **`IsPartitionEOF` excluded** | Consumer state, not record metadata |
+| **`LeaderEpoch` excluded** | Consumer fetch metadata, not stored record data ([#639](https://github.com/Azure/azure-functions-kafka-extension/issues/639)) |
 | **Protobuf serialization** | Zero Base64 overhead for binary key/value transport |
 | **Opt-in via parameter type** | No configuration changes; existing code unaffected |
 
@@ -98,11 +99,12 @@ message KafkaRecordProto {
     string topic = 1;
     int32 partition = 2;
     int64 offset = 3;
-    bytes key = 4;              // native bytes, zero overhead
-    bytes value = 5;            // native bytes, zero overhead
+    optional bytes key = 4;     // native bytes, zero overhead
+    optional bytes value = 5;   // native bytes, zero overhead
     KafkaTimestampProto timestamp = 6;
     repeated KafkaHeaderProto headers = 7;
-    optional int32 leader_epoch = 8;
+    reserved 8;                 // leader_epoch removed (issue #639)
+    reserved "leader_epoch";
 }
 ```
 
