@@ -3,6 +3,7 @@
 
 using System;
 using System.Text;
+using Google.Protobuf;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.Serialization;
 using Xunit;
 
@@ -53,6 +54,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             };
 
             var bytes = KafkaRecordProtobufSerializer.Serialize(eventData);
+            Assert.False(ContainsTopLevelField(bytes, 8));
+
             var proto = KafkaRecordProto.Parser.ParseFrom(bytes);
 
             // Protobuf schema no longer has leader_epoch field.
@@ -208,6 +211,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Single(proto.Headers);
             Assert.Equal("nullHeader", proto.Headers[0].Key);
             Assert.True(proto.Headers[0].Value.IsEmpty);
+        }
+
+        private static bool ContainsTopLevelField(byte[] bytes, int fieldNumber)
+        {
+            var input = new CodedInputStream(bytes);
+            uint tag;
+
+            while ((tag = input.ReadTag()) != 0)
+            {
+                if (WireFormat.GetTagFieldNumber(tag) == fieldNumber)
+                {
+                    return true;
+                }
+
+                input.SkipLastField();
+            }
+
+            return false;
         }
     }
 }

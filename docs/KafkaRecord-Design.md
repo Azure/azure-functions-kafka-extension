@@ -99,8 +99,8 @@ message KafkaRecordProto {
     string topic = 1;
     int32 partition = 2;
     int64 offset = 3;
-    bytes key = 4;              // native bytes, zero overhead
-    bytes value = 5;            // native bytes, zero overhead
+    optional bytes key = 4;     // native bytes, zero overhead
+    optional bytes value = 5;   // native bytes, zero overhead
     KafkaTimestampProto timestamp = 6;
     repeated KafkaHeaderProto headers = 7;
     reserved 8;                 // leader_epoch removed (issue #639)
