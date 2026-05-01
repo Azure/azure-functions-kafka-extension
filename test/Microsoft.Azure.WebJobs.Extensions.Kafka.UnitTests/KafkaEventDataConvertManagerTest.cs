@@ -4,7 +4,6 @@
 using System;
 using System.Text;
 using System.Threading.Tasks;
-using Google.Protobuf;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.Serialization;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -57,7 +56,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal("1.0", bindingData.Version);
             Assert.Equal(KafkaRecordProtobufSerializer.BindingSource, bindingData.Source);
             Assert.Equal(KafkaRecordProtobufSerializer.ContentType, bindingData.ContentType);
-            Assert.False(ContainsTopLevelField(bindingData.Content.ToArray(), 8));
+            Assert.False(ProtobufTestHelpers.ContainsTopLevelField(bindingData.Content.ToArray(), 8));
 
             // Verify content is valid Protobuf with expected fields
             var proto = KafkaRecordProto.Parser.ParseFrom(bindingData.Content);
@@ -88,24 +87,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var manager = new KafkaEventDataConvertManager(NullLogger.Instance);
             var converter = manager.GetConverter<KafkaTriggerAttribute>(typeof(IKafkaEventData), typeof(byte[]));
             Assert.NotNull(converter);
-        }
-
-        private static bool ContainsTopLevelField(byte[] bytes, int fieldNumber)
-        {
-            var input = new CodedInputStream(bytes);
-            uint tag;
-
-            while ((tag = input.ReadTag()) != 0)
-            {
-                if (WireFormat.GetTagFieldNumber(tag) == fieldNumber)
-                {
-                    return true;
-                }
-
-                input.SkipLastField();
-            }
-
-            return false;
         }
     }
 }
