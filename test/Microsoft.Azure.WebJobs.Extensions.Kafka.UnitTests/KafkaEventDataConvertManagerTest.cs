@@ -56,13 +56,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal("1.0", bindingData.Version);
             Assert.Equal(KafkaRecordProtobufSerializer.BindingSource, bindingData.Source);
             Assert.Equal(KafkaRecordProtobufSerializer.ContentType, bindingData.ContentType);
+            Assert.False(ProtobufTestHelpers.ContainsTopLevelField(bindingData.Content.ToArray(), 8));
 
             // Verify content is valid Protobuf with expected fields
             var proto = KafkaRecordProto.Parser.ParseFrom(bindingData.Content);
             Assert.Equal("test-topic", proto.Topic);
             Assert.Equal(3, proto.Partition);
             Assert.Equal(42L, proto.Offset);
-            Assert.Equal(5, proto.LeaderEpoch);
+            // LeaderEpoch intentionally not serialized into KafkaRecordProto (issue #639)
             Assert.Equal("test-key", Encoding.UTF8.GetString(proto.Key.ToByteArray()));
             Assert.Equal("test-value", Encoding.UTF8.GetString(proto.Value.ToByteArray()));
 
