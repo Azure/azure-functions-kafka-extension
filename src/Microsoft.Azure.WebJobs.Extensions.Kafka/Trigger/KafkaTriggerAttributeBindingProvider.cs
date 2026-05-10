@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Confluent.Kafka;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.Config;
 using Microsoft.Azure.WebJobs.Extensions.Kafka.Trigger;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
@@ -57,7 +58,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             var schemaRegistryUsername = this.config.ResolveSecureSetting(nameResolver, attribute.SchemaRegistryUsername);
             var schemaRegistryPassword = this.config.ResolveSecureSetting(nameResolver, attribute.SchemaRegistryPassword);
             var topic = this.config.ResolveSecureSetting(nameResolver, attribute.Topic);
-            (var valueDeserializer, var keyDeserializer) = SerializationHelper.ResolveDeserializers(keyAndValueTypes, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword, topic);
+
+            Confluent.SchemaRegistry.IAuthenticationHeaderValueProvider schemaRegistryAuthProvider = null;
+            if (attribute.AuthenticationMode == BrokerAuthenticationMode.OAuthBearer &&
+                OidcManagedAuth.IsManaged(attribute.OAuthBearerMethod))
+            {
+                var tokenProvider = OidcManagedAuth.CreateProvider(
+                    this.config.ResolveSecureSetting(nameResolver, attribute.OAuthBearerTokenEndpointUrl),
+                    this.config.ResolveSecureSetting(nameResolver, attribute.OAuthBearerClientId),
+                    this.config.ResolveSecureSetting(nameResolver, attribute.OAuthBearerClientSecret),
+                    this.config.ResolveSecureSetting(nameResolver, attribute.OAuthBearerScope),
+                    this.config.ResolveSecureSetting(nameResolver, attribute.OAuthBearerExtensions));
+                schemaRegistryAuthProvider = new OidcAuthenticationHeaderValueProvider(tokenProvider);
+            }
+
+            (var valueDeserializer, var keyDeserializer) = SerializationHelper.ResolveDeserializers(keyAndValueTypes, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword, topic, schemaRegistryAuthProvider);
             var consumerConfig = CreateConsumerConfiguration(attribute);
             var binding = CreateBindingStrategyFor(keyAndValueTypes.KeyType ?? typeof(Ignore), keyAndValueTypes.ValueType, keyAndValueTypes.RequiresKey, valueDeserializer, keyDeserializer, parameter, consumerConfig);
             return Task.FromResult<ITriggerBinding>(new KafkaTriggerBindingWrapper(binding));
@@ -134,7 +149,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
                 if (attribute.AuthenticationMode == BrokerAuthenticationMode.OAuthBearer)
                 {
-                    consumerConfig.SaslOAuthBearerMethod = (SaslOauthbearerMethod)attribute.OAuthBearerMethod;
+                    consumerConfig.SaslOAuthBearerMethod = attribute.OAuthBearerMethod;
                     consumerConfig.SaslOAuthBearerClientId = this.config.ResolveSecureSetting(nameResolver, attribute.OAuthBearerClientId);
                     consumerConfig.SaslOAuthBearerClientSecret = this.config.ResolveSecureSetting(nameResolver, attribute.OAuthBearerClientSecret);
                     consumerConfig.SaslOAuthBearerScope = this.config.ResolveSecureSetting(nameResolver, attribute.OAuthBearerScope);

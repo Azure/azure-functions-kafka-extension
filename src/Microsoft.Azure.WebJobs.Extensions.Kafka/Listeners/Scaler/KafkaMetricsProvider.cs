@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using Confluent.Kafka;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.Config;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -16,20 +17,33 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly AdminClientConfig adminClientConfig;
         private readonly IConsumer<TKey, TValue> consumer;
         private readonly ILogger logger;
+        private readonly OidcTokenProvider oidcTokenProvider;
         protected Lazy<List<TopicPartition>> topicPartitions;
 
         virtual protected internal KafkaTriggerMetrics LastCalculatedMetrics { get; set; }
 
-        internal KafkaMetricsProvider(string topicName, AdminClientConfig adminClientConfig, IConsumer<TKey, TValue> consumer, ILogger logger) : this(topicName, adminClientConfig, logger)
+        internal KafkaMetricsProvider(string topicName, AdminClientConfig adminClientConfig, IConsumer<TKey, TValue> consumer, ILogger logger)
+            : this(topicName, adminClientConfig, consumer, logger, null)
+        {
+        }
+
+        internal KafkaMetricsProvider(string topicName, AdminClientConfig adminClientConfig, IConsumer<TKey, TValue> consumer, ILogger logger, OidcTokenProvider oidcTokenProvider)
+            : this(topicName, adminClientConfig, logger, oidcTokenProvider)
         {
             this.consumer = consumer;
         }
 
         internal KafkaMetricsProvider(string topicName, AdminClientConfig adminClientConfig, ILogger logger)
+            : this(topicName, adminClientConfig, logger, null)
+        {
+        }
+
+        internal KafkaMetricsProvider(string topicName, AdminClientConfig adminClientConfig, ILogger logger, OidcTokenProvider oidcTokenProvider)
         {
             this.topicName = topicName;
             this.adminClientConfig = adminClientConfig;
             this.logger = logger;
+            this.oidcTokenProvider = oidcTokenProvider;
             this.topicPartitions = new Lazy<List<TopicPartition>>(LoadTopicPartitions);
             this.LastCalculatedMetrics = null;
         }
@@ -68,7 +82,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             try
             {
                 var timeout = TimeSpan.FromSeconds(5);
-                using var adminClient = new AdminClientBuilder(adminClientConfig).Build();
+                var adminBuilder = new AdminClientBuilder(adminClientConfig);
+                if (oidcTokenProvider != null)
+                {
+                    OidcManagedAuth.WireAdminClient(adminBuilder, oidcTokenProvider, logger);
+                }
+                using var adminClient = adminBuilder.Build();
+                if (oidcTokenProvider != null)
+                {
+                    OidcManagedAuth.PrimeToken(adminClient, oidcTokenProvider, logger);
+                }
                 var metadata = adminClient.GetMetadata(this.topicName, timeout);
                 if (metadata.Topics == null || metadata.Topics.Count == 0)
                 {

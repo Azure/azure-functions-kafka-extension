@@ -5,6 +5,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Confluent.Kafka;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.Config;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
@@ -127,7 +128,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 logger.Log((LogLevel)m.LevelAs(LogLevelType.MicrosoftExtensionsLogging), $"Libkafka: {m?.Message}");
             });
 
-            return builder.Build();
+            OidcTokenProvider oidcProvider = null;
+            if (OidcManagedAuth.IsManaged(this.listenerConfiguration.SaslOAuthBearerMethod))
+            {
+                oidcProvider = OidcManagedAuth.CreateProvider(
+                    this.listenerConfiguration.SaslOAuthBearerTokenEndpointUrl,
+                    this.listenerConfiguration.SaslOAuthBearerClientId,
+                    this.listenerConfiguration.SaslOAuthBearerClientSecret,
+                    this.listenerConfiguration.SaslOAuthBearerScope,
+                    this.listenerConfiguration.SaslOAuthBearerExtensions);
+                OidcManagedAuth.WireConsumer(builder, oidcProvider, this.logger);
+            }
+
+            var builtConsumer = builder.Build();
+            if (oidcProvider != null)
+            {
+                OidcManagedAuth.PrimeToken(builtConsumer, oidcProvider, this.logger);
+            }
+            return builtConsumer;
         }
 
         private KafkaMetricsProvider<TKey, TValue> CreateMetricsProvider()
@@ -207,13 +225,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 SslCertificatePem = this.listenerConfiguration.SslCertificatePEM,
                 SslKeyPem = this.listenerConfiguration.SslKeyPEM,
 
-                // OAuthBearer config
-                SaslOauthbearerMethod = this.listenerConfiguration.SaslOAuthBearerMethod,
-                SaslOauthbearerClientId = this.listenerConfiguration.SaslOAuthBearerClientId,
-                SaslOauthbearerClientSecret = this.listenerConfiguration.SaslOAuthBearerClientSecret,
-                SaslOauthbearerScope = this.listenerConfiguration.SaslOAuthBearerScope,
-                SaslOauthbearerTokenEndpointUrl = this.listenerConfiguration.SaslOAuthBearerTokenEndpointUrl,
-                SaslOauthbearerExtensions = this.listenerConfiguration.SaslOAuthBearerExtensions,
+                // OAuthBearer config. When OidcManaged is selected we deliberately leave
+                // these librdkafka properties unset so the native OIDC flow is not used;
+                // instead the managed handler is wired on the builder below.
 
                 // Values from host configuration
                 StatisticsIntervalMs = this.options.StatisticsIntervalMs,
@@ -228,6 +242,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 MetadataMaxAgeMs = this.options.MetadataMaxAgeMs,
                 SocketKeepaliveEnable = this.options.SocketKeepaliveEnable
             };
+
+            if (!OidcManagedAuth.IsManaged(this.listenerConfiguration.SaslOAuthBearerMethod))
+            {
+                conf.SaslOauthbearerMethod = (SaslOauthbearerMethod)this.listenerConfiguration.SaslOAuthBearerMethod;
+                conf.SaslOauthbearerClientId = this.listenerConfiguration.SaslOAuthBearerClientId;
+                conf.SaslOauthbearerClientSecret = this.listenerConfiguration.SaslOAuthBearerClientSecret;
+                conf.SaslOauthbearerScope = this.listenerConfiguration.SaslOAuthBearerScope;
+                conf.SaslOauthbearerTokenEndpointUrl = this.listenerConfiguration.SaslOAuthBearerTokenEndpointUrl;
+                conf.SaslOauthbearerExtensions = this.listenerConfiguration.SaslOAuthBearerExtensions;
+            }
 
             if (string.IsNullOrEmpty(this.listenerConfiguration.EventHubConnectionString))
             {

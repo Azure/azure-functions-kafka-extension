@@ -230,6 +230,11 @@ function Test-ConfluentKafkaIsolation {
         # Offset commit (consumer.StoreOffset)
         "AsyncCommitStrategy.cs",
         "ICommitStrategy.cs",
+        # OIDC managed-auth helpers (wire SetOAuthBearerTokenRefreshHandler on
+        # ConsumerBuilder/ProducerBuilder/AdminClientBuilder and adapt tokens
+        # to Schema Registry's IAuthenticationHeaderValueProvider).
+        "OidcManagedAuth.cs",
+        "OidcAuthenticationHeaderValueProvider.cs",
         # Config & Enums (maps to Confluent types)
         "KafkaListenerConfiguration.cs",
         "BrokerAuthenticationMode.cs",

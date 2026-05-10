@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using Confluent.Kafka;
+using Microsoft.Azure.WebJobs.Extensions.Kafka.Config;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Scale;
 using Microsoft.Azure.WebJobs.Logging;
@@ -39,8 +40,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             ILogger logger = loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("Kafka"));
 
             var consumerConfig = GetConsumerConfiguration(kafkaMetadata, config, nameResolver);
-            var consumer = new ConsumerBuilder<string, string>(consumerConfig).Build();
-            var metricsProvider = new KafkaMetricsProvider<string, string>(topicName, new AdminClientConfig(consumerConfig), consumer, logger);
+
+            OidcTokenProvider tokenProvider = null;
+            if (kafkaMetadata.AuthenticationMode == BrokerAuthenticationMode.OAuthBearer &&
+                OidcManagedAuth.IsManaged(kafkaMetadata.OAuthBearerMethod))
+            {
+                tokenProvider = OidcManagedAuth.CreateProvider(
+                    config.ResolveSecureSetting(nameResolver, kafkaMetadata.OAuthBearerTokenEndpointUrl),
+                    config.ResolveSecureSetting(nameResolver, kafkaMetadata.OAuthBearerClientId),
+                    config.ResolveSecureSetting(nameResolver, kafkaMetadata.OAuthBearerClientSecret),
+                    config.ResolveSecureSetting(nameResolver, kafkaMetadata.OAuthBearerScope),
+                    config.ResolveSecureSetting(nameResolver, kafkaMetadata.OAuthBearerExtensions));
+            }
+
+            var consumerBuilder = new ConsumerBuilder<string, string>(consumerConfig);
+            if (tokenProvider != null)
+            {
+                OidcManagedAuth.WireConsumer(consumerBuilder, tokenProvider, logger);
+            }
+            var consumer = consumerBuilder.Build();
+            if (tokenProvider != null)
+            {
+                OidcManagedAuth.PrimeToken(consumer, tokenProvider, logger);
+            }
+            var metricsProvider = new KafkaMetricsProvider<string, string>(topicName, new AdminClientConfig(consumerConfig), consumer, logger, tokenProvider);
 
             _scaleMonitor = new KafkaObjectTopicScaler(topicName, consumerGroup, metricsProvider, triggerMetadata.FunctionName, lagThreshold, logger);
             _targetScaler = new KafkaObjectTargetScaler(topicName, consumerGroup, metricsProvider, triggerMetadata.FunctionName, lagThreshold, logger);
@@ -79,7 +102,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     adminConfig.SecurityProtocol = (SecurityProtocol)kafkaMetaData.Protocol;
                 }
 
-                if (kafkaMetaData.AuthenticationMode == BrokerAuthenticationMode.OAuthBearer)
+                if (kafkaMetaData.AuthenticationMode == BrokerAuthenticationMode.OAuthBearer &&
+                    !OidcManagedAuth.IsManaged(kafkaMetaData.OAuthBearerMethod))
                 {
                     adminConfig.SaslOauthbearerMethod = (SaslOauthbearerMethod)kafkaMetaData.OAuthBearerMethod;
                     adminConfig.SaslOauthbearerClientId = config.ResolveSecureSetting(nameResolver, kafkaMetaData.OAuthBearerClientId);
@@ -187,7 +211,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             public string OAuthBearerExtensions { get; set; }
 
             [JsonProperty]
-            public SaslOauthbearerMethod OAuthBearerMethod { get; set; }
+            public OAuthBearerMethod OAuthBearerMethod { get; set; }
 
             public void ResolveProperties(IConfiguration config, INameResolver resolver)
             {

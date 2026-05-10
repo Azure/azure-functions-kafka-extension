@@ -13,6 +13,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.Config
     public enum OAuthBearerMethod
     {
         Default,
-        Oidc
+        Oidc,
+
+        /// <summary>
+        /// OIDC client-credentials flow performed in managed .NET code rather than
+        /// delegated to librdkafka's libcurl-based token fetch. Uses HttpClient to
+        /// POST to <c>OAuthBearerTokenEndpointUrl</c> and supplies the resulting
+        /// token to librdkafka via <c>SetOAuthBearerTokenRefreshHandler</c>. Avoids
+        /// the platform-specific CA-bundle issue that affects librdkafka's OIDC
+        /// path on some Linux images (e.g. Azure Functions Flex).
+        /// </summary>
+        OidcManaged
     }
 }
