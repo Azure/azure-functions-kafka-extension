@@ -28,6 +28,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
         }
 
+        public IEnumerable<KeyValuePair<string, string>> Config => new List<KeyValuePair<string, string>>();
+
+        public void ClearLatestCaches()
+        {
+        }
+
+        public void ClearCaches()
+        {
+        }
+
         public string ConstructKeySubjectName(string topic, string recordType = null) => $"{topic}-key";
 
         public string ConstructValueSubjectName(string topic, string recordType = null) => topic;
@@ -67,12 +77,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return Task.FromResult(schema);
         }
 
+        public Task<Schema> GetSchemaBySubjectAndIdAsync(string subject, int id, string format = null)
+        {
+            return GetSchemaAsync(id, format);
+        }
+
         public Task<int> GetSchemaIdAsync(string subject, string schema)
         {
             throw new System.NotImplementedException();
         }
 
+        public Task<RegisteredSchema> GetRegisteredSchemaAsync(string subject, int version, bool ignoreDeletedSchemas)
+        {
+            throw new System.NotImplementedException();
+        }
+
         public Task<int> GetSchemaIdAsync(string subject, Schema schema)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public Task<RegisteredSchema> GetLatestWithMetadataAsync(string subject, IDictionary<string, string> metadata, bool ignoreDeletedSchemas)
         {
             throw new System.NotImplementedException();
         }

@@ -33,11 +33,11 @@
     <WarningsAsErrors />
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="6.0.0" />
-    <PackageReference Include="Confluent.Kafka" Version="2.4.0" />
-    <PackageReference Include="Confluent.SchemaRegistry" Version="2.4.0" />
-    <PackageReference Include="Confluent.SchemaRegistry.Serdes.Avro" Version="2.4.0" />
-    <PackageReference Include="Confluent.SchemaRegistry.Serdes.Protobuf" Version="2.4.0" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="8.0.1" />
+    <PackageReference Include="Confluent.Kafka" Version="2.6.1" />
+    <PackageReference Include="Confluent.SchemaRegistry" Version="2.6.1" />
+    <PackageReference Include="Confluent.SchemaRegistry.Serdes.Avro" Version="2.6.1" />
+    <PackageReference Include="Confluent.SchemaRegistry.Serdes.Protobuf" Version="2.6.1" />
     <PackageReference Include="Grpc.Tools" Version="2.60.0">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
