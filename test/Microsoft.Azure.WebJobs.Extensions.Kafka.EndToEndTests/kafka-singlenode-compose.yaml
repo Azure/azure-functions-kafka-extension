@@ -42,7 +42,7 @@ services:
       CLUSTER_ID: Smqq4VQPTXahsrIWU98xeQ
 
   schema-registry:
-    image: confluentinc/cp-schema-registry:latest
+    image: funcacrcache.azurecr.io/cache/confluentinc/cp-schema-registry:7.6.0
     depends_on:
       - kafka
     ports:
