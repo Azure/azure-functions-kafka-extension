@@ -3,8 +3,9 @@
 ARG BASE_IMAGE=mcr.microsoft.com/azure-functions/base:2.0-alpine
 FROM ${BASE_IMAGE} as runtime-image
 
-FROM openjdk:8-jdk-alpine as jdk
-RUN mkdir -p /usr/lib/jvm/java-1.8-openjdk
+FROM openjdk:8u102-jdk as jdk
+RUN mkdir -p /usr/lib/jvm/java-1.8-openjdk && \
+    cp -a "${JAVA_HOME}/." /usr/lib/jvm/java-1.8-openjdk
 
 FROM mcr.microsoft.com/dotnet/core/runtime-deps:2.2-alpine
 
