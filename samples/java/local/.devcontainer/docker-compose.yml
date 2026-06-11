@@ -116,7 +116,7 @@ services:
       PORT: 9021
 
   rest-proxy:
-    image: confluentinc/cp-kafka-rest:5.3.1
+    image: funcacrcache.azurecr.io/cache/confluentinc/cp-kafka-rest:5.3.1
     depends_on:
       - zookeeper
       - broker
