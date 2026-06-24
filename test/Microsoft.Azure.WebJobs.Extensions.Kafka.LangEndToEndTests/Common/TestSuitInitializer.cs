@@ -38,8 +38,9 @@ public class TestSuitInitializer
 
 	private async Task StartupApplicationAsync(Language language, BrokerType brokerType)
 	{
+		var buildConfiguration = TestFunctionAppBuildConfiguration.FromEnvironment();
 		IExecutableCommand<Process> command =
-			ShellCommandFactory.CreateShellCommand(ShellCommandType.DOCKER_RUN, brokerType, language);
+			ShellCommandFactory.CreateShellCommand(ShellCommandType.DOCKER_RUN, brokerType, language, buildConfiguration);
 		IExecutor<IExecutableCommand<Process>, Process> executor = new ShellCommandExecutor();
 		ProcessLifecycleManager.GetInstance().AddProcess(await executor.ExecuteAsync(command));
 	}

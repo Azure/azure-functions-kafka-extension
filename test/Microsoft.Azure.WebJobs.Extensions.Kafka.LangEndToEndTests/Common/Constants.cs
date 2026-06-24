@@ -25,6 +25,8 @@ public static class Constants
 	public const string COLON_7071 = ":7071";
 	public const string DOCKER_ENVVAR_FLAG = "-e";
 	public const string DOCKER_NAME_FLAG = "--name";
+	public const string EXTENSION_SOURCE_ENV_VAR = "EXTENSION_SOURCE";
+	public const string EXTENSION_BUNDLE_VERSION_ENV_VAR = "EXTENSION_BUNDLE_VERSION";
 
 	public const string CONFLUENT_USERNAME_VAR = "ConfluentCloudUsername";
 	public const string CONFLUENT_PASSWORD_VAR = "ConfluentCloudPassword";

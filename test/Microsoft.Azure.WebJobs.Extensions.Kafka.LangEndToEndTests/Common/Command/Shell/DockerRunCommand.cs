@@ -11,8 +11,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common;
 */
 public class DockerRunCommand : ShellCommand
 {
-	public DockerRunCommand(BrokerType brokerType, Language language)
+	private readonly TestFunctionAppBuildConfiguration _buildConfiguration;
+
+	public DockerRunCommand(BrokerType brokerType, Language language, TestFunctionAppBuildConfiguration buildConfiguration = null)
 	{
+		_buildConfiguration = buildConfiguration;
 		cmd = BuildDockerStartCmd(brokerType, language);
 	}
 
@@ -46,6 +49,18 @@ public class DockerRunCommand : ShellCommand
 		//Adding env variable for the Storage Account
 		cmdList.Add(Constants.DOCKER_ENVVAR_FLAG);
 		cmdList.Add(Constants.AZURE_WEBJOBS_STORAGE);
+
+		if (_buildConfiguration?.HasExtensionSource == true)
+		{
+			cmdList.Add(Constants.DOCKER_ENVVAR_FLAG);
+			cmdList.Add($"{Constants.EXTENSION_SOURCE_ENV_VAR}={_buildConfiguration.ExtensionSource}");
+		}
+
+		if (_buildConfiguration?.HasExtensionBundleVersion == true)
+		{
+			cmdList.Add(Constants.DOCKER_ENVVAR_FLAG);
+			cmdList.Add($"{Constants.EXTENSION_BUNDLE_VERSION_ENV_VAR}={_buildConfiguration.ExtensionBundleVersion}");
+		}
 
 		//Creating container with the same name as the image
 		cmdList.Add(Constants.DOCKER_NAME_FLAG);

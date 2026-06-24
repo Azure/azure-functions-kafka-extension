@@ -5,14 +5,6 @@ if [ "$EXTENSION_SOURCE" = "bundle" ]; then
   cat > host.json <<EOF
 {
   "version": "2.0",
-  "logging": {
-    "applicationInsights": {
-      "samplingSettings": {
-        "isEnabled": true,
-        "excludedTypes": "Request"
-      }
-    }
-  },
   "extensionBundle": {
     "id": "Microsoft.Azure.Functions.ExtensionBundle",
     "version": "[$EXTENSION_BUNDLE_VERSION]"
@@ -28,14 +20,6 @@ else
   cat > host.json <<EOF
 {
   "version": "2.0",
-  "logging": {
-    "applicationInsights": {
-      "samplingSettings": {
-        "isEnabled": true,
-        "excludedTypes": "Request"
-      }
-    }
-  },
   "extensions": {
     "kafka": {
       "maxBatchSize": 3
@@ -45,4 +29,8 @@ else
 EOF
 fi
 
-func start
+if [ -n "$TARGET_DIR" ] && [ -d "$TARGET_DIR" ]; then
+  cp host.json "$TARGET_DIR/host.json"
+fi
+
+mvn azure-functions:run
