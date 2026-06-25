@@ -31,7 +31,7 @@ else {
 $safeBundleVersion = $ExtensionBundleVersion -replace '[^A-Za-z0-9_.-]', '_'
 $trxFileName = "confluent-bundle-$safeBundleVersion.trx"
 $azuriteAccountName = "devstoreaccount1"
-# [SuppressMessage("Microsoft.Security", "CS002:SecretInNextLine", Justification="Well known public Azurite emulator key. Used for local testing only.")]
+<#[SuppressMessage("Microsoft.Security", "CS002:SecretInNextLine", Justification="Well known public Azurite emulator key. Used for local testing only.")]#>
 $azuriteAccountKey = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
 
 function Require-Command {
