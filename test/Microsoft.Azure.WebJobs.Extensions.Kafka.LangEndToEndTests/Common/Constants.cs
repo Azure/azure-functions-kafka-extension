@@ -20,13 +20,21 @@ public static class Constants
 	public const string DOTNETISOLATED = "dotnet-isolated";
 
 	public const string DOCKER_RUN = "docker run";
+	public const string DOCKER_DETACH_FLAG = "-d";
 	public const string DOCKER_KILL = "docker rm -f";
 	public const string DOCKER_PORT_FLAG = "-p";
+	public const string DOCKER_NETWORK_FLAG = "--network";
 	public const string COLON_7071 = ":7071";
 	public const string DOCKER_ENVVAR_FLAG = "-e";
 	public const string DOCKER_NAME_FLAG = "--name";
 	public const string EXTENSION_SOURCE_ENV_VAR = "EXTENSION_SOURCE";
 	public const string EXTENSION_BUNDLE_VERSION_ENV_VAR = "EXTENSION_BUNDLE_VERSION";
+	public const string EXTENSION_BUNDLE_VERSION_RANGE_ENV_VAR = "EXTENSION_BUNDLE_VERSION_RANGE";
+	public const string FUNCTIONS_EXTENSIONBUNDLE_SOURCE_URI = "FUNCTIONS_EXTENSIONBUNDLE_SOURCE_URI";
+	public const string LOCAL_DOCKER_NETWORK = "azure-functions-kafka-lang-e2e";
+	public const string LOCAL_KAFKA_BROKER_LIST = "broker:29092";
+	public const string AZURITE_CONTAINER_HOSTNAME = "azurite";
+	public const string AZURITE_HOSTNAME_FROM_TEST_PROCESS = "127.0.0.1";
 
 	public const string CONFLUENT_USERNAME_VAR = "ConfluentCloudUsername";
 	public const string CONFLUENT_PASSWORD_VAR = "ConfluentCloudPassword";
@@ -34,6 +42,7 @@ public static class Constants
 	public const string EVENTHUB_CONSTRING_VAR = "EventHubConnectionString";
 	public const string EVENTHUB_BROKERLIST_VAR = "EventHubBrokerList";
 	public const string AZURE_WEBJOBS_STORAGE = "AzureWebJobsStorage";
+	public const string FUNCTIONS_WORKER_RUNTIME = "FUNCTIONS_WORKER_RUNTIME";
 	public const string AZURE_CLIENT_ID = "AZURE_CLIENT_ID";
 	public const string AZURE_CLIENT_SECRET = "AZURE_CLIENT_SECRET";
 	public const string AZURE_TENANT_ID = "AZURE_TENANT_ID";

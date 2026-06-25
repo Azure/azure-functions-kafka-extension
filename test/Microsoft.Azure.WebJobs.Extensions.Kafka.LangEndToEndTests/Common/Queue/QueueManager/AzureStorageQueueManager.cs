@@ -20,7 +20,7 @@ public class AzureStorageQueueManager : IQueueManager<QueueRequest, QueueRespons
 
 	private AzureStorageQueueManager()
 	{
-		_connectionString = Environment.GetEnvironmentVariable(Constants.AZURE_WEBJOBS_STORAGE);
+		_connectionString = StorageConnectionConfiguration.GetQueueTestConnectionString();
 		_queueClientStore = new ConcurrentDictionary<string, QueueClient>();
 	}
 

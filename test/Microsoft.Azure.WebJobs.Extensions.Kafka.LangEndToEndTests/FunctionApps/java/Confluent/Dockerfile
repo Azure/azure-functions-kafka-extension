@@ -1,6 +1,12 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0-bookworm-slim-amd64 AS dn8-sdk-image
 FROM mcr.microsoft.com/azure-functions/java:4-java21-core-tools
 
+RUN rm -f /etc/apt/sources.list.d/yarn.list /etc/apt/sources.list.d/yarn*.list \
+	&& apt-get update \
+	&& apt-get install -y --no-install-recommends azure-functions-core-tools-4 \
+	&& apt-get clean \
+	&& rm -rf /var/lib/apt/lists/*
+
 ARG EXTENSION_SOURCE=package
 ARG EXTENSION_BUNDLE_VERSION=4.3.2
 ENV EXTENSION_SOURCE=${EXTENSION_SOURCE}

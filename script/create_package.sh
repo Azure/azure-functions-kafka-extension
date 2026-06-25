@@ -19,3 +19,4 @@ docker build --build-arg EXTENSION_SOURCE="$EXTENSION_SOURCE" --build-arg EXTENS
 
 docker build --build-arg EXTENSION_SOURCE="$EXTENSION_SOURCE" --build-arg EXTENSION_BUNDLE_VERSION="$EXTENSION_BUNDLE_VERSION" -f ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/java/Confluent/Dockerfile -t azure-functions-kafka-java-confluent .
 docker build --build-arg EXTENSION_SOURCE="$EXTENSION_SOURCE" --build-arg EXTENSION_BUNDLE_VERSION="$EXTENSION_BUNDLE_VERSION" -f ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/python/Confluent/Dockerfile -t azure-functions-kafka-python-confluent .
+docker build --build-arg EXTENSION_SOURCE="$EXTENSION_SOURCE" --build-arg EXTENSION_BUNDLE_VERSION="$EXTENSION_BUNDLE_VERSION" -f ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/javascript/Confluent/Dockerfile -t azure-functions-kafka-javascript-confluent .

@@ -3,6 +3,8 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
+using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
@@ -14,6 +16,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common;
 */
 public class TestSuitInitializer
 {
+	private const int FunctionAppStartupAttempts = 60;
+	private static readonly TimeSpan FunctionAppStartupDelay = TimeSpan.FromSeconds(5);
+	private static readonly HttpClient HttpClient = new();
 	private readonly ILogger _logger = TestLogger.GetTestLogger();
 
 	public async Task InitializeTestSuitAsync(Language language, BrokerType brokerType)
@@ -42,7 +47,46 @@ public class TestSuitInitializer
 		IExecutableCommand<Process> command =
 			ShellCommandFactory.CreateShellCommand(ShellCommandType.DOCKER_RUN, brokerType, language, buildConfiguration);
 		IExecutor<IExecutableCommand<Process>, Process> executor = new ShellCommandExecutor();
-		ProcessLifecycleManager.GetInstance().AddProcess(await executor.ExecuteAsync(command));
+		var process = await executor.ExecuteAsync(command);
+		ProcessLifecycleManager.GetInstance().AddProcess(process);
+		if (process.ExitCode != 0)
+		{
+			throw new InvalidOperationException($"Function App container failed to start. Docker command exited with code {process.ExitCode}.");
+		}
+
+		await WaitForFunctionAppStartupAsync(language, brokerType);
+	}
+
+	private async Task WaitForFunctionAppStartupAsync(Language language, BrokerType brokerType)
+	{
+		var port = Constants.BrokerLanguagePortMapping[new Tuple<BrokerType, Language>(brokerType, language)];
+		var statusUri = new Uri($"http://localhost:{port}/admin/host/status");
+		Exception lastException = null;
+
+		for (var attempt = 1; attempt <= FunctionAppStartupAttempts; attempt++)
+		{
+			try
+			{
+				var response = await HttpClient.GetAsync(statusUri);
+				if (response.IsSuccessStatusCode)
+				{
+					var content = await response.Content.ReadAsStringAsync();
+					if (content.Contains("\"state\":\"Running\"", StringComparison.OrdinalIgnoreCase))
+					{
+						_logger.LogInformation($"Function App for {language} {brokerType} is ready at {statusUri}.");
+						return;
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				lastException = ex;
+			}
+
+			await Task.Delay(FunctionAppStartupDelay);
+		}
+
+		throw new TimeoutException($"Function App for {language} {brokerType} did not become ready at {statusUri}.", lastException);
 	}
 
 	private async Task ClearStorageQueueAsync(Language language, BrokerType brokerType)
