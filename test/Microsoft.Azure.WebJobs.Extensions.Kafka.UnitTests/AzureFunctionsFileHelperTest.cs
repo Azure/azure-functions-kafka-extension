@@ -78,5 +78,34 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.NotEmpty(actual);
             Assert.Equal(pathInContainer, actual);
         }
+
+        [Fact]
+        public void TryGetUserSpecifiedLibrdKafkaLocation_WhenRunningInAzure_ShouldIgnoreEnvironmentVariable()
+        {
+            const string librdKafkaLocation = @"C:\temp\librdkafka.dll";
+
+            AzureEnvironment.SetRunningInAzureEnvVars();
+            AzureEnvironment.SetEnvironmentVariable(AzureFunctionsFileHelper.LibrdKafkaLocationEnvVarName, librdKafkaLocation);
+
+            var result = AzureFunctionsFileHelper.TryGetUserSpecifiedLibrdKafkaLocation(NullLogger.Instance, out var actual);
+
+            Assert.False(result);
+            Assert.Null(actual);
+        }
+
+        [Fact]
+        public void TryGetUserSpecifiedLibrdKafkaLocation_WhenRunningInDevelopment_ShouldReturnEnvironmentVariable()
+        {
+            const string librdKafkaLocation = @"C:\temp\librdkafka.dll";
+
+            AzureEnvironment.SetRunningInAzureEnvVars();
+            AzureEnvironment.SetEnvironmentVariable(AzureFunctionsFileHelper.AzureFunctionEnvironmentEnvVarName, AzureFunctionsFileHelper.DevelopmentEnvironmentName);
+            AzureEnvironment.SetEnvironmentVariable(AzureFunctionsFileHelper.LibrdKafkaLocationEnvVarName, librdKafkaLocation);
+
+            var result = AzureFunctionsFileHelper.TryGetUserSpecifiedLibrdKafkaLocation(NullLogger.Instance, out var actual);
+
+            Assert.True(result);
+            Assert.Equal(librdKafkaLocation, actual);
+        }
     }
 }

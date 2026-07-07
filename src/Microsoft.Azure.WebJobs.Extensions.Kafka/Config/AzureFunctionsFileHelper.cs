@@ -80,6 +80,26 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         // Ensure that we return only once the initialization is finished
         static object librdkafkaInitializationLock = new object();
 
+        internal static bool TryGetUserSpecifiedLibrdKafkaLocation(ILogger logger, out string librdKafkaLocation)
+        {
+            librdKafkaLocation = Environment.GetEnvironmentVariable(LibrdKafkaLocationEnvVarName);
+            if (string.IsNullOrWhiteSpace(librdKafkaLocation))
+            {
+                librdKafkaLocation = null;
+                return false;
+            }
+
+            if (IsRunningAsFunctionInAzureOrContainer())
+            {
+                logger.LogWarning("Librdkafka initialization: ignoring {envVarName} because user specified native library paths are not supported when running in Azure or containers", LibrdKafkaLocationEnvVarName);
+                librdKafkaLocation = null;
+                return false;
+            }
+
+            logger.LogWarning("Librdkafka initialization: {envVarName} is deprecated and should only be used for local development", LibrdKafkaLocationEnvVarName);
+            return true;
+        }
+
         /// <summary>
         /// Initializes the librdkafka library from a specific place
         /// This address the problem that running Functions in Azure won't have the current directory where the function code is.
@@ -100,8 +120,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
                 librdkafkaInitialized = true;
 
-                var userSpecifiedLibrdKafkaLocation = Environment.GetEnvironmentVariable(LibrdKafkaLocationEnvVarName);
-                if (!string.IsNullOrWhiteSpace(userSpecifiedLibrdKafkaLocation))
+                if (TryGetUserSpecifiedLibrdKafkaLocation(logger, out var userSpecifiedLibrdKafkaLocation))
                 {
                     logger.LogDebug("Librdkafka initialization: loading librdkafka from user specified location: {librdkafkaPath}", userSpecifiedLibrdKafkaLocation);
                     Confluent.Kafka.Library.Load(userSpecifiedLibrdKafkaLocation);
