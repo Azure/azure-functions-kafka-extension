@@ -80,7 +80,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         // Ensure that we return only once the initialization is finished
         static object librdkafkaInitializationLock = new object();
 
-        internal static bool TryGetUserSpecifiedLibrdKafkaLocation(ILogger logger, out string librdKafkaLocation)
+        internal static bool TryResolveUserSpecifiedLibrdKafkaLocation(ILogger logger, out string librdKafkaLocation)
         {
             librdKafkaLocation = Environment.GetEnvironmentVariable(LibrdKafkaLocationEnvVarName);
             if (string.IsNullOrWhiteSpace(librdKafkaLocation))
@@ -92,6 +92,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             if (IsRunningAsFunctionInAzureOrContainer())
             {
                 logger.LogWarning("Librdkafka initialization: ignoring {envVarName} because user specified native library paths are not supported when running in Azure or containers", LibrdKafkaLocationEnvVarName);
+                librdKafkaLocation = null;
+                return false;
+            }
+
+            if (!Path.IsPathRooted(librdKafkaLocation))
+            {
+                logger.LogWarning("Librdkafka initialization: ignoring {envVarName} because relative paths are not supported. Use an absolute path.", LibrdKafkaLocationEnvVarName);
+                librdKafkaLocation = null;
+                return false;
+            }
+
+            if (!File.Exists(librdKafkaLocation))
+            {
+                logger.LogWarning("Librdkafka initialization: ignoring {envVarName} because the specified file does not exist: {fileName}", LibrdKafkaLocationEnvVarName, Path.GetFileName(librdKafkaLocation));
                 librdKafkaLocation = null;
                 return false;
             }
@@ -120,9 +134,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
                 librdkafkaInitialized = true;
 
-                if (TryGetUserSpecifiedLibrdKafkaLocation(logger, out var userSpecifiedLibrdKafkaLocation))
+                if (TryResolveUserSpecifiedLibrdKafkaLocation(logger, out var userSpecifiedLibrdKafkaLocation))
                 {
-                    logger.LogDebug("Librdkafka initialization: loading librdkafka from user specified location: {librdkafkaPath}", userSpecifiedLibrdKafkaLocation);
+                    logger.LogDebug("Librdkafka initialization: loading librdkafka from user specified location: {librdkafkaFileName}", Path.GetFileName(userSpecifiedLibrdKafkaLocation));
                     Confluent.Kafka.Library.Load(userSpecifiedLibrdKafkaLocation);
                     return;
                 }
