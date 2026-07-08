@@ -699,7 +699,8 @@ Confluent.Kafka IProducer → Kafka Broker
 
 1. Detects runtime environment (Azure Functions vs. container vs. local dev)
 2. Searches `runtimes/{rid}/native/` directory in NuGet package layout
-3. Sets `LIBRDKAFKA_LOCATION` environment variable
-4. Confluent.Kafka loads from this location
+3. Ignores `LIBRDKAFKA_LOCATION` in Azure/container execution because hosted app settings must not redirect native library loading
+4. Temporarily allows `LIBRDKAFKA_LOCATION` only as a deprecated local-development workaround
+5. Confluent.Kafka loads from the discovered package path or its normal native asset resolution
 
 This is sensitive to NuGet package layout changes and platform-specific paths.
