@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System.Collections.Generic;
+using System.Net;
 using System.Threading.Tasks;
 using Confluent.SchemaRegistry;
 
@@ -29,6 +30,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         }
 
         public IEnumerable<KeyValuePair<string, string>> Config => new List<KeyValuePair<string, string>>();
+
+        public IAuthenticationHeaderValueProvider AuthHeaderProvider => null;
+
+        public IWebProxy Proxy => null;
 
         public void ClearLatestCaches()
         {
@@ -80,6 +85,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         public Task<Schema> GetSchemaBySubjectAndIdAsync(string subject, int id, string format = null)
         {
             return GetSchemaAsync(id, format);
+        }
+
+        public Task<Schema> GetSchemaByGuidAsync(string guid, string format = null)
+        {
+            return GetSchemaAsync(1, format);
         }
 
         public Task<int> GetSchemaIdAsync(string subject, string schema)
@@ -158,6 +168,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             subjects.Add(subject);
             return Task.FromResult(1);
+        }
+
+        public Task<RegisteredSchema> RegisterSchemaWithResponseAsync(string subject, Schema schema, bool normalize = false)
+        {
+            subjects.Add(subject);
+            return Task.FromResult(new RegisteredSchema(subject, 1, 1, schema.SchemaString, schema.SchemaType, schema.References));
         }
 
         public Task<Compatibility> UpdateCompatibilityAsync(Compatibility compatibility, string subject = null)
