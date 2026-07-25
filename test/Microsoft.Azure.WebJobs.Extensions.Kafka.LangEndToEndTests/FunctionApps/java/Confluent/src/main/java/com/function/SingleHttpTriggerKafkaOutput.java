@@ -12,11 +12,7 @@ public class SingleHttpTriggerKafkaOutput {
             @HttpTrigger(name = "req", methods = {HttpMethod.GET, HttpMethod.POST}, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
             @KafkaOutput(name = "kafkaOutput",
                          topic = "e2e-kafka-java-single-confluent", 
-                         brokerList="ConfluentBrokerList",
-                         username = "ConfluentCloudUsername",
-                         password = "ConfluentCloudPassword",
-                         authenticationMode = BrokerAuthenticationMode.PLAIN,
-                         protocol = BrokerProtocol.SASLSSL)  OutputBinding<String> output,
+                         brokerList="ConfluentBrokerList")  OutputBinding<String> output,
             final ExecutionContext context) {
         context.getLogger().info("Java HTTP trigger processed a request.");
 

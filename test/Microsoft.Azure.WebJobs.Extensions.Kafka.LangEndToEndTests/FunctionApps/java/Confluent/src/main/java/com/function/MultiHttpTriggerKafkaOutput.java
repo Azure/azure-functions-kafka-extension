@@ -13,11 +13,7 @@ public class MultiHttpTriggerKafkaOutput {
             @HttpTrigger(name = "req", methods = {HttpMethod.GET}, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<String>> request,
             @KafkaOutput(name = "kafkaOutput",
                          topic = "e2e-kafka-java-multi-confluent", 
-                         brokerList="ConfluentBrokerList",
-                         username = "ConfluentCloudUsername",
-                         password = "ConfluentCloudPassword",
-                         authenticationMode = BrokerAuthenticationMode.PLAIN,
-                         protocol = BrokerProtocol.SASLSSL)  OutputBinding<List<String>> output,
+                         brokerList="ConfluentBrokerList")  OutputBinding<List<String>> output,
             final ExecutionContext context) {
         context.getLogger().info("Java HTTP trigger processed a request.");
 

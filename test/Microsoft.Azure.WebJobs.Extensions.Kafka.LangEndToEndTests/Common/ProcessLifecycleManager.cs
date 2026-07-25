@@ -24,8 +24,15 @@ public class ProcessLifecycleManager : IDisposable
 	{
 		foreach (var process in processList)
 		{
-			process.Kill();
+			if (!process.HasExited)
+			{
+				process.Kill();
+			}
+
+			process.Dispose();
 		}
+
+		processList.Clear();
 	}
 
 	public static ProcessLifecycleManager GetInstance()

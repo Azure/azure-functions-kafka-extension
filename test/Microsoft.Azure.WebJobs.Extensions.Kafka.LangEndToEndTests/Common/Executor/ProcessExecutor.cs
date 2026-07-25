@@ -19,7 +19,11 @@ public class ProcessExecutor : IExecutor<string, Process>
 		}
 
 		var requestProcess = CreateProcess(request);
-		await Task.Run(() => requestProcess.Start());
+		await Task.Run(() =>
+		{
+			requestProcess.Start();
+			requestProcess.WaitForExit();
+		});
 
 		return requestProcess;
 	}
@@ -30,19 +34,17 @@ public class ProcessExecutor : IExecutor<string, Process>
 
 		if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 		{
-			process.StartInfo.ArgumentList.Add("/C");
 			process.StartInfo.FileName = "cmd.exe";
-			process.StartInfo.ArgumentList.Add(request);
+			process.StartInfo.Arguments = $"/C {request}";
 		}
 		else
 		{
-			process.StartInfo.Arguments = $"-c \"{request}\"";
 			process.StartInfo.FileName = "/bin/bash";
+			process.StartInfo.ArgumentList.Add("-c");
+			process.StartInfo.ArgumentList.Add(request);
 		}
 
 		process.StartInfo.UseShellExecute = false;
-		process.StartInfo.RedirectStandardError = true;
-		process.StartInfo.RedirectStandardOutput = true;
 		process.StartInfo.CreateNoWindow = false;
 
 		return process;

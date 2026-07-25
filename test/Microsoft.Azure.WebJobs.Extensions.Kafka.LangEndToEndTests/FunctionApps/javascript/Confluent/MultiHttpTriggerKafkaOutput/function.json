@@ -1,5 +1,5 @@
 {
-  "scriptFile": "__init__.py",
+  "scriptFile": "index.js",
   "bindings": [
     {
       "authLevel": "function",
@@ -7,7 +7,8 @@
       "direction": "in",
       "name": "req",
       "methods": [
-        "get"
+        "get",
+        "post"
       ]
     },
     {
@@ -15,12 +16,12 @@
       "direction": "out",
       "name": "out",
       "brokerList": "ConfluentBrokerList",
-      "topic": "e2e-kafka-python-multi-confluent"
+      "topic": "e2e-kafka-javascript-multi-confluent"
     },
     {
       "type": "http",
       "direction": "out",
-      "name": "$return"
+      "name": "res"
     }
   ]
 }

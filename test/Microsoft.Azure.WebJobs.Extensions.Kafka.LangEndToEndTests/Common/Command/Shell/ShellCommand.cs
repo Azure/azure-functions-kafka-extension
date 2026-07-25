@@ -18,6 +18,8 @@ public class ShellCommand : IExecutableCommand<Process>
 		processExecutor = new ProcessExecutor();
 	}
 
+	internal string CommandText => cmd;
+
 	public async Task<Process> ExecuteCommandAsync()
 	{
 		process = await processExecutor.ExecuteAsync(cmd);

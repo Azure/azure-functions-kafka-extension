@@ -27,14 +27,6 @@ if [ "$EXTENSION_SOURCE" = "bundle" ]; then
 	cat > host.json <<EOF
 {
 	"version": "2.0",
-	"logging": {
-		"applicationInsights": {
-			"samplingSettings": {
-				"isEnabled": true,
-				"excludedTypes": "Request"
-			}
-		}
-	},
 	"extensionBundle": {
 		"id": "Microsoft.Azure.Functions.ExtensionBundle",
 		"version": "$bundle_version_range"
@@ -50,14 +42,6 @@ else
 	cat > host.json <<EOF
 {
 	"version": "2.0",
-	"logging": {
-		"applicationInsights": {
-			"samplingSettings": {
-				"isEnabled": true,
-				"excludedTypes": "Request"
-			}
-		}
-	},
 	"extensions": {
 		"kafka": {
 			"maxBatchSize": 3

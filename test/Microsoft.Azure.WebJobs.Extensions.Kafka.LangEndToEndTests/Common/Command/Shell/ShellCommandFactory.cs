@@ -9,12 +9,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Common;
 public static class ShellCommandFactory
 {
 	public static ShellCommand CreateShellCommand(ShellCommandType shellCommandType, BrokerType brokerType,
-		Language language)
+		Language language, TestFunctionAppBuildConfiguration buildConfiguration = null)
 	{
 		switch (shellCommandType)
 		{
 			case ShellCommandType.DOCKER_RUN:
-				return new DockerRunCommand(brokerType, language);
+				return new DockerRunCommand(brokerType, language, buildConfiguration);
 			case ShellCommandType.DOCKER_KILL:
 				return new DockerKillCommand(brokerType, language);
 			default:

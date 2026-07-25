@@ -1,36 +1,106 @@
 ﻿## Software Installation
 
-Function apps for the test run in docker containers. Please install docker on the system.
+Function apps for the test run in Docker containers. Install Docker before running the language E2E tests.
 
-## Additional Infrastructure Resources
+## Local Infrastructure
 
-For the tests to run end-to-end we need to precreate the following resources - 
+The default language E2E path uses local containers only:
 
-### Azure Resources: 
-Create the following the azure resources in the same subscription -
-1. Resource Group: Name can be configured as RESOURCE_GROUP in Constants file
-2. Eventhub Namespace: Name can be configured as EVENTHUB_NAMESPACE in Constants file   
-3. Azure Storage Account: Create an Azure Storage Account
-4. Azure Service Principle: Create Service Principle with access to above created eventhub namespace and azure storage account
+1. Kafka broker: `broker:29092` inside the Docker network and `localhost:9092` from the host.
+2. Azurite: queue storage emulator on host ports `10000`, `10001`, and `10002`.
+3. Function App containers: started by the xUnit fixture with `docker run`.
 
-### External Resources:
-1. Confluent Cluster: Create a confluent cluster with the following topics per languange
-	a) e2e-kafka-{lang}-single-confluent 	
-	b) e2e-kafka-{lang}-multi-confluent
-	c) e2e-kafka-{lang}-single-eventhub
-	d) e2e-kafka-{lang}-multi-eventhub
+For bundle release sanity, use the one-command local runner from the repo root:
 
-## Env Variables
+```powershell
+./script/run_bundle_lang_e2e.ps1 -ExtensionBundleVersion 4.37.0
+```
 
-Add the following environment variables, which will be picked up automatically provided to functions as environment variables during container startup - 
+The runner builds the local Confluent Java/Python/JavaScript Function App images, starts Kafka and Azurite, sets fixed local values for `ConfluentBrokerList`, `AzureWebJobsStorage`, and `AzureStorageQueueTestConnection`, runs the Confluent Lang E2E tests in bundle mode, writes a TRX result under `artifacts/LangE2E`, and cleans up the local containers. It uses `https://cdn-staging.functions.azure.com/public` as the bundle source by default.
 
-1. AZURE_CLIENT_ID: Service Principle Client Id
-2. AZURE_CLIENT_SECRET: Service Principle Client Secret
-3. AZURE_SUBSCRIPTION_ID: Susbcription Id for all azure resources
-4. AZURE_TENANT_ID: Tenant Id for all azure resources
-5. AzureWebJobsStorage: Connection String for Azure Storage Account
-6. ConfluentBrokerList: Bootstrap Server for Confluent cluster
-7. ConfluentCloudPassword: API Key for Confluent Cluster
-8. ConfluentCloudUsername: API Key name for Confluent Cluster
-9. EventHubBrokerList: Eventhub server url
-10. EventHubConnectionString: Connection String for Azure Eventhub with Manage/Read/Write Permissions
+To test a bundle that is already on the production CDN, switch the bundle source:
+
+```powershell
+./script/run_bundle_lang_e2e.ps1 -ExtensionBundleVersion 4.37.0 -BundleSource Production
+```
+
+To test a custom bundle CDN, pass `-ExtensionBundleSourceUri <uri>`.
+
+Start the local infrastructure before running the tests.
+
+PowerShell:
+
+```powershell
+Push-Location test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/server
+docker-compose up -d
+docker exec broker cub kafka-ready -b broker:29092 1 60
+Pop-Location
+```
+
+Bash:
+
+```bash
+bash test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/server/start-kafka-test-environment.sh
+```
+
+Stop it after the run.
+
+PowerShell:
+
+```powershell
+Push-Location test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/server
+docker-compose down -v
+Pop-Location
+```
+
+Bash:
+
+```bash
+bash test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/server/stop-kafka-test-environment.sh
+```
+
+## Default Environment Variables
+
+No Azure or Confluent Cloud account variables are required for the default local path.
+
+The test harness supplies these defaults when the variables are not set:
+
+1. `ConfluentBrokerList`: defaults to `broker:29092` for the Function App containers. The historical Confluent test path now targets the local Kafka broker.
+2. `AzureWebJobsStorage`: defaults to an Azurite connection string that uses `azurite` from Function App containers.
+3. `AzureStorageQueueTestConnection`: optional test-process override. If unset, the xUnit verifier uses an Azurite connection string that targets `127.0.0.1`.
+
+For bundle builds that are only available from the staging CDN, set this before running `dotnet test`:
+
+PowerShell:
+
+```powershell
+$env:FUNCTIONS_EXTENSIONBUNDLE_SOURCE_URI = "https://cdn-staging.functions.azure.com/public"
+```
+
+Bash:
+
+```bash
+export FUNCTIONS_EXTENSIONBUNDLE_SOURCE_URI=https://cdn-staging.functions.azure.com/public
+```
+
+When `EXTENSION_BUNDLE_VERSION=4.37.0`, the harness writes the bundle range as `[4.37.0,5.0.0)`.
+
+## EventHub Tests
+
+EventHub tests are disabled by default. They are not part of the local sanity path.
+
+To opt in to the legacy EventHub path, set:
+
+```bash
+export EnableEventHubsTestsFlag=true
+```
+
+The legacy EventHub path still requires Azure resources and EventHub connection settings:
+
+1. `EventHubBrokerList`: Event Hubs Kafka endpoint.
+2. `EventHubConnectionString`: Event Hubs connection string with manage, read, and write permissions.
+3. Azure credentials resolvable by `DefaultAzureCredential` for creating and deleting Event Hubs under the configured resource group and namespace. Locally, `az login` and `az account set --subscription <subscription-id>` can satisfy this.
+
+## Legacy Confluent Cloud Path
+
+The language E2E tests no longer require Confluent Cloud credentials by default. The old `ConfluentCloudUsername` and `ConfluentCloudPassword` settings are not used by the local path.

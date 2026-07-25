@@ -4,9 +4,11 @@
 	<WarningsAsErrors></WarningsAsErrors>
 	<DefaultItemExcludes>**</DefaultItemExcludes>
   </PropertyGroup>
+  <ItemGroup Condition="'$(EXTENSION_SOURCE)' != 'bundle'">
+    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Kafka" Version="[4.0.0,)" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Azure.Identity" Version="1.13.1" />
-    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Kafka" Version="[4.0.0,)" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="5.3.3" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Script.ExtensionsMetadataGenerator" Version="4.0.1" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage.Queues" Version="5.3.3" />

@@ -12,11 +12,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.Tests
         {
             if (IgnoreOnDisableEventHubsFlag())
             {
-                Skip = "Skipping EventHubs tests as DisableEventHubsTestsFlag is provided";
+                Skip = "Skipping EventHubs tests. Set EnableEventHubsTestsFlag=true to opt in.";
             }
         }
 
         private static bool IgnoreOnDisableEventHubsFlag() =>
-            Environment.GetEnvironmentVariable("DisableEventHubsTestsFlag") == "true";
+            Environment.GetEnvironmentVariable("DisableEventHubsTestsFlag") == "true"
+            || Environment.GetEnvironmentVariable("EnableEventHubsTestsFlag") != "true";
     }
 }

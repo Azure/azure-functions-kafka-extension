@@ -16,11 +16,7 @@
       "direction": "out",
       "name": "out",
       "brokerList": "ConfluentBrokerList",
-      "topic": "e2e-kafka-python-single-confluent",
-      "username": "ConfluentCloudUsername",
-      "password": "ConfluentCloudPassword",
-      "protocol": "SASLSSL",
-      "authenticationMode": "PLAIN"
+      "topic": "e2e-kafka-python-single-confluent"
     },
     {
       "type": "http",

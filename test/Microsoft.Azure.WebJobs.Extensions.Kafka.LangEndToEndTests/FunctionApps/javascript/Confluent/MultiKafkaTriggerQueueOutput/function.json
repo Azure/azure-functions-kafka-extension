@@ -1,19 +1,21 @@
 {
-  "scriptFile": "__init__.py",
+  "scriptFile": "index.js",
   "bindings": [
     {
       "type": "kafkaTrigger",
-      "name": "kevent",
+      "name": "events",
       "direction": "in",
       "brokerList": "ConfluentBrokerList",
-      "topic": "e2e-kafka-python-single-confluent",
-      "consumerGroup": "$Default"
+      "topic": "e2e-kafka-javascript-multi-confluent",
+      "consumerGroup": "$Default",
+      "cardinality": "MANY",
+      "dataType": "string"
     },
     {
       "type": "queue",
       "direction": "out",
       "name": "queueMsg",
-      "queueName": "e2e-python-single-confluent",
+      "queueName": "e2e-javascript-multi-confluent",
       "connection": "AzureWebJobsStorage"
     }
   ]

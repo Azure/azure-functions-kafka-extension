@@ -1,5 +1,5 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0-bookworm-slim-amd64 AS dn8-sdk-image
-FROM mcr.microsoft.com/azure-functions/python:4-python3.10-core-tools
+FROM mcr.microsoft.com/azure-functions/node:4-node20-core-tools
 
 RUN rm -f /etc/apt/sources.list.d/yarn.list /etc/apt/sources.list.d/yarn*.list \
 	&& apt-get update \
@@ -12,17 +12,14 @@ ARG EXTENSION_BUNDLE_VERSION=4.3.2
 
 COPY --from=dn8-sdk-image [ "/usr/share/dotnet", "/usr/share/dotnet" ]
 
-# Copy Local File
 RUN mkdir /workspace
 COPY . /workspace
-WORKDIR /workspace/test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/python/Confluent
+WORKDIR /workspace/test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/javascript/Confluent
 
-ENV LD_LIBRARY_PATH=/workspace/test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/python/Confluent/bin/runtimes/linux-x64/native
+ENV LD_LIBRARY_PATH=/workspace/test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/javascript/Confluent/bin/runtimes/linux-x64/native
 ENV EXTENSION_SOURCE=${EXTENSION_SOURCE}
 ENV EXTENSION_BUNDLE_VERSION=${EXTENSION_BUNDLE_VERSION}
 
-RUN python -m venv .venv 
-RUN pip install -r requirements.txt
 RUN dotnet nuget add source /workspace/temp --name local && dotnet nuget list source
 RUN if [ "$EXTENSION_SOURCE" = "bundle" ]; then \
 			echo "Using extension bundle mode"; \
