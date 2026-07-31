@@ -129,7 +129,7 @@ extends:
               - template: ci/sign-files.yml@eng
                 parameters:
                   displayName: Sign extension assembly
-                  folderPath: src/Microsoft.Azure.WebJobs.Extensions.Kafka/bin/Debug/netstandard2.0/
+                  folderPath: src/Microsoft.Azure.WebJobs.Extensions.Kafka/bin/Release/netstandard2.0/
                   pattern: Microsoft.Azure.WebJobs.Extensions.Kafka.dll
                   signType: dll
 

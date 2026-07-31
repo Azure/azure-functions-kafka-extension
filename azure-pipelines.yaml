@@ -124,12 +124,71 @@ steps:
       filePath: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/stop-kafka-test-environment.sh
       workingDirectory: test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
 
+  - pwsh: |
+      if ([string]::IsNullOrWhiteSpace($env:SYSTEM_ACCESSTOKEN)) {
+        throw 'System.AccessToken is required to authenticate Docker NuGet restores.'
+      }
+
+      $configPath = Join-Path '$(Agent.TempDirectory)' 'NuGet.CFS.config'
+      Write-Host "##vso[task.setvariable variable=CFS_NUGET_CONFIG]$configPath"
+      $sourceConfigPath = Join-Path '$(Build.SourcesDirectory)' 'NuGet.config'
+      try {
+        Copy-Item -LiteralPath $sourceConfigPath -Destination $configPath -Force
+
+        $arguments = @(
+          'nuget'
+          'update'
+          'source'
+          'upstream-public'
+          '--configfile'
+          $configPath
+          '--username'
+          'AzureDevOps'
+          '--password'
+          $env:SYSTEM_ACCESSTOKEN
+          '--store-password-in-clear-text'
+        )
+        & dotnet @arguments
+        if ($LASTEXITCODE -ne 0) {
+          throw "Unable to configure Docker NuGet authentication (exit code $LASTEXITCODE)."
+        }
+      } catch {
+        Remove-Item -LiteralPath $configPath -Force -ErrorAction SilentlyContinue
+        throw
+      }
+    displayName: Configure Docker NuGet authentication
+    env:
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+
+  - task: Bash@3
+    displayName: Package current source as NuGet package and pack it in Docker
+    env:
+      CFS_NUGET_CONFIG: $(CFS_NUGET_CONFIG)
+    inputs:
+      targetType: filePath
+      filePath: ./script/create_package.sh
+
+  - pwsh: |
+      $configPath = Join-Path '$(Agent.TempDirectory)' 'NuGet.CFS.config'
+      if (Test-Path -LiteralPath $configPath) {
+        Remove-Item -LiteralPath $configPath -Force
+      }
+    displayName: Remove Docker NuGet authentication
+    condition: always()
+
+  - task: DotNetCoreCLI@2
+    displayName: Rebuild project for release package
+    inputs:
+      command: build
+      arguments: '--configuration Release --no-restore -p:IsLocalBuild=False'
+      projects: src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
+
   - task: EsrpCodeSigning@1
     displayName: Sign extension assembly
     condition: and(succeeded(), eq(variables.isReleaseTriggered, 'True'))
     inputs:
       connectedServiceName: ESRP Service
-      folderPath: src/Microsoft.Azure.WebJobs.Extensions.Kafka/bin/Debug/netstandard2.0/
+      folderPath: src/Microsoft.Azure.WebJobs.Extensions.Kafka/bin/Release/netstandard2.0/
       pattern: Microsoft.Azure.WebJobs.Extensions.Kafka.dll
       signConfigType: inlineSignParams
       inlineOperation: |
@@ -155,20 +214,6 @@ steps:
               "ToolVersion": "1.0"
             }
           ]
-  
-
-  - task: Bash@3
-    displayName: Package current source as NuGet package and pack it in Docker
-    inputs:
-      targetType: filePath
-      filePath: ./script/create_package.sh
-
-  - task: DotNetCoreCLI@2
-    displayName: Rebuild project for release package
-    inputs:
-      command: build
-      arguments: '--configuration Release --no-restore -p:IsLocalBuild=False'
-      projects: src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
 
 #  - task: DotNetCoreCLI@2
 #    displayName: Run language e2e tests

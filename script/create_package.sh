@@ -12,6 +12,15 @@ if [[ -z "${PIP_INDEX_URL:-}" ]]; then
     echo "PIP_INDEX_URL must be set to the authenticated CFS Python feed." >&2
     exit 1
 fi
+if [[ -z "${CFS_NUGET_CONFIG:-}" ]]; then
+    echo "CFS_NUGET_CONFIG must point to an authenticated temporary NuGet config." >&2
+    exit 1
+fi
+DOCKER_NUGET_CONFIG_PATH=$CFS_NUGET_CONFIG
+if [[ ! -f "$DOCKER_NUGET_CONFIG_PATH" ]]; then
+    echo "Docker NuGet config does not exist: $DOCKER_NUGET_CONFIG_PATH" >&2
+    exit 1
+fi
 
 cd "$REPOSITORY_ROOT"
 trap 'cd "$CURRENT_DIR"' EXIT
@@ -41,8 +50,8 @@ done
 
 export DOCKER_BUILDKIT=1
 
-docker build --secret "id=nuget_config,src=$NUGET_CONFIG_PATH" -f ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/java/EventHub/Dockerfile -t azure-functions-kafka-java-eventhub .
-docker build --secret "id=nuget_config,src=$NUGET_CONFIG_PATH" --secret id=pip_index_url,env=PIP_INDEX_URL -f ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/python/EventHub/Dockerfile -t azure-functions-kafka-python-eventhub .
+docker build --secret "id=nuget_config,src=$DOCKER_NUGET_CONFIG_PATH" -f ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/java/EventHub/Dockerfile -t azure-functions-kafka-java-eventhub .
+docker build --secret "id=nuget_config,src=$DOCKER_NUGET_CONFIG_PATH" --secret id=pip_index_url,env=PIP_INDEX_URL -f ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/python/EventHub/Dockerfile -t azure-functions-kafka-python-eventhub .
 
-docker build --secret "id=nuget_config,src=$NUGET_CONFIG_PATH" -f ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/java/Confluent/Dockerfile -t azure-functions-kafka-java-confluent .
-docker build --secret "id=nuget_config,src=$NUGET_CONFIG_PATH" --secret id=pip_index_url,env=PIP_INDEX_URL -f ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/python/Confluent/Dockerfile -t azure-functions-kafka-python-confluent .
+docker build --secret "id=nuget_config,src=$DOCKER_NUGET_CONFIG_PATH" -f ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/java/Confluent/Dockerfile -t azure-functions-kafka-java-confluent .
+docker build --secret "id=nuget_config,src=$DOCKER_NUGET_CONFIG_PATH" --secret id=pip_index_url,env=PIP_INDEX_URL -f ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/python/Confluent/Dockerfile -t azure-functions-kafka-python-confluent .
