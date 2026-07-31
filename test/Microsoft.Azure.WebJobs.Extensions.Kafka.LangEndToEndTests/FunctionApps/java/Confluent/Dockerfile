@@ -11,9 +11,13 @@ COPY . /workspace
 WORKDIR ${WORK_DIR}
 # dotnet 
 
-
-RUN dotnet nuget add source /workspace/temp --name Local && dotnet nuget list source
-RUN mvn clean package
+ARG NUGET_CONFIG_PATH=/tmp/cfs/NuGet.config
+RUN --mount=type=secret,id=nuget_config,required=true \
+    bash /workspace/script/create_test_nuget_config.sh /run/secrets/nuget_config "${NUGET_CONFIG_PATH}" /workspace/temp \
+    && RestoreConfigFile="${NUGET_CONFIG_PATH}" mvn clean package \
+    && dotnet nuget locals all --clear \
+    && find /workspace -type d -name obj -prune -exec rm -rf {} + \
+    && rm -f "${NUGET_CONFIG_PATH}"
 ENV LD_LIBRARY_PATH=${TARGET_DIR}/bin/runtimes/linux-x64/native
 # WORKDIR ${TARGET_DIR}
 

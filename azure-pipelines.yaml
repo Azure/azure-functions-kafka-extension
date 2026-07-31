@@ -37,6 +37,15 @@ pool:
     - ImageOverride -equals MMSUbuntu20.04TLS
 
 steps:
+  - task: NuGetAuthenticate@1
+    displayName: Authenticate NuGet feed
+
+  - task: PipAuthenticate@1
+    displayName: Authenticate Python feed
+    inputs:
+      artifactFeeds: 'public/upstream-public'
+      onlyAddExtraIndex: false
+
   - task: UseDotNet@2
     displayName: 'Install .NET Core SDK'
     inputs:
@@ -56,17 +65,29 @@ steps:
       packageType: sdk
 
   - task: DotNetCoreCLI@2
+    displayName: Restore projects
+    inputs:
+      command: restore
+      projects: |
+        src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
+        test/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.csproj
+        test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests.csproj
+        test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.csproj
+      feedsToUse: config
+      nugetConfigPath: '$(Build.SourcesDirectory)/NuGet.config'
+
+  - task: DotNetCoreCLI@2
     displayName: Build project
     inputs:
       command: 'build'
-      arguments: '--configuration Release -p:IsLocalBuild=False'
+      arguments: '--configuration Release --no-restore -p:IsLocalBuild=False'
       projects: src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
 
   - task: DotNetCoreCLI@2
     displayName: Build test projects
     inputs:
       command: 'build'
-      arguments: '--configuration Release -p:IsLocalBuild=False'
+      arguments: '--configuration Release --no-restore -p:IsLocalBuild=False'
       projects: |
         test/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.csproj
         test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests.csproj
@@ -77,6 +98,7 @@ steps:
     inputs:
       command: test
       projects: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
+      arguments: '--configuration Release --no-build --no-restore'
 
   - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
     displayName: Component Detection
@@ -93,6 +115,7 @@ steps:
     inputs:
       command: test
       projects: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
+      arguments: '--configuration Release --no-build --no-restore'
 
   - task: Bash@3
     displayName: Stop Kafka in single node
@@ -140,12 +163,20 @@ steps:
       targetType: filePath
       filePath: ./script/create_package.sh
 
+  - task: DotNetCoreCLI@2
+    displayName: Rebuild project for release package
+    inputs:
+      command: build
+      arguments: '--configuration Release --no-restore -p:IsLocalBuild=False'
+      projects: src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
+
 #  - task: DotNetCoreCLI@2
 #    displayName: Run language e2e tests
 #    condition: and(succeeded(), eq(variables.isMasterTriggered, 'False')) # Skip in master until we fix the connections
 #    inputs:
 #      command: test
 #      projects: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests
+#      arguments: '--configuration Release --no-build --no-restore'
 #    env:
 #      AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
 #      AZURE_CLIENT_SECRET: $(AZURE_CLIENT_SECRET)
@@ -168,6 +199,7 @@ steps:
       searchPatternPack: src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
       configurationToPack: Release
       includesymbols: true
+      nobuild: true
 
   - task: EsrpCodeSigning@1
     displayName: Sign extension package

@@ -1,18 +1,48 @@
 #!/bin/bash
 
-CURRENT_DIR=`pwd`
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-cd $DIR/..
+set -euo pipefail
 
-WORKING_DIR=temp
-if [ -d "$WORKING_DIR" ]; then rm -rf $WORKING_DIR; fi
+CURRENT_DIR=$PWD
+REPOSITORY_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null 2>&1 && pwd)"
+PROJECT_PATH="$REPOSITORY_ROOT/src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj"
+NUGET_CONFIG_PATH="$REPOSITORY_ROOT/NuGet.config"
+WORKING_DIR="$REPOSITORY_ROOT/temp"
 
-dotnet pack -o temp --include-symbols src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj /p:Version=100.100.100-pre
+if [[ -z "${PIP_INDEX_URL:-}" ]]; then
+    echo "PIP_INDEX_URL must be set to the authenticated CFS Python feed." >&2
+    exit 1
+fi
 
-cd $CURRENT_DIR
+cd "$REPOSITORY_ROOT"
+trap 'cd "$CURRENT_DIR"' EXIT
 
-docker build -f ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/java/EventHub/Dockerfile -t azure-functions-kafka-java-eventhub .
-docker build -f ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/python/EventHub/Dockerfile -t azure-functions-kafka-python-eventhub .
+if [[ -d "$WORKING_DIR" ]]; then
+    rm -rf -- "$WORKING_DIR"
+fi
 
-docker build -f ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/java/Confluent/Dockerfile -t azure-functions-kafka-java-confluent .
-docker build -f ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/python/Confluent/Dockerfile -t azure-functions-kafka-python-confluent .
+restore_args=(
+    restore
+    "$PROJECT_PATH"
+    --configfile "$NUGET_CONFIG_PATH"
+)
+dotnet "${restore_args[@]}"
+
+for package_version in 100.100.100-pre 4.0.0; do
+    pack_args=(
+        pack
+        "$PROJECT_PATH"
+        --output "$WORKING_DIR"
+        --include-symbols
+        --no-restore
+        "/p:Version=$package_version"
+    )
+    dotnet "${pack_args[@]}"
+done
+
+export DOCKER_BUILDKIT=1
+
+docker build --secret "id=nuget_config,src=$NUGET_CONFIG_PATH" -f ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/java/EventHub/Dockerfile -t azure-functions-kafka-java-eventhub .
+docker build --secret "id=nuget_config,src=$NUGET_CONFIG_PATH" --secret id=pip_index_url,env=PIP_INDEX_URL -f ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/python/EventHub/Dockerfile -t azure-functions-kafka-python-eventhub .
+
+docker build --secret "id=nuget_config,src=$NUGET_CONFIG_PATH" -f ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/java/Confluent/Dockerfile -t azure-functions-kafka-java-confluent .
+docker build --secret "id=nuget_config,src=$NUGET_CONFIG_PATH" --secret id=pip_index_url,env=PIP_INDEX_URL -f ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/python/Confluent/Dockerfile -t azure-functions-kafka-python-confluent .

@@ -1,0 +1,16 @@
+.git
+NuGet.config
+**/.npmrc
+**/.venv
+**/__pycache__
+**/bin
+**/node_modules
+**/obj
+**/package-lock.json
+**/pip.conf
+**/pip.ini
+**/target
+**/uv.lock
+**/*.pyc
+**/local.appsettings.tests.json
+**/local.settings.json
