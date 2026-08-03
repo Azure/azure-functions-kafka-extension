@@ -9,6 +9,13 @@ $workingDirectory = Join-Path $repositoryRoot 'temp'
 if ([string]::IsNullOrWhiteSpace($env:PIP_INDEX_URL)) {
     throw 'PIP_INDEX_URL must be set to the authenticated CFS Python feed.'
 }
+if ([string]::IsNullOrWhiteSpace($env:CFS_NUGET_CONFIG)) {
+    throw 'CFS_NUGET_CONFIG must point to an authenticated temporary NuGet config.'
+}
+$dockerNugetConfigPath = $env:CFS_NUGET_CONFIG
+if (-not (Test-Path -LiteralPath $dockerNugetConfigPath -PathType Leaf)) {
+    throw "Docker NuGet config does not exist: $dockerNugetConfigPath"
+}
 
 Push-Location $repositoryRoot
 $previousDockerBuildKit = $env:DOCKER_BUILDKIT
@@ -72,7 +79,7 @@ try {
         $dockerArguments = @(
             'build'
             '--secret'
-            "id=nuget_config,src=$nugetConfigPath"
+            "id=nuget_config,src=$dockerNugetConfigPath"
         )
         if ($build.Python) {
             $dockerArguments += @('--secret', 'id=pip_index_url,env=PIP_INDEX_URL')

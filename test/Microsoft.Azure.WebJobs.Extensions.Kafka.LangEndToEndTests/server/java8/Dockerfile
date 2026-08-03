@@ -15,11 +15,14 @@ RUN mvn clean package
 WORKDIR ${TARGET_DIR}
 ARG NUGET_CONFIG_PATH=/tmp/cfs/NuGet.config
 RUN --mount=type=secret,id=nuget_config,required=true \
-    bash /workspace/script/create_test_nuget_config.sh /run/secrets/nuget_config "${NUGET_CONFIG_PATH}" /workspace/temp \
-    && RestoreConfigFile="${NUGET_CONFIG_PATH}" func extensions install --package Microsoft.Azure.WebJobs.Extensions.Kafka --version 100.100.100-pre \
-    && dotnet nuget locals all --clear \
-    && find /workspace -type d -name obj -prune -exec rm -rf {} + \
-    && rm -f "${NUGET_CONFIG_PATH}"
+    set -eu; \
+    trap 'rm -f "${NUGET_CONFIG_PATH}"' EXIT; \
+    bash /workspace/script/create_test_nuget_config.sh /run/secrets/nuget_config "${NUGET_CONFIG_PATH}" /workspace/temp; \
+    RestoreConfigFile="${NUGET_CONFIG_PATH}" func extensions install --package Microsoft.Azure.WebJobs.Extensions.Kafka --version 100.100.100-pre; \
+    test -f bin/Microsoft.Azure.WebJobs.Extensions.Kafka.dll; \
+    dotnet nuget locals all --clear; \
+    rm -rf /root/.nuget/NuGet /root/.config/NuGet; \
+    find /workspace -type d -name obj -prune -exec rm -rf {} +
 WORKDIR ${WORK_DIR}
 
 ## ENTRYPOINT ["/usr/bin/tail", "-f", "/var/log/dpkg.log"]
