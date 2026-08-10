@@ -53,6 +53,9 @@ extends:
                   targetPath: $(Build.ArtifactStagingDirectory)
                   artifactName: drop
             steps:
+              - task: NuGetAuthenticate@1
+                displayName: Authenticate NuGet feed
+
               - task: UseDotNet@2
                 displayName: "Install .NET Core SDK"
                 inputs:
@@ -72,17 +75,29 @@ extends:
                   packageType: sdk
 
               - task: DotNetCoreCLI@2
+                displayName: Restore projects
+                inputs:
+                  command: restore
+                  projects: |
+                    src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
+                    test/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.csproj
+                    test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests.csproj
+                    test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests.csproj
+                  feedsToUse: config
+                  nugetConfigPath: '$(Build.SourcesDirectory)/NuGet.config'
+
+              - task: DotNetCoreCLI@2
                 displayName: Build project
                 inputs:
                   command: "build"
-                  arguments: "--configuration Release -p:IsLocalBuild=False"
+                  arguments: "--configuration Release --no-restore -p:IsLocalBuild=False"
                   projects: src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
 
               - task: DotNetCoreCLI@2
                 displayName: Build test projects
                 inputs:
                   command: "build"
-                  arguments: "--configuration Release -p:IsLocalBuild=False"
+                  arguments: "--configuration Release --no-restore -p:IsLocalBuild=False"
                   projects: |
                     test/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests.csproj
                     test/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests/Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests.csproj
@@ -101,17 +116,20 @@ extends:
                   cd ../EventHub
                   mvn clean package `-Dmaven`.javadoc`.skip=true `-Dmaven`.test`.skip `-Dorg`.slf4j`.simpleLogger`.log`.org`.apache`.maven`.cli`.transfer`.Slf4jMavenTransferListener=warn `-B
                 displayName: "Package Java Functions for Codeql"
+                env:
+                  RestoreConfigFile: $(Build.SourcesDirectory)/NuGet.config
 
               - task: DotNetCoreCLI@2
                 displayName: Run unit tests
                 inputs:
                   command: test
                   projects: ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
+                  arguments: '--configuration Release --no-build --no-restore'
 
               - template: ci/sign-files.yml@eng
                 parameters:
                   displayName: Sign extension assembly
-                  folderPath: src/Microsoft.Azure.WebJobs.Extensions.Kafka/bin/Debug/netstandard2.0/
+                  folderPath: src/Microsoft.Azure.WebJobs.Extensions.Kafka/bin/Release/netstandard2.0/
                   pattern: Microsoft.Azure.WebJobs.Extensions.Kafka.dll
                   signType: dll
 
@@ -123,6 +141,7 @@ extends:
                   searchPatternPack: src/Microsoft.Azure.WebJobs.Extensions.Kafka/Microsoft.Azure.WebJobs.Extensions.Kafka.csproj
                   configurationToPack: Release
                   includesymbols: true
+                  nobuild: true
 
               - template: ci/sign-files.yml@eng
                 parameters:

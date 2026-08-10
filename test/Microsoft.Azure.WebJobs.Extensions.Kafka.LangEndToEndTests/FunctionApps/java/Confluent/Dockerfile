@@ -11,9 +11,16 @@ COPY . /workspace
 WORKDIR ${WORK_DIR}
 # dotnet 
 
-
-RUN dotnet nuget add source /workspace/temp --name Local && dotnet nuget list source
-RUN mvn clean package
+ARG NUGET_CONFIG_PATH=/tmp/cfs/NuGet.config
+RUN --mount=type=secret,id=nuget_config,required=true \
+    set -eu; \
+    trap 'rm -f "${NUGET_CONFIG_PATH}"' EXIT; \
+    bash /workspace/script/create_test_nuget_config.sh /run/secrets/nuget_config "${NUGET_CONFIG_PATH}" /workspace/temp; \
+    RestoreConfigFile="${NUGET_CONFIG_PATH}" mvn clean package; \
+    test -f "${TARGET_DIR}/bin/Microsoft.Azure.WebJobs.Extensions.Kafka.dll"; \
+    dotnet nuget locals all --clear; \
+    rm -rf /root/.nuget/NuGet /root/.config/NuGet; \
+    find /workspace -type d -name obj -prune -exec rm -rf {} +
 ENV LD_LIBRARY_PATH=${TARGET_DIR}/bin/runtimes/linux-x64/native
 # WORKDIR ${TARGET_DIR}
 

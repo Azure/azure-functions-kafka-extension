@@ -19,7 +19,7 @@ services:
     # See https://rmoff.net/2018/08/02/kafka-listeners-explained/ for details
     # "`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-
     #
-    image: confluentinc/cp-kafka:latest
+    image: funcacrcache.azurecr.io/cache/confluentinc/cp-kafka:7.6.0
     hostname: kafka
     ports:
       - 9092:9092
@@ -42,7 +42,7 @@ services:
       CLUSTER_ID: Smqq4VQPTXahsrIWU98xeQ
 
   schema-registry:
-    image: confluentinc/cp-schema-registry:latest
+    image: funcacrcache.azurecr.io/cache/confluentinc/cp-schema-registry:7.6.0
     depends_on:
       - kafka
     ports:

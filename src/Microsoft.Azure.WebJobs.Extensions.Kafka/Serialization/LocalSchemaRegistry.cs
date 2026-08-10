@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System.Collections.Generic;
+using System.Net;
 using System.Threading.Tasks;
 using Confluent.SchemaRegistry;
 
@@ -26,6 +27,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 return 1;
             }
+        }
+
+        public IEnumerable<KeyValuePair<string, string>> Config => new List<KeyValuePair<string, string>>();
+
+        public IAuthenticationHeaderValueProvider AuthHeaderProvider => null;
+
+        public IWebProxy Proxy => null;
+
+        public void ClearLatestCaches()
+        {
+        }
+
+        public void ClearCaches()
+        {
         }
 
         public string ConstructKeySubjectName(string topic, string recordType = null) => $"{topic}-key";
@@ -67,12 +82,32 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return Task.FromResult(schema);
         }
 
+        public Task<Schema> GetSchemaBySubjectAndIdAsync(string subject, int id, string format = null)
+        {
+            return GetSchemaAsync(id, format);
+        }
+
+        public Task<Schema> GetSchemaByGuidAsync(string guid, string format = null)
+        {
+            return GetSchemaAsync(1, format);
+        }
+
         public Task<int> GetSchemaIdAsync(string subject, string schema)
         {
             throw new System.NotImplementedException();
         }
 
+        public Task<RegisteredSchema> GetRegisteredSchemaAsync(string subject, int version, bool ignoreDeletedSchemas)
+        {
+            throw new System.NotImplementedException();
+        }
+
         public Task<int> GetSchemaIdAsync(string subject, Schema schema)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public Task<RegisteredSchema> GetLatestWithMetadataAsync(string subject, IDictionary<string, string> metadata, bool ignoreDeletedSchemas)
         {
             throw new System.NotImplementedException();
         }
@@ -133,6 +168,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             subjects.Add(subject);
             return Task.FromResult(1);
+        }
+
+        public Task<RegisteredSchema> RegisterSchemaWithResponseAsync(string subject, Schema schema, bool normalize = false)
+        {
+            subjects.Add(subject);
+            return Task.FromResult(new RegisteredSchema(subject, 1, 1, schema.SchemaString, schema.SchemaType, schema.References));
         }
 
         public Task<Compatibility> UpdateCompatibilityAsync(Compatibility compatibility, string subject = null)
