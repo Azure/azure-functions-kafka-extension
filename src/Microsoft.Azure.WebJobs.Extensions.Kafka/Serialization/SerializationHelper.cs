@@ -143,6 +143,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return new AvroDeserializer<TKey>(schemaRegistry).AsSyncOverAsync();
         }
 
+        private static ISerializer<T> CreateAvroSerializer<T>(ISchemaRegistryClient schemaRegistry)
+        {
+            return new AvroSerializer<T>(schemaRegistry, new AvroSerializerConfig()).AsSyncOverAsync();
+        }
+
+        private static object CreateAvroSerializer(Type recordType, ISchemaRegistryClient schemaRegistry)
+        {
+            var methodInfo = typeof(SerializationHelper).GetMethod(nameof(CreateAvroSerializer), BindingFlags.Static | BindingFlags.NonPublic, null, new[] { typeof(ISchemaRegistryClient) }, null);
+            var genericMethod = methodInfo.MakeGenericMethod(recordType);
+            return genericMethod.Invoke(null, new object[] { schemaRegistry });
+        }
+
         internal static (object, object) ResolveSerializers(Type valueType, Type keyType, string specifiedValueAvroSchema, string specifiedKeyAvroSchema, string schemaRegistryUrl, string schemaRegistryUsername, string schemaRegistryPassword, string topic)
         {
             object keySerializer = null;
@@ -182,22 +194,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             // check for avro serialization
             if (specifiedValueAvroSchema != null || specifiedKeyAvroSchema != null)
             {
-                object serializer = null;
-
                 // create serializers for avro - generic or specific records
                 if (isValueGenericRecord || isValueSpecificRecord)
                 {
                     // create schema registry client only for value schema
                     var valueSchemaRegistry = CreateSchemaRegistry(specifiedValueAvroSchema, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword);
-                    serializer = Activator.CreateInstance(typeof(AvroSerializer<>).MakeGenericType(valueType), valueSchemaRegistry, null /* config */);
-                    valueSerializer = typeof(SyncOverAsyncSerializerExtensionMethods).GetMethod("AsSyncOverAsync").MakeGenericMethod(valueType).Invoke(null, new object[] { serializer });
+                    valueSerializer = CreateAvroSerializer(valueType, valueSchemaRegistry);
                 }
                 if (isKeyGenericRecord || isKeySpecificRecord)
                 {
                     // create schema registry client only for key schema
                     var keySchemaRegistry = CreateSchemaRegistry(specifiedKeyAvroSchema, schemaRegistryUrl, schemaRegistryUsername, schemaRegistryPassword);
-                    serializer = Activator.CreateInstance(typeof(AvroSerializer<>).MakeGenericType(keyType), keySchemaRegistry, null /* config */);
-                    keySerializer = typeof(SyncOverAsyncSerializerExtensionMethods).GetMethod("AsSyncOverAsync").MakeGenericMethod(keyType).Invoke(null, new object[] { serializer });
+                    keySerializer = CreateAvroSerializer(keyType, keySchemaRegistry);
                 }
             }
 
@@ -213,14 +221,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             if (typeof(GenericRecord).IsAssignableFrom(valueType) || typeof(ISpecificRecord).IsAssignableFrom(valueType))
             {
-                var serializer = Activator.CreateInstance(typeof(AvroSerializer<>).MakeGenericType(valueType), schemaRegistry, null /* config */);
-                valueSerializer = typeof(SyncOverAsyncSerializerExtensionMethods).GetMethod("AsSyncOverAsync").MakeGenericMethod(valueType).Invoke(null, new object[] { serializer });
+                valueSerializer = CreateAvroSerializer(valueType, schemaRegistry);
             }
 
             if (typeof(GenericRecord).IsAssignableFrom(keyType) || typeof(ISpecificRecord).IsAssignableFrom(keyType))
             {
-                var serializer = Activator.CreateInstance(typeof(AvroSerializer<>).MakeGenericType(keyType), schemaRegistry, null /* config */);
-                keySerializer = typeof(SyncOverAsyncSerializerExtensionMethods).GetMethod("AsSyncOverAsync").MakeGenericMethod(keyType).Invoke(null, new object[] { serializer });
+                keySerializer = CreateAvroSerializer(keyType, schemaRegistry);
             }
 
             return (valueSerializer, keySerializer);

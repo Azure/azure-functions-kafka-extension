@@ -15,7 +15,7 @@ services:
       - "7072:7071"
  
   zookeeper:
-    image: confluentinc/cp-zookeeper:5.3.1
+    image: funcacrcache.azurecr.io/cache/confluentinc/cp-zookeeper:5.3.1
     hostname: zookeeper
     container_name: zookeeper
     ports:
@@ -25,7 +25,7 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
 
   broker:
-    image: confluentinc/cp-enterprise-kafka:5.3.1
+    image: funcacrcache.azurecr.io/cache/confluentinc/cp-enterprise-kafka:5.3.1
     hostname: broker
     container_name: broker
     depends_on:
@@ -47,7 +47,7 @@ services:
       CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
 
   schema-registry:
-    image: confluentinc/cp-schema-registry:5.3.1
+    image: funcacrcache.azurecr.io/cache/confluentinc/cp-schema-registry:5.3.1
     hostname: schema-registry
     container_name: schema-registry
     depends_on:
@@ -60,7 +60,7 @@ services:
       SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: 'zookeeper:2181'
 
   rest-proxy:
-    image: confluentinc/cp-kafka-rest:5.3.1
+    image: funcacrcache.azurecr.io/cache/confluentinc/cp-kafka-rest:5.3.1
     depends_on:
       - zookeeper
       - broker
