@@ -110,14 +110,25 @@ extends:
                   script: |
                     sudo apt-get install azure-functions-core-tools-4=$(coreToolsVersion)
 
+              # Maven resolves plugins before pom.xml repositories are honored; install the
+              # mirror settings first, then authenticate, so all resolution goes through CFS.
+              - pwsh: |
+                  $m2 = Join-Path $HOME '.m2'
+                  New-Item -ItemType Directory -Path $m2 -Force | Out-Null
+                  Copy-Item '$(Build.SourcesDirectory)/test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/java/settings.xml' (Join-Path $m2 'settings.xml') -Force
+                displayName: "Install Maven settings.xml for CFS"
+
+              - task: MavenAuthenticate@0
+                displayName: "Authenticate Maven to CFS"
+                inputs:
+                  artifactsFeeds: upstream-public
+
               - pwsh: |
                   cd ./test/Microsoft.Azure.WebJobs.Extensions.Kafka.LangEndToEndTests/FunctionApps/java/Confluent
                   mvn clean package `-Dmaven`.javadoc`.skip=true `-Dmaven`.test`.skip `-Dorg`.slf4j`.simpleLogger`.log`.org`.apache`.maven`.cli`.transfer`.Slf4jMavenTransferListener=warn `-B
                   cd ../EventHub
                   mvn clean package `-Dmaven`.javadoc`.skip=true `-Dmaven`.test`.skip `-Dorg`.slf4j`.simpleLogger`.log`.org`.apache`.maven`.cli`.transfer`.Slf4jMavenTransferListener=warn `-B
                 displayName: "Package Java Functions for Codeql"
-                env:
-                  RestoreConfigFile: $(Build.SourcesDirectory)/NuGet.config
 
               - task: DotNetCoreCLI@2
                 displayName: Run unit tests
