@@ -16,7 +16,7 @@
       <id>upstream-public</id>
       <name>Azure Functions public upstream feed</name>
       <url>https://pkgs.dev.azure.com/azfunc/public/_packaging/upstream-public/maven/v1</url>
-      <mirrorOf>central</mirrorOf>
+      <mirrorOf>*</mirrorOf>
     </mirror>
   </mirrors>
 </settings>
