@@ -56,6 +56,11 @@ extends:
               - task: NuGetAuthenticate@1
                 displayName: Authenticate NuGet feed
 
+              - task: npmAuthenticate@0
+                displayName: Authenticate npm to CFS
+                inputs:
+                  workingFile: .npmrc
+
               - task: UseDotNet@2
                 displayName: "Install .NET Core SDK"
                 inputs:
