@@ -24,6 +24,7 @@ using Microsoft.Azure.WebJobs.Host;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 {
+    [Collection(AzureEnvironmentTestCollection.Name)]
     public class KafkaTriggerAttributeBindingProviderTest : IDisposable
     {
         private List<FileInfo> createdFiles = new List<FileInfo>();
@@ -38,6 +39,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
         public void Dispose()
         {
+            AzureEnvironment.ClearEnvironmentVariables();
+
             foreach (var fi in this.createdFiles)
             {
                 if (fi.Exists)
