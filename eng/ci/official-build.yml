@@ -172,3 +172,6 @@ extends:
                   BuildDropPath: $(Build.ArtifactStagingDirectory)
                   PackageName: Microsoft.Azure.WebJobs.Extensions.Kafka
                   Verbosity: Information
+                env:
+                  NPM_CONFIG_USERCONFIG: $(Build.SourcesDirectory)/.npmrc
+                  NPM_CONFIG_REPLACE_REGISTRY_HOST: always
