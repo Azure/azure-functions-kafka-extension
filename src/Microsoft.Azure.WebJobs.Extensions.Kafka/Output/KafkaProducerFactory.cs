@@ -145,6 +145,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 resolvedSslCaLocation = sslCaLocation;
             }
+
+            var httpsCaLocation = config.ResolveSecureSetting(nameResolver, entity.Attribute.HttpsCaLocation);
+            if (!AzureFunctionsFileHelper.TryGetValidHttpsCaLocation(httpsCaLocation, out var resolvedHttpsCaLocation))
+            {
+                resolvedHttpsCaLocation = httpsCaLocation;
+            }
             
             var sslKeyLocation = config.ResolveSecureSetting(nameResolver, entity.Attribute.SslKeyLocation);
             if (!AzureFunctionsFileHelper.TryGetValidFilePath(sslKeyLocation, out var resolvedSslKeyLocation))
@@ -175,6 +181,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 SocketKeepaliveEnable = kafkaOptions?.SocketKeepaliveEnable,
                 LingerMs = entity.Attribute.LingerMs,
             };
+
+            conf.SetHttpsCaCertificate(
+                resolvedHttpsCaLocation,
+                this.config.ResolveSecureSetting(nameResolver, entity.Attribute.HttpsCaPem));
 
             if (!string.IsNullOrEmpty(entity.Attribute.SslCertificateandKeyPEM))
             {

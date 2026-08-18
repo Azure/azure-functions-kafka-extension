@@ -21,10 +21,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
     {
         private List<FileInfo> createdFiles = new List<FileInfo>();
         private readonly IConfigurationRoot emptyConfiguration;
+        private readonly DirectoryInfo testDirectory;
 
         public KafkaProducerFactoryTest()
         {
             this.emptyConfiguration = new ConfigurationBuilder().Build();
+            this.testDirectory = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), nameof(KafkaProducerFactoryTest), Guid.NewGuid().ToString("N")));
         }
 
         public void Dispose()
@@ -38,12 +40,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             }
 
             this.createdFiles.Clear();
+
+            if (this.testDirectory.Exists)
+            {
+                this.testDirectory.Delete(recursive: true);
+            }
         }
 
         private FileInfo CreateFile(string fileName)
         {
-            File.WriteAllText(fileName, "dummy contents");
-            var file = new FileInfo(fileName);
+            var filePath = Path.IsPathRooted(fileName) ? fileName : Path.Combine(this.testDirectory.FullName, fileName);
+            Directory.CreateDirectory(Path.GetDirectoryName(filePath));
+            File.WriteAllText(filePath, "dummy contents");
+            var file = new FileInfo(filePath);
             this.createdFiles.Add(file);
 
             return file;
@@ -307,7 +316,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         {
             AzureEnvironment.SetRunningInAzureEnvVars();
 
-            var currentFolder = Directory.GetCurrentDirectory();
+            var currentFolder = this.testDirectory.FullName;
             var folder1 = Directory.CreateDirectory(Path.Combine(currentFolder, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1));
             Directory.CreateDirectory(Path.Combine(folder1.FullName, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2));
 
@@ -342,7 +351,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         {
             AzureEnvironment.SetRunningInAzureEnvVars();
 
-            var currentFolder = Directory.GetCurrentDirectory();
+            var currentFolder = this.testDirectory.FullName;
             var folder1 = Directory.CreateDirectory(Path.Combine(currentFolder, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1));
             Directory.CreateDirectory(Path.Combine(folder1.FullName, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2));
 
@@ -382,6 +391,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         }
 
         [Fact]
+        public void GetProducerConfig_When_Both_HttpsCaSettings_Are_Defined_Should_Throw()
+        {
+            var attribute = new KafkaAttribute("brokers:9092", "myTopic")
+            {
+                AuthenticationMode = BrokerAuthenticationMode.OAuthBearer,
+                HttpsCaLocation = "httpsCaLocation",
+                HttpsCaPem = "httpsCaPem",
+            };
+
+            var entity = new KafkaProducerEntity
+            {
+                Attribute = attribute,
+                ValueType = typeof(ProtoUser),
+            };
+
+            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerFactory.Instance);
+
+            var exception = Assert.Throws<ArgumentException>(() => factory.GetProducerConfig(entity));
+
+            Assert.Contains("https.ca.location", exception.Message);
+            Assert.Contains("https.ca.pem", exception.Message);
+        }
+
+        [Fact]
         public void GetProducerConfig_When_OAuthBearer_Auth_Defined_Should_Contain_Them()
         {
             var attribute = new KafkaAttribute("brokers:9092", "myTopic")
@@ -394,6 +427,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 OAuthBearerScope = "scope",
                 OAuthBearerExtensions = "key=value",
                 OAuthBearerTokenEndpointUrl = "endpointUrl",
+                HttpsCaLocation = "httpsCaLocation",
             };
 
             var entity = new KafkaProducerEntity()
@@ -404,7 +438,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerFactory.Instance);
             var config = factory.GetProducerConfig(entity);
-            Assert.Equal(16, config.Count());
+            Assert.Equal(17, config.Count());
             Assert.Equal("brokers:9092", config.BootstrapServers);
             Assert.Equal(SecurityProtocol.SaslSsl, config.SecurityProtocol);
             Assert.Equal(SaslMechanism.OAuthBearer, config.SaslMechanism);
@@ -414,6 +448,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal("scope", config.SaslOauthbearerScope);
             Assert.Equal("key=value", config.SaslOauthbearerExtensions);
             Assert.Equal("endpointUrl", config.SaslOauthbearerTokenEndpointUrl);
+            Assert.Equal("httpsCaLocation", config.Get("https.ca.location"));
+            Assert.Null(config.Get("https.ca.pem"));
         }
 
         [Fact]
@@ -431,6 +467,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 OAuthBearerScope = "OAuthBearerScope",
                 OAuthBearerExtensions = "OAuthBearerExtensions",
                 OAuthBearerTokenEndpointUrl = "OAuthBearerTokenEndpointUrl",
+                HttpsCaPem = "HttpsCaPem",
             };
 
             var entity = new KafkaProducerEntity
@@ -446,6 +483,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 {"OAuthBearerScope", "scope"},
                 {"OAuthBearerExtensions", "key=value"},
                 {"OAuthBearerTokenEndpointUrl", "endpointUrl"},
+                {"HttpsCaPem", "httpsCaPem"},
             };
 
             var configuration = new ConfigurationBuilder().AddInMemoryCollection(configSslLocations).Build();
@@ -461,6 +499,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal("scope", config.SaslOauthbearerScope);
             Assert.Equal("key=value", config.SaslOauthbearerExtensions);
             Assert.Equal("endpointUrl", config.SaslOauthbearerTokenEndpointUrl);
+            Assert.Null(config.Get("https.ca.location"));
+            Assert.Equal("httpsCaPem", config.Get("https.ca.pem"));
         }
     }
 }

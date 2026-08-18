@@ -46,7 +46,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             _targetScaler = new KafkaObjectTargetScaler(topicName, consumerGroup, metricsProvider, triggerMetadata.FunctionName, lagThreshold, logger);
         }
 
-        private ConsumerConfig GetConsumerConfiguration(KafkaMetaData kafkaMetaData, IConfiguration config, INameResolver nameResolver)
+        internal static ConsumerConfig GetConsumerConfiguration(KafkaMetaData kafkaMetaData, IConfiguration config, INameResolver nameResolver)
         {
             var adminConfig = new ConsumerConfig() {
                 GroupId = config.ResolveSecureSetting(nameResolver, kafkaMetaData.ConsumerGroup),
@@ -86,6 +86,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     adminConfig.SaslOauthbearerClientSecret = config.ResolveSecureSetting(nameResolver, kafkaMetaData.OAuthBearerClientSecret);
                     adminConfig.SaslOauthbearerScope = config.ResolveSecureSetting(nameResolver, kafkaMetaData.OAuthBearerScope);
                     adminConfig.SaslOauthbearerTokenEndpointUrl = config.ResolveSecureSetting(nameResolver, kafkaMetaData.OAuthBearerTokenEndpointUrl);
+                    var httpsCaLocation = config.ResolveSecureSetting(nameResolver, kafkaMetaData.HttpsCaLocation);
+                    if (!AzureFunctionsFileHelper.TryGetValidHttpsCaLocation(httpsCaLocation, out var resolvedHttpsCaLocation))
+                    {
+                        resolvedHttpsCaLocation = httpsCaLocation;
+                    }
+
+                    adminConfig.SetHttpsCaCertificate(
+                        resolvedHttpsCaLocation,
+                        config.ResolveSecureSetting(nameResolver, kafkaMetaData.HttpsCaPem));
                     adminConfig.SaslOauthbearerExtensions = config.ResolveSecureSetting(nameResolver, kafkaMetaData.OAuthBearerExtensions);
                 }
             }
@@ -103,7 +112,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return _targetScaler;
         }
 
-        private string ExtractSection(string pemString, string sectionName)
+        private static string ExtractSection(string pemString, string sectionName)
         {
             if (!string.IsNullOrEmpty(pemString))
             {
@@ -117,12 +126,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return null;
         }
 
-        private string ExtractCertificate(string pemString)
+        private static string ExtractCertificate(string pemString)
         {
              return ExtractSection(pemString, "CERTIFICATE");
         }
 
-        private string ExtractPrivateKey(string pemString)
+        private static string ExtractPrivateKey(string pemString)
         {
             return ExtractSection(pemString, "PRIVATE KEY");
         }
@@ -182,6 +191,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             [JsonProperty]
             public string OAuthBearerTokenEndpointUrl { get; set; }
+
+            [JsonProperty]
+            public string HttpsCaLocation { get; set; }
+
+            [JsonProperty]
+            public string HttpsCaPem { get; set; }
 
             [JsonProperty]
             public string OAuthBearerExtensions { get; set; }

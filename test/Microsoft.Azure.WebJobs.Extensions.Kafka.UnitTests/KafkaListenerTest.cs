@@ -474,6 +474,87 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         }
 
         [Fact]
+        public async Task When_Both_OAuthBearer_HttpsCaSettings_Are_Set_Should_Throw()
+        {
+            var listenerConfig = new KafkaListenerConfiguration
+            {
+                BrokerList = "testBroker",
+                Topic = "topic",
+                ConsumerGroup = "group1",
+                SaslMechanism = SaslMechanism.OAuthBearer,
+                HttpsCaLocation = "path/to/https-ca.pem",
+                HttpsCaPem = "httpsCaPem",
+            };
+            var target = new KafkaListenerForTest<Null, string>(
+                new Mock<ITriggeredFunctionExecutor>().Object,
+                true,
+                new KafkaOptions(),
+                listenerConfig,
+                requiresKey: true,
+                valueDeserializer: null,
+                keyDeserializer: null,
+                NullLogger.Instance,
+                functionId: "testId",
+                drainModeManager: null);
+
+            var exception = await Assert.ThrowsAsync<ArgumentException>(() => target.StartAsync(default));
+
+            Assert.Contains("https.ca.location", exception.Message);
+            Assert.Contains("https.ca.pem", exception.Message);
+        }
+
+        [Fact]
+        public async Task When_OAuthBearer_HttpsCaSettings_Are_Set_Should_Be_Set_In_Consumer_Config()
+        {
+            var executor = new Mock<ITriggeredFunctionExecutor>();
+            var consumer = new Mock<IConsumer<Null, string>>();
+
+            var listenerConfig = new KafkaListenerConfiguration()
+            {
+                BrokerList = "testBroker",
+                Topic = "topic",
+                ConsumerGroup = "group1",
+                SaslMechanism = SaslMechanism.OAuthBearer,
+                SaslOAuthBearerMethod = SaslOauthbearerMethod.Oidc,
+                SaslOAuthBearerClientId = "clientId",
+                SaslOAuthBearerClientSecret = "secret",
+                SaslOAuthBearerScope = "scope",
+                SaslOAuthBearerTokenEndpointUrl = "endpointUrl",
+                SaslOAuthBearerExtensions = "key=value",
+                HttpsCaLocation = "path/to/https-ca.pem",
+                SecurityProtocol = SecurityProtocol.SaslSsl,
+            };
+
+            var target = new KafkaListenerForTest<Null, string>(
+                executor.Object,
+                true,
+                new KafkaOptions(),
+                listenerConfig,
+                requiresKey: true,
+                valueDeserializer: null,
+                keyDeserializer: null,
+                NullLogger.Instance,
+                functionId: "testId",
+                drainModeManager: null);
+
+            target.SetConsumer(consumer.Object);
+
+            await target.StartAsync(default);
+
+            Assert.Equal("path/to/https-ca.pem", target.ConsumerConfig.Get("https.ca.location"));
+            Assert.Null(target.ConsumerConfig.Get("https.ca.pem"));
+            Assert.Equal(SaslMechanism.OAuthBearer, target.ConsumerConfig.SaslMechanism);
+            Assert.Equal(SaslOauthbearerMethod.Oidc, target.ConsumerConfig.SaslOauthbearerMethod);
+            Assert.Equal("clientId", target.ConsumerConfig.SaslOauthbearerClientId);
+            Assert.Equal("secret", target.ConsumerConfig.SaslOauthbearerClientSecret);
+            Assert.Equal("scope", target.ConsumerConfig.SaslOauthbearerScope);
+            Assert.Equal("endpointUrl", target.ConsumerConfig.SaslOauthbearerTokenEndpointUrl);
+            Assert.Equal("key=value", target.ConsumerConfig.SaslOauthbearerExtensions);
+
+            await target.StopAsync(default);
+        }
+
+        [Fact]
         public async Task When_Using_Single_Dispatcher_Slow_Partition_Processing_Should_Not_Delay_Other_Partitions()
         {
             const int Offset1 = 1;

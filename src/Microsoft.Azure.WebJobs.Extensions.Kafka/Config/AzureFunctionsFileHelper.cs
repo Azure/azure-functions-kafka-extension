@@ -233,6 +233,42 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             }
 
             return false;
-        }        
+        }
+
+        internal static bool TryGetValidHttpsCaLocation(string location, out string resolvedLocation)
+        {
+            resolvedLocation = null;
+
+            if (string.IsNullOrWhiteSpace(location))
+            {
+                return false;
+            }
+
+            if (string.Equals(location, "probe", StringComparison.Ordinal))
+            {
+                resolvedLocation = location;
+                return true;
+            }
+
+            if (Directory.Exists(location))
+            {
+                resolvedLocation = location;
+                return true;
+            }
+
+            var basePath = GetFunctionBaseFolder();
+            if (!string.IsNullOrWhiteSpace(basePath))
+            {
+                var relativeLocation = location.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                var directoryPathInAzureFunctionFolder = Path.Combine(basePath, relativeLocation);
+                if (Directory.Exists(directoryPathInAzureFunctionFolder))
+                {
+                    resolvedLocation = directoryPathInAzureFunctionFolder;
+                    return true;
+                }
+            }
+
+            return TryGetValidFilePath(location, out resolvedLocation);
+        }
     }
 }

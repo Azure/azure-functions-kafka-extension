@@ -27,6 +27,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
     public class KafkaTriggerAttributeBindingProviderTest : IDisposable
     {
         private List<FileInfo> createdFiles = new List<FileInfo>();
+        private readonly DirectoryInfo testDirectory;
         private IConfigurationRoot emptyConfiguration;
         private IDrainModeManager drainModeManager = new Mock<IDrainModeManager>().Object;
 
@@ -34,6 +35,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         {
             this.emptyConfiguration = new ConfigurationBuilder()
                 .Build();
+            this.testDirectory = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), nameof(KafkaTriggerAttributeBindingProviderTest), Guid.NewGuid().ToString("N")));
         }
 
         public void Dispose()
@@ -47,12 +49,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             }
 
             this.createdFiles.Clear();
+
+            if (this.testDirectory.Exists)
+            {
+                this.testDirectory.Delete(recursive: true);
+            }
         }
 
         private FileInfo CreateFile(string fileName)
         {
-            File.WriteAllText(fileName, "dummy contents");
-            var file = new FileInfo(fileName);
+            var filePath = Path.IsPathRooted(fileName) ? fileName : Path.Combine(this.testDirectory.FullName, fileName);
+            Directory.CreateDirectory(Path.GetDirectoryName(filePath));
+            File.WriteAllText(filePath, "dummy contents");
+            var file = new FileInfo(filePath);
             this.createdFiles.Add(file);
 
             return file;
@@ -407,7 +416,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         {
             AzureEnvironment.SetRunningInAzureEnvVars();
 
-            var currentFolder = Directory.GetCurrentDirectory();
+            var currentFolder = this.testDirectory.FullName;
             var folder1 = Directory.CreateDirectory(Path.Combine(currentFolder, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1));
             Directory.CreateDirectory(Path.Combine(folder1.FullName, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2));
 
@@ -451,7 +460,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         {
             AzureEnvironment.SetRunningInAzureEnvVars();
 
-            var currentFolder = Directory.GetCurrentDirectory();
+            var currentFolder = this.testDirectory.FullName;
             var folder1 = Directory.CreateDirectory(Path.Combine(currentFolder, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1));
             Directory.CreateDirectory(Path.Combine(folder1.FullName, AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2));
 
@@ -568,8 +577,83 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         }
 
         [Fact]
+        public void GetConsumerConfig_When_Both_HttpsCaSettings_Are_Defined_Should_Throw()
+        {
+            var httpsCa = this.CreateFile("httpsCa.pem");
+            var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")
+            {
+                AuthenticationMode = BrokerAuthenticationMode.OAuthBearer,
+                HttpsCaLocation = httpsCa.FullName,
+                HttpsCaPem = "httpsCaPem",
+            };
+
+            var bindingProvider = new KafkaTriggerAttributeBindingProvider(
+                this.emptyConfiguration,
+                Options.Create(new KafkaOptions()),
+                new KafkaEventDataConvertManager(NullLogger.Instance),
+                new DefaultNameResolver(this.emptyConfiguration),
+                NullLoggerFactory.Instance,
+                drainModeManager);
+            var consumerConfigMethod = typeof(KafkaTriggerAttributeBindingProvider).GetMethod("CreateConsumerConfiguration", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            var exception = Assert.Throws<TargetInvocationException>(() => consumerConfigMethod.Invoke(bindingProvider, new object[] { attribute }));
+            var argumentException = Assert.IsType<ArgumentException>(exception.InnerException);
+
+            Assert.Contains("https.ca.location", argumentException.Message);
+            Assert.Contains("https.ca.pem", argumentException.Message);
+        }
+
+        [Fact]
+        public void GetConsumerConfig_When_HttpsCaLocation_Is_Directory_Should_Accept_It()
+        {
+            var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")
+            {
+                AuthenticationMode = BrokerAuthenticationMode.OAuthBearer,
+                HttpsCaLocation = this.testDirectory.FullName,
+            };
+
+            var bindingProvider = new KafkaTriggerAttributeBindingProvider(
+                this.emptyConfiguration,
+                Options.Create(new KafkaOptions()),
+                new KafkaEventDataConvertManager(NullLogger.Instance),
+                new DefaultNameResolver(this.emptyConfiguration),
+                NullLoggerFactory.Instance,
+                drainModeManager);
+            var consumerConfigMethod = typeof(KafkaTriggerAttributeBindingProvider).GetMethod("CreateConsumerConfiguration", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            var result = (KafkaListenerConfiguration)consumerConfigMethod.Invoke(bindingProvider, new object[] { attribute });
+
+            Assert.Equal(this.testDirectory.FullName, result.HttpsCaLocation);
+        }
+
+        [Fact]
+        public void GetConsumerConfig_When_HttpsCaLocation_Is_Probe_Should_Accept_It()
+        {
+            var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")
+            {
+                AuthenticationMode = BrokerAuthenticationMode.OAuthBearer,
+                HttpsCaLocation = "probe",
+            };
+
+            var bindingProvider = new KafkaTriggerAttributeBindingProvider(
+                this.emptyConfiguration,
+                Options.Create(new KafkaOptions()),
+                new KafkaEventDataConvertManager(NullLogger.Instance),
+                new DefaultNameResolver(this.emptyConfiguration),
+                NullLoggerFactory.Instance,
+                drainModeManager);
+            var consumerConfigMethod = typeof(KafkaTriggerAttributeBindingProvider).GetMethod("CreateConsumerConfiguration", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            var result = (KafkaListenerConfiguration)consumerConfigMethod.Invoke(bindingProvider, new object[] { attribute });
+
+            Assert.Equal("probe", result.HttpsCaLocation);
+        }
+
+        [Fact]
         public void GetConsumerConfig_When_OAuthBearer_Auth_Defined_Should_Contain_Them()
         {
+            var httpsCa = this.CreateFile("httpsCa.pem");
+
             var attribute = new KafkaTriggerAttribute("brokers:9092", "myTopic")
             {
                 AuthenticationMode = BrokerAuthenticationMode.OAuthBearer,
@@ -580,6 +664,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 OAuthBearerScope = "scope",
                 OAuthBearerExtensions = "key=value",
                 OAuthBearerTokenEndpointUrl = "endpointUrl",
+                HttpsCaLocation = httpsCa.FullName,
             };
 
             var config = this.emptyConfiguration;
@@ -604,6 +689,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal("scope", result.SaslOAuthBearerScope);
             Assert.Equal("key=value", result.SaslOAuthBearerExtensions);
             Assert.Equal("endpointUrl", result.SaslOAuthBearerTokenEndpointUrl);
+            Assert.Equal(httpsCa.FullName, result.HttpsCaLocation);
+            Assert.Null(result.HttpsCaPem);
         }
 
         [Fact]
@@ -621,6 +708,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 OAuthBearerScope = "OAuthBearerScope",
                 OAuthBearerExtensions = "OAuthBearerExtensions",
                 OAuthBearerTokenEndpointUrl = "OAuthBearerTokenEndpointUrl",
+                HttpsCaPem = "HttpsCaPem",
             };
 
             var configSslLocations = new Dictionary<string, string>
@@ -630,6 +718,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 {"OAuthBearerScope", "scope"},
                 {"OAuthBearerExtensions", "key=value"},
                 {"OAuthBearerTokenEndpointUrl", "endpointUrl"},
+                {"HttpsCaPem", "httpsCaPem"},
             };
 
             var config = new ConfigurationBuilder().AddInMemoryCollection(configSslLocations).Build();
@@ -655,6 +744,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal("scope", result.SaslOAuthBearerScope);
             Assert.Equal("key=value", result.SaslOAuthBearerExtensions);
             Assert.Equal("endpointUrl", result.SaslOAuthBearerTokenEndpointUrl);
+            Assert.Null(result.HttpsCaLocation);
+            Assert.Equal("httpsCaPem", result.HttpsCaPem);
         }
     }
 }

@@ -256,6 +256,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 conf.BrokerVersionFallback = EventHubsBrokerVersionFallback;
             }
 
+            conf.SetHttpsCaCertificate(
+                this.EnsureValidHttpsCaLocation(this.listenerConfiguration.HttpsCaLocation),
+                this.listenerConfiguration.HttpsCaPem);
+
             return conf;
         }
 
@@ -273,6 +277,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     this.logger.LogWarning("Could not find valid file path for {confName} {filePath}", confName, userProvidedLocation);
                 }
             }
+            return userProvidedLocation;
+        }
+
+        private string EnsureValidHttpsCaLocation(string userProvidedLocation)
+        {
+            if (!string.IsNullOrWhiteSpace(userProvidedLocation))
+            {
+                if (AzureFunctionsFileHelper.TryGetValidHttpsCaLocation(userProvidedLocation, out var resolvedLocation))
+                {
+                    this.logger.LogDebug("Found {confName} in {filePath}", ConfigurationExtensions.HttpsCaLocationConfigKey, resolvedLocation);
+                    return resolvedLocation;
+                }
+
+                this.logger.LogWarning(
+                    "Could not find valid file or directory path for {confName} {filePath}",
+                    ConfigurationExtensions.HttpsCaLocationConfigKey,
+                    userProvidedLocation);
+            }
+
             return userProvidedLocation;
         }
 
