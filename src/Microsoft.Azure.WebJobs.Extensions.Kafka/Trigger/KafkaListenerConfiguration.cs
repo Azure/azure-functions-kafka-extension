@@ -204,8 +204,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 conf.SecurityProtocol = this.SecurityProtocol.Value;
             }
-
-            conf.SetHttpsCaCertificate(this.HttpsCaLocation, this.HttpsCaPem);
         }
     }
 }

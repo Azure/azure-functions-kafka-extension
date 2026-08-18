@@ -415,6 +415,49 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         }
 
         [Fact]
+        public void GetProducerConfig_When_HttpsCaLocation_Does_Not_Exist_Should_Throw()
+        {
+            var attribute = new KafkaAttribute("brokers:9092", "myTopic")
+            {
+                AuthenticationMode = BrokerAuthenticationMode.OAuthBearer,
+                HttpsCaLocation = "relative/does-not-exist.pem",
+            };
+            var entity = new KafkaProducerEntity
+            {
+                Attribute = attribute,
+                ValueType = typeof(ProtoUser),
+            };
+            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerFactory.Instance);
+
+            var exception = Assert.Throws<ArgumentException>(() => factory.GetProducerConfig(entity));
+
+            Assert.Contains("https.ca.location", exception.Message);
+            Assert.Contains("relative/does-not-exist.pem", exception.Message);
+        }
+
+        [Fact]
+        public void GetProducerConfig_When_AuthenticationMode_Is_Not_OAuthBearer_Should_Ignore_HttpsCaSettings()
+        {
+            var attribute = new KafkaAttribute("brokers:9092", "myTopic")
+            {
+                AuthenticationMode = BrokerAuthenticationMode.Plain,
+                HttpsCaLocation = "relative/does-not-exist.pem",
+                HttpsCaPem = "httpsCaPem",
+            };
+            var entity = new KafkaProducerEntity
+            {
+                Attribute = attribute,
+                ValueType = typeof(ProtoUser),
+            };
+            var factory = new KafkaProducerFactory(emptyConfiguration, new DefaultNameResolver(emptyConfiguration), NullLoggerFactory.Instance);
+
+            var config = factory.GetProducerConfig(entity);
+
+            Assert.Null(config.Get("https.ca.location"));
+            Assert.Null(config.Get("https.ca.pem"));
+        }
+
+        [Fact]
         public void GetProducerConfig_When_OAuthBearer_Auth_Defined_Should_Contain_Them()
         {
             var attribute = new KafkaAttribute("brokers:9092", "myTopic")
@@ -427,7 +470,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 OAuthBearerScope = "scope",
                 OAuthBearerExtensions = "key=value",
                 OAuthBearerTokenEndpointUrl = "endpointUrl",
-                HttpsCaLocation = "httpsCaLocation",
+                HttpsCaLocation = "probe",
             };
 
             var entity = new KafkaProducerEntity()
@@ -448,7 +491,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal("scope", config.SaslOauthbearerScope);
             Assert.Equal("key=value", config.SaslOauthbearerExtensions);
             Assert.Equal("endpointUrl", config.SaslOauthbearerTokenEndpointUrl);
-            Assert.Equal("httpsCaLocation", config.Get("https.ca.location"));
+            Assert.Equal("probe", config.Get("https.ca.location"));
             Assert.Null(config.Get("https.ca.pem"));
         }
 
@@ -483,7 +526,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 {"OAuthBearerScope", "scope"},
                 {"OAuthBearerExtensions", "key=value"},
                 {"OAuthBearerTokenEndpointUrl", "endpointUrl"},
-                {"HttpsCaPem", "httpsCaPem"},
+                {"HttpsCaPem", "line1\\nline2"},
             };
 
             var configuration = new ConfigurationBuilder().AddInMemoryCollection(configSslLocations).Build();
@@ -500,7 +543,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal("key=value", config.SaslOauthbearerExtensions);
             Assert.Equal("endpointUrl", config.SaslOauthbearerTokenEndpointUrl);
             Assert.Null(config.Get("https.ca.location"));
-            Assert.Equal("httpsCaPem", config.Get("https.ca.pem"));
+            Assert.Equal("line1\nline2", config.Get("https.ca.pem"));
         }
     }
 }

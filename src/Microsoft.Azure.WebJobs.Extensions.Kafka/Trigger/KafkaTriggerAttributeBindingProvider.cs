@@ -142,7 +142,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     var httpsCaLocation = this.config.ResolveSecureSetting(nameResolver, attribute.HttpsCaLocation);
                     var httpsCaPem = this.config.ResolveSecureSetting(nameResolver, attribute.HttpsCaPem);
                     ConfigurationExtensions.ValidateHttpsCaCertificate(httpsCaLocation, httpsCaPem);
-                    consumerConfig.HttpsCaLocation = GetValidHttpsCaLocation(httpsCaLocation);
+                    consumerConfig.HttpsCaLocation = AzureFunctionsFileHelper.GetValidHttpsCaLocation(httpsCaLocation);
                     consumerConfig.HttpsCaPem = ConfigurationExtensions.NormalizePem(httpsCaPem);
                     consumerConfig.SaslOAuthBearerExtensions = this.config.ResolveSecureSetting(nameResolver, attribute.OAuthBearerExtensions);
                 }
@@ -163,21 +163,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 throw new Exception($"{location} is not a valid file location");
             }
             return validPath;
-        }
-
-        private string GetValidHttpsCaLocation(string location)
-        {
-            if (string.IsNullOrWhiteSpace(location))
-            {
-                return null;
-            }
-
-            if (!AzureFunctionsFileHelper.TryGetValidHttpsCaLocation(location, out var validLocation))
-            {
-                throw new ArgumentException($"{location} is not a valid HTTPS CA location", nameof(location));
-            }
-
-            return validLocation;
         }
 
         private string ExtractSection(string pemString, string sectionName)

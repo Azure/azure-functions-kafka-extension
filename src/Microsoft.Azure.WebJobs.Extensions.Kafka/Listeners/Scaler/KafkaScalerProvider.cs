@@ -87,14 +87,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     adminConfig.SaslOauthbearerScope = config.ResolveSecureSetting(nameResolver, kafkaMetaData.OAuthBearerScope);
                     adminConfig.SaslOauthbearerTokenEndpointUrl = config.ResolveSecureSetting(nameResolver, kafkaMetaData.OAuthBearerTokenEndpointUrl);
                     var httpsCaLocation = config.ResolveSecureSetting(nameResolver, kafkaMetaData.HttpsCaLocation);
-                    if (!AzureFunctionsFileHelper.TryGetValidHttpsCaLocation(httpsCaLocation, out var resolvedHttpsCaLocation))
-                    {
-                        resolvedHttpsCaLocation = httpsCaLocation;
-                    }
-
+                    var httpsCaPem = config.ResolveSecureSetting(nameResolver, kafkaMetaData.HttpsCaPem);
+                    ConfigurationExtensions.ValidateHttpsCaCertificate(httpsCaLocation, httpsCaPem);
                     adminConfig.SetHttpsCaCertificate(
-                        resolvedHttpsCaLocation,
-                        config.ResolveSecureSetting(nameResolver, kafkaMetaData.HttpsCaPem));
+                        AzureFunctionsFileHelper.GetValidHttpsCaLocation(httpsCaLocation),
+                        httpsCaPem);
                     adminConfig.SaslOauthbearerExtensions = config.ResolveSecureSetting(nameResolver, kafkaMetaData.OAuthBearerExtensions);
                 }
             }

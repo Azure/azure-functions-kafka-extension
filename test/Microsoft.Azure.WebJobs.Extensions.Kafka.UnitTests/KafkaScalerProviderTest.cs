@@ -96,6 +96,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         }
 
         [Fact]
+        public void GetConsumerConfiguration_When_HttpsCaLocation_Does_Not_Exist_Should_Throw()
+        {
+            var metadata = new KafkaScalerProvider.KafkaMetaData
+            {
+                BrokerList = "brokerList",
+                ConsumerGroup = "consumerGroup",
+                AuthenticationMode = BrokerAuthenticationMode.OAuthBearer,
+                HttpsCaLocation = "relative/does-not-exist.pem",
+            };
+
+            var exception = Assert.Throws<ArgumentException>(
+                () => KafkaScalerProvider.GetConsumerConfiguration(metadata, config.Object, nameResolver.Object));
+
+            Assert.Contains("https.ca.location", exception.Message);
+            Assert.Contains("relative/does-not-exist.pem", exception.Message);
+        }
+
+        [Fact]
         public void GetConsumerConfiguration_When_OAuthBearer_HttpsCaSettings_Resolve_From_AppSetting()
         {
             var metadata = new KafkaScalerProvider.KafkaMetaData
@@ -122,7 +140,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 {"OAuthBearerScope", "scope"},
                 {"OAuthBearerExtensions", "key=value"},
                 {"OAuthBearerTokenEndpointUrl", "endpointUrl"},
-                {"HttpsCaLocation", "httpsCaLocation"},
+                {"HttpsCaLocation", "probe"},
             };
 
             var configuration = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
@@ -138,7 +156,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Equal("scope", result.SaslOauthbearerScope);
             Assert.Equal("key=value", result.SaslOauthbearerExtensions);
             Assert.Equal("endpointUrl", result.SaslOauthbearerTokenEndpointUrl);
-            Assert.Equal("httpsCaLocation", result.Get("https.ca.location"));
+            Assert.Equal("probe", result.Get("https.ca.location"));
             Assert.Null(result.Get("https.ca.pem"));
         }
     }

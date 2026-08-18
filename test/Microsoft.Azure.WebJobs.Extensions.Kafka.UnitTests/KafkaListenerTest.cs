@@ -504,6 +504,35 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         }
 
         [Fact]
+        public async Task When_OAuthBearer_HttpsCaLocation_Does_Not_Exist_Should_Throw()
+        {
+            var listenerConfig = new KafkaListenerConfiguration
+            {
+                BrokerList = "testBroker",
+                Topic = "topic",
+                ConsumerGroup = "group1",
+                SaslMechanism = SaslMechanism.OAuthBearer,
+                HttpsCaLocation = "relative/does-not-exist.pem",
+            };
+            var target = new KafkaListenerForTest<Null, string>(
+                new Mock<ITriggeredFunctionExecutor>().Object,
+                true,
+                new KafkaOptions(),
+                listenerConfig,
+                requiresKey: true,
+                valueDeserializer: null,
+                keyDeserializer: null,
+                NullLogger.Instance,
+                functionId: "testId",
+                drainModeManager: null);
+
+            var exception = await Assert.ThrowsAsync<ArgumentException>(() => target.StartAsync(default));
+
+            Assert.Contains("https.ca.location", exception.Message);
+            Assert.Contains("relative/does-not-exist.pem", exception.Message);
+        }
+
+        [Fact]
         public async Task When_OAuthBearer_HttpsCaSettings_Are_Set_Should_Be_Set_In_Consumer_Config()
         {
             var executor = new Mock<ITriggeredFunctionExecutor>();
@@ -521,7 +550,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 SaslOAuthBearerScope = "scope",
                 SaslOAuthBearerTokenEndpointUrl = "endpointUrl",
                 SaslOAuthBearerExtensions = "key=value",
-                HttpsCaLocation = "path/to/https-ca.pem",
+                HttpsCaLocation = "probe",
                 SecurityProtocol = SecurityProtocol.SaslSsl,
             };
 
@@ -541,7 +570,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 
             await target.StartAsync(default);
 
-            Assert.Equal("path/to/https-ca.pem", target.ConsumerConfig.Get("https.ca.location"));
+            Assert.Equal("probe", target.ConsumerConfig.Get("https.ca.location"));
             Assert.Null(target.ConsumerConfig.Get("https.ca.pem"));
             Assert.Equal(SaslMechanism.OAuthBearer, target.ConsumerConfig.SaslMechanism);
             Assert.Equal(SaslOauthbearerMethod.Oidc, target.ConsumerConfig.SaslOauthbearerMethod);

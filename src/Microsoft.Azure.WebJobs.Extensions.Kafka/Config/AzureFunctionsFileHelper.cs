@@ -270,5 +270,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             return TryGetValidFilePath(location, out resolvedLocation);
         }
+
+        internal static string GetValidHttpsCaLocation(string location)
+        {
+            if (string.IsNullOrWhiteSpace(location))
+            {
+                return null;
+            }
+
+            if (TryGetValidHttpsCaLocation(location, out var resolvedLocation))
+            {
+                return resolvedLocation;
+            }
+
+            throw new ArgumentException(
+                $"'{ConfigurationExtensions.HttpsCaLocationConfigKey}' must be 'probe' or an existing file or directory: {location}",
+                nameof(location));
+        }
     }
 }
