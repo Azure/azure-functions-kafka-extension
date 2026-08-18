@@ -132,7 +132,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         private KafkaMetricsProvider<TKey, TValue> CreateMetricsProvider()
         {
-            return new KafkaMetricsProvider<TKey, TValue>(this.topicName, new AdminClientConfig(GetConsumerConfiguration()), consumer.Value, this.logger);
+            return new KafkaMetricsProvider<TKey, TValue>(this.topicName, new AdminClientConfig(GetConsumerConfiguration()), consumer.Value, this.logger, ownsConsumer: false);
         }
 
         private KafkaGenericTopicScaler<TKey, TValue> CreateTopicScaler()

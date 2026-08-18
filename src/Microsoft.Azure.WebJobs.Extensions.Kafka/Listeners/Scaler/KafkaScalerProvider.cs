@@ -28,6 +28,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
 
         public KafkaScalerProvider(IServiceProvider serviceProvider, TriggerMetadata triggerMetadata)
+            : this(serviceProvider, triggerMetadata, config => new ConsumerBuilder<string, string>(config).Build())
+        {
+        }
+
+        internal KafkaScalerProvider(
+            IServiceProvider serviceProvider,
+            TriggerMetadata triggerMetadata,
+            Func<ConsumerConfig, IConsumer<string, string>> consumerFactory)
         {
             var config = serviceProvider.GetService<IConfiguration>();
             var nameResolver = serviceProvider.GetService<INameResolver>();
@@ -41,11 +49,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             ILogger logger = loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("Kafka"));
 
             var consumerConfig = GetConsumerConfiguration(kafkaMetadata, config, nameResolver);
-            var consumer = new ConsumerBuilder<string, string>(consumerConfig).Build();
-            _metricsProvider = new KafkaMetricsProvider<string, string>(topicName, new AdminClientConfig(consumerConfig), consumer, logger);
-
-            _scaleMonitor = new KafkaObjectTopicScaler(topicName, consumerGroup, _metricsProvider, triggerMetadata.FunctionName, lagThreshold, logger);
-            _targetScaler = new KafkaObjectTargetScaler(topicName, consumerGroup, _metricsProvider, triggerMetadata.FunctionName, lagThreshold, logger);
+            var consumer = consumerFactory(consumerConfig);
+            try
+            {
+                _metricsProvider = new KafkaMetricsProvider<string, string>(
+                    topicName,
+                    new AdminClientConfig(consumerConfig),
+                    consumer,
+                    logger,
+                    ownsConsumer: true);
+                _scaleMonitor = new KafkaObjectTopicScaler(topicName, consumerGroup, _metricsProvider, triggerMetadata.FunctionName, lagThreshold, logger);
+                _targetScaler = new KafkaObjectTargetScaler(topicName, consumerGroup, _metricsProvider, triggerMetadata.FunctionName, lagThreshold, logger);
+            }
+            catch
+            {
+                consumer.Dispose();
+                throw;
+            }
         }
 
         private ConsumerConfig GetConsumerConfiguration(KafkaMetaData kafkaMetaData, IConfiguration config, INameResolver nameResolver)

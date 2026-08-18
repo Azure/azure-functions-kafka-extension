@@ -104,6 +104,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         }
 
         [Fact]
+        public void KafkaScalerProvider_DisposesConsumer_WhenConstructionFails()
+        {
+            var consumer = new Mock<IConsumer<string, string>>();
+            var triggerMetadata = CreateTriggerMetadata(string.Empty);
+
+            Assert.Throws<ArgumentException>(() =>
+                new KafkaScalerProvider(serviceProvider.Object, triggerMetadata, _ => consumer.Object));
+
+            consumer.Verify(x => x.Dispose(), Times.Once);
+        }
+
+        [Fact]
         public void AddKafkaScaleForTrigger_RegistersDistinctProvidersForEachTrigger_AndDisposesThem()
         {
             var services = new TestServiceCollection();

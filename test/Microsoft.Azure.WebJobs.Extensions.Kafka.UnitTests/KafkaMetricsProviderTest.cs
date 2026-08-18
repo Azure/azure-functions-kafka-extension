@@ -178,5 +178,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             consumer.Verify(x => x.Close(), Times.Once);
             consumer.Verify(x => x.Dispose(), Times.Once);
         }
+
+        [Fact]
+        public void KafkaMetricsProvider_Dispose_Does_Not_Close_Or_Dispose_NonOwned_Consumer()
+        {
+            var nonOwningMetricsProvider = new KafkaMetricsProviderForTest<string, byte[]>(
+                TopicName,
+                new AdminClientConfig(),
+                consumer.Object,
+                NullLogger.Instance,
+                topicPartitions,
+                assignedPartitions,
+                ownsConsumer: false);
+
+            nonOwningMetricsProvider.Dispose();
+
+            consumer.Verify(x => x.Close(), Times.Never);
+            consumer.Verify(x => x.Dispose(), Times.Never);
+        }
     }
 }

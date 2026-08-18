@@ -16,14 +16,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         private readonly AdminClientConfig adminClientConfig;
         private readonly IConsumer<TKey, TValue> consumer;
         private readonly ILogger logger;
+        private readonly bool ownsConsumer;
         private bool _disposed;
         protected Lazy<List<TopicPartition>> topicPartitions;
 
         virtual protected internal KafkaTriggerMetrics LastCalculatedMetrics { get; set; }
 
-        internal KafkaMetricsProvider(string topicName, AdminClientConfig adminClientConfig, IConsumer<TKey, TValue> consumer, ILogger logger) : this(topicName, adminClientConfig, logger)
+        internal KafkaMetricsProvider(string topicName, AdminClientConfig adminClientConfig, IConsumer<TKey, TValue> consumer, ILogger logger)
+            : this(topicName, adminClientConfig, consumer, logger, ownsConsumer: true)
+        {
+        }
+
+        internal KafkaMetricsProvider(string topicName, AdminClientConfig adminClientConfig, IConsumer<TKey, TValue> consumer, ILogger logger, bool ownsConsumer) : this(topicName, adminClientConfig, logger)
         {
             this.consumer = consumer;
+            this.ownsConsumer = ownsConsumer;
         }
 
         internal KafkaMetricsProvider(string topicName, AdminClientConfig adminClientConfig, ILogger logger)
@@ -200,7 +207,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         {
             if (!_disposed)
             {
-                if (disposing && consumer != null)
+                if (disposing && ownsConsumer && consumer != null)
                 {
                     try
                     {
