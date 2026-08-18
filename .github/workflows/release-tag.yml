@@ -53,7 +53,7 @@ jobs:
 
       - name: Verify version in common.props
         run: |
-          PROPS_VERSION=$(grep -oP '<Version>\K[^<$]+' build/common.props)
+          PROPS_VERSION=$(grep -oP '<VersionPrefix>\K[^<]+' build/common.props)
           echo "Version in common.props: $PROPS_VERSION"
           if [ "$PROPS_VERSION" != "${{ env.VERSION }}" ]; then
             echo "::error::Version mismatch! common.props=$PROPS_VERSION, expected=${{ env.VERSION }}"
@@ -87,18 +87,18 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.PIPELINE_ADMIN }}
         run: |
-          # After releasing X.Y.Z on master, dev's common.props must be
-          # updated to X.Y.Z$(VersionSuffix) so it stays in sync.
+          # After releasing X.Y.Z on master, dev's VersionPrefix must be
+          # updated to X.Y.Z so it stays in sync.
           # Without this, dev retains the OLD version indefinitely.
           BUMP_BRANCH="auto/bump-dev-to-${{ env.VERSION }}"
 
           git fetch origin dev
           git checkout -b "$BUMP_BRANCH" origin/dev
 
-          # Update version — preserve $(VersionSuffix) for dev builds
-          sed -i 's|<Version>[^<]*|<Version>'"${{ env.VERSION }}"'$(VersionSuffix)|' build/common.props
+          # The .NET SDK adds "-$(VersionSuffix)" only when a suffix is set.
+          sed -i 's|<VersionPrefix>[^<]*|<VersionPrefix>'"${{ env.VERSION }}"'|' build/common.props
           echo "Updated dev common.props:"
-          grep '<Version>' build/common.props
+          grep '<VersionPrefix>' build/common.props
 
           git add build/common.props
           git commit -m "Bump version to ${{ env.VERSION }} on dev after release"
@@ -108,7 +108,7 @@ jobs:
             --base dev \
             --head "$BUMP_BRANCH" \
             --title "Bump version to ${{ env.VERSION }} on dev after release" \
-            --body "Automated version bump after release **${{ env.VERSION }}**."$'\n\n'"Updates \`build/common.props\` from the pre-release version to \`${{ env.VERSION }}\$(VersionSuffix)\`."
+            --body "Automated version bump after release **${{ env.VERSION }}**."$'\n\n'"Updates \`VersionPrefix\` in \`build/common.props\` to \`${{ env.VERSION }}\`; the .NET SDK appends \`-\$(VersionSuffix)\` when a suffix is set."
 
       - name: Summary
         run: |
@@ -122,7 +122,7 @@ jobs:
           echo "2. [Official Build](https://azfunc.visualstudio.com/internal/_build?definitionId=690) — builds + signs NuGet package" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Dev branch" >> $GITHUB_STEP_SUMMARY
-          echo "- Version bump PR created for \`dev\` → \`${{ env.VERSION }}\$(VersionSuffix)\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Version bump PR created for \`dev\` → \`VersionPrefix=${{ env.VERSION }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Manual steps remaining" >> $GITHUB_STEP_SUMMARY
           echo "3. Run [Release Pipeline](https://azfunc.visualstudio.com/internal/_build?definitionId=1553) with artifact from Official Build" >> $GITHUB_STEP_SUMMARY

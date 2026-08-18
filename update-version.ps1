@@ -60,8 +60,8 @@ function Update-ExtensionVersion{
         $newExtensionVersion
     )
     $path = ".\build\common.props"
-    $old = "<Version>" + $oldExtensionVersion
-    $new = "<Version>" + $newExtensionVersion
+    $old = "<VersionPrefix>" + $oldExtensionVersion
+    $new = "<VersionPrefix>" + $newExtensionVersion
     $newContent = Get-Content $path | % { $_ -replace $old, $new }
     Set-Content -Path $path -Value $newContent
 }

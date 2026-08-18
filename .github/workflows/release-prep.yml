@@ -88,9 +88,9 @@ jobs:
 
       - name: Update version in common.props
         run: |
-          sed -i "s|<Version>[^<]*|<Version>${{ env.VERSION }}|" build/common.props
+          sed -i "s|<VersionPrefix>[^<]*|<VersionPrefix>${{ env.VERSION }}|" build/common.props
           echo "Updated version to ${{ env.VERSION }}:"
-          grep '<Version>' build/common.props
+          grep '<VersionPrefix>' build/common.props
 
       - name: Commit and push release branch
         run: |
