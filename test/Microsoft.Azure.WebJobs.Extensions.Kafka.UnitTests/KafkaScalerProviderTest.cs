@@ -13,6 +13,9 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
+using System.Linq;
+using System.Reflection;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 {
@@ -50,7 +53,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 { "Password", "password" },
             };
             var triggerMetadata = new TriggerMetadata(metadata);
-            var kafkaScalerProvider = new KafkaScalerProvider(serviceProvider.Object, triggerMetadata);
+            using var kafkaScalerProvider = new KafkaScalerProvider(serviceProvider.Object, triggerMetadata);
             Assert.NotNull(kafkaScalerProvider);
             Assert.NotNull(kafkaScalerProvider.GetTargetScaler());
             Assert.NotNull(kafkaScalerProvider.GetMonitor());
@@ -70,7 +73,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
                 { "SslCertificateandKeyPEM", "dummycertificateandkeypem" }
             };
             var triggerMetadata = new TriggerMetadata(metadata);
-            var kafkaScalerProvider = new KafkaScalerProvider(serviceProvider.Object, triggerMetadata);
+            using var kafkaScalerProvider = new KafkaScalerProvider(serviceProvider.Object, triggerMetadata);
             Assert.NotNull(kafkaScalerProvider);
             Assert.NotNull(kafkaScalerProvider.GetTargetScaler());
             Assert.NotNull(kafkaScalerProvider.GetMonitor());
@@ -90,14 +93,63 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             var triggerMetadata = new TriggerMetadata(metadata);
 
             // Act & Assert
-            var kafkaScalerProvider = new KafkaScalerProvider(serviceProvider.Object, triggerMetadata);
+            using var kafkaScalerProvider = new KafkaScalerProvider(serviceProvider.Object, triggerMetadata);
             Assert.True(kafkaScalerProvider is IDisposable, "KafkaScalerProvider should implement IDisposable");
-            
+
             // Dispose should not throw
             kafkaScalerProvider.Dispose();
-            
+
             // Multiple Dispose calls should be safe
             kafkaScalerProvider.Dispose();
+        }
+
+        [Fact]
+        public void AddKafkaScaleForTrigger_RegistersDistinctProvidersForEachTrigger_AndDisposesThem()
+        {
+            var services = new TestServiceCollection();
+            services.AddSingleton(config.Object);
+            services.AddSingleton(nameResolver.Object);
+            services.AddSingleton<ILoggerFactory>(NullLoggerFactory.Instance);
+            services.AddSingleton(Options.Create(new KafkaOptions()));
+
+            var builder = new Mock<IWebJobsBuilder>();
+            builder.SetupGet(p => p.Services).Returns(services);
+
+            builder.Object.AddKafkaScaleForTrigger(CreateTriggerMetadata("topic-one"));
+            builder.Object.AddKafkaScaleForTrigger(CreateTriggerMetadata("topic-two"));
+
+            var provider = services.BuildServiceProvider();
+            var monitorProviders = provider.GetServices<IScaleMonitorProvider>().ToArray();
+            var targetScalerProviders = provider.GetServices<ITargetScalerProvider>().ToArray();
+
+            Assert.Equal(2, monitorProviders.Length);
+            Assert.Equal(2, targetScalerProviders.Length);
+            Assert.NotSame(monitorProviders[0], monitorProviders[1]);
+            Assert.Same(monitorProviders[0], targetScalerProviders[0]);
+            Assert.Same(monitorProviders[1], targetScalerProviders[1]);
+
+            provider.Dispose();
+
+            var disposedField = typeof(KafkaScalerProvider).GetField("_disposed", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.All(monitorProviders, scalerProvider =>
+                Assert.True((bool)disposedField.GetValue(scalerProvider)));
+        }
+
+        private static TriggerMetadata CreateTriggerMetadata(string topic)
+        {
+            var metadata = new JObject
+            {
+                { "BrokerList", "brokerList" },
+                { "Topic", topic },
+                { "ConsumerGroup", "consumerGroup" },
+                { "LagThreshold", 1000 },
+            };
+
+            return new TriggerMetadata(metadata);
+        }
+
+        private sealed class TestServiceCollection : List<ServiceDescriptor>, IServiceCollection
+        {
         }
     }
 }
