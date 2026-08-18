@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Kafka extension compatibility manifest",
+  "type": "object",
+  "required": [
+    "name",
+    "qualificationMode",
+    "host",
+    "worker",
+    "languageLibrary",
+    "kafkaExtension",
+    "broker",
+    "buildTooling"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "qualificationMode": {
+      "enum": [
+        "development",
+        "release"
+      ]
+    },
+    "host": {
+      "$ref": "#/$defs/component"
+    },
+    "worker": {
+      "$ref": "#/$defs/component"
+    },
+    "languageLibrary": {
+      "$ref": "#/$defs/component"
+    },
+    "kafkaExtension": {
+      "$ref": "#/$defs/component"
+    },
+    "broker": {
+      "$ref": "#/$defs/component"
+    },
+    "buildTooling": {
+      "$ref": "#/$defs/component"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "component": {
+      "type": "object",
+      "required": [
+        "source"
+      ],
+      "properties": {
+        "source": {
+          "enum": [
+            "container",
+            "bundled",
+            "package",
+            "workspace",
+            "git"
+          ]
+        },
+        "repository": {
+          "type": "string"
+        },
+        "ref": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "image": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

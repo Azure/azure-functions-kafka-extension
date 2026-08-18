@@ -1,0 +1,30 @@
+{
+  "$schema": "../manifest.schema.json",
+  "name": "java-local-kafka-development",
+  "qualificationMode": "development",
+  "host": {
+    "source": "container",
+    "image": "mcr.microsoft.com/azure-functions/java:4-java21-core-tools@sha256:6c377762f8de49e115a5e527f75f176a590d5842b3b3fb0bd9ea5a731039b679"
+  },
+  "worker": {
+    "source": "bundled",
+    "ref": "from-host-image"
+  },
+  "languageLibrary": {
+    "source": "package",
+    "version": "2.0.1"
+  },
+  "kafkaExtension": {
+    "source": "workspace",
+    "repository": "Azure/azure-functions-kafka-extension",
+    "ref": "HEAD"
+  },
+  "broker": {
+    "source": "container",
+    "image": "funcacrcache.azurecr.io/cache/confluentinc/cp-kafka:7.6.0@sha256:24cdd3a7fa89d2bed150560ebea81ff1943badfa61e51d66bb541a6b0d7fb047"
+  },
+  "buildTooling": {
+    "source": "container",
+    "image": "mcr.microsoft.com/dotnet/sdk:8.0-bookworm-slim-amd64@sha256:5dfdb3b19e6900a3dc449760547a0a3fdd1f47900062d274d57e7ab725484c16"
+  }
+}
