@@ -13,7 +13,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         readonly List<TopicPartition> allPartitions;
         readonly List<TopicPartition> onlyAssignedPartitions;
 
-        public KafkaMetricsProviderForTest(string topicName, AdminClientConfig adminClientConfig, IConsumer<TKey, TValue> consumer, ILogger logger, List<TopicPartition> topicPartitions, List<TopicPartition> assignedPartitions) : base(topicName, adminClientConfig, consumer, logger)
+        public KafkaMetricsProviderForTest(string topicName, AdminClientConfig adminClientConfig, IConsumer<TKey, TValue> consumer, ILogger logger, List<TopicPartition> topicPartitions, List<TopicPartition> assignedPartitions, bool ownsConsumer = true) : base(topicName, adminClientConfig, consumer, logger, ownsConsumer)
         {
             this.allPartitions = topicPartitions;
             this.onlyAssignedPartitions = assignedPartitions;
