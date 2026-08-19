@@ -140,5 +140,35 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.False(result);
             Assert.Null(actual);
         }
+
+        [Fact]
+        public void TryGetValidHttpsCaLocation_WhenAzureRelativeDirectoryHasSubdirectories_ShouldPreserveThem()
+        {
+            var home = Path.Combine(Path.GetTempPath(), nameof(AzureFunctionsFileHelperTest), Guid.NewGuid().ToString("N"));
+            var expected = Directory.CreateDirectory(
+                Path.Combine(
+                    home,
+                    AzureFunctionsFileHelper.AzureDefaultFunctionPathPart1,
+                    AzureFunctionsFileHelper.AzureDefaultFunctionPathPart2,
+                    "certs",
+                    "ca")).FullName;
+
+            try
+            {
+                AzureEnvironment.SetRunningInAzureEnvVars();
+                AzureEnvironment.SetEnvironmentVariable(AzureFunctionsFileHelper.AzureHomeEnvVarName, home);
+
+                var result = AzureFunctionsFileHelper.TryGetValidHttpsCaLocation(
+                    Path.Combine("certs", "ca") + Path.DirectorySeparatorChar,
+                    out var actual);
+
+                Assert.True(result);
+                Assert.Equal(expected, actual);
+            }
+            finally
+            {
+                Directory.Delete(home, recursive: true);
+            }
+        }
     }
 }

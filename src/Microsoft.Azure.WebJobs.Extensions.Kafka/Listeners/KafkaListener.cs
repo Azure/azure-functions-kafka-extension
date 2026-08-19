@@ -256,6 +256,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 conf.BrokerVersionFallback = EventHubsBrokerVersionFallback;
             }
 
+            ConfigurationExtensions.ValidateHttpsCaCertificate(
+                this.listenerConfiguration.HttpsCaLocation,
+                this.listenerConfiguration.HttpsCaPem);
+            conf.SetHttpsCaCertificate(
+                AzureFunctionsFileHelper.GetValidHttpsCaLocation(this.listenerConfiguration.HttpsCaLocation),
+                this.listenerConfiguration.HttpsCaPem);
+
             return conf;
         }
 

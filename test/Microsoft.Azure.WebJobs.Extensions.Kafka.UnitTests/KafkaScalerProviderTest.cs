@@ -80,6 +80,90 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
         }
 
         [Fact]
+        public void GetConsumerConfiguration_When_Both_HttpsCaSettings_Are_Defined_Should_Throw()
+        {
+            var metadata = new KafkaScalerProvider.KafkaMetaData
+            {
+                BrokerList = "brokerList",
+                ConsumerGroup = "consumerGroup",
+                AuthenticationMode = BrokerAuthenticationMode.OAuthBearer,
+                HttpsCaLocation = "httpsCaLocation",
+                HttpsCaPem = "httpsCaPem",
+            };
+
+            var exception = Assert.Throws<ArgumentException>(
+                () => KafkaScalerProvider.GetConsumerConfiguration(metadata, config.Object, nameResolver.Object));
+
+            Assert.Contains("https.ca.location", exception.Message);
+            Assert.Contains("https.ca.pem", exception.Message);
+        }
+
+        [Fact]
+        public void GetConsumerConfiguration_When_HttpsCaLocation_Does_Not_Exist_Should_Throw()
+        {
+            var metadata = new KafkaScalerProvider.KafkaMetaData
+            {
+                BrokerList = "brokerList",
+                ConsumerGroup = "consumerGroup",
+                AuthenticationMode = BrokerAuthenticationMode.OAuthBearer,
+                HttpsCaLocation = "relative/does-not-exist.pem",
+            };
+
+            var exception = Assert.Throws<ArgumentException>(
+                () => KafkaScalerProvider.GetConsumerConfiguration(metadata, config.Object, nameResolver.Object));
+
+            Assert.Contains("https.ca.location", exception.Message);
+            Assert.Contains("relative/does-not-exist.pem", exception.Message);
+        }
+
+        [Fact]
+        public void GetConsumerConfiguration_When_OAuthBearer_HttpsCaSettings_Resolve_From_AppSetting()
+        {
+            var metadata = new KafkaScalerProvider.KafkaMetaData
+            {
+                BrokerList = "brokerList",
+                ConsumerGroup = "consumerGroup",
+                AuthenticationMode = BrokerAuthenticationMode.OAuthBearer,
+                Protocol = BrokerProtocol.SaslSsl,
+                OAuthBearerClientId = "OAuthBearerClientId",
+                OAuthBearerClientSecret = "OAuthBearerClientSecret",
+                OAuthBearerMethod = SaslOauthbearerMethod.Oidc,
+                OAuthBearerScope = "OAuthBearerScope",
+                OAuthBearerExtensions = "OAuthBearerExtensions",
+                OAuthBearerTokenEndpointUrl = "OAuthBearerTokenEndpointUrl",
+                HttpsCaLocation = "HttpsCaLocation",
+            };
+
+            var settings = new Dictionary<string, string>
+            {
+                {"brokerList", "broker:9092"},
+                {"consumerGroup", "group"},
+                {"OAuthBearerClientId", "clientId"},
+                {"OAuthBearerClientSecret", "secret"},
+                {"OAuthBearerScope", "scope"},
+                {"OAuthBearerExtensions", "key=value"},
+                {"OAuthBearerTokenEndpointUrl", "endpointUrl"},
+                {"HttpsCaLocation", "probe"},
+            };
+
+            var configuration = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
+            var result = KafkaScalerProvider.GetConsumerConfiguration(metadata, configuration, new DefaultNameResolver(configuration));
+
+            Assert.Equal("broker:9092", result.BootstrapServers);
+            Assert.Equal("group", result.GroupId);
+            Assert.Equal(SecurityProtocol.SaslSsl, result.SecurityProtocol);
+            Assert.Equal(SaslMechanism.OAuthBearer, result.SaslMechanism);
+            Assert.Equal("secret", result.SaslOauthbearerClientSecret);
+            Assert.Equal("clientId", result.SaslOauthbearerClientId);
+            Assert.Equal(SaslOauthbearerMethod.Oidc, result.SaslOauthbearerMethod);
+            Assert.Equal("scope", result.SaslOauthbearerScope);
+            Assert.Equal("key=value", result.SaslOauthbearerExtensions);
+            Assert.Equal("endpointUrl", result.SaslOauthbearerTokenEndpointUrl);
+            Assert.Equal("probe", result.Get("https.ca.location"));
+            Assert.Null(result.Get("https.ca.pem"));
+        }
+
+        [Fact]
         public void KafkaScalerProvider_Implements_IDisposable()
         {
             // Arrange
