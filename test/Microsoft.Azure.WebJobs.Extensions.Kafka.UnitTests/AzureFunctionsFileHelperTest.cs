@@ -19,6 +19,7 @@ using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
 {
+    [Collection(AzureEnvironmentTestCollection.Name)]
     public class AzureFunctionsFileHelperTest : IDisposable
     {
         public void Dispose()
