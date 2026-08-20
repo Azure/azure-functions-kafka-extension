@@ -34,5 +34,7 @@ services:
       - "7071:80"
     environment:
       AzureWebJobsStorage: ""
+      AzureWebJobsSecretStorageType: Files
+      AZURE_FUNCTIONS_ENVIRONMENT: Development
       FUNCTIONS_WORKER_RUNTIME: java
       AzureFunctionsJobHost__Logging__Console__IsEnabled: "true"

@@ -14,8 +14,12 @@ $composePath = Join-Path $PSScriptRoot 'docker-compose.yml'
 $workingDirectory = Join-Path $repositoryRoot 'temp\compat'
 $nugetDirectory = Join-Path $workingDirectory 'nuget'
 $resultsDirectory = Join-Path $workingDirectory 'results'
+$secretsDirectory = Join-Path $workingDirectory 'secrets'
 $functionImage = 'azure-functions-kafka-compat-java:local'
 $environmentStarted = $false
+$generatedSecretPaths = [System.Collections.Generic.List[string]]::new()
+$assembledArtifactHashes = [ordered]@{}
+$functionImageId = $null
 
 function Invoke-Native {
     param(
@@ -90,11 +94,16 @@ function Assert-CfsMavenSettings {
 }
 
 function Assert-Manifest {
-    if ($manifest.qualificationMode -eq 'release' -and $manifest.worker.source -eq 'bundled') {
-        throw 'Release qualification requires an independently identified worker artifact.'
+    foreach ($componentName in @('host', 'worker', 'javaAdditions', 'languageLibrary')) {
+        $component = $manifest.$componentName
+        if ($component.source -ne 'git' -or
+            $component.repository -notmatch '^https://github\.com/Azure/' -or
+            $component.commit -notmatch '^[a-f0-9]{40}$') {
+            throw "$componentName must identify an Azure Git repository and an immutable 40-character commit."
+        }
     }
-    if ($manifest.host.source -ne 'container' -or $manifest.host.image -notmatch '@sha256:[a-f0-9]{64}$') {
-        throw 'The initial Host provider requires a digest-pinned container image.'
+    if ($manifest.host.runtimeImage -notmatch '@sha256:[a-f0-9]{64}$') {
+        throw 'The Host runtime image must be digest-pinned.'
     }
     if ($manifest.kafkaExtension.source -ne 'workspace') {
         throw 'The initial Kafka extension provider supports only the current workspace.'
@@ -102,13 +111,82 @@ function Assert-Manifest {
     if ($manifest.broker.source -ne 'container' -or $manifest.broker.image -notmatch '@sha256:[a-f0-9]{64}$') {
         throw 'The Local Kafka provider requires a digest-pinned container image.'
     }
-    if ($manifest.buildTooling.source -ne 'container' -or $manifest.buildTooling.image -notmatch '@sha256:[a-f0-9]{64}$') {
-        throw 'Build tooling must use a digest-pinned container image.'
+    if ($manifest.buildTooling.source -ne 'container' -or
+        $manifest.buildTooling.javaAdditionsImage -notmatch '@sha256:[a-f0-9]{64}$' -or
+        $manifest.buildTooling.javaImage -notmatch '@sha256:[a-f0-9]{64}$' -or
+        $manifest.buildTooling.dotnetSdkImage -notmatch '@sha256:[a-f0-9]{64}$') {
+        throw 'Java and .NET build tooling must use digest-pinned container images.'
     }
 }
 
-Assert-CfsConfiguration -Path $env:CFS_NUGET_CONFIG
-Assert-CfsMavenSettings -Path $env:CFS_MAVEN_SETTINGS
+function New-CfsSecrets {
+    New-Item -ItemType Directory -Path $secretsDirectory -Force | Out-Null
+    $token = (& az account get-access-token `
+        --resource '499b84ac-1321-427f-aa17-267ca6975798' `
+        --query accessToken `
+        --output tsv)
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($token)) {
+        throw 'Unable to acquire a short-lived Azure DevOps token from the current Azure CLI identity.'
+    }
+    $token = $token.Trim()
+
+    $tokenPath = Join-Path $secretsDirectory 'ado-token'
+    Set-Content -LiteralPath $tokenPath -Value $token -NoNewline
+    $generatedSecretPaths.Add($tokenPath)
+
+    $nugetPath = Join-Path $secretsDirectory 'NuGet.config'
+    @"
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <packageSources>
+    <clear />
+    <add key="upstream-public" value="https://pkgs.dev.azure.com/azfunc/public/_packaging/upstream-public/nuget/v3/index.json" />
+  </packageSources>
+  <packageSourceCredentials>
+    <upstream-public>
+      <add key="Username" value="AzureDevOps" />
+      <add key="ClearTextPassword" value="$token" />
+    </upstream-public>
+  </packageSourceCredentials>
+  <packageSourceMapping>
+    <packageSource key="upstream-public">
+      <package pattern="*" />
+    </packageSource>
+  </packageSourceMapping>
+</configuration>
+"@ | Set-Content -LiteralPath $nugetPath
+    $generatedSecretPaths.Add($nugetPath)
+
+    $mavenPath = Join-Path $secretsDirectory 'settings.xml'
+    @"
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0">
+  <servers>
+    <server>
+      <id>upstream-public</id>
+      <username>AzureDevOps</username>
+      <password>$token</password>
+    </server>
+  </servers>
+  <mirrors>
+    <mirror>
+      <id>upstream-public</id>
+      <name>Azure Functions CFS</name>
+      <url>https://pkgs.dev.azure.com/azfunc/public/_packaging/upstream-public/maven/v1</url>
+      <mirrorOf>*</mirrorOf>
+    </mirror>
+  </mirrors>
+</settings>
+"@ | Set-Content -LiteralPath $mavenPath
+    $generatedSecretPaths.Add($mavenPath)
+
+    return @{
+        TokenPath = $tokenPath
+        NuGetPath = $nugetPath
+        MavenPath = $mavenPath
+    }
+}
+
 Assert-Manifest
 
 $head = (& git -C $repositoryRoot rev-parse HEAD).Trim()
@@ -119,7 +197,14 @@ if ($manifest.kafkaExtension.ref -ne 'HEAD' -and -not $head.StartsWith($manifest
     throw "Workspace commit $head does not match requested ref $($manifest.kafkaExtension.ref)."
 }
 
-$packageVersion = "0.0.0-e2e.$($head.Substring(0, 12).ToLowerInvariant())"
+$versionPropsPath = Join-Path $repositoryRoot 'build\common.props'
+$versionMatch = [Regex]::Match(
+    (Get-Content -LiteralPath $versionPropsPath -Raw),
+    '<Version>(\d+\.\d+\.\d+)')
+if (-not $versionMatch.Success) {
+    throw "Unable to resolve the Kafka extension version from $versionPropsPath."
+}
+$packageVersion = "$($versionMatch.Groups[1].Value)-e2e.$($head.Substring(0, 12).ToLowerInvariant())"
 $projectPath = Join-Path $repositoryRoot 'src\Microsoft.Azure.WebJobs.Extensions.Kafka\Microsoft.Azure.WebJobs.Extensions.Kafka.csproj'
 $previousBuildKit = $env:DOCKER_BUILDKIT
 $previousFunctionImage = $env:COMPAT_FUNCTION_IMAGE
@@ -127,21 +212,59 @@ $previousKafkaImage = $env:COMPAT_KAFKA_IMAGE
 
 try {
     New-Item -ItemType Directory -Path $nugetDirectory, $resultsDirectory -Force | Out-Null
+    $cfs = New-CfsSecrets
+    Assert-CfsConfiguration -Path $cfs.NuGetPath
+    Assert-CfsMavenSettings -Path $cfs.MavenPath
 
-    Invoke-Native dotnet restore $projectPath --configfile $env:CFS_NUGET_CONFIG
+    Invoke-Native dotnet restore $projectPath --configfile $cfs.NuGetPath
     Invoke-Native dotnet pack $projectPath --output $nugetDirectory --include-symbols --no-restore "/p:Version=$packageVersion"
+    $packagePath = Get-ChildItem -LiteralPath $nugetDirectory -Filter "Microsoft.Azure.WebJobs.Extensions.Kafka.$packageVersion.nupkg" |
+        Select-Object -First 1
+    if ($null -eq $packagePath) {
+        throw "Kafka extension package $packageVersion was not produced."
+    }
+    $packageContextPath = [IO.Path]::GetRelativePath($repositoryRoot, $packagePath.FullName).Replace('\', '/')
 
     $env:DOCKER_BUILDKIT = '1'
     Invoke-Native docker build `
-        --secret "id=nuget_config,src=$($env:CFS_NUGET_CONFIG)" `
-        --secret "id=maven_settings,src=$($env:CFS_MAVEN_SETTINGS)" `
-        --build-arg "DOTNET_SDK_IMAGE=$($manifest.buildTooling.image)" `
-        --build-arg "FUNCTIONS_JAVA_IMAGE=$($manifest.host.image)" `
+        --secret "id=ado_token,src=$($cfs.TokenPath)" `
+        --secret "id=nuget_config,src=$($cfs.NuGetPath)" `
+        --secret "id=maven_settings,src=$($cfs.MavenPath)" `
+        --build-arg "JAVA_ADDITIONS_BUILD_IMAGE=$($manifest.buildTooling.javaAdditionsImage)" `
+        --build-arg "JAVA_BUILD_IMAGE=$($manifest.buildTooling.javaImage)" `
+        --build-arg "DOTNET_SDK_IMAGE=$($manifest.buildTooling.dotnetSdkImage)" `
+        --build-arg "DOTNET_RUNTIME_IMAGE=$($manifest.host.runtimeImage)" `
+        --build-arg "HOST_REPOSITORY=$($manifest.host.repository)" `
+        --build-arg "HOST_COMMIT=$($manifest.host.commit)" `
+        --build-arg "JAVA_ADDITIONS_REPOSITORY=$($manifest.javaAdditions.repository)" `
+        --build-arg "JAVA_ADDITIONS_COMMIT=$($manifest.javaAdditions.commit)" `
+        --build-arg "JAVA_LIBRARY_REPOSITORY=$($manifest.languageLibrary.repository)" `
+        --build-arg "JAVA_LIBRARY_COMMIT=$($manifest.languageLibrary.commit)" `
         --build-arg "JAVA_LIBRARY_VERSION=$($manifest.languageLibrary.version)" `
+        --build-arg "JAVA_WORKER_REPOSITORY=$($manifest.worker.repository)" `
+        --build-arg "JAVA_WORKER_COMMIT=$($manifest.worker.commit)" `
         --build-arg "KAFKA_EXTENSION_VERSION=$packageVersion" `
+        --build-arg "KAFKA_NUPKG=$packageContextPath" `
         --file (Join-Path $PSScriptRoot 'java\Dockerfile') `
         --tag $functionImage `
         $repositoryRoot
+    $functionImageId = (& docker image inspect $functionImage --format '{{.Id}}').Trim()
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Unable to resolve the assembled Function image ID.'
+    }
+    $artifactHashLines = & docker run --rm --entrypoint sha256sum $functionImage `
+        /azure-functions-host/Microsoft.Azure.WebJobs.Script.WebHost.dll `
+        /azure-functions-host/workers/java/azure-functions-java-worker.jar `
+        "/azure-functions-host/workers/java/annotationLib/azure-functions-java-library-$($manifest.languageLibrary.version).jar" `
+        /home/site/wwwroot/bin/Microsoft.Azure.WebJobs.Extensions.Kafka.dll
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Unable to hash the assembled runtime artifacts.'
+    }
+    foreach ($line in $artifactHashLines) {
+        if ($line -match '^([a-f0-9]{64})\s+(.+)$') {
+            $assembledArtifactHashes[$Matches[2]] = $Matches[1]
+        }
+    }
 
     $env:COMPAT_FUNCTION_IMAGE = $functionImage
     $env:COMPAT_KAFKA_IMAGE = $manifest.broker.image
@@ -195,12 +318,16 @@ try {
             repository = $manifest.kafkaExtension.repository
             commit = $head
             packageVersion = $packageVersion
+            packageSha256 = (Get-FileHash -LiteralPath $packagePath.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
         }
         host = $manifest.host
         worker = $manifest.worker
+        javaAdditions = $manifest.javaAdditions
         languageLibrary = $manifest.languageLibrary
         broker = $manifest.broker
         buildTooling = $manifest.buildTooling
+        assembledImageId = $functionImageId
+        assembledArtifactSha256 = $assembledArtifactHashes
         correlationToken = $token
         completedAtUtc = [DateTimeOffset]::UtcNow.ToString('O')
     }
@@ -223,4 +350,9 @@ finally {
     $env:DOCKER_BUILDKIT = $previousBuildKit
     $env:COMPAT_FUNCTION_IMAGE = $previousFunctionImage
     $env:COMPAT_KAFKA_IMAGE = $previousKafkaImage
+    foreach ($secretPath in $generatedSecretPaths) {
+        if (Test-Path -LiteralPath $secretPath) {
+            Remove-Item -LiteralPath $secretPath -Force
+        }
+    }
 }

@@ -13,7 +13,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.release>17</maven.compiler.release>
     <azure.functions.maven.plugin.version>1.36.0</azure.functions.maven.plugin.version>
-    <azure.functions.java.library.version>2.0.1</azure.functions.java.library.version>
+    <azure.functions.java.library.version>3.3.0</azure.functions.java.library.version>
     <functionAppName>compat-java</functionAppName>
   </properties>
 

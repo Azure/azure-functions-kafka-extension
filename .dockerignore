@@ -12,5 +12,7 @@ NuGet.config
 **/target
 **/uv.lock
 **/*.pyc
+temp/compat/secrets
+!temp/compat/nuget/*.nupkg
 **/local.appsettings.tests.json
 **/local.settings.json

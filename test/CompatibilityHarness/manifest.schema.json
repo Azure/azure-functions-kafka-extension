@@ -1,81 +1,119 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Azure/azure-functions-kafka-extension/test/CompatibilityHarness/manifest.schema.json",
   "title": "Kafka extension compatibility manifest",
   "type": "object",
+  "additionalProperties": false,
   "required": [
     "name",
     "qualificationMode",
     "host",
     "worker",
+    "javaAdditions",
     "languageLibrary",
     "kafkaExtension",
     "broker",
     "buildTooling"
   ],
-  "properties": {
-    "$schema": {
-      "type": "string"
+  "$defs": {
+    "gitComponent": {
+      "type": "object",
+      "required": ["source", "repository", "commit"],
+      "properties": {
+        "source": { "const": "git" },
+        "repository": {
+          "type": "string",
+          "pattern": "^https://github\\.com/Azure/.+\\.git$"
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        }
+      }
     },
-    "name": {
+    "digestImage": {
       "type": "string",
-      "minLength": 1
-    },
-    "qualificationMode": {
-      "enum": [
-        "development",
-        "release"
-      ]
-    },
-    "host": {
-      "$ref": "#/$defs/component"
-    },
-    "worker": {
-      "$ref": "#/$defs/component"
-    },
-    "languageLibrary": {
-      "$ref": "#/$defs/component"
-    },
-    "kafkaExtension": {
-      "$ref": "#/$defs/component"
-    },
-    "broker": {
-      "$ref": "#/$defs/component"
-    },
-    "buildTooling": {
-      "$ref": "#/$defs/component"
+      "pattern": "^.+@sha256:[a-f0-9]{64}$"
     }
   },
-  "additionalProperties": false,
-  "$defs": {
-    "component": {
-      "type": "object",
-      "required": [
-        "source"
-      ],
-      "properties": {
-        "source": {
-          "enum": [
-            "container",
-            "bundled",
-            "package",
-            "workspace",
-            "git"
-          ]
-        },
-        "repository": {
-          "type": "string"
-        },
-        "ref": {
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
-        },
-        "image": {
-          "type": "string"
+  "properties": {
+    "$schema": { "type": "string" },
+    "name": { "type": "string", "minLength": 1 },
+    "qualificationMode": { "enum": ["development", "release"] },
+    "host": {
+      "allOf": [
+        { "$ref": "#/$defs/gitComponent" },
+        {
+          "type": "object",
+          "required": ["runtimeImage"],
+          "properties": {
+            "runtimeImage": { "$ref": "#/$defs/digestImage" }
+          }
         }
-      },
-      "additionalProperties": false
+      ],
+      "unevaluatedProperties": false
+    },
+    "worker": {
+      "allOf": [
+        { "$ref": "#/$defs/gitComponent" },
+        {
+          "type": "object",
+          "required": ["language"],
+          "properties": {
+            "language": { "const": "java" }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "javaAdditions": {
+      "allOf": [{ "$ref": "#/$defs/gitComponent" }],
+      "unevaluatedProperties": false
+    },
+    "languageLibrary": {
+      "allOf": [
+        { "$ref": "#/$defs/gitComponent" },
+        {
+          "type": "object",
+          "required": ["language", "version"],
+          "properties": {
+            "language": { "const": "java" },
+            "version": { "type": "string", "minLength": 1 }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "kafkaExtension": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "repository", "ref"],
+      "properties": {
+        "source": { "const": "workspace" },
+        "repository": { "type": "string", "format": "uri" },
+        "ref": { "type": "string", "minLength": 1 }
+      }
+    },
+    "broker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "source", "image"],
+      "properties": {
+        "kind": { "const": "local-kafka" },
+        "source": { "const": "container" },
+        "image": { "$ref": "#/$defs/digestImage" }
+      }
+    },
+    "buildTooling": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "javaAdditionsImage", "javaImage", "dotnetSdkImage"],
+      "properties": {
+        "source": { "const": "container" },
+        "javaAdditionsImage": { "$ref": "#/$defs/digestImage" },
+        "javaImage": { "$ref": "#/$defs/digestImage" },
+        "dotnetSdkImage": { "$ref": "#/$defs/digestImage" }
+      }
     }
   }
 }

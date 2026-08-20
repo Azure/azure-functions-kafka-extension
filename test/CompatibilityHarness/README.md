@@ -1,80 +1,78 @@
 # Kafka extension compatibility harness
 
 This harness validates a declared Azure Functions component combination before any
-package is published. The first vertical slice runs a Java function against a local,
-Docker-based Kafka broker and loads the Kafka extension from a package built from
-the current workspace.
+package is published. The Java slice builds exact source commits, assembles them into
+one runtime image, and verifies an HTTP -> Kafka trigger -> Kafka output round trip
+against a local Docker-based Kafka broker.
 
-## Design
+## Source-pinned assembly
 
-`manifests/*.json` is the source of truth for component identity:
+`manifests/*.json` is the source of truth for:
 
-- Functions Host image and digest
-- language worker identity
-- language library version or commit
-- Kafka extension repository and commit
-- broker image and digest
+- Functions Host repository and commit
+- Java worker repository and commit
+- Java additions repository and commit
+- Java library repository, commit, and Maven version
+- Kafka extension workspace commit
+- digest-pinned build, runtime, and broker images
 
-Artifact providers turn those identities into local artifacts. The initial provider
-set is deliberately small:
+The build order is:
 
-| Component | Initial provider | Planned provider |
-| --- | --- | --- |
-| Functions Host | Digest-pinned Functions Java image | Build a selected Host commit |
-| Java worker | Bundled in the Host image | Build and inject a selected worker commit |
-| Java library | Exact Maven version through CFS | Build a selected library commit into an isolated Maven repository |
-| Kafka extension | Current workspace commit packed into a local NuGet feed | Checkout and pack a selected commit |
+```text
+java-additions -> java-library -> java-worker -> Java Function App
+                                      |
+Host source --------------------------+-> assembled runtime image
+Kafka extension workspace package ---+
+```
 
-The bundled worker mode is acceptable only for development qualification. A manifest
-with `qualificationMode` set to `release` must identify Host and worker independently;
-the runner rejects bundled worker mode for that purpose.
+Java additions and the Java library are built with JDK 8 because their inherited
+SpotBugs tooling is not compatible with JDK 21. Their artifacts are installed into an
+isolated Maven repository. The worker and Function App are then built with JDK 21.
+The selected Java library JAR is used both by the Function App and in the worker's
+`annotationLib` directory.
 
-Each run writes the resolved component identities and locally produced package version
-to `temp/compat/results/provenance.json`. This provenance file is the contract that a
-future CI matrix and remote artifact providers will preserve.
+The Host is published from the selected commit without bundled worker packages. The
+selected worker is copied to `workers/java`, and the runtime starts
+`Microsoft.Azure.WebJobs.Script.WebHost.dll` directly. Core Tools is used only during
+the image build to materialize the workspace Kafka NuGet package and is not used to
+start the Function App.
 
 ## CFS invariants
 
-- `CFS_NUGET_CONFIG` must point to an existing authenticated NuGet configuration.
-- `CFS_MAVEN_SETTINGS` must point to Maven settings authenticated for the
-  `upstream-public` server.
-- NuGet restore and Docker extension installation use that configuration.
-- The local Kafka extension package is added as a package-mapped source without
-  replacing the CFS upstream source.
-- Maven uses `FunctionApps/java/settings.xml`, whose `mirrorOf` is `*` and whose only
-  remote endpoint is the CFS `upstream-public` feed.
-- NuGet configuration is mounted as a BuildKit secret. It is not copied into an image.
-- Package manager caches and temporary NuGet configuration are removed in the builder.
-- The runner rejects direct NuGet.org sources. Maven's `mirrorOf=*` setting routes
-  every Maven repository and plugin repository through CFS. The authenticated Maven
-  settings are mounted as a BuildKit secret.
+- The runner obtains a short-lived Azure DevOps token from the authenticated Azure CLI
+  identity.
+- Temporary authenticated NuGet and Maven files are created under `temp/compat/secrets`
+  and deleted in `finally`.
+- NuGet.org, Maven Central, and Sonatype are never configured directly.
+- Public NuGet and Maven dependencies are routed through the CFS
+  `upstream-public` feed.
+- Host-only first-party feeds retain the Host repository's package-source mappings.
+- Credentials are mounted as BuildKit secrets, never passed as build arguments or
+  copied into image layers.
+- The local Kafka extension package is package-mapped without replacing the CFS source.
 
 ## Run the Java/Local Kafka slice
 
-Prerequisites are Docker, PowerShell 7, .NET 8, and an authenticated CFS NuGet
-configuration.
+Prerequisites are Docker, PowerShell 7, a .NET SDK, Azure CLI, and an Azure CLI identity
+that can access the required Azure Artifacts feeds.
 
 ```powershell
-$env:CFS_NUGET_CONFIG = "<absolute path to authenticated NuGet.config>"
-$env:CFS_MAVEN_SETTINGS = "<absolute path to authenticated Maven settings.xml>"
 pwsh ./test/CompatibilityHarness/run.ps1
 ```
 
-The runner:
+The runner validates the manifest, packs the workspace extension with a release-compatible
+commit-derived prerelease version, builds the source-pinned image, starts Kafka, sends a
+correlation token through both functions, and verifies the result topic. Use
+`-KeepEnvironment` to retain the containers after a successful run.
 
-1. validates the component manifest and CFS configuration;
-2. packs the workspace Kafka extension with a commit-derived prerelease version;
-3. builds a Java Function image using only CFS and the local NuGet feed;
-4. starts a KRaft Kafka broker and creates input/result topics;
-5. sends a correlation token through HTTP output -> Kafka trigger -> Kafka output;
-6. consumes the result and verifies the same token;
-7. captures provenance and logs, then removes the environment.
+Each run writes `temp/compat/results/provenance.json`, including resolved commits,
+container digests, the assembled image ID, and SHA-256 values for the Host DLL, worker
+JAR, Java library JAR, Kafka extension DLL, and local NuGet package. Failure logs are
+written to `temp/compat/results/docker-compose.log`.
 
-Use `-KeepEnvironment` to retain containers after a successful run for debugging.
+## Extending the matrix
 
-## Next providers
-
-The next implementation step is a Git artifact provider with a shared contract:
+Additional brokers and languages should preserve the provider contract:
 
 ```text
 resolve(ref) -> immutable commit
@@ -82,12 +80,5 @@ build(commit, CFS inputs) -> artifact directory
 describe(artifact) -> provenance entry
 ```
 
-Host, Java worker, and Java library builders will each implement this contract. The
-assembler will copy the selected worker into a selected Host publish layout, while the
-Function App will consume the selected Java library from an isolated Maven repository.
-The Local Kafka scenario and verifier remain unchanged.
-
-In Azure Pipelines, create the two temporary files after `NuGetAuthenticate@1` and
-`MavenAuthenticate@0`, pass their paths through the two environment variables, and
-delete them under an `always()` cleanup step. Do not pass access tokens as Docker
-build arguments or copy authenticated settings into the Docker context.
+The Local Kafka scenario and correlation verifier can remain unchanged while Host,
+worker, library, and extension manifests vary.
