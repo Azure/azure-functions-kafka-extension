@@ -7,6 +7,7 @@ NuGet.config
 **/node_modules
 **/obj
 **/package-lock.json
+!test/CompatibilityHarness/node/package-lock.json
 **/pip.conf
 **/pip.ini
 **/target

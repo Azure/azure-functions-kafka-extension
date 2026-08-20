@@ -9,8 +9,6 @@
     "qualificationMode",
     "host",
     "worker",
-    "javaAdditions",
-    "languageLibrary",
     "kafkaExtension",
     "broker",
     "functionApp",
@@ -63,7 +61,7 @@
           "type": "object",
           "required": ["language"],
           "properties": {
-            "language": { "const": "java" }
+            "language": { "enum": ["java", "dotnet-isolated", "node"] }
           }
         }
       ],
@@ -85,6 +83,14 @@
           }
         }
       ],
+      "unevaluatedProperties": false
+    },
+    "nodeLibrary": {
+      "allOf": [{ "$ref": "#/$defs/gitComponent" }],
+      "unevaluatedProperties": false
+    },
+    "nodeExtensions": {
+      "allOf": [{ "$ref": "#/$defs/gitComponent" }],
       "unevaluatedProperties": false
     },
     "kafkaExtension": {
@@ -110,25 +116,25 @@
     "functionApp": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "name",
-        "javaVersion",
-        "compilerRelease",
-        "azureFunctionsMavenPluginVersion",
-        "mavenCompilerPluginVersion"
-      ],
+      "required": ["name"],
       "properties": {
         "name": { "type": "string", "pattern": "^[a-z0-9-]+$" },
         "javaVersion": { "type": "string", "pattern": "^\\d+$" },
         "compilerRelease": { "type": "string", "pattern": "^\\d+$" },
         "azureFunctionsMavenPluginVersion": { "type": "string", "minLength": 1 },
-        "mavenCompilerPluginVersion": { "type": "string", "minLength": 1 }
+        "mavenCompilerPluginVersion": { "type": "string", "minLength": 1 },
+        "targetFramework": { "type": "string", "pattern": "^net\\d+\\.0$" },
+        "workerVersion": { "type": "string", "minLength": 1 },
+        "workerSdkVersion": { "type": "string", "minLength": 1 },
+        "httpExtensionVersion": { "type": "string", "minLength": 1 },
+        "kafkaExtensionVersion": { "type": "string", "minLength": 1 },
+        "nodeVersion": { "type": "string", "pattern": "^\\d+$" }
       }
     },
     "packageFeeds": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["policy", "azureDevOpsResource", "nuget", "maven"],
+      "required": ["policy", "azureDevOpsResource", "nuget"],
       "properties": {
         "policy": { "const": "cfs-only" },
         "azureDevOpsResource": {
@@ -142,37 +148,110 @@
         "maven": {
           "type": "string",
           "const": "https://pkgs.dev.azure.com/azfunc/public/_packaging/upstream-public/maven/v1"
+        },
+        "npm": {
+          "type": "string",
+          "const": "https://pkgs.dev.azure.com/azfunc/public/_packaging/upstream-public/npm/registry/"
         }
       }
     },
     "toolchains": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "javaAdditions",
-        "javaWorker",
-        "mavenAdditions",
-        "mavenWorker",
-        "dotnetSdk"
-      ],
+      "required": ["dotnetSdk"],
       "properties": {
         "javaAdditions": { "type": "string", "minLength": 1 },
         "javaWorker": { "type": "string", "minLength": 1 },
         "mavenAdditions": { "type": "string", "minLength": 1 },
         "mavenWorker": { "type": "string", "minLength": 1 },
-        "dotnetSdk": { "type": "string", "minLength": 1 }
+        "dotnetSdk": { "type": "string", "minLength": 1 },
+        "node": { "type": "string", "minLength": 1 }
       }
     },
     "buildTooling": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["source", "javaAdditionsImage", "javaImage", "dotnetSdkImage"],
+      "required": ["source", "dotnetSdkImage"],
       "properties": {
         "source": { "const": "container" },
         "javaAdditionsImage": { "$ref": "#/$defs/digestImage" },
         "javaImage": { "$ref": "#/$defs/digestImage" },
-        "dotnetSdkImage": { "$ref": "#/$defs/digestImage" }
+        "dotnetSdkImage": { "$ref": "#/$defs/digestImage" },
+        "nodeImage": { "$ref": "#/$defs/digestImage" },
+        "coreToolsImage": { "$ref": "#/$defs/digestImage" }
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "worker": { "properties": { "language": { "const": "java" } } } }
+      },
+      "then": {
+        "required": ["javaAdditions", "languageLibrary"],
+        "properties": {
+          "functionApp": {
+            "required": [
+              "name",
+              "javaVersion",
+              "compilerRelease",
+              "azureFunctionsMavenPluginVersion",
+              "mavenCompilerPluginVersion"
+            ]
+          },
+          "packageFeeds": { "required": ["maven"] },
+          "toolchains": {
+            "required": [
+              "javaAdditions",
+              "javaWorker",
+              "mavenAdditions",
+              "mavenWorker",
+              "dotnetSdk"
+            ]
+          },
+          "buildTooling": {
+            "required": ["source", "javaAdditionsImage", "javaImage", "dotnetSdkImage"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "worker": { "properties": { "language": { "const": "dotnet-isolated" } } }
+        }
+      },
+      "then": {
+        "properties": {
+          "functionApp": {
+            "required": [
+              "name",
+              "targetFramework",
+              "workerVersion",
+              "workerSdkVersion",
+              "httpExtensionVersion",
+              "kafkaExtensionVersion"
+            ]
+          },
+          "toolchains": { "required": ["dotnetSdk"] }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "worker": { "properties": { "language": { "const": "node" } } } }
+      },
+      "then": {
+        "required": ["nodeLibrary", "nodeExtensions"],
+        "properties": {
+          "functionApp": { "required": ["name", "nodeVersion"] },
+          "packageFeeds": { "required": ["npm"] },
+          "toolchains": { "required": ["dotnetSdk", "node"] },
+          "buildTooling": {
+            "required": ["source", "dotnetSdkImage", "nodeImage", "coreToolsImage"]
+          }
+        }
+      }
+    }
+  ]
 }
