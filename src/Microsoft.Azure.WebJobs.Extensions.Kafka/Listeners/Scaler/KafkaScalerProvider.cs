@@ -19,13 +19,23 @@ using static Confluent.Kafka.ConfigPropertyNames;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
-    internal class KafkaScalerProvider : IScaleMonitorProvider, ITargetScalerProvider
+    internal class KafkaScalerProvider : IScaleMonitorProvider, ITargetScalerProvider, IDisposable
     {
         private readonly KafkaObjectTopicScaler _scaleMonitor;
         private readonly KafkaObjectTargetScaler _targetScaler;
+        private readonly KafkaMetricsProvider<string, string> _metricsProvider;
+        private bool _disposed;
 
 
         public KafkaScalerProvider(IServiceProvider serviceProvider, TriggerMetadata triggerMetadata)
+            : this(serviceProvider, triggerMetadata, config => new ConsumerBuilder<string, string>(config).Build())
+        {
+        }
+
+        internal KafkaScalerProvider(
+            IServiceProvider serviceProvider,
+            TriggerMetadata triggerMetadata,
+            Func<ConsumerConfig, IConsumer<string, string>> consumerFactory)
         {
             var config = serviceProvider.GetService<IConfiguration>();
             var nameResolver = serviceProvider.GetService<INameResolver>();
@@ -39,14 +49,26 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             ILogger logger = loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("Kafka"));
 
             var consumerConfig = GetConsumerConfiguration(kafkaMetadata, config, nameResolver);
-            var consumer = new ConsumerBuilder<string, string>(consumerConfig).Build();
-            var metricsProvider = new KafkaMetricsProvider<string, string>(topicName, new AdminClientConfig(consumerConfig), consumer, logger);
-
-            _scaleMonitor = new KafkaObjectTopicScaler(topicName, consumerGroup, metricsProvider, triggerMetadata.FunctionName, lagThreshold, logger);
-            _targetScaler = new KafkaObjectTargetScaler(topicName, consumerGroup, metricsProvider, triggerMetadata.FunctionName, lagThreshold, logger);
+            var consumer = consumerFactory(consumerConfig);
+            try
+            {
+                _metricsProvider = new KafkaMetricsProvider<string, string>(
+                    topicName,
+                    new AdminClientConfig(consumerConfig),
+                    consumer,
+                    logger,
+                    ownsConsumer: true);
+                _scaleMonitor = new KafkaObjectTopicScaler(topicName, consumerGroup, _metricsProvider, triggerMetadata.FunctionName, lagThreshold, logger);
+                _targetScaler = new KafkaObjectTargetScaler(topicName, consumerGroup, _metricsProvider, triggerMetadata.FunctionName, lagThreshold, logger);
+            }
+            catch
+            {
+                consumer.Dispose();
+                throw;
+            }
         }
 
-        private ConsumerConfig GetConsumerConfiguration(KafkaMetaData kafkaMetaData, IConfiguration config, INameResolver nameResolver)
+        internal static ConsumerConfig GetConsumerConfiguration(KafkaMetaData kafkaMetaData, IConfiguration config, INameResolver nameResolver)
         {
             var adminConfig = new ConsumerConfig() {
                 GroupId = config.ResolveSecureSetting(nameResolver, kafkaMetaData.ConsumerGroup),
@@ -86,6 +108,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     adminConfig.SaslOauthbearerClientSecret = config.ResolveSecureSetting(nameResolver, kafkaMetaData.OAuthBearerClientSecret);
                     adminConfig.SaslOauthbearerScope = config.ResolveSecureSetting(nameResolver, kafkaMetaData.OAuthBearerScope);
                     adminConfig.SaslOauthbearerTokenEndpointUrl = config.ResolveSecureSetting(nameResolver, kafkaMetaData.OAuthBearerTokenEndpointUrl);
+                    var httpsCaLocation = config.ResolveSecureSetting(nameResolver, kafkaMetaData.HttpsCaLocation);
+                    var httpsCaPem = config.ResolveSecureSetting(nameResolver, kafkaMetaData.HttpsCaPem);
+                    ConfigurationExtensions.ValidateHttpsCaCertificate(httpsCaLocation, httpsCaPem);
+                    adminConfig.SetHttpsCaCertificate(
+                        AzureFunctionsFileHelper.GetValidHttpsCaLocation(httpsCaLocation),
+                        httpsCaPem);
                     adminConfig.SaslOauthbearerExtensions = config.ResolveSecureSetting(nameResolver, kafkaMetaData.OAuthBearerExtensions);
                 }
             }
@@ -103,7 +131,33 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return _targetScaler;
         }
 
-        private string ExtractSection(string pemString, string sectionName)
+        /// <summary>
+        /// Disposes the metrics provider which in turn disposes the Kafka consumer.
+        /// This releases native threads spawned by librdkafka.
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Disposes the metrics provider which in turn disposes the Kafka consumer.
+        /// </summary>
+        /// <param name="disposing">True if called from Dispose(), false if called from finalizer.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    _metricsProvider?.Dispose();
+                }
+                _disposed = true;
+            }
+        }
+
+        private static string ExtractSection(string pemString, string sectionName)
         {
             if (!string.IsNullOrEmpty(pemString))
             {
@@ -117,12 +171,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             return null;
         }
 
-        private string ExtractCertificate(string pemString)
+        private static string ExtractCertificate(string pemString)
         {
              return ExtractSection(pemString, "CERTIFICATE");
         }
 
-        private string ExtractPrivateKey(string pemString)
+        private static string ExtractPrivateKey(string pemString)
         {
             return ExtractSection(pemString, "PRIVATE KEY");
         }
@@ -182,6 +236,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             [JsonProperty]
             public string OAuthBearerTokenEndpointUrl { get; set; }
+
+            [JsonProperty]
+            public string HttpsCaLocation { get; set; }
+
+            [JsonProperty]
+            public string HttpsCaPem { get; set; }
 
             [JsonProperty]
             public string OAuthBearerExtensions { get; set; }

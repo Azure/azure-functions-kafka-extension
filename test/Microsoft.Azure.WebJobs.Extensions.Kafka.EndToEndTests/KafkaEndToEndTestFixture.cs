@@ -69,6 +69,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
             }
         }
 
+        public Task CreateTopicsAsync(IEnumerable<TopicSpecification> topicSpecifications)
+        {
+            return CreateTopicsAsync(topicSpecifications, ignoreExistingTopics: true);
+        }
+
         public Task DisposeAsync() => Task.CompletedTask;
 
         /// <summary>
@@ -76,6 +81,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
         /// </summary>
         /// <returns>The async.</returns>
         public async Task InitializeAsync()
+        {
+            await CreateTopicsAsync(GetAllTopics(), ignoreExistingTopics: true);
+        }
+
+        private async Task CreateTopicsAsync(IEnumerable<TopicSpecification> topicSpecifications, bool ignoreExistingTopics)
         {
             var adminClientBuilder = new AdminClientBuilder(new AdminClientConfig()
             {
@@ -92,11 +102,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.EndToEndTests
                     RequestTimeout = TimeSpan.FromMinutes(2),
                 };
 
-                await adminClient.CreateTopicsAsync(GetAllTopics(), createTopicOptions);
+                await adminClient.CreateTopicsAsync(topicSpecifications, createTopicOptions);
             }
             catch (CreateTopicsException createTopicsException)
             {
-                if (!createTopicsException.Results.All(x => x.Error.Code == ErrorCode.TopicAlreadyExists))
+                if (!ignoreExistingTopics || !createTopicsException.Results.All(x => x.Error.Code == ErrorCode.TopicAlreadyExists))
                 {
                     Console.WriteLine($"Error creation topics: {createTopicsException.ToString()}");
                     throw;

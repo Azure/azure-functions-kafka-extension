@@ -139,6 +139,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                     consumerConfig.SaslOAuthBearerClientSecret = this.config.ResolveSecureSetting(nameResolver, attribute.OAuthBearerClientSecret);
                     consumerConfig.SaslOAuthBearerScope = this.config.ResolveSecureSetting(nameResolver, attribute.OAuthBearerScope);
                     consumerConfig.SaslOAuthBearerTokenEndpointUrl = this.config.ResolveSecureSetting(nameResolver, attribute.OAuthBearerTokenEndpointUrl);
+                    var httpsCaLocation = this.config.ResolveSecureSetting(nameResolver, attribute.HttpsCaLocation);
+                    var httpsCaPem = this.config.ResolveSecureSetting(nameResolver, attribute.HttpsCaPem);
+                    ConfigurationExtensions.ValidateHttpsCaCertificate(httpsCaLocation, httpsCaPem);
+                    consumerConfig.HttpsCaLocation = AzureFunctionsFileHelper.GetValidHttpsCaLocation(httpsCaLocation);
+                    consumerConfig.HttpsCaPem = ConfigurationExtensions.NormalizePem(httpsCaPem);
                     consumerConfig.SaslOAuthBearerExtensions = this.config.ResolveSecureSetting(nameResolver, attribute.OAuthBearerExtensions);
                 }
             }

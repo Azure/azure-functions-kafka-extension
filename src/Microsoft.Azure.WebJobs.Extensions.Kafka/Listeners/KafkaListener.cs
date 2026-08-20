@@ -132,7 +132,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
         private KafkaMetricsProvider<TKey, TValue> CreateMetricsProvider()
         {
-            return new KafkaMetricsProvider<TKey, TValue>(this.topicName, new AdminClientConfig(GetConsumerConfiguration()), consumer.Value, this.logger);
+            return new KafkaMetricsProvider<TKey, TValue>(this.topicName, new AdminClientConfig(GetConsumerConfiguration()), consumer.Value, this.logger, ownsConsumer: false);
         }
 
         private KafkaGenericTopicScaler<TKey, TValue> CreateTopicScaler()
@@ -255,6 +255,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 conf.GroupId = consumerGroupToUse;
                 conf.BrokerVersionFallback = EventHubsBrokerVersionFallback;
             }
+
+            ConfigurationExtensions.ValidateHttpsCaCertificate(
+                this.listenerConfiguration.HttpsCaLocation,
+                this.listenerConfiguration.HttpsCaPem);
+            conf.SetHttpsCaCertificate(
+                AzureFunctionsFileHelper.GetValidHttpsCaLocation(this.listenerConfiguration.HttpsCaLocation),
+                this.listenerConfiguration.HttpsCaPem);
 
             return conf;
         }
