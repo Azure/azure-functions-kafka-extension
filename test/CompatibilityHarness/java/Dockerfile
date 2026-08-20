@@ -54,6 +54,11 @@ FROM ${JAVA_BUILD_IMAGE} AS java-build
 ARG JAVA_WORKER_REPOSITORY
 ARG JAVA_WORKER_COMMIT
 ARG JAVA_LIBRARY_VERSION
+ARG FUNCTION_APP_NAME
+ARG FUNCTION_JAVA_VERSION
+ARG FUNCTION_COMPILER_RELEASE
+ARG AZURE_FUNCTIONS_MAVEN_PLUGIN_VERSION
+ARG MAVEN_COMPILER_PLUGIN_VERSION
 ARG KAFKA_EXTENSION_VERSION
 ARG KAFKA_NUPKG
 
@@ -99,9 +104,14 @@ RUN --mount=type=secret,id=maven_settings,target=/run/secrets/maven-settings.xml
       --settings /run/secrets/maven-settings.xml \
       -Dmaven.repo.local="${MAVEN_REPOSITORY}" \
       -Dazure.functions.java.library.version="${JAVA_LIBRARY_VERSION}" \
+      -Dazure.functions.maven.plugin.version="${AZURE_FUNCTIONS_MAVEN_PLUGIN_VERSION}" \
+      -Dmaven.compiler.plugin.version="${MAVEN_COMPILER_PLUGIN_VERSION}" \
+      -Dmaven.compiler.release="${FUNCTION_COMPILER_RELEASE}" \
+      -Dfunction.java.version="${FUNCTION_JAVA_VERSION}" \
+      -DfunctionAppName="${FUNCTION_APP_NAME}" \
       -DskipTests package \
       -f /workspace/function-app/pom.xml \
-    && cp -R /workspace/function-app/target/azure-functions/compat-java /artifacts/app
+    && cp -R "/workspace/function-app/target/azure-functions/${FUNCTION_APP_NAME}" /artifacts/app
 
 COPY ${KAFKA_NUPKG} /workspace/packages/
 COPY script/create_test_nuget_config.sh /workspace/create_test_nuget_config.sh
@@ -156,14 +166,15 @@ ARG HOST_COMMIT
 ARG JAVA_ADDITIONS_COMMIT
 ARG JAVA_LIBRARY_COMMIT
 ARG JAVA_WORKER_COMMIT
+ARG FUNCTION_JAVA_VERSION
 ARG KAFKA_EXTENSION_VERSION
 
 ENV AzureWebJobsScriptRoot=/home/site/wwwroot \
     AzureFunctionsJobHost__Logging__Console__IsEnabled=true \
     FUNCTIONS_WORKER_RUNTIME=java \
     HOME=/home \
-    JAVA_HOME=/usr/lib/jvm/msft-21-x64 \
-    PATH=/usr/lib/jvm/msft-21-x64/bin:${PATH} \
+    JAVA_HOME=/usr/lib/jvm/msft-${FUNCTION_JAVA_VERSION}-x64 \
+    PATH=/usr/lib/jvm/msft-${FUNCTION_JAVA_VERSION}-x64/bin:${PATH} \
     ASPNETCORE_URLS=http://0.0.0.0:80 \
     ASPNETCORE_CONTENTROOT=/azure-functions-host \
     DOTNET_USE_POLLING_FILE_WATCHER=true \
@@ -173,7 +184,7 @@ ENV AzureWebJobsScriptRoot=/home/site/wwwroot \
     JAVA_WORKER_COMMIT=${JAVA_WORKER_COMMIT} \
     KAFKA_EXTENSION_VERSION=${KAFKA_EXTENSION_VERSION}
 
-COPY --from=java-build /usr/lib/jvm/msft-21-x64 /usr/lib/jvm/msft-21-x64
+COPY --from=java-build /usr/lib/jvm/msft-${FUNCTION_JAVA_VERSION}-x64 /usr/lib/jvm/msft-${FUNCTION_JAVA_VERSION}-x64
 COPY --from=host-build /artifacts/host /azure-functions-host
 COPY --from=java-build /artifacts/worker /azure-functions-host/workers/java
 COPY --from=java-build /artifacts/app /home/site/wwwroot

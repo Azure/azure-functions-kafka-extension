@@ -14,7 +14,16 @@ against a local Docker-based Kafka broker.
 - Java additions repository and commit
 - Java library repository, commit, and Maven version
 - Kafka extension workspace commit
+- Function App Java/Maven plugin/compiler versions
+- CFS-only NuGet and Maven endpoints
+- expected JDK, Maven, and .NET SDK versions
 - digest-pinned build, runtime, and broker images
+
+Change `manifests/local-java.json` to exercise another Java combination. Git
+components must resolve to immutable 40-character commits for release qualification.
+The runner also checks that the selected build images report the manifest-declared
+JDK, Maven, and .NET SDK versions, so descriptive toolchain values cannot drift from
+the actual containers.
 
 The build order is:
 
@@ -46,6 +55,7 @@ start the Function App.
 - NuGet.org, Maven Central, and Sonatype are never configured directly.
 - Public NuGet and Maven dependencies are routed through the CFS
   `upstream-public` feed.
+- The CFS endpoints and Azure DevOps token resource are selected by the manifest.
 - Host-only first-party feeds retain the Host repository's package-source mappings.
 - Credentials are mounted as BuildKit secrets, never passed as build arguments or
   copied into image layers.
@@ -65,10 +75,58 @@ commit-derived prerelease version, builds the source-pinned image, starts Kafka,
 correlation token through both functions, and verifies the result topic. Use
 `-KeepEnvironment` to retain the containers after a successful run.
 
-Each run writes `temp/compat/results/provenance.json`, including resolved commits,
-container digests, the assembled image ID, and SHA-256 values for the Host DLL, worker
-JAR, Java library JAR, Kafka extension DLL, and local NuGet package. Failure logs are
-written to `temp/compat/results/docker-compose.log`.
+Use `-DiagnosticsDirectory <path>` to select a different diagnostics root and
+`-KeepEnvironment` to retain the containers after the diagnostics snapshot is taken.
+
+## Diagnostics
+
+Every run uses one correlation ID for the runner and Kafka message and writes an
+isolated bundle under `temp/compat/results/<run-id>/`:
+
+```text
+manifest.json
+provenance.json
+summary.json
+timeline.jsonl
+logs/
+  docker-build.log
+  extension-build.log
+  function.log
+  kafka.log
+  orchestrator.log
+  toolchains.log
+  verifier.log
+state/
+  compose-ps.jsonl
+  container-inspect.json
+  function-image-inspect.json
+  java-worker-layout.txt
+  function-app/
+    host.json
+    extensions.json
+    functions.txt
+```
+
+`summary.json` identifies the failed phase without parsing log text. Diagnostics are
+captured before Compose cleanup on both success and failure. `provenance.json` records
+resolved commits, toolchains, feed identities, container digests, the assembled image
+ID, and SHA-256 values for the Host DLL, worker JAR, Java library JAR, Kafka extension
+DLL, and local NuGet package. Credential values and temporary authenticated settings
+are never included.
+
+In Azure Pipelines, publish the diagnostics root even when the test fails:
+
+```yaml
+- pwsh: ./test/CompatibilityHarness/run.ps1
+  displayName: Java Local Kafka compatibility E2E
+
+- task: PublishPipelineArtifact@1
+  displayName: Publish compatibility diagnostics
+  condition: always()
+  inputs:
+    targetPath: temp/compat/results
+    artifact: kafka-compat-diagnostics
+```
 
 ## Extending the matrix
 

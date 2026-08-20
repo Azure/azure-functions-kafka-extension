@@ -11,24 +11,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.release>17</maven.compiler.release>
-    <azure.functions.maven.plugin.version>1.36.0</azure.functions.maven.plugin.version>
-    <azure.functions.java.library.version>3.3.0</azure.functions.java.library.version>
-    <functionAppName>compat-java</functionAppName>
   </properties>
-
-  <repositories>
-    <repository>
-      <id>central</id>
-      <url>https://pkgs.dev.azure.com/azfunc/public/_packaging/upstream-public/maven/v1</url>
-    </repository>
-  </repositories>
-  <pluginRepositories>
-    <pluginRepository>
-      <id>central</id>
-      <url>https://pkgs.dev.azure.com/azfunc/public/_packaging/upstream-public/maven/v1</url>
-    </pluginRepository>
-  </pluginRepositories>
 
   <dependencies>
     <dependency>
@@ -43,7 +26,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.13.0</version>
+        <version>${maven.compiler.plugin.version}</version>
         <configuration>
           <release>${maven.compiler.release}</release>
         </configuration>
@@ -56,7 +39,7 @@
           <appName>${functionAppName}</appName>
           <runtime>
             <os>linux</os>
-            <javaVersion>17</javaVersion>
+            <javaVersion>${function.java.version}</javaVersion>
           </runtime>
         </configuration>
         <executions>
