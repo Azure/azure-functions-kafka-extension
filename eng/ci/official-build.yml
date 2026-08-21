@@ -134,6 +134,8 @@ extends:
                   cd ../EventHub
                   mvn clean package `-Dmaven`.javadoc`.skip=true `-Dmaven`.test`.skip `-Dorg`.slf4j`.simpleLogger`.log`.org`.apache`.maven`.cli`.transfer`.Slf4jMavenTransferListener=warn `-B
                 displayName: "Package Java Functions for Codeql"
+                env:
+                  NPM_CONFIG_USERCONFIG: $(Build.SourcesDirectory)/.npmrc
 
               - task: DotNetCoreCLI@2
                 displayName: Run unit tests
