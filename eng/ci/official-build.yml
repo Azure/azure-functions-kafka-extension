@@ -165,13 +165,3 @@ extends:
                   folderPath: $(Build.ArtifactStagingDirectory)
                   pattern: Microsoft.Azure.WebJobs.Extensions.Kafka.*.nupkg
                   signType: nuget
-
-              - task: ManifestGeneratorTask@0
-                displayName: SBOM Generation Task
-                inputs:
-                  BuildDropPath: $(Build.ArtifactStagingDirectory)
-                  PackageName: Microsoft.Azure.WebJobs.Extensions.Kafka
-                  Verbosity: Information
-                env:
-                  NPM_CONFIG_USERCONFIG: $(Build.SourcesDirectory)/.npmrc
-                  NPM_CONFIG_REPLACE_REGISTRY_HOST: always
