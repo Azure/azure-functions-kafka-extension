@@ -1,0 +1,10 @@
+{
+  "name": "kafka-compatibility-node",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/functions/*.js",
+  "dependencies": {
+    "@azure/functions": "file:/artifacts/azure-functions.tgz",
+    "@azure/functions-extensions-base": "file:/artifacts/azure-functions-extensions-base.tgz"
+  }
+}

@@ -25,4 +25,5 @@ dotnet "${dotnet_args[@]}"
 sed -i '/<packageSource key="upstream-public">/i\
     <packageSource key="local-tests">\
       <package pattern="Microsoft.Azure.WebJobs.Extensions.Kafka" />\
+    <package pattern="Microsoft.Azure.Functions.Worker*" />\
     </packageSource>' "$destination_config"
