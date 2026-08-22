@@ -10,19 +10,27 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 {
-    internal class KafkaMetricsProvider<TKey, TValue>
+    internal class KafkaMetricsProvider<TKey, TValue> : IDisposable
     {
         private readonly string topicName;
         private readonly AdminClientConfig adminClientConfig;
         private readonly IConsumer<TKey, TValue> consumer;
         private readonly ILogger logger;
+        private readonly bool ownsConsumer;
+        private bool _disposed;
         protected Lazy<List<TopicPartition>> topicPartitions;
 
         virtual protected internal KafkaTriggerMetrics LastCalculatedMetrics { get; set; }
 
-        internal KafkaMetricsProvider(string topicName, AdminClientConfig adminClientConfig, IConsumer<TKey, TValue> consumer, ILogger logger) : this(topicName, adminClientConfig, logger)
+        internal KafkaMetricsProvider(string topicName, AdminClientConfig adminClientConfig, IConsumer<TKey, TValue> consumer, ILogger logger)
+            : this(topicName, adminClientConfig, consumer, logger, ownsConsumer: true)
+        {
+        }
+
+        internal KafkaMetricsProvider(string topicName, AdminClientConfig adminClientConfig, IConsumer<TKey, TValue> consumer, ILogger logger, bool ownsConsumer) : this(topicName, adminClientConfig, logger)
         {
             this.consumer = consumer;
+            this.ownsConsumer = ownsConsumer;
         }
 
         internal KafkaMetricsProvider(string topicName, AdminClientConfig adminClientConfig, ILogger logger)
@@ -180,6 +188,49 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
                 diff = Math.Min(watermark.High.Value - committed.Offset.Value, diff);
             }
             return diff;
+        }
+
+        /// <summary>
+        /// Disposes the Kafka consumer and releases native resources.
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Disposes the Kafka consumer and releases native resources.
+        /// </summary>
+        /// <param name="disposing">True if called from Dispose(), false if called from finalizer.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing && ownsConsumer && consumer != null)
+                {
+                    try
+                    {
+                        consumer.Close();
+                    }
+                    catch (Exception ex)
+                    {
+                        logger?.LogWarning(ex, "Error closing Kafka consumer during disposal");
+                    }
+                    finally
+                    {
+                        try
+                        {
+                            consumer.Dispose();
+                        }
+                        catch (Exception ex)
+                        {
+                            logger?.LogWarning(ex, "Error disposing Kafka consumer");
+                        }
+                    }
+                }
+                _disposed = true;
+            }
         }
     }
 }

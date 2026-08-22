@@ -349,6 +349,8 @@ Both, trigger and output, can connect to a secure Kafka broker. The following at
 |OAuthBearerClientSecret|sasl.oauthbearer.client.secret|OIDC ClientSecret
 |OAuthBearerScope|sasl.oauthbearer.scope|OIDC Scope
 |OAuthBearerTokenEndpointUrl|sasl.oauthbearer.token.endpoint.url|Token endpoint URL
+|HttpsCaLocation|https.ca.location|File or directory path to CA certificates for verifying the OAuth/OIDC token endpoint certificate. Use `probe` to discover the operating system's default certificate paths. Mutually exclusive with `HttpsCaPem`|
+|HttpsCaPem|https.ca.pem|CA certificate for verifying the OAuth/OIDC token endpoint certificate in PEM format. Mutually exclusive with `HttpsCaLocation`|
 |OAuthBearerExtensions|sasl.oauthbearer.extensions|Comma separated key/value pair required by Confluent Kafka
 
 Username and password should reference a Azure function configuration variable and not be hardcoded.
