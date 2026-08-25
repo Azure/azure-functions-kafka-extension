@@ -145,7 +145,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
             {
                 resolvedSslCaLocation = sslCaLocation;
             }
-            
+
             var sslKeyLocation = config.ResolveSecureSetting(nameResolver, entity.Attribute.SslKeyLocation);
             if (!AzureFunctionsFileHelper.TryGetValidFilePath(sslKeyLocation, out var resolvedSslKeyLocation))
             {
@@ -195,6 +195,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
 
             if (entity.Attribute.AuthenticationMode == BrokerAuthenticationMode.OAuthBearer)
             {
+                var httpsCaLocation = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.HttpsCaLocation);
+                var httpsCaPem = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.HttpsCaPem);
+                ConfigurationExtensions.ValidateHttpsCaCertificate(httpsCaLocation, httpsCaPem);
+                conf.SetHttpsCaCertificate(AzureFunctionsFileHelper.GetValidHttpsCaLocation(httpsCaLocation), httpsCaPem);
                 conf.SaslOauthbearerMethod = (SaslOauthbearerMethod)entity.Attribute.OAuthBearerMethod;
                 conf.SaslOauthbearerClientId = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerClientId);
                 conf.SaslOauthbearerClientSecret = this.config.ResolveSecureSetting(nameResolver, entity.Attribute.OAuthBearerClientSecret);
