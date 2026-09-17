@@ -31,7 +31,7 @@ interface EventData {
 
 const kafkaTrigger: AzureFunction = async function (context: Context, event_str: string): Promise<void> {
 
-    let event_obj = new KafkaEvent(eval(event_str));
+    let event_obj = new KafkaEvent(JSON.parse(event_str));
 
     context.log("Event Offset: " + event_obj.Offset);
     context.log("Event Partition: " + event_obj.Partition);

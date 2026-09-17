@@ -30,7 +30,7 @@ class KafkaEvent {
 
 const kafkaTrigger: AzureFunction = async function (context: Context, event_str: string[]): Promise<void> {
     for(var event of event_str) {
-        let event_obj = new KafkaEvent(eval(JSON.parse(event)));
+        let event_obj = new KafkaEvent(JSON.parse(event));
         context.log("Event Offset: " + event_obj.Offset);
         context.log("Event Partition: " + event_obj.Partition);
         context.log("Event Topic: " + event_obj.Topic);
