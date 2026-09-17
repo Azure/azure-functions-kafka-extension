@@ -20,6 +20,17 @@ $ npm install
 $ npm run build
 ```
 
+## Tests
+
+Run the trigger tests with Node.js 16 or later:
+
+```bash
+npm ci
+npm test
+```
+
+The tests compile and call the single-message, retry, and header triggers without a Kafka broker or an Azure Functions host. They check JSON parsing, payload data, header decoding, batch processing, retry errors, and rejection of executable input.
+
 ## Reference
 
 * [Quickstart: Create a function in Azure using Visual Studio Code](https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-first-function-vs-code?pivots=programming-language-typescript)

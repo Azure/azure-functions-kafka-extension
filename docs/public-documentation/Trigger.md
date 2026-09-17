@@ -490,7 +490,7 @@ interface EventData {
 
 const kafkaTrigger: AzureFunction = async function (context: Context, event_str: string): Promise<void> {
 
-    let event_obj = new KafkaEvent(eval(event_str));
+    let event_obj = new KafkaEvent(JSON.parse(event_str));
 
     context.log("Event Offset: " + event_obj.Offset);
     context.log("Event Partition: " + event_obj.Partition);
@@ -531,7 +531,7 @@ Here's Typescript code:
 const kafkaTrigger: AzureFunction = async function (context: Context, events: string[]): Promise<void> {
 
     for(var event of events) {
-        let event_obj = new KafkaEvent(eval(event));
+        let event_obj = new KafkaEvent(JSON.parse(event));
         context.log("Event Offset: " + event_obj.Offset);
         context.log("Event Partition: " + event_obj.Partition);
         context.log("Event Topic: " + event_obj.Topic);
@@ -576,7 +576,7 @@ class KafkaEvent {
 }
 
 const kafkaTrigger: AzureFunction = async function (context: Context, event: string): Promise<void> {
-    let event_obj = new KafkaEvent(eval(event));
+    let event_obj = new KafkaEvent(JSON.parse(event));
     context.log("Event Value (as string): " + event_obj.Value);
     context.log("Event Headers: ");
     event_obj.Headers.forEach((header: KafkaHeaders) => {
