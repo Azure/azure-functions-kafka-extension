@@ -1,0 +1,257 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Azure/azure-functions-kafka-extension/test/CompatibilityHarness/manifest.schema.json",
+  "title": "Kafka extension compatibility manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "name",
+    "qualificationMode",
+    "host",
+    "worker",
+    "kafkaExtension",
+    "broker",
+    "functionApp",
+    "packageFeeds",
+    "toolchains",
+    "buildTooling"
+  ],
+  "$defs": {
+    "gitComponent": {
+      "type": "object",
+      "required": ["source", "repository", "commit"],
+      "properties": {
+        "source": { "const": "git" },
+        "repository": {
+          "type": "string",
+          "pattern": "^https://github\\.com/Azure/.+\\.git$"
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        }
+      }
+    },
+    "digestImage": {
+      "type": "string",
+      "pattern": "^.+@sha256:[a-f0-9]{64}$"
+    }
+  },
+  "properties": {
+    "$schema": { "type": "string" },
+    "name": { "type": "string", "minLength": 1 },
+    "qualificationMode": { "enum": ["development", "release"] },
+    "host": {
+      "allOf": [
+        { "$ref": "#/$defs/gitComponent" },
+        {
+          "type": "object",
+          "required": ["runtimeImage"],
+          "properties": {
+            "runtimeImage": { "$ref": "#/$defs/digestImage" }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "worker": {
+      "allOf": [
+        { "$ref": "#/$defs/gitComponent" },
+        {
+          "type": "object",
+          "required": ["language"],
+          "properties": {
+            "language": { "enum": ["java", "dotnet-isolated", "node"] }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "javaAdditions": {
+      "allOf": [{ "$ref": "#/$defs/gitComponent" }],
+      "unevaluatedProperties": false
+    },
+    "languageLibrary": {
+      "allOf": [
+        { "$ref": "#/$defs/gitComponent" },
+        {
+          "type": "object",
+          "required": ["language", "version"],
+          "properties": {
+            "language": { "const": "java" },
+            "version": { "type": "string", "minLength": 1 }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "nodeLibrary": {
+      "allOf": [{ "$ref": "#/$defs/gitComponent" }],
+      "unevaluatedProperties": false
+    },
+    "nodeExtensions": {
+      "allOf": [{ "$ref": "#/$defs/gitComponent" }],
+      "unevaluatedProperties": false
+    },
+    "kafkaExtension": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "repository", "ref"],
+      "properties": {
+        "source": { "const": "workspace" },
+        "repository": { "type": "string", "format": "uri" },
+        "ref": { "type": "string", "minLength": 1 }
+      }
+    },
+    "broker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "source", "image"],
+      "properties": {
+        "kind": { "const": "local-kafka" },
+        "source": { "const": "container" },
+        "image": { "$ref": "#/$defs/digestImage" }
+      }
+    },
+    "functionApp": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "javaVersion": { "type": "string", "pattern": "^\\d+$" },
+        "compilerRelease": { "type": "string", "pattern": "^\\d+$" },
+        "azureFunctionsMavenPluginVersion": { "type": "string", "minLength": 1 },
+        "mavenCompilerPluginVersion": { "type": "string", "minLength": 1 },
+        "targetFramework": { "type": "string", "pattern": "^net\\d+\\.0$" },
+        "workerVersion": { "type": "string", "minLength": 1 },
+        "workerSdkVersion": { "type": "string", "minLength": 1 },
+        "httpExtensionVersion": { "type": "string", "minLength": 1 },
+        "kafkaExtensionVersion": { "type": "string", "minLength": 1 },
+        "nodeVersion": { "type": "string", "pattern": "^\\d+$" }
+      }
+    },
+    "packageFeeds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policy", "azureDevOpsResource", "nuget"],
+      "properties": {
+        "policy": { "const": "cfs-only" },
+        "azureDevOpsResource": {
+          "type": "string",
+          "pattern": "^[a-f0-9-]{36}$"
+        },
+        "nuget": {
+          "type": "string",
+          "const": "https://pkgs.dev.azure.com/azfunc/public/_packaging/upstream-public/nuget/v3/index.json"
+        },
+        "maven": {
+          "type": "string",
+          "const": "https://pkgs.dev.azure.com/azfunc/public/_packaging/upstream-public/maven/v1"
+        },
+        "npm": {
+          "type": "string",
+          "const": "https://pkgs.dev.azure.com/azfunc/public/_packaging/upstream-public/npm/registry/"
+        }
+      }
+    },
+    "toolchains": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dotnetSdk"],
+      "properties": {
+        "javaAdditions": { "type": "string", "minLength": 1 },
+        "javaWorker": { "type": "string", "minLength": 1 },
+        "mavenAdditions": { "type": "string", "minLength": 1 },
+        "mavenWorker": { "type": "string", "minLength": 1 },
+        "dotnetSdk": { "type": "string", "minLength": 1 },
+        "node": { "type": "string", "minLength": 1 }
+      }
+    },
+    "buildTooling": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "dotnetSdkImage"],
+      "properties": {
+        "source": { "const": "container" },
+        "javaAdditionsImage": { "$ref": "#/$defs/digestImage" },
+        "javaImage": { "$ref": "#/$defs/digestImage" },
+        "dotnetSdkImage": { "$ref": "#/$defs/digestImage" },
+        "nodeImage": { "$ref": "#/$defs/digestImage" },
+        "coreToolsImage": { "$ref": "#/$defs/digestImage" }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "worker": { "properties": { "language": { "const": "java" } } } }
+      },
+      "then": {
+        "required": ["javaAdditions", "languageLibrary"],
+        "properties": {
+          "functionApp": {
+            "required": [
+              "name",
+              "javaVersion",
+              "compilerRelease",
+              "azureFunctionsMavenPluginVersion",
+              "mavenCompilerPluginVersion"
+            ]
+          },
+          "packageFeeds": { "required": ["maven"] },
+          "toolchains": {
+            "required": [
+              "javaAdditions",
+              "javaWorker",
+              "mavenAdditions",
+              "mavenWorker",
+              "dotnetSdk"
+            ]
+          },
+          "buildTooling": {
+            "required": ["source", "javaAdditionsImage", "javaImage", "dotnetSdkImage"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "worker": { "properties": { "language": { "const": "dotnet-isolated" } } }
+        }
+      },
+      "then": {
+        "properties": {
+          "functionApp": {
+            "required": [
+              "name",
+              "targetFramework",
+              "workerVersion",
+              "workerSdkVersion",
+              "httpExtensionVersion",
+              "kafkaExtensionVersion"
+            ]
+          },
+          "toolchains": { "required": ["dotnetSdk"] }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "worker": { "properties": { "language": { "const": "node" } } } }
+      },
+      "then": {
+        "required": ["nodeLibrary", "nodeExtensions"],
+        "properties": {
+          "functionApp": { "required": ["name", "nodeVersion"] },
+          "packageFeeds": { "required": ["npm"] },
+          "toolchains": { "required": ["dotnetSdk", "node"] },
+          "buildTooling": {
+            "required": ["source", "dotnetSdkImage", "nodeImage", "coreToolsImage"]
+          }
+        }
+      }
+    }
+  ]
+}

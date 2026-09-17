@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>$(FunctionTargetFramework)</TargetFramework>
+    <AzureFunctionsVersion>v4</AzureFunctionsVersion>
+    <OutputType>Exe</OutputType>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <FunctionsEnableWorkerIndexing>true</FunctionsEnableWorkerIndexing>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk"
+                      Version="$(FunctionsWorkerSdkVersion)"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker"
+                      Version="$(FunctionsWorkerVersion)" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http"
+                      Version="$(FunctionsHttpExtensionVersion)" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Kafka"
+                      Version="$(FunctionsKafkaExtensionVersion)" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="host.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>

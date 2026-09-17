@@ -1,0 +1,57 @@
+{
+  "$schema": "../manifest.schema.json",
+  "name": "local-kafka-node-source-assembled",
+  "qualificationMode": "release",
+  "host": {
+    "source": "git",
+    "repository": "https://github.com/Azure/azure-functions-host.git",
+    "commit": "d2ae50ace306501aca637ff18ba57db74a87b3ff",
+    "runtimeImage": "mcr.microsoft.com/azure-functions/node:4-node22@sha256:79497ce7a501567bd1488eb03bb926f5e6ad2c6ea647a29f7dfb78b1f83bc30b"
+  },
+  "worker": {
+    "language": "node",
+    "source": "git",
+    "repository": "https://github.com/Azure/azure-functions-nodejs-worker.git",
+    "commit": "43378cad9fbae00af4c7fba92d86b75bb767155f"
+  },
+  "nodeLibrary": {
+    "source": "git",
+    "repository": "https://github.com/Azure/azure-functions-nodejs-library.git",
+    "commit": "113f3a1fc99e0e109e131ee1da3c57899af8e5ed"
+  },
+  "nodeExtensions": {
+    "source": "git",
+    "repository": "https://github.com/Azure/azure-functions-nodejs-extensions.git",
+    "commit": "f84a29ddbd62b31e56c29ed9a270460c433d5188"
+  },
+  "kafkaExtension": {
+    "source": "workspace",
+    "repository": "https://github.com/Azure/azure-functions-kafka-extension.git",
+    "ref": "HEAD"
+  },
+  "broker": {
+    "kind": "local-kafka",
+    "source": "container",
+    "image": "confluentinc/cp-kafka:7.6.1@sha256:620734d9fc0bb1f9886932e5baf33806074469f40e3fe246a3fdbb59309535fa"
+  },
+  "functionApp": {
+    "name": "compat-node",
+    "nodeVersion": "22"
+  },
+  "packageFeeds": {
+    "policy": "cfs-only",
+    "azureDevOpsResource": "499b84ac-1321-427f-aa17-267ca6975798",
+    "nuget": "https://pkgs.dev.azure.com/azfunc/public/_packaging/upstream-public/nuget/v3/index.json",
+    "npm": "https://pkgs.dev.azure.com/azfunc/public/_packaging/upstream-public/npm/registry/"
+  },
+  "toolchains": {
+    "dotnetSdk": "10.0",
+    "node": "22"
+  },
+  "buildTooling": {
+    "source": "container",
+    "dotnetSdkImage": "mcr.microsoft.com/dotnet/sdk:10.0@sha256:e1ffd2a92ae84c1291bc1b6887501f8af98e6331e7af6d4c8d37168c5e87a64c",
+    "nodeImage": "mcr.microsoft.com/azure-functions/node:4-node22@sha256:79497ce7a501567bd1488eb03bb926f5e6ad2c6ea647a29f7dfb78b1f83bc30b",
+    "coreToolsImage": "mcr.microsoft.com/azure-functions/java:4-java21-core-tools@sha256:6c377762f8de49e115a5e527f75f176a590d5842b3b3fb0bd9ea5a731039b679"
+  }
+}

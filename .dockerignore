@@ -7,10 +7,13 @@ NuGet.config
 **/node_modules
 **/obj
 **/package-lock.json
+!test/CompatibilityHarness/node/package-lock.json
 **/pip.conf
 **/pip.ini
 **/target
 **/uv.lock
 **/*.pyc
+temp/compat/secrets
+!temp/compat/nuget/*.nupkg
 **/local.appsettings.tests.json
 **/local.settings.json

@@ -1,0 +1,65 @@
+{
+  "$schema": "../manifest.schema.json",
+  "name": "local-kafka-java-source-assembled",
+  "qualificationMode": "release",
+  "host": {
+    "source": "git",
+    "repository": "https://github.com/Azure/azure-functions-host.git",
+    "commit": "d2ae50ace306501aca637ff18ba57db74a87b3ff",
+    "runtimeImage": "mcr.microsoft.com/dotnet/aspnet:10.0.4-noble-amd64@sha256:f36bb81e345e2d2a4b483c75ead48484c729a40a38944a0e1772332b9ba045db"
+  },
+  "worker": {
+    "language": "java",
+    "source": "git",
+    "repository": "https://github.com/Azure/azure-functions-java-worker.git",
+    "commit": "ceb218cdd27029b8a8ab9c98b515166dd2d189a7"
+  },
+  "javaAdditions": {
+    "source": "git",
+    "repository": "https://github.com/Azure/azure-functions-java-additions.git",
+    "commit": "8a320514ec019e6d6be0448f3197228b88de3233"
+  },
+  "languageLibrary": {
+    "language": "java",
+    "source": "git",
+    "repository": "https://github.com/Azure/azure-functions-java-library.git",
+    "commit": "5d006a58d8a358ddf59d276502e49d8184d2e41f",
+    "version": "3.3.0"
+  },
+  "kafkaExtension": {
+    "source": "workspace",
+    "repository": "https://github.com/Azure/azure-functions-kafka-extension.git",
+    "ref": "HEAD"
+  },
+  "broker": {
+    "kind": "local-kafka",
+    "source": "container",
+    "image": "confluentinc/cp-kafka:7.6.1@sha256:620734d9fc0bb1f9886932e5baf33806074469f40e3fe246a3fdbb59309535fa"
+  },
+  "functionApp": {
+    "name": "compat-java",
+    "javaVersion": "21",
+    "compilerRelease": "17",
+    "azureFunctionsMavenPluginVersion": "1.36.0",
+    "mavenCompilerPluginVersion": "3.13.0"
+  },
+  "packageFeeds": {
+    "policy": "cfs-only",
+    "azureDevOpsResource": "499b84ac-1321-427f-aa17-267ca6975798",
+    "nuget": "https://pkgs.dev.azure.com/azfunc/public/_packaging/upstream-public/nuget/v3/index.json",
+    "maven": "https://pkgs.dev.azure.com/azfunc/public/_packaging/upstream-public/maven/v1"
+  },
+  "toolchains": {
+    "javaAdditions": "8",
+    "javaWorker": "21",
+    "mavenAdditions": "3.9.9",
+    "mavenWorker": "3.8.5",
+    "dotnetSdk": "10.0"
+  },
+  "buildTooling": {
+    "source": "container",
+    "javaAdditionsImage": "maven:3.9.9-eclipse-temurin-8@sha256:4977e75de990c5923bffd540c03c76a91075d07bddd8a42d71126e752a2bd34d",
+    "javaImage": "mcr.microsoft.com/azure-functions/java:4-java21-core-tools@sha256:6c377762f8de49e115a5e527f75f176a590d5842b3b3fb0bd9ea5a731039b679",
+    "dotnetSdkImage": "mcr.microsoft.com/dotnet/sdk:10.0@sha256:e1ffd2a92ae84c1291bc1b6887501f8af98e6331e7af6d4c8d37168c5e87a64c"
+  }
+}
