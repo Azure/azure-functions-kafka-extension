@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using Confluent.Kafka;
@@ -48,22 +49,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka
         }
 
         /// <summary>
-        /// Creates a config key by concatenating all property key and values
+        /// Creates a config key from all property keys and values.
+        /// Each part is length prefixed, so values that contain separators cannot make distinct configs share a key.
         /// </summary>
-        private string CreateKeyForConfig(ProducerConfig producerConfig)
+        internal static string CreateKeyForConfig(ProducerConfig producerConfig)
         {
             var keyBuilder = new StringBuilder();
 
             foreach (var kv in producerConfig)
             {
-                keyBuilder
-                    .Append(kv.Key)
-                    .Append('=')
-                    .Append(kv.Value)
-                    .Append(';');
+                AppendLengthPrefixed(keyBuilder, kv.Key);
+                AppendLengthPrefixed(keyBuilder, kv.Value);
             }
 
             return keyBuilder.ToString();
+        }
+
+        private static void AppendLengthPrefixed(StringBuilder keyBuilder, string value)
+        {
+            keyBuilder
+                .Append((value?.Length ?? -1).ToString(CultureInfo.InvariantCulture))
+                .Append(':')
+                .Append(value);
         }
 
         private IProducer<byte[], byte[]> CreateBaseProducer(ProducerConfig producerConfig)

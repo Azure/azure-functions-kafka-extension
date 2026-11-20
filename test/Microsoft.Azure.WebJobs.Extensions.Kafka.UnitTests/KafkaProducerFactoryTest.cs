@@ -548,5 +548,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.Kafka.UnitTests
             Assert.Null(config.Get("https.ca.location"));
             Assert.Equal("line1\nline2", config.Get("https.ca.pem"));
         }
+
+        [Fact]
+        public void CreateKeyForConfig_ValuesContainingSeparators_ProduceDistinctKeys()
+        {
+            var first = new ProducerConfig();
+            first.Set("client.id", "a;b=c");
+
+            var second = new ProducerConfig();
+            second.Set("client.id", "a");
+            second.Set("b", "c");
+
+            Assert.NotEqual(KafkaProducerFactory.CreateKeyForConfig(first), KafkaProducerFactory.CreateKeyForConfig(second));
+        }
+
+        [Fact]
+        public void CreateKeyForConfig_EqualConfigs_ProduceEqualKeys()
+        {
+            var first = new ProducerConfig { BootstrapServers = "brokers:9092", SaslUsername = "user", SaslPassword = "a;b=c" };
+            var second = new ProducerConfig { BootstrapServers = "brokers:9092", SaslUsername = "user", SaslPassword = "a;b=c" };
+
+            Assert.Equal(KafkaProducerFactory.CreateKeyForConfig(first), KafkaProducerFactory.CreateKeyForConfig(second));
+        }
     }
 }
